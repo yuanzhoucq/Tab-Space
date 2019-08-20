@@ -1,37 +1,15 @@
 ## Welcome to GitHub Pages
 
-You can use the [editor on GitHub](https://github.com/yuanzhoucq/Tab-Space/edit/master/index.md) to maintain and preview the content for your website in Markdown files.
+<img src="imgs/screenshot%203.png" width=400px/>
 
-Whenever you commit to this repository, GitHub Pages will run [Jekyll](https://jekyllrb.com/) to rebuild the pages in your site, from the content in your Markdown files.
+Tab Space saves your tabs as a workspace at 1 click.
 
-### Markdown
+There is a famous extension in Chrome for this use, but it does not work in Safari. Well, I am a Safari fans, so I wrote this. 
 
-Markdown is a lightweight and easy-to-use syntax for styling your writing. It includes conventions for
+If you want to go to Tab Space page directly without saving current tabs, press "Ctrl + T".
 
-```markdown
-Syntax highlighted code block
+if you want to add Tab Space as a bookmark or to set it as homepage, the url you should use is "http://yuanzhoucq.github.io/Tab-Space/redirect.html".
 
-# Header 1
-## Header 2
-### Header 3
+In addition, with this app installed, you can duplicate your active tab by pressing "Ctrl + D".
 
-- Bulleted
-- List
-
-1. Numbered
-2. List
-
-**Bold** and _Italic_ and `Code` text
-
-[Link](url) and ![Image](src)
-```
-
-For more details see [GitHub Flavored Markdown](https://guides.github.com/features/mastering-markdown/).
-
-### Jekyll Themes
-
-Your Pages site will use the layout and styles from the Jekyll theme you have selected in your [repository settings](https://github.com/yuanzhoucq/Tab-Space/settings). The name of this theme is saved in the Jekyll `_config.yml` configuration file.
-
-### Support or Contact
-
-Having trouble with Pages? Check out our [documentation](https://help.github.com/categories/github-pages-basics/) or [contact support](https://github.com/contact) and we’ll help you sort it out.
+Please enjoy and report potential bugs to me. Thanks!
