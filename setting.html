@@ -1,0 +1,80 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+  <title>Tab space</title>
+  <!-- prod -->
+    <script src="https://cdn.jsdelivr.net/npm/vue"></script>
+  <!-- dev -->
+  <!--  <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>-->
+  <style>
+    body {
+      background-color: #fbfbfb;
+    }
+
+    #main {
+      min-height: calc(100vh - 80px);
+    }
+
+    footer {
+      display: flex;
+      justify-content: center;
+    }
+
+    .link {
+      color: rgb(54, 49, 61);
+      font-weight: normal;
+    }
+
+    .link:hover {
+      box-shadow: inset 0 -10px rgba(0, 181, 29, 0.17451);
+      color: rgb(0, 181, 29);
+    }
+
+    #title {
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    #settings {
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+  </style>
+</head>
+
+<body>
+<div id="app">
+  <div id="main">
+    <div id="title">
+      <h1>Tab space {{lang.settings}}</h1>
+    </div>
+    <div id="settings">
+      <p id="tab-space-settings-loading">{{lang.loading}}</p>
+    </div>
+  </div>
+  <footer>
+    <a class="link" href="mailto:joyuercn@icloud.com">{{lang.contact}}</a>
+  </footer>
+</div>
+</body>
+<script>
+  const app = new Vue({
+    el: '#app',
+    data: {
+      lang: {},
+    },
+    mounted() {
+      fetch("lang.json").then(r => r.json()).then(r => {
+        if (navigator.language === "zh-CN") {
+          this.lang = r["zh-CN"]
+        } else {
+          this.lang = r["en-US"]
+        }
+      })
+    },
+    methods: {
+    }
+  })
+</script>
+</html>

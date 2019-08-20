@@ -1,0 +1,14 @@
+{
+    "en-US": {
+        "settings": "Settings",
+        "loading": "loading...",
+        "contact": "Contact",
+        "ignore-pinned-tabs": "Ignore pinned web pages while saving tabs"
+    },
+    "zh-CN": {
+        "settings": "设置",
+        "loading": "加载中...",
+        "contact": "联系我们",
+        "ignore-pinned-tabs": "保存标签时忽略置顶页"
+    }
+}
