@@ -1,6 +1,6 @@
 ## Welcome to GitHub Pages
 
-<img src="imgs/screenshot%203.png" width=400px/>
+![](imgs/screenshot3.png)
 
 Tab Space saves your tabs as a workspace at 1 click.
 
