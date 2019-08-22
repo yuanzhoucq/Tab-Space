@@ -8,11 +8,11 @@ It mainly includes the following functions:
 
 - Save your browsing tabs at 1 click (just like OneTab in Chrome)，and restore these tabs whenever you want. 
 
-![](imgs/publicity.001.jpeg)
+![](assets/imgs/publicity.001.jpeg)
 
 - Tag system. You can mark your saved sessions with custom tags and use this app as a web browsing workflow launcher. For example, under my tag "Reading", I can launch my "News" workflow by opening all my favorite news websites at 1 click.
 
-![](imgs/publicity.002.jpeg)
+![](assets/imgs/publicity.002.jpeg)
 
 - Shortcuts for Safari which offer the long missing function:
     - Ctrl + L -- Close left tabs
@@ -23,9 +23,9 @@ It mainly includes the following functions:
     - Ctrl + F -- Open in Firefox
     - Ctrl + T -- Open Tab Space
 
-![](imgs/publicity.003.jpeg)
+![](assets/imgs/publicity.003.jpeg)
 
-![](imgs/publicity.004.jpeg)
+![](assets/imgs/publicity.004.jpeg)
 
 In addition, if you want to add Tab Space as a bookmark or to set it as homepage, the url you should use is "http://yuanzhoucq.github.io/Tab-Space/redirect.html".
 
