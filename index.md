@@ -1,4 +1,4 @@
-## Tab Space - Born for improve your web browsing productivity.
+## Tab Space - Born for improving your web browsing productivity.
 
 [中文介绍](https://sspai.com/post/56315)
 
