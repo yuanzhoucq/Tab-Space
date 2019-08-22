@@ -3,14 +3,16 @@
 
 @import "{{ site.theme }}";
 
-header {
-  width: 180px;
-}
+@media (min-width: 600px) {
+  header {
+    width: 180px;
+  }
 
-section {
-  width: 600px;
-}
+  section {
+    width: 600px;
+  }
 
-footer {
-  width: 180px;
+  footer {
+    width: 180px;
+  }
 }
