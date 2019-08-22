@@ -6,22 +6,22 @@ Tab Space is a Safari extension app which is born for improving web browsing pro
 
 It mainly includes the following functions:
 
-1.Save your browsing tabs at 1 click (just like OneTab in Chrome)，and restore these tabs whenever you want. 
+- Save your browsing tabs at 1 click (just like OneTab in Chrome)，and restore these tabs whenever you want. 
 
 ![](imgs/publicity.001.jpeg)
 
-2. Tag system. You can mark your saved sessions with custom tags and use this app as a web browsing workflow launcher. For example, under my tag "Reading", I can launch my "News" workflow by opening all my favorite news websites at 1 click.
+- Tag system. You can mark your saved sessions with custom tags and use this app as a web browsing workflow launcher. For example, under my tag "Reading", I can launch my "News" workflow by opening all my favorite news websites at 1 click.
 
 ![](imgs/publicity.002.jpeg)
 
-3. Shortcuts for Safari which offer the long missing function:
-- Ctrl + L -- Close left tabs
-- Ctrl + R -- Close right tabs 
-- Ctrl + A -- Close all other tabs
-- Ctrl + D -- Duplicate current tab
-- Ctrl + C -- Open in Chrome
-- Ctrl + F -- Open in Firefox
-- Ctrl + T -- Open Tab Space
+- Shortcuts for Safari which offer the long missing function:
+    - Ctrl + L -- Close left tabs
+    - Ctrl + R -- Close right tabs 
+    - Ctrl + A -- Close all other tabs
+    - Ctrl + D -- Duplicate current tab
+    - Ctrl + C -- Open in Chrome
+    - Ctrl + F -- Open in Firefox
+    - Ctrl + T -- Open Tab Space
 
 ![](imgs/publicity.003.jpeg)
 
