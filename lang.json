@@ -12,7 +12,9 @@
         "ctrlC": "Open in Chrome",
         "ctrlF": "Open in Firefox",
         "ctrlT": "Open Tab Space",
-        "ctrlB": "Save to Bear"
+        "ctrlB": "Save selected text to Bear",
+        "bearTip": "* To use this feature, you need to upgrade to Tab Space 2.1 and install ",
+        "bearUrl": "https://bear.app"
     },
     "zh-CN": {
         "settings": "设置",
@@ -27,6 +29,8 @@
         "ctrlC": "用 Chrome 打开当前标签页",
         "ctrlF": "用 Firefox 打开当前标签页",
         "ctrlT": "打开 Tab Space",
-        "ctrlB": "保存到 Bear 熊掌记"
+        "ctrlB": "保存选中文字到 Bear 熊掌记",
+        "bearTip": "* 此功能需要 Tab Space 升级到 2.1 及以上版本，并在 Mac 上安装 ",
+        "bearUrl": "https://bear.app/cn/"
     }
 }
