@@ -3,12 +3,30 @@
         "settings": "Settings",
         "loading": "loading...",
         "contact": "Contact",
-        "ignore-pinned-tabs": "Ignore pinned web pages while saving tabs"
+        "ignore-pinned-tabs": "Ignore pinned web pages while saving tabs",
+        "shortcuts": "Shortcuts",
+        "shortcutTip": "Note: shortcuts do not work when Safari address bar is empty.",
+        "ctrlL": "Close left tabs",
+        "ctrlR": "Close right tabs",
+        "ctrlA": "Close all other tabs",
+        "ctrlC": "Open in Chrome",
+        "ctrlF": "Open in Firefox",
+        "ctrlT": "Open Tab Space",
+        "ctrlB": "Save to Bear"
     },
     "zh-CN": {
         "settings": "设置",
         "loading": "加载中...",
         "contact": "联系我们",
-        "ignore-pinned-tabs": "保存标签时忽略置顶页"
+        "ignore-pinned-tabs": "保存标签时忽略置顶页",
+        "shortcuts": "快捷键",
+        "shortcutTip": "注意：Safari 地址栏为空时快捷键无法使用。",
+        "ctrlL": "关闭左侧标签页",
+        "ctrlR": "关闭右侧标签页",
+        "ctrlA": "关闭其它所有标签页",
+        "ctrlC": "用 Chrome 打开当前标签页",
+        "ctrlF": "用 Firefox 打开当前标签页",
+        "ctrlT": "打开 Tab Space",
+        "ctrlB": "保存到 Bear 熊掌记"
     }
 }
