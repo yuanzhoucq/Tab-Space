@@ -6,14 +6,17 @@
   <!-- prod -->
     <script src="https://cdn.jsdelivr.net/npm/vue"></script>
   <!-- dev -->
-  <!--  <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>-->
+  <!--    <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>-->
   <style>
     body {
       background-image: linear-gradient(-45deg, #efefef, #fbfbfb);
     }
 
     li {
-      /*list-style-image: */
+      list-style: none;
+      margin-left: -20px;
+      display: flex;
+      align-items: center;
     }
 
     #main {
@@ -124,7 +127,7 @@
     }
 
     .add-tag {
-      background-image: url("icon_tianjia.svg");
+      background-image: url("img/icon_tianjia.svg");
       background-repeat: no-repeat;
       background-size: cover;
       opacity: 0.5;
@@ -201,6 +204,18 @@
       transition: transform 0.5s;
     }
 
+    .fav {
+      display: inline-block;
+      margin-right: 5px;
+      width: 16px;
+      height: 16px;
+    }
+
+    .fav-img {
+      width: 100%;
+      max-height: 100%;
+    }
+
   </style>
 </head>
 
@@ -229,7 +244,8 @@
           <a class="btn del-btn" @click.stop="restore(session[0], false, true)">{{lang.delete}}</a>
           <a class="btn del-res-btn" @click.stop="restore(session[0], true, true)">{{lang.restoreAndDel}}</a>
           <ul class="session-sites" v-for="tab in session[1]">
-            <li><a class="link" :href="tab[1]">{{ (tab[0] || tab[1]) | wrap }}</a></li>
+            <li><div class="fav"><img class="fav-img" :src="getFavicon(tab[1])" onerror="src='img/icon_wangye.svg'" alt="">
+            </div><span><a class="link" :href="tab[1]">{{ (tab[0] || tab[1]) | wrap }}</a></span></li>
           </ul>
           <div class="session-tags">
             <div class="tag" v-for="tag in (session[3] || [])" @click="removeTag(tag, session)">{{ tag }}</div>
@@ -346,6 +362,10 @@
             updateSession(session) {
                 this.data = this.data.map(s => s[0] === session[0] ? session : s)
                 localStorage.setItem("bookmarks", JSON.stringify(this.data))
+            },
+            getFavicon(url) {
+              let origin = (new URL(url)).origin
+              return origin + "/favicon.ico"
             },
             restore(key, open, del) {
                 console.log("Restore", key)
