@@ -18,7 +18,7 @@ It mainly includes the following functions:
 - Shortcuts for Safari which offer the long missing function:
     - Ctrl + L -- Close left tabs
     - Ctrl + R -- Close right tabs 
-    - Ctrl + A -- Close all other tabs
+    - Ctrl + Q -- Close all other tabs
     - Ctrl + D -- Duplicate current tab
     - Ctrl + C -- Open in Chrome
     - Ctrl + F -- Open in Firefox
