@@ -232,6 +232,7 @@ footer {
     border: 1px solid gray;
     border-radius: 5px;
     text-align: left;
+    background-color: white;
 }
 
 .export:hover .export-dropdown {
