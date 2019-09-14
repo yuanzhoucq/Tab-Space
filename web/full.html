@@ -54,8 +54,8 @@
               <span class="link" href="#" @click="exportTabs('html', [session])">{{lang.exportHTML}}</span>
             </div>
           </div>
-          <ul class="session-sites" v-for="tab in session[1]">
-            <li><div class="fav"><img class="fav-img" :src="getFavicon(tab[1])" onerror="src='img/icon_wangye.svg'" alt="">
+          <ul class="session-sites" v-for="(tab, tid) in session[1]">
+            <li><div class="del-item" @click="delItem(tid,session)"><small>X</small></div><div class="fav"><img class="fav-img" :src="getFavicon(tab[1])" onerror="src='img/icon_wangye.svg'" alt="">
             </div><span><a class="link" :href="tab[1]">{{ (tab[0] || tab[1]) | wrap }}</a></span></li>
           </ul>
           <div class="session-tags">
@@ -186,6 +186,14 @@
         if (session[2]) this.updateSession(session)
         else div.innerText = this.tmpText
       },
+      delItem(tid, session) {
+        session[1].splice(tid,1)
+        if (session[1].length === 0) {
+          this.data = this.data.filter(r => r[0] !== session[0])
+          localStorage.setItem("bookmarks", JSON.stringify(this.data))
+        }
+        else this.updateSession(session)
+      },
       addTag(e, id) {
         this.tagEditorId = id
       },
@@ -194,9 +202,7 @@
           let session = this.getSessionById(this.tagEditorId)
           if (session.length === 2) session.push("")
           if (session.length === 3) session.push([e.target.value])
-          else {
-            session[3].indexOf(e.target.value) === -1 && session[3].push(e.target.value)
-          }
+          else { session[3].indexOf(e.target.value) === -1 && session[3].push(e.target.value) }
           this.updateSession(session)
         }
         this.tagEditorId = false

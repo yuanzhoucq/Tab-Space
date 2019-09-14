@@ -241,3 +241,16 @@ footer {
 .export:hover .export-session-dropdown {
     display: inline-block;
 }
+
+.del-item {
+    padding-right: 10px;
+    color: #eb5205;
+    display: none;
+    font-weight: bold;
+    font-style: italic;
+    cursor: pointer;
+}
+ li:hover .del-item {
+    display: block;
+    margin-left: -18.5px;
+ }
