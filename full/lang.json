@@ -8,7 +8,13 @@
         "settings": "Settings",
         "about": "About",
         "all": "All",
-        "tagPrompt": "Add tags here..."
+        "tagPrompt": "Add tags here...",
+        "export": "Export",
+        "exportTitle": "Tab Space Exported Tabs",
+        "exportHTML": "Export as HTML",
+        "exportJSON": "Export as JSON",
+        "exportText": "Copy as Text",
+        "exportMD": "Copy as Markdown"
     },
     "zh-CN": {
         "saveAt": "保存于",
@@ -19,6 +25,12 @@
         "settings": "设置",
         "about": "关于",
         "all": "全部",
-        "tagPrompt": "添加标签..."
+        "tagPrompt": "添加标签...",
+        "export": "导出",
+        "exportTitle": "Tab Space 导出标签页",
+        "exportHTML": "导出为 HTML",
+        "exportJSON": "导出为 JSON",
+        "exportText": "复制为文字",
+        "exportMD": "复制为 Markdown"
     }
 }
