@@ -1,230 +1,31 @@
 <!DOCTYPE HTML>
 <html>
 <head>
-  <title>Tab Space</title>
-  <link rel="icon" href="favicon.ico" type="image/x-icon">
+  <meta charset="utf-8">
+  <title>Tab space</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/velocity/1.2.3/velocity.min.js"></script>
   <!-- prod -->
-    <script src="https://cdn.jsdelivr.net/npm/vue"></script>
+  <script src="https://cdn.jsdelivr.net/npm/vue@2.6.10"></script>
   <!-- dev -->
-  <!--    <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>-->
-  <style>
-    body {
-      background-image: linear-gradient(-45deg, #efefef, #fbfbfb);
-      font-family: -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Oxygen-Sans,Ubuntu,Cantarell,"Helvetica Neue",sans-serif;
-    }
-
-    li {
-      list-style: none;
-      margin-left: -20px;
-      display: flex;
-      align-items: center;
-    }
-
-    #main {
-      min-height: calc(100vh - 35px);
-    }
-
-    footer {
-      display: flex;
-      justify-content: center;
-      font-size: 14px;
-    }
-
-    .link {
-      color: rgb(54, 49, 61);
-      font-weight: normal;
-    }
-
-    .link:hover {
-      box-shadow: inset 0 -10px rgba(0, 181, 29, 0.17451);
-      color: rgb(0, 181, 29);
-    }
-
-    #title {
-      max-width: 600px;
-      margin: 0 auto;
-      margin-top: -20px;
-    }
-
-    .sessions-container {
-      display: flex;
-      transition: 0.2s;
-      flex-direction: row;
-      justify-content: center;
-    }
-
-    .session-filter {
-      width: 100px;
-      margin-right: 25px;
-      display: flex;
-      flex-direction: column;
-    }
-
-    .tag-filter {
-      background-color: white;
-      padding: 5px;
-      padding-left: 10px;
-      border-radius: 5px;
-      cursor: pointer;
-    }
-
-    .tag-filter:hover {
-      background-color: lightsalmon;
-      border-width: 0;
-      transition: 0.15s;
-      margin-right: -5px;
-      color: whitesmoke;
-    }
-
-    .active-tag {
-      background-color: salmon;
-      color: white !important;
-      transition: 0.1s;
-      font-weight: bold;
-      margin-right: -10px;
-    }
-
-    .session {
-      border-radius: 5px;
-      text-decoration: none;
-      width: 600px;
-      margin: 20px auto;
-      margin-top: 0;
-      padding: 15px 80px 10px 40px;
-      background-color: white;
-      box-shadow: rgba(46, 41, 51, 0.0784314) 0 1px 2px, rgba(71, 63, 79, 0.0784314) 0 2px 4px;
-      transition-duration: 250ms, 250ms, 250ms;
-      transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1), cubic-bezier(0.4, 0, 0.2, 1), cubic-bezier(0.4, 0, 0.2, 1);
-      transition-property: transform, box-shadow, padding;
-    }
-
-    .session:hover {
-      transform: translateY(-0.5px);
-      box-shadow: rgba(46, 41, 51, 0.0784314) 0 3px 6px, rgba(71, 63, 79, 0.156863) 0 6px 12px;
-    }
-
-    .session-tags {
-      display: flex;
-      flex-direction: row;
-      flex-wrap: wrap;
-    }
-
-    .tag {
-      background-color: #f5f5f5;
-      border: 1px solid #dddddd;
-      padding: 3px;
-      color: #333333;
-      font-size: 12px;
-      border-radius: 8px;
-      margin-right: 5px;
-      margin-bottom: 5px;
-    }
-
-    .tag:hover {
-      cursor: pointer;
-      text-decoration: line-through;
-      opacity: 0.8;
-      transition: 0.2s;
-    }
-
-    .add-tag {
-      background-image: url("img/icon_tianjia.svg");
-      background-repeat: no-repeat;
-      background-size: cover;
-      opacity: 0.5;
-      margin-top: 4px;
-      width: 18px;
-      height: 18px;
-      cursor: pointer;
-    }
-
-    .tag-editor input {
-      width: 40px;
-      margin-left: 5px;
-    }
-
-    .session-title {
-      font-size: 20px;
-      font-weight: bold;
-      transition: box-shadow .2s linear;
-      box-shadow: inset 0 -10px #fadc23;
-      display: inline-block;
-      min-height: 26px;
-      margin-right: 20px;
-    }
-
-    .session-title:hover {
-      cursor: pointer;
-    }
-
-    .btn {
-      display: inline-block;
-      padding: 3px 5px;
-      color: rgb(255, 255, 255);
-      font-family: Helvetica, Arial, sans-serif;
-      font-size: 12px;
-      height: 16px;
-      line-height: 16px;
-      background-color: rgb(0, 181, 29);
-      cursor: pointer;
-      font-weight: 400;
-      border-radius: 2px;
-      min-width: 50px;
-      text-align: center;
-    }
-
-    .btn:hover {
-      font-weight: 700;
-    }
-
-    .del-btn {
-      background-color: #eb5205;
-    }
-
-    .del-res-btn {
-      background-color: #35abe5;
-    }
-
-    .footer-sep {
-      width: 10px;
-    }
-
-    .upper-border {
-      border-top: 1px solid #eeeeee;
-      color: #555555;
-    }
-
-    .tag-prompt {
-      font-size: 14px;
-      color: #999999;
-      margin-top: 2px;
-      margin-right: 5px;
-    }
-
-    .session-move {
-      transition: transform 0.5s;
-    }
-
-    .fav {
-      display: inline-block;
-      margin-right: 5px;
-      width: 16px;
-      height: 16px;
-    }
-
-    .fav-img {
-      width: 100%;
-      max-height: 100%;
-    }
-
-  </style>
+  <!--<script src="https://cdn.jsdelivr.net/npm/vue@2.6.10/dist/vue.js"></script>-->
+  <link rel="stylesheet" href="main.css">
 </head>
 
 <body>
 <div id="app">
   <div id="main">
-    <nav align="right"><a class="link" target="_blank" href="http://yuanzhoucq.github.io/Tab-Space/settings.html">{{lang.settings}}</a></nav>
+    <nav align="right">
+      <div class="export">
+        <span class="link">{{lang.export}}<small>▼</small></span>
+        <div class="export-dropdown">
+          <span class="link" href="#" @click="exportTabs('Text')">{{lang.exportText}}</span><br>
+          <span class="link" href="#" @click="exportTabs('MD')">{{lang.exportMD}}</span><br>
+          <span class="link" href="#" @click="exportTabs('HTML')">{{lang.exportHTML}}</span>
+          <!--<span class="link" href="#" @click="exportTabs('json')">{{lang.exportJSON}}</span>-->
+        </div>
+      </div>
+      <a class="link" target="_blank" href="http://yuanzhoucq.github.io/Tab-Space/settings.html">{{lang.settings}}</a>
+    </nav>
     <div id="title">
       <h1>Tab Space</h1>
     </div>
@@ -245,8 +46,16 @@
           <a class="btn" @click.stop="restore(session[0], true, false)">{{lang.restore}}</a>
           <a class="btn del-btn" @click.stop="restore(session[0], false, true)">{{lang.delete}}</a>
           <a class="btn del-res-btn" @click.stop="restore(session[0], true, true)">{{lang.restoreAndDel}}</a>
-          <ul class="session-sites" v-for="tab in session[1]">
-            <li><div class="fav"><img class="fav-img" :src="getFavicon(tab[1])" onerror="src='img/icon_wangye.svg'" alt="">
+          <div class="export">
+            <a class="btn del-res-btn">{{lang.export}}<small>▼</small></a>
+            <div class="export-session-dropdown">
+              <span class="link" href="#" @click="exportTabs('Text', [session])">{{lang.exportText}}</span><br>
+              <span class="link" href="#" @click="exportTabs('MD', [session])">{{lang.exportMD}}</span><br>
+              <span class="link" href="#" @click="exportTabs('HTML', [session])">{{lang.exportHTML}}</span>
+            </div>
+          </div>
+          <ul class="session-sites" v-for="(tab, tid) in session[1]">
+            <li><div class="del-item" @click="delItem(tid,session)"><small>X</small></div><div class="fav"><img class="fav-img" :src="getFavicon(tab[1])" onerror="src='img/icon_wangye.svg'" alt="">
             </div><span><a class="link" :href="tab[1]">{{ (tab[0] || tab[1]) | wrap }}</a></span></li>
           </ul>
           <div class="session-tags">
@@ -266,187 +75,211 @@
     <a class="link" href="http://yuanzhoucq.github.io/Tab-Space" target="_blank">{{lang.about}}</a>
   </footer>
 </div>
-</body>
+<script src="utility.js"></script>
 <script>
-    let data = JSON.parse(localStorage.getItem("bookmarks") || "[]")
-
-    Date.prototype.Format = function (fmt) {
-        var o = {
-            "y+": this.getFullYear(),
-            "M+": this.getMonth() + 1,
-            "d+": this.getDate(),
-            "h+": this.getHours(),
-            "m+": this.getMinutes(),
-            "s+": this.getSeconds(),
-            "q+": Math.floor((this.getMonth() + 3) / 3),
-            "S+": this.getMilliseconds()
-        };
-        for (var k in o) {
-            if (new RegExp("(" + k + ")").test(fmt)) {
-                if (k == "y+") {
-                    fmt = fmt.replace(RegExp.$1, ("" + o[k]).substr(4 - RegExp.$1.length));
-                } else if (k == "S+") {
-                    var lens = RegExp.$1.length;
-                    lens = lens == 1 ? 3 : lens;
-                    fmt = fmt.replace(RegExp.$1, ("00" + o[k]).substr(("" + o[k]).length - 1, lens));
-                } else {
-                    fmt = fmt.replace(RegExp.$1, (RegExp.$1.length == 1) ? (o[k]) : (("00" + o[k]).substr(("" + o[k]).length)));
-                }
-            }
+  let data = JSON.parse(localStorage.getItem("bookmarks") || "[]")
+  const app = new Vue({
+    el: '#app',
+    data: {
+      data: data,
+      lang: {},
+      activeId: "",
+      tmpText: "",
+      tagEditorId: false,
+      activeTag: ""
+    },
+    mounted() {
+      document.addEventListener('keydown', e => {
+        if (e.code === 'Enter') {
+          e.preventDefault()
+          try { document.querySelector('.tag-editor input').blur() } catch (e) {}
+          try { document.querySelector(`#id${this.activeId}`).blur() } catch (e) {}
         }
-        return fmt;
-    }
-
-    const app = new Vue({
-        el: '#app',
-        data: {
-            data: data,
-            lang: {},
-            activeId: "",
-            tmpText: "",
-            tagEditorId: false,
-            activeTag: ""
-        },
-        mounted() {
-            document.addEventListener('keydown', e => {
-                if (e.code === 'Enter') {
-                    e.preventDefault()
-                    document.querySelector('.tag-editor input').blur()
-                    document.querySelector(`#id${this.activeId}`).blur()
-                }
-            })
-            const urlParams = new URLSearchParams(window.location.search);
-            let sites = urlParams.get('site');
-            if (sites) {
-                sites = sites.split("##")
-                sites = sites.map((site, id, array) => [site, array[id + 1]].reverse()).filter((site, id) => id % 2 === 0)
-                const time = String(Date.now())
-                const new_session = [time, sites]
-                const last_session = this.data[0] || [0, 1]
-                if (JSON.stringify(sites) !== JSON.stringify(last_session[1])) {
-                    this.data.unshift(new_session)
-                } else {
-                    this.data[0][0] = time
-                }
-                localStorage.setItem("bookmarks", JSON.stringify(this.data))
-            }
-            fetch("lang.json").then(r => r.json()).then(r => {
-                if (navigator.language === "zh-CN") {
-                    this.lang = r["zh-CN"]
-                } else {
-                    this.lang = r["en-US"]
-                }
-            })
-
-        },
-        filters: {
-            wrap: function (value) {
-                return (value.length > 53 ? value.slice(0, 50) + "..." : value)
-            }
-        },
-        computed: {
-          tags() {
-            let tags = []
-            this.data.forEach(session => {
-              session[3] && session[3].forEach(tag => tags.indexOf(tag) === -1 && tags.push(tag))
-            })
-            return tags
-          },
-          selectedSessions() {
-            return this.activeTag === '' ? this.data :
-              this.data.filter(session => session[3] && session[3].indexOf(this.activeTag) > -1)
+      })
+      const urlParams = new URLSearchParams(window.location.search);
+      let sites = urlParams.get('site');
+      if (sites) {
+        sites = sites.split("TS#SEP")
+        sites = sites.map((site, id, array) => [site, array[id + 1]].reverse()).filter((site, id) => id % 2 === 0)
+        const time = String(Date.now())
+        const new_session = [time, sites]
+        const last_session = this.data[0] || [0, 1]
+        if (JSON.stringify(sites) !== JSON.stringify(last_session[1])) {
+          this.data.unshift(new_session)
+        } else {
+          this.data[0][0] = time
+        }
+        localStorage.setItem("bookmarks", JSON.stringify(this.data))
+      }
+      this.fetchLang()
+    },
+    filters: {
+      wrap: function (value) {
+        return (value.length > 53 ? value.slice(0, 50) + "..." : value)
+      }
+    },
+    computed: {
+      tags() {
+        let tags = []
+        this.data.forEach(session => {
+          session[3] && session[3].forEach(tag => tags.indexOf(tag) === -1 && tags.push(tag))
+        })
+        return tags
+      },
+      selectedSessions() {
+        return this.activeTag === '' ? this.data :
+          this.data.filter(session => session[3] && session[3].indexOf(this.activeTag) > -1)
+      }
+    },
+    methods: {
+      fetchLang() {
+        fetch("lang.json").then(r => r.json()).then(r => {
+          this.allLang = r
+          if (navigator.language === "zh-CN") {
+            this.lang = r["zh-CN"]
+          } else {
+            this.lang = r["en-US"]
           }
-        },
-        methods: {
-            getSessionById(id) {
-                return this.data.filter(r => r[0] === id)[0]
-            },
-            updateSession(session) {
-                this.data = this.data.map(s => s[0] === session[0] ? session : s)
-                localStorage.setItem("bookmarks", JSON.stringify(this.data))
-            },
-            getFavicon(url) {
-              let origin = (new URL(url)).origin
-              return origin + "/favicon.ico"
-            },
-            restore(key, open, del) {
-                console.log("Restore", key)
-                if (open) {
-                    this.data.map(session => {
-                        if (session[0] === key) {
-                            session[1].forEach(site => {
-                                window.open(site[1])
-                            })
-                        }
-                    })
-                }
-                if (del) {
-                    this.data = this.data.filter(session => session[0] !== key)
-                    localStorage.setItem("bookmarks", JSON.stringify(this.data))
-                }
-            },
-            editSessionName(id) {
-                this.activeId = id
-                const div = document.querySelector(`#id${id}`)
-                div.setAttribute('contentEditable', "true")
-                div.style.minWidth = "150px";
-                div.focus()
-                this.tmpText = div.innerText
-                document.execCommand('selectAll', false, null)
-            },
-            updateSessionName() {
-                const div = document.querySelector(`#id${this.activeId}`)
-                div.style.minWidth = "0";
-                let session = this.getSessionById(this.activeId)
-                session[2] = div.innerText
-                if (session[2]) this.updateSession(session)
-                else div.innerText = this.tmpText
-            },
-            addTag(e, id) {
-              this.tagEditorId = id
-            },
-            saveTag(e) {
-              if (e.target.value) {
-                let session = this.getSessionById(this.tagEditorId)
-                if (session.length === 2) session.push("")
-                if (session.length === 3) session.push([e.target.value])
-                else {
-                  session[3].indexOf(e.target.value) === -1 && session[3].push(e.target.value)
-                }
-                this.updateSession(session)
-              }
-              this.tagEditorId = false
-            },
-            removeTag(tag, session) {
-              session[3].splice(session[3].indexOf(tag), 1)
-              this.updateSession(session)
-            },
-            beforeEnter: function (el) {
-              el.style.opacity = 0
-            },
-            enter: function (el, done) {
-              setTimeout(function () {
-                Velocity(
-                  el,
-                  { opacity: 1},
-                  { complete: done }
-                )
-              }, 0)
-            },
-            leave: function (el, done) {
-              el.style.padding = 0
-              el.style.height = 0
-              el.style.margin = 0
-              el.style.opacity = 0.1
-              setTimeout(function () {
-                Velocity(
-                  el,
-                  { opacity: 0},
-                  { complete: done }
-                )
-              }, 0)
+        })
+      },
+      getSessionById(id) {
+        return this.data.filter(r => r[0] === id)[0]
+      },
+      updateSession(session) {
+        this.data = this.data.map(s => s[0] === session[0] ? session : s)
+        localStorage.setItem("bookmarks", JSON.stringify(this.data))
+      },
+      getFavicon(url) {
+        let origin = (new URL(url)).origin
+        return origin + "/favicon.ico"
+      },
+      restore(key, open, del) {
+        console.log("Restore", key)
+        if (open) {
+          this.data.map(session => {
+            if (session[0] === key) {
+              session[1].forEach(site => {
+                window.open(site[1])
+              })
             }
+          })
         }
-    })
+        if (del) {
+          this.data = this.data.filter(session => session[0] !== key)
+          localStorage.setItem("bookmarks", JSON.stringify(this.data))
+        }
+      },
+      editSessionName(id) {
+        this.activeId = id
+        const div = document.querySelector(`#id${id}`)
+        div.setAttribute('contentEditable', "true")
+        div.style.minWidth = "150px";
+        div.focus()
+        this.tmpText = div.innerText
+        document.execCommand('selectAll', false, null)
+      },
+      updateSessionName() {
+        const div = document.querySelector(`#id${this.activeId}`)
+        div.style.minWidth = "0";
+        let session = this.getSessionById(this.activeId)
+        session[2] = div.innerText
+        if (session[2]) this.updateSession(session)
+        else div.innerText = this.tmpText
+      },
+      delItem(tid, session) {
+        session[1].splice(tid,1)
+        if (session[1].length === 0) {
+          this.data = this.data.filter(r => r[0] !== session[0])
+          localStorage.setItem("bookmarks", JSON.stringify(this.data))
+        }
+        else this.updateSession(session)
+      },
+      addTag(e, id) {
+        this.tagEditorId = id
+      },
+      saveTag(e) {
+        if (e.target.value) {
+          let session = this.getSessionById(this.tagEditorId)
+          if (session.length === 2) session.push("")
+          if (session.length === 3) session.push([e.target.value])
+          else { session[3].indexOf(e.target.value) === -1 && session[3].push(e.target.value) }
+          this.updateSession(session)
+        }
+        this.tagEditorId = false
+      },
+      removeTag(tag, session) {
+        session[3].splice(session[3].indexOf(tag), 1)
+        this.updateSession(session)
+      },
+      sessionTo(type, session) {
+        let s = ""
+        switch (type.toLowerCase()) {
+          case 'text':
+            s += (session[2] || (`${this.lang.saveAt} ${(new Date(Number(session[0]))).Format("yyyy-MM-dd hh:mm:ss")}`))
+            session[1].forEach(i => { s += "\n- "; if (i[0]) s += i[0] + ": "; s += i[1] })
+            break
+          case 'md':
+            s += "# " + (session[2] || (`${this.lang.saveAt} ${(new Date(Number(session[0]))).Format("yyyy-MM-dd hh:mm:ss")}`))
+            session[1].forEach(i => { s += `\n- [${i[0]}](${i[1]})` })
+            break
+        }
+        return s
+      },
+      exportTabs(type, data) {
+        let tabs = data || this.data
+        let s = ""
+        switch (type.toLowerCase()) {
+          case 'html':
+            fetch("export.html").then(r => r.text()).then(r => {
+              let content = r.replace("JSON.parse(localStorage.getItem(\"bookmarks\") || \"[]\")", JSON.stringify(tabs))
+              content = content.replace("<h1>Tab Space</h1>", `<h1>{{lang.exportTitle}}</h1>`)
+              content = content.replace("this.fetchLang()", `this.feedLang(${JSON.stringify(this.allLang)})`)
+              download("Tab-Space-Exported.html", content)
+            })
+            break
+          case 'json':
+            download("Tab-Space-Exported.json", JSON.stringify(tabs))
+            break
+          case 'text':
+            tabs.forEach(i => s += this.sessionTo('text', i) + "\n\n")
+            Clipboard.copy(s)
+            break
+          case "md":
+            tabs.forEach(i => s += this.sessionTo('md', i) + "\n\n")
+            Clipboard.copy(s)
+            break
+        }
+        let text = this.lang['export'+type]
+        this.lang['export'+type] = "OK"
+        setTimeout(() => this.lang['export'+type] = text, 1000)
+      },
+      beforeEnter: function (el) {
+        el.style.opacity = 0
+      },
+      enter: function (el, done) {
+        setTimeout(function () {
+          Velocity(
+            el,
+            { opacity: 1},
+            { complete: done }
+          )
+        }, 0)
+      },
+      leave: function (el, done) {
+        el.style.padding = 0
+        el.style.height = 0
+        el.style.margin = 0
+        el.style.opacity = 0.1
+        setTimeout(function () {
+          Velocity(
+            el,
+            { opacity: 0},
+            { complete: done }
+          )
+        }, 0)
+      }
+    }
+  })
 </script>
+</body>
 </html>
