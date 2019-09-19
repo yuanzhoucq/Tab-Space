@@ -4,12 +4,14 @@
   <meta charset="utf-8">
   <title>Tab Space</title>
   <link rel="icon" href="favicon.ico" type="image/x-icon">
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/velocity/1.2.3/velocity.min.js"></script>
+  <script src="js/velocity.min.js"></script>
   <!-- prod -->
-  <script src="https://cdn.jsdelivr.net/npm/vue@2.6.10"></script>
+  <script src="js/vue@2.6.10.js"></script>
   <!-- dev -->
   <!--<script src="https://cdn.jsdelivr.net/npm/vue@2.6.10/dist/vue.js"></script>-->
-  <link rel="stylesheet" href="main.css">
+
+  <script src="js/utility.js"></script>
+  <link rel="stylesheet" href="css/main.css">
 </head>
 
 <body>
@@ -73,10 +75,10 @@
   </div>
   <footer>
     <a class="link" href="mailto:joyuercn@icloud.com">{{lang.contact}}</a><span class="footer-sep"></span>
+    <a class="link" href="https://twitter.com/joyuer/status/1164816334305157120" target="_blank">Twitter</a><span class="footer-sep"></span>
     <a class="link" href="http://yuanzhoucq.github.io/Tab-Space" target="_blank">{{lang.about}}</a>
   </footer>
 </div>
-<script src="utility.js"></script>
 <script>
   let data = JSON.parse(localStorage.getItem("bookmarks") || "[]")
   const app = new Vue({

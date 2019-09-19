@@ -226,6 +226,7 @@
   </div>
   <footer>
     <a class="link" href="mailto:joyuercn@icloud.com">{{lang.contact}}</a><span class="footer-sep"></span>
+    <a class="link" href="https://twitter.com/joyuer/status/1164816334305157120">Twitter</a><span class="footer-sep"></span>
     <a class="link" href="http://yuanzhoucq.github.io/Tab-Space" target="_blank">{{lang.about}}</a>
   </footer>
 </div>
@@ -272,6 +273,11 @@
 </script>
 <script>
   let data = JSON.parse(localStorage.getItem("bookmarks") || "[]")
+  try {
+    Vue
+  } catch (e) {
+    document.body.innerText = "Please go online to view contents. 请联网以查看内容。"
+  }
   const app = new Vue({
     el: '#app',
     data: {
