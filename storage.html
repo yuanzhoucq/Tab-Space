@@ -10,7 +10,7 @@
   if (urlParams.get("method") === "get")
     window.parent.postMessage(localStorage.getItem("bookmarks"), "*")
   else {
-    const bookmarks = decodeURIComponent(urlParams.get('site'))
+    const bookmarks = urlParams.get('site')
     bookmarks || localStorage.setItem("bookmarks", bookmarks)
   }
   </script>
