@@ -73,6 +73,8 @@
       </transition-group>
     </div>
   </div>
+  <iframe src="http://yuanzhoucq.github.io/Tab-Space/storage.html?method=get" height="0" frameborder="0"></iframe>
+  <iframe id="backupStorage" src="http://yuanzhoucq.github.io/Tab-Space/storage.html" height="0" frameborder="0"></iframe>
   <footer>
     <a class="link" href="mailto:joyuercn@icloud.com">{{lang.contact}}</a><span class="footer-sep"></span>
     <a class="link" href="https://twitter.com/joyuer/status/1164816334305157120" target="_blank">Twitter</a><span class="footer-sep"></span>
@@ -81,6 +83,11 @@
 </div>
 <script>
   let data = JSON.parse(localStorage.getItem("bookmarks") || "[]")
+  function saveBookmarks(contentString) {
+    localStorage.setItem("bookmarks", contentString)
+    document.querySelector("#backupStorage").setAttribute("src",
+    "http://yuanzhoucq.github.io/Tab-Space/storage.html?site=" + encodeURIComponent(contentString))
+  }
   const app = new Vue({
     el: '#app',
     data: {
@@ -114,6 +121,21 @@
         }
         localStorage.setItem("bookmarks", JSON.stringify(this.data))
       }
+      window.addEventListener("message", evt => {
+        let dataFromBackup = evt.data
+        // Restore sessions deleted by upgrade
+        if (this.data.length === 0 && dataFromBackup && dataFromBackup !== "[]" && dataFromBackup !== "null") {
+          this.data = JSON.parse(dataFromBackup)
+          localStorage.setItem("bookmarks", JSON.stringify(this.data))
+        }
+        // Add a session and restore sessions deleted by upgrade
+        else if (this.data.length === 1 && sites && dataFromBackup && dataFromBackup !== "[]" && dataFromBackup !== "null") {
+          this.data = this.data.concat(JSON.parse(dataFromBackup))
+          saveBookmarks(JSON.stringify(this.data))
+        }
+        // Automatic backup
+        else if (this.data.length >= 1) saveBookmarks(JSON.stringify(this.data))
+      })
       this.fetchLang()
     },
     filters: {
@@ -150,7 +172,7 @@
       },
       updateSession(session) {
         this.data = this.data.map(s => s[0] === session[0] ? session : s)
-        localStorage.setItem("bookmarks", JSON.stringify(this.data))
+        saveBookmarks(JSON.stringify(this.data))
       },
       getFavicon(url) {
         let origin = (new URL(url)).origin
@@ -169,7 +191,7 @@
         }
         if (del) {
           this.data = this.data.filter(session => session[0] !== key)
-          localStorage.setItem("bookmarks", JSON.stringify(this.data))
+          saveBookmarks(JSON.stringify(this.data))
         }
       },
       editSessionName(id) {
@@ -193,7 +215,7 @@
         session[1].splice(tid,1)
         if (session[1].length === 0) {
           this.data = this.data.filter(r => r[0] !== session[0])
-          localStorage.setItem("bookmarks", JSON.stringify(this.data))
+          saveBookmarks(JSON.stringify(this.data))
         }
         else this.updateSession(session)
       },
