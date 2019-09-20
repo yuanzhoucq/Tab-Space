@@ -6,14 +6,5 @@
 </head>
 <body>
   <div id="tab-space-backup-storage"></div>
-  <script>
-  const urlParams = (new URLSearchParams(window.location.search))
-  if (urlParams.get("method") === "get")
-    window.parent.postMessage(localStorage.getItem("bookmarks"), "*")
-  else {
-    const bookmarks = urlParams.get('site')
-    bookmarks && localStorage.setItem("bookmarks", bookmarks)
-  }
-  </script>
 </body>
 </html>
