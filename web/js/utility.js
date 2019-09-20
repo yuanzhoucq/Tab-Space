@@ -56,6 +56,7 @@ function download(filename, text) {
 
   document.body.removeChild(element);
 }
+
 Date.prototype.Format = function (fmt) {
   var o = {
     "y+": this.getFullYear(),

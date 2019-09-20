@@ -17,6 +17,7 @@
 <body>
 <div id="app">
   <div id="main">
+    <div id="msg" v-if="msg && safariMainVersion < 13"><span id="msg-prompt">Note:</span> {{msg}}</div>
     <nav align="right">
       <div class="export">
         <span class="link">{{lang.export}}<small>▼</small></span>
@@ -91,6 +92,8 @@
   const app = new Vue({
     el: '#app',
     data: {
+      safariMainVersion: Number(navigator.appVersion.match(/Version\/(\d{1,2})\.\d+/)[1]),
+      msg: "",
       data: data,
       lang: {},
       activeId: "",
@@ -99,6 +102,15 @@
       activeTag: ""
     },
     mounted() {
+      fetch("https://joyuer.azurewebsites.net/tab-space/info").then(r => r.json())
+        .then(r => {
+          if (navigator.language === "zh-CN") {
+            this.msg = r["zh-CN"].msg
+          } else {
+            this.msg = r["en-US"].msg
+          }
+        })
+        .catch(e => console.log(e))
       document.addEventListener('keydown', e => {
         if (e.code === 'Enter') {
           e.preventDefault()

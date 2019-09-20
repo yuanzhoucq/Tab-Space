@@ -252,7 +252,22 @@ footer {
     font-style: italic;
     cursor: pointer;
 }
- li:hover .del-item {
-    display: block;
-    margin-left: -18.5px;
- }
+
+li:hover .del-item {
+display: block;
+margin-left: -18.5px;
+}
+#msg-prompt {
+    color: red;
+    font-weight: bold;
+}
+
+#msg {
+    max-width: 900px;
+    margin: 0 auto;
+    /*text-align: center;*/
+    color: #444444;
+    background-color: #dddddd;
+    padding: 3px 10px;
+}
+
