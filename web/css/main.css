@@ -257,17 +257,26 @@ li:hover .del-item {
 display: block;
 margin-left: -18.5px;
 }
-#msg-prompt {
+
+.msg-prompt {
     color: red;
     font-weight: bold;
 }
 
-#msg {
+.msg {
     max-width: 900px;
     margin: 0 auto;
-    /*text-align: center;*/
     color: #444444;
     background-color: #dddddd;
+    padding: 3px 10px;
+}
+
+.lose-tabs {
+    max-width: 600px;
+    text-align: center;
+    text-decoration: underline;
+    margin: 20px auto;
+    color: #444444;
     padding: 3px 10px;
 }
 

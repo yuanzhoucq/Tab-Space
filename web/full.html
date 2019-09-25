@@ -17,7 +17,7 @@
 <body>
 <div id="app">
   <div id="main">
-    <div id="msg" v-if="msg && safariMainVersion < 13"><span id="msg-prompt">Note:</span> {{msg}}</div>
+    <div class="msg" v-if="msg && safariMainVersion < 13"><span class="msg-prompt">Note:</span> {{msg}}</div>
     <nav align="right">
       <div class="export">
         <span class="link">{{lang.export}}<small>▼</small></span>
@@ -32,6 +32,9 @@
     </nav>
     <div id="title">
       <h1>Tab Space</h1>
+    </div>
+    <div class="lose-tabs" v-if="safariMainVersion === 13 && this.data.length <= 1">
+      <span class="link"><a :href="lang.loseTabsLink" target="_blank">{{lang.loseTabs}}</a></span>
     </div>
     <div class="sessions-container">
       <div class="session-filter">
@@ -88,6 +91,7 @@
     data: {
       safariMainVersion: Number(navigator.appVersion.match(/Version\/(\d{1,2})\.\d+/)[1]),
       msg: "",
+      msg13: "",
       data: data,
       lang: {},
       activeId: "",
@@ -127,8 +131,10 @@
         .then(r => {
           if (navigator.language === "zh-CN") {
             this.msg = r["zh-CN"].msg
+            this.msg13 = r["zh-CN"].msg13
           } else {
             this.msg = r["en-US"].msg
+            this.msg13 = r["en-US"].msg13
           }
         })
         .catch(e => console.log(e))
