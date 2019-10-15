@@ -10,13 +10,15 @@
         "all": "All",
         "tagPrompt": "Add tags here...",
         "export": "Export",
+        "import": "Import",
         "exportTitle": "Tab Space Exported Tabs",
         "exportHTML": "Export as HTML",
-        "exportJSON": "Export as JSON",
+        "exportJSON": "Export backup file",
         "exportText": "Copy as Text",
         "exportMD": "Copy as Markdown",
         "loseTabs": "Lost your tabs?",
-        "loseTabsLink": "https://joyuer.cn/2019-09-25-why-i-lost-my-tabs/"
+        "loseTabsLink": "https://joyuer.cn/2019-09-25-why-i-lost-my-tabs/",
+        "cloudTips": "Your sessions are now synced across all your devices with iCloud."
     },
     "zh-CN": {
         "saveAt": "保存于",
@@ -29,12 +31,14 @@
         "all": "全部",
         "tagPrompt": "添加标签...",
         "export": "导出",
+        "import": "导入",
         "exportTitle": "Tab Space 导出标签页",
         "exportHTML": "导出为 HTML",
-        "exportJSON": "导出为 JSON",
+        "exportJSON": "导出备份文件",
         "exportText": "复制为文字",
         "exportMD": "复制为 Markdown",
         "loseTabs": "标签页不见了？",
-        "loseTabsLink": "https://joyuer.cn/2019-09-25-why-i-lost-my-tabs-ZH/"
+        "loseTabsLink": "https://joyuer.cn/2019-09-25-why-i-lost-my-tabs-ZH/",
+        "cloudTips": "您的书签组现通过 iCloud 在设备间同步。"
     }
 }

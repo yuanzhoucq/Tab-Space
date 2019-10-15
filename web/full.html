@@ -22,18 +22,20 @@
       <div class="export">
         <span class="link">{{lang.export}}<small>▼</small></span>
         <div class="export-dropdown">
-          <span class="link" href="#" @click="exportTabs('Text')">{{lang.exportText}}</span><br>
-          <span class="link" href="#" @click="exportTabs('MD')">{{lang.exportMD}}</span><br>
-          <span class="link" href="#" @click="exportTabs('HTML')">{{lang.exportHTML}}</span>
-          <!--<span class="link" href="#" @click="exportTabs('json')">{{lang.exportJSON}}</span>-->
+          <span class="link" href="#" @click="exportTabs('Text')">{{lang.exportText}}</span>
+          <br><span class="link" href="#" @click="exportTabs('MD')">{{lang.exportMD}}</span>
+          <br><span class="link" href="#" @click="exportTabs('HTML')">{{lang.exportHTML}}</span>
+          <br><span class="link" href="#" @click="exportTabs('JSON')">{{lang.exportJSON}}</span>
         </div>
       </div>
+      <label for="file-input" class="link">{{lang.import}}<small>(<code>.tabspace</code>)</small></label>
+      <input type="file" id="file-input" @change="importTabs" accept=".tabspace">
       <a class="link" target="_blank" href="http://yuanzhoucq.github.io/Tab-Space/settings.html">{{lang.settings}}</a>
     </nav>
     <div id="title">
       <h1>Tab Space</h1>
     </div>
-    <div class="lose-tabs" v-if="safariMainVersion === 13 && this.data.length <= 1">
+    <div class="lose-tabs" v-if="safariMainVersion === 13 && this.sessions.length <= 1">
       <span class="link"><a :href="lang.loseTabsLink" target="_blank">{{lang.loseTabs}}</a></span>
     </div>
     <div class="sessions-container">
@@ -41,6 +43,7 @@
         <div class="tag-filter" :class="{'active-tag': activeTag===''}" @click="()=>activeTag=''"><b>{{ lang.all }}</b></div>
         <div class="tag-filter upper-border" v-for="tag in tags" :class="{'active-tag': activeTag===tag}"
              @click="()=>activeTag=tag">{{tag}}</div>
+        <div class="tips">Tips: {{ lang.cloudTips }}</div>
       </div>
       <transition-group tag="div" name="session" v-bind:css="false"
                         v-on:before-enter="beforeEnter"
@@ -61,8 +64,8 @@
               <span class="link" href="#" @click="exportTabs('HTML', [session])">{{lang.exportHTML}}</span>
             </div>
           </div>
-          <ul class="session-sites" v-for="(tab, tid) in session[1]">
-            <li><div class="del-item" @click="delItem(tid,session)"><small>X</small></div><div class="fav"><img class="fav-img" :src="getFavicon(tab[1])" onerror="src='img/icon_wangye.svg'" alt="">
+          <ul class="session-sites">
+            <li v-for="(tab, tid) in session[1]"><div class="del-item" @click="delItem(tid,session)"><small>X</small></div><div class="fav"><img class="fav-img" :src="getFavicon(tab[1])" onerror="src='img/icon_wangye.svg'" alt="">
             </div><span><a class="link" :href="tab[1]">{{ (tab[0] || tab[1]) | wrap }}</a></span></li>
           </ul>
           <div class="session-tags">
@@ -85,21 +88,22 @@
   </footer>
 </div>
 <script>
-  let data = JSON.parse(localStorage.getItem("bookmarks") || "[]")
+  let sessions = JSON.parse(localStorage.getItem("bookmarks") || "[]")
   const app = new Vue({
     el: '#app',
     data: {
-      safariMainVersion: Number(navigator.appVersion.match(/Version\/(\d{1,2})\.\d+/)[1]),
+      safariMainVersion: Number(navigator.appVersion.match(/Version\/(\d{1,2})\.\d+/)[1]), // "13" for the newest
       msg: "",
-      msg13: "",
-      data: data,
+      sessions: sessions,
       lang: {},
       activeId: "",
       tmpText: "",
       tagEditorId: false,
       activeTag: "",
       iframe: null,
-      iframeLoaded: false
+      iframeLoaded: false,
+      newSession: null,
+      shouldBackupForOne: true
     },
     mounted() {
       this.iframe = document.querySelector("#backupStorage")
@@ -113,31 +117,24 @@
         sites = sites.split("TS#SEP")
         sites = sites.map((site, id, array) => [site, array[id + 1]].reverse()).filter((site, id) => id % 2 === 0)
         const time = String(Date.now())
-        const new_session = [time, sites]
-        const last_session = this.data[0] || [0, 1]
+        this.newSession = [time, sites]
+        const last_session = this.sessions[0] || [0, 1]
         if (JSON.stringify(sites) !== JSON.stringify(last_session[1])) {
-          this.data.unshift(new_session)
+          this.sessions.unshift(this.newSession)
         } else {
-          this.data[0][0] = time
+          this.sessions[0][0] = time
         }
-        localStorage.setItem("bookmarks", JSON.stringify(this.data))
+        localStorage.setItem("bookmarks", JSON.stringify(this.sessions))
       }
       window.addEventListener("message", evt => {
         console.log("Received checked bookmarks from Tab Space.app.")
-        this.initBookmarks(evt, sites)
+        this.syncBookmarks(evt)
       })
       this.fetchLang()
-      fetch("https://joyuer.azurewebsites.net/tab-space/info").then(r => r.json())
-        .then(r => {
-          if (navigator.language === "zh-CN") {
-            this.msg = r["zh-CN"].msg
-            this.msg13 = r["zh-CN"].msg13
-          } else {
-            this.msg = r["en-US"].msg
-            this.msg13 = r["en-US"].msg13
-          }
-        })
-        .catch(e => console.log(e))
+      fetch("https://joyuer.azurewebsites.net/tab-space/info").then(r => r.json()).then(r => {
+        const localizedRes = r[navigator.language] || r["en-US"]
+        this.msg = localizedRes.msg
+      }).catch(e => console.log(e))
       document.addEventListener('keydown', e => {
         if (e.code === 'Enter') {
           e.preventDefault()
@@ -154,77 +151,114 @@
     computed: {
       tags() {
         let tags = []
-        this.data.forEach(session => {
-          session[3] && session[3].forEach(tag => tags.indexOf(tag) === -1 && tags.push(tag))
+        this.sessions.forEach(session => {
+          session[3] && session[3].forEach(tag => !tags.includes(tag) && tags.push(tag))
         })
         return tags
       },
       selectedSessions() {
-        return this.activeTag === '' ? this.data :
-          this.data.filter(session => session[3] && session[3].indexOf(this.activeTag) > -1)
+        return this.activeTag === '' ? this.sessions :
+          this.sessions.filter(session => session[3] && session[3].includes(this.activeTag))
       }
     },
     methods: {
-      initBookmarks(evt, sites) {
+      syncBookmarks(evt) {
         if (this.iframeLoaded) {
           // Filter other sites' postMessage
           if (evt.origin.indexOf("joyuer.cn") === -1 && evt.origin.indexOf("yuanzhoucq.github.io") === -1) return
-          let dataFromBackup = evt.data
-          // Restore sessions deleted by upgrade
-          if (this.data.length === 0 && dataFromBackup && dataFromBackup !== "[]" && dataFromBackup !== "null") {
-            this.data = JSON.parse(dataFromBackup)
-            localStorage.setItem("bookmarks", JSON.stringify(this.data))
+
+          let dataFromBackup = []
+          try {
+            const data = JSON.parse(evt.data.value)
+            if (validateSessionsArray(data)) {
+              dataFromBackup = data
+            }
+          } catch (e) {
+            console.log("Backup bookmarks are not valid.")
           }
-          // Add a session and restore sessions deleted by upgrade
-          else if (this.data.length === 1 && sites && dataFromBackup && dataFromBackup !== "[]" && dataFromBackup !== "null") {
-            this.data = this.data.concat(JSON.parse(dataFromBackup))
-            this.saveBookmarks(JSON.stringify(this.data))
+
+          // LOCALSTORAGE WHATEVER && BACKUP UPDATES
+          // Cloud backup is the newest backup
+          if (dataFromBackup.length > 0 && evt.data.source === "cloud") {
+            if (this.newSession) {
+              // New session + cloud backup
+              this.sessions = [this.newSession].concat(dataFromBackup)
+              this.newSession = null
+            } else {
+              // Completely restore from cloud
+              this.sessions = dataFromBackup
+            }
+            this.saveBookmarks(this.sessions)
           }
-          // Automatic backup
-          else if (this.data.length >= 1) this.saveBookmarks(JSON.stringify(this.data))
+          // From local backup (source === "local")
+          else if (dataFromBackup.length > 0) {
+            // Note: "->" means "override" here.
+            // LOCALSTORAGE EMPTY && BACKUP EXISTS
+            // The following two cases: backup -> localStorage of size 0 / 1 (with new coming session)
+            // Case 0: restore sessions deleted by upgrade
+            if (this.sessions.length === 0) {
+              this.sessions = dataFromBackup
+              localStorage.setItem("bookmarks", JSON.stringify(this.sessions))
+            }
+            // Case 1: add a new session and restore sessions deleted by upgrade
+            else if (this.sessions.length === 1 && this.newSession) {
+              this.sessions = this.sessions.concat(dataFromBackup)
+              this.newSession = null
+              this.saveBookmarks(this.sessions)
+            }
+            // LOCALSTORAGE EXISTS/UPDATES && BACKUP EXISTS
+            // The third case: localStorage with new coming session -> backup
+            else if (this.sessions.length > 1 && this.newSession) {
+              this.newSession = null
+              this.saveBookmarks(this.sessions)
+            }
+          }
+          // LOCALSTORAGE EXISTS/UPDATES && BACKUP EMPTY
+          // Automatic backup (backup was empty)
+          else if (dataFromBackup.length === 0) {
+              this.saveBookmarks(this.sessions)
+          }
         } else {
-          setTimeout(() => this.initBookmarks(evt, sites), 200)
+          setTimeout(() => this.syncBookmarks(evt), 200)
         }
       },
-      saveBookmarks(contentString) {
+      saveBookmarks(sessionsArray) {
+        if (!validateSessionsArray(sessionsArray)) throw Error("Invalid sessions!")
+        const contentString = JSON.stringify(sessionsArray)
         localStorage.setItem("bookmarks", contentString)
         this.iframe.contentWindow.postMessage(contentString, "*")
       },
       fetchLang() {
         fetch("lang.json").then(r => r.json()).then(r => {
-          this.allLang = r
-          if (navigator.language === "zh-CN") {
-            this.lang = r["zh-CN"]
-          } else {
-            this.lang = r["en-US"]
-          }
+          this.langData = r
+          this.lang = r[navigator.language] || r["en-US"]
         })
       },
       getSessionById(id) {
-        return this.data.filter(r => r[0] === id)[0]
+        return this.sessions.find(session => session[0] === id)
       },
       updateSession(session) {
-        this.data = this.data.map(s => s[0] === session[0] ? session : s)
-        this.saveBookmarks(JSON.stringify(this.data))
+        if (!validateSessionsArray([session])) throw Error("Invalid session!")
+        // delete session without any sites
+        if (session[1].length === 0) {
+          this.sessions = this.sessions.filter(s => s[0] !== session[0])
+        } else {
+          this.sessions = this.sessions.map(s => s[0] === session[0] ? session : s)
+        }
+        this.saveBookmarks(this.sessions)
       },
       getFavicon(url) {
         let origin = (new URL(url)).origin
         return origin + "/favicon.ico"
       },
       restore(key, open, del) {
-        console.log("Restore", key)
         if (open) {
-          this.data.map(session => {
-            if (session[0] === key) {
-              session[1].forEach(site => {
-                window.open(site[1])
-              })
-            }
-          })
+          let session = this.sessions.find(s => s[0] === key)
+          session && session[1].forEach(site => window.open(site[1]))
         }
         if (del) {
-          this.data = this.data.filter(session => session[0] !== key)
-          this.saveBookmarks(JSON.stringify(this.data))
+          this.sessions = this.sessions.filter(session => session[0] !== key)
+          this.saveBookmarks(this.sessions)
         }
       },
       editSessionName(id) {
@@ -246,11 +280,7 @@
       },
       delItem(tid, session) {
         session[1].splice(tid,1)
-        if (session[1].length === 0) {
-          this.data = this.data.filter(r => r[0] !== session[0])
-          this.saveBookmarks(JSON.stringify(this.data))
-        }
-        else this.updateSession(session)
+        this.updateSession(session)
       },
       addTag(e, id) {
         this.tagEditorId = id
@@ -260,7 +290,7 @@
           let session = this.getSessionById(this.tagEditorId)
           if (session.length === 2) session.push("")
           if (session.length === 3) session.push([e.target.value])
-          else { session[3].indexOf(e.target.value) === -1 && session[3].push(e.target.value) }
+          else { !session[3].includes(e.target.value) && session[3].push(e.target.value) }
           this.updateSession(session)
         }
         this.tagEditorId = false
@@ -283,20 +313,36 @@
         }
         return s
       },
+      importTabs(e) {
+        const file = new FileReader()
+        file.onload = e => {
+          const importedSessions = JSON.parse(e.target.result)
+          if (!validateSessionsArray(importedSessions)) alert("Error: invalid data!")
+          else {
+            this.sessions = this.sessions.concat(importedSessions)
+          }
+        }
+        file.readAsText(e.target.files[0])
+      },
       exportTabs(type, data) {
-        let tabs = data || this.data
+        let tabs = data || this.sessions
         let s = ""
         switch (type.toLowerCase()) {
           case 'html':
             fetch("export.html").then(r => r.text()).then(r => {
               let content = r.replace("JSON.parse(localStorage.getItem(\"bookmarks\") || \"[]\")", JSON.stringify(tabs))
               content = content.replace("<h1>Tab Space</h1>", `<h1>{{lang.exportTitle}}</h1>`)
-              content = content.replace("this.fetchLang()", `this.feedLang(${JSON.stringify(this.allLang)})`)
+              content = content.replace("this.fetchLang()", `this.feedLang(${JSON.stringify(this.langData)})`)
               download("Tab-Space-Exported.html", content)
             })
             break
           case 'json':
-            download("Tab-Space-Exported.json", JSON.stringify(tabs))
+            const exported = tabs.map(session => {
+              let s = [...session]
+              s[0] = String(1 + Number(s[0]))
+              return s
+            })
+            download("backup.tabspace", JSON.stringify(exported))
             break
           case 'text':
             tabs.forEach(i => s += this.sessionTo('text', i) + "\n\n")
@@ -311,6 +357,7 @@
         this.lang['export'+type] = "OK"
         setTimeout(() => this.lang['export'+type] = text, 1000)
       },
+      // List animation
       beforeEnter: function (el) {
         el.style.opacity = 0
       },

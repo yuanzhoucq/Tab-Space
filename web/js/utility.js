@@ -83,3 +83,9 @@ Date.prototype.Format = function (fmt) {
   }
   return fmt;
 }
+
+function validateSessionsArray(data) {
+  return Array.isArray(data) // sessions
+    && (typeof data[0][0] === "string") // key: timestamp
+    && Array.isArray(data[0][1]) // sites
+}
