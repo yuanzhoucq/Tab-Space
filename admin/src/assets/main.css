@@ -128,7 +128,7 @@ footer {
 }
 
 .add-tag {
-    background-image: url("../img/icon_tianjia.svg");
+    background-image: url("./img/icon_tianjia.svg");
     background-repeat: no-repeat;
     background-size: cover;
     opacity: 0.5;
@@ -161,6 +161,7 @@ footer {
 .btn {
     display: inline-block;
     padding: 3px 5px;
+    margin-right: 5px;
     color: rgb(255, 255, 255);
     font-family: Helvetica, Arial, sans-serif;
     font-size: 12px;
@@ -243,7 +244,7 @@ footer {
 }
 
 .export:hover .export-dropdown {
-    display: inline-block;
+    display: block;
 }
 
 .export:hover .export-session-dropdown {
@@ -279,6 +280,7 @@ footer {
     margin: 20px auto;
     color: #444444;
     padding: 3px 10px;
+    font-size: 12px;
 }
 
 .tips {
