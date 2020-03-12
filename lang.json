@@ -20,7 +20,8 @@
         "ctrlT": "Open Tab Space",
         "ctrlB": "Save selected text to Bear",
         "bearTip": "* To use this feature, you need to upgrade to Tab Space 2.1 and install ",
-        "bearUrl": "https://bear.app"
+        "bearUrl": "https://bear.app",
+        "goTip": "If you just want to go to Tab Space, please add \"http://joyuer.cn/Tab-Space/redirect.html\" as a bookmark for Safari, this will lead you to Tab Space admin page. Or you could use the shortcut Ctrl + T on normal pages (i.e. when Safari's address bar is not empty)."
     },
     "zh-CN": {
         "settings": "设置",
@@ -43,6 +44,7 @@
         "ctrlT": "打开 Tab Space",
         "ctrlB": "保存选中文字到 Bear 熊掌记",
         "bearTip": "* 此功能需要 Tab Space 升级到 2.1 及以上版本，并在 Mac 上安装 ",
-        "bearUrl": "https://bear.app/cn/"
+        "bearUrl": "https://bear.app/cn/",
+        "goTip": "如果您想直接进入 Tab Space 页面而不是保存当前标签的话，请将 \"http://joyuer.cn/Tab-Space/redirect.html\" 添加为书签，它将带您转到 Tab Space 页面；或者您也可以使用 Ctrl + T 快捷键。"
     }
 }
