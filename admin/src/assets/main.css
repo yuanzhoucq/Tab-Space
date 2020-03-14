@@ -6,6 +6,7 @@ body {
 li {
     list-style: none;
     padding: 4px 0 4px 40px;
+    margin-right: 100px;
     display: flex;
     align-items: center;
 }
@@ -292,4 +293,12 @@ footer {
 #file-input {
     position: fixed;
     right: -500px;
+}
+
+.sortable-fallback {
+    opacity: 0;
+}
+
+.sortable-chosen {
+    opacity: .5;
 }

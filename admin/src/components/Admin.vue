@@ -37,46 +37,52 @@
           </div>
           <div class="tips">{{ lang.cloudTips }}</div>
         </div>
-        <transition-group tag="div" name="session" v-bind:css="false"
-                          v-on:before-enter="beforeEnter"
-                          v-on:enter="enter"
-                          v-on:leave="leave">
-          <div class="session" v-for="session in selectedSessions" :key="session[0]">
-            <div class="session-title" :id="'id'+session[0]" @click.stop="editSessionName(session[0])"
-                 @blur="updateSessionName"
-            >{{ session[2] || (`${lang.saveAt} ${(new Date(Number(session[0]))).Format("yyyy-MM-dd hh:mm:ss")}`) }}
-            </div>
-            <a class="btn" @click.stop="restore(session[0], true, false)">{{lang.restore}}</a>
-            <a class="btn del-btn" @click.stop="restore(session[0], false, true)">{{lang.delete}}</a>
-            <a class="btn del-res-btn" @click.stop="restore(session[0], true, true)">{{lang.restoreAndDel}}</a>
-            <div class="export">
-              <a class="btn del-res-btn">{{lang.export}}<small>▼</small></a>
-              <div class="export-session-dropdown">
-                <span class="link" href="#" @click="exportTabs('Text', [session])">{{lang.exportText}}</span><br>
-                <span class="link" href="#" @click="exportTabs('MD', [session])">{{lang.exportMD}}</span><br>
-                <span class="link" href="#" @click="exportTabs('HTML', [session])">{{lang.exportHTML}}</span>
+        <draggable :list="sessions" @end="endDragSession">
+          <transition-group tag="div" name="session" v-bind:css="false"
+                            v-on:before-enter="beforeEnter"
+                            v-on:enter="enter"
+                            v-on:leave="leave"
+          >
+            <div class="session" v-for="session in selectedSessions" :key="session[0]">
+              <div class="session-title" :id="'id'+session[0]" @click.stop="editSessionName(session[0])"
+                   @blur="updateSessionName"
+              >{{ session[2] || (`${lang.saveAt} ${(new Date(Number(session[0]))).Format("yyyy-MM-dd hh:mm:ss")}`) }}
               </div>
-            </div>
-            <ul class="session-sites">
-              <li v-for="(tab, tid) in session[1]" v-bind:key="tid">
-                <div class="del-item" @click="delItem(tid,session)"><small>X</small></div>
-                <div class="fav"><img class="fav-img" :src="getFavicon(tab[1])" :onerror="`src='${WangYeIcon}'`"
-                                      alt="">
+              <a class="btn" @click.stop="restore(session[0], true, false)">{{lang.restore}}</a>
+              <a class="btn del-btn" @click.stop="restore(session[0], false, true)">{{lang.delete}}</a>
+              <a class="btn del-res-btn" @click.stop="restore(session[0], true, true)">{{lang.restoreAndDel}}</a>
+              <div class="export">
+                <a class="btn del-res-btn">{{lang.export}}<small>▼</small></a>
+                <div class="export-session-dropdown">
+                  <span class="link" href="#" @click="exportTabs('Text', [session])">{{lang.exportText}}</span><br>
+                  <span class="link" href="#" @click="exportTabs('MD', [session])">{{lang.exportMD}}</span><br>
+                  <span class="link" href="#" @click="exportTabs('HTML', [session])">{{lang.exportHTML}}</span>
                 </div>
-                <span><a class="link" :href="tab[1]">{{ (tab[0] || tab[1]) | wrap }}</a></span></li>
-            </ul>
-            <div class="session-tags">
-              <div class="tag" v-for="tag in (session[3] || [])" @click="removeTag(tag, session)" v-bind:key="tag">{{
-                tag }}
               </div>
-              <div class="tag-prompt" v-if="!session[3] || session[3].length === 0">{{lang.tagPrompt}}</div>
-              <div class="add-tag" v-if="tagEditorId !== session[0]" @click="e => addTag(e, session[0])"></div>
-              <div class="tag-editor" v-if="tagEditorId === session[0]">
-                <input type="text" @blur="saveTag" autofocus/>
+              <ul class="session-sites" style="user-select: none">
+                <draggable :forceFallback="true" :list="session[1]" group="shared" @end="endDragSite">
+                <li v-for="(tab, tid) in session[1]" v-bind:key="tid">
+                  <div class="del-item" @click="delItem(tid,session)"><small>X</small></div>
+                  <div class="fav"><img class="fav-img" :src="getFavicon(tab[1])" :onerror="`src='${WangYeIcon}'`"
+                                        alt="">
+                  </div>
+                  <span><a class="link" :href="tab[1]">{{ (tab[0] || tab[1]) | wrap }}</a></span>
+                </li>
+                </draggable>
+              </ul>
+              <div class="session-tags">
+                <div class="tag" v-for="tag in (session[3] || [])" @click="removeTag(tag, session)" v-bind:key="tag">{{
+                  tag }}
+                </div>
+                <div class="tag-prompt" v-if="!session[3] || session[3].length === 0">{{lang.tagPrompt}}</div>
+                <div class="add-tag" v-if="tagEditorId !== session[0]" @click="e => addTag(e, session[0])"></div>
+                <div class="tag-editor" v-if="tagEditorId === session[0]">
+                  <input type="text" @blur="saveTag" autofocus/>
+                </div>
               </div>
             </div>
-          </div>
-        </transition-group>
+          </transition-group>
+        </draggable>
       </div>
     </div>
     <iframe id="bridgeStorage" src="http://tabspacestatic.joyuer.cn/storage.html?method=get" height="0"
@@ -92,6 +98,7 @@
 
 <script>
   import { VueLoading } from 'vue-loading-template'
+  import draggable from 'vuedraggable'
   import LangData from '../lang.json'
   import Velocity from 'velocity-animate'
   import WangYeIcon from '../assets/img/icon_wangye.svg'
@@ -105,7 +112,8 @@
   }
   export default {
     components: {
-      VueLoading
+      VueLoading,
+      draggable
     },
     data() {
       return {
@@ -335,7 +343,7 @@
       beforeEnter: function (el) {
         el.style.opacity = 0
       },
-      enter: function (el, done) {
+      enter(el, done) {
         setTimeout(function () {
           Velocity(
             el,
@@ -344,7 +352,7 @@
           )
         }, 0)
       },
-      leave: function (el, done) {
+      leave(el, done) {
         el.style.padding = 0
         el.style.height = 0
         el.style.margin = 0
@@ -356,6 +364,28 @@
             { complete: done }
           )
         }, 0)
+      },
+      endDragSession(e) {
+        if (e.newIndex !== e.oldIndex) {
+          this.iframe.contentWindow.postMessage({cmd: 'SwapSession', index: [Number(e.newIndex), Number(e.oldIndex)]}, "*")
+        }
+      },
+      getSessionIdFromDraggingSite(site) {
+        return site.parentElement.parentElement.firstElementChild.id.slice(2)
+      },
+      endDragSite(e) {
+        const fromId = this.getSessionIdFromDraggingSite(e.from)
+        const toId = this.getSessionIdFromDraggingSite(e.to)
+        if (fromId === toId) {
+          if (e.newIndex !== e.oldIndex) {
+            this.updateSession(this.sessions.find(item => item[0] === fromId))
+          }
+        }
+        else {
+          this.updateSession(this.sessions.find(item => item[0] === fromId))
+          this.updateSession(this.sessions.find(item => item[0] === toId))
+        }
+
       }
     }
   }
