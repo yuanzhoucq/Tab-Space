@@ -46,7 +46,7 @@
             <div class="session" v-for="session in selectedSessions" :key="session[0]">
               <div class="session-title" :id="'id'+session[0]" @click.stop="editSessionName(session[0])"
                    @blur="updateSessionName"
-              >{{ session[2] || (`${lang.saveAt} ${(new Date(Number(session[0]))).Format("yyyy-MM-dd hh:mm:ss")}`) }}
+              >{{ session[2] || (`${lang.saveAt} ${(new Date(Number(session[0]))).Format("yyyy-MM-dd hh:mm")}`) }}
               </div>
               <a class="btn" @click.stop="restore(session[0], true, false)">{{lang.restore}}</a>
               <a class="btn del-btn" @click.stop="restore(session[0], false, true)">{{lang.delete}}</a>
@@ -278,7 +278,7 @@
         let s = ""
         switch (type.toLowerCase()) {
           case 'text':
-            s += (session[2] || (`${this.lang.saveAt} ${(new Date(Number(session[0]))).Format("yyyy-MM-dd hh:mm:ss")}`))
+            s += (session[2] || (`${this.lang.saveAt} ${(new Date(Number(session[0]))).Format("yyyy-MM-dd hh:mm")}`))
             session[1].forEach(i => {
               s += "\n- ";
               if (i[0]) s += i[0] + ": ";
@@ -286,7 +286,7 @@
             })
             break
           case 'md':
-            s += "# " + (session[2] || (`${this.lang.saveAt} ${(new Date(Number(session[0]))).Format("yyyy-MM-dd hh:mm:ss")}`))
+            s += "# " + (session[2] || (`${this.lang.saveAt} ${(new Date(Number(session[0]))).Format("yyyy-MM-dd hh:mm")}`))
             session[1].forEach(i => { s += `\n- [${i[0]}](${i[1]})` })
             break
         }
