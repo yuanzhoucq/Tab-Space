@@ -31,6 +31,6 @@ It mainly includes the following functions:
 
 ![](assets/img/publicity.005.jpeg)
 
-In addition, if you want to add Tab Space as a bookmark or to set it as homepage, the url you should use is "http://yuanzhoucq.github.io/Tab-Space/redirect.html".
+In addition, if you want to add Tab Space as a bookmark or to set it as homepage, the url you should use is "http://joyuer.cn/Tab-Space/redirect.html".
 
 Please enjoy and report potential bugs to me. Thanks!
