@@ -120,7 +120,7 @@
         safariMainVersion: SafariVersion,
         msg: "",
         sessions: [],
-        lang: LangData[navigator.language] || LangData["en-US"],
+        lang: LangData[navigator.language.toLowerCase()] || LangData["en-us"],
         activeId: "",
         tmpText: "",
         tagEditorId: false,

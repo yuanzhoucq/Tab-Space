@@ -93,11 +93,7 @@
     },
     mounted() {
       fetch("lang.json").then(r => r.json()).then(r => {
-        if (navigator.language === "zh-CN") {
-          this.lang = r["zh-CN"]
-        } else {
-          this.lang = r["en-US"]
-        }
+        this.lang = r[navigator.language.toLowerCase()] || r["en-us"]
       })
     },
     methods: {

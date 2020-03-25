@@ -1,5 +1,5 @@
 {
-    "en-US": {
+    "en-us": {
         "saveAt": "Saved at",
         "restore": "Restore",
         "delete": "Delete",
@@ -20,7 +20,7 @@
         "loseTabsLink": "https://joyuer.cn/2019-09-25-why-i-lost-my-tabs/",
         "cloudTips": "Tips: 1. Your sessions are now synced across all your devices with iCloud. 2. You can now use Drag and Drop to reorganize your sessions or sites."
     },
-    "zh-CN": {
+    "zh-cn": {
         "saveAt": "保存于",
         "restore": "恢复",
         "delete": "删除",
