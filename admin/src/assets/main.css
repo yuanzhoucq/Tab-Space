@@ -326,7 +326,7 @@ footer {
 .session-placeholder {
     position: absolute;
     left: calc(50vw - 55px);
-    top: 120px;
+    top: 150px;
     color: #555555;
     transition: 0.3s;
 }
