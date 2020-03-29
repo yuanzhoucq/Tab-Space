@@ -1,7 +1,6 @@
 <template>
   <div>
     <div id="main">
-      <noscript>Something wrong, please enable JavaScript and refresh.</noscript>
       <div class="msg" v-if="msg && safariMainVersion < 13"><span class="msg-prompt">Note:</span> {{msg}}</div>
       <nav align="right">
         <div class="export">
@@ -18,7 +17,9 @@
         <a class="link" target="_blank" href="https://joyuer.cn/Tab-Space/settings.html">{{lang.settings}}</a>
       </nav>
       <div id="title">
-        <h1>Tab Space</h1>
+        <h1 style="display: inline-block; padding-left: 130px">Tab Space</h1>
+        <input type="text" name="keyword" id="keyword" v-model="keyword"
+               placeholder="Search title, url, tag...">
       </div>
       <div v-if="!iframeLoaded" style="margin-top: 160px; color: #999999">
         <vue-loading type="bars" color="#eb5205" :size="{ width: '50px', height: '50px' }"></vue-loading>
@@ -29,24 +30,26 @@
       </div>
       <div v-if="iframeLoaded" class="sessions-container">
         <div class="session-filter">
-          <div class="tag-filter" :class="{'active-tag': activeTag===''}" @click="()=>activeTag=''"><b>{{ lang.all
-            }}</b></div>
+          <div class="tag-filter" :class="{'active-tag': activeTag===''}" @click="()=>activeTag=''">
+            <b>{{ lang.all }}</b>
+          </div>
           <div class="tag-filter upper-border" v-for="tag in tags" v-bind:key="tag"
                :class="{'active-tag': activeTag===tag}"
                @click="()=>activeTag=tag">{{tag}}
           </div>
           <div class="tips">{{ lang.cloudTips }}</div>
         </div>
-        <draggable :list="sessions" @end="endDragSession">
+        <div v-if="displaySessions.length===0" class="session-placeholder">Nothing here...</div>
+        <draggable :disabled="sessions.length!==displaySessions.length" :list="sessions" @end="endDragSession">
           <transition-group tag="div" name="session" v-bind:css="false"
                             v-on:before-enter="beforeEnter"
                             v-on:enter="enter"
                             v-on:leave="leave"
           >
-            <div class="session" v-for="session in selectedSessions" :key="session[0]">
+            <div class="session" v-for="session in displaySessions" :key="session[0]">
               <div class="session-title" :id="'id'+session[0]" @click.stop="editSessionName(session[0])"
-                   @blur="updateSessionName"
-              >{{ session[2] || (`${lang.saveAt} ${(new Date(Number(session[0]))).Format("yyyy-MM-dd hh:mm")}`) }}
+                   @blur="updateSessionName" v-html='highlight(session[2] || (`${lang.saveAt} ${(new Date(Number(session[0]))).Format("yyyy-MM-dd hh:mm")}`))'
+              >
               </div>
               <a class="btn" @click.stop="restore(session[0], true, false)">{{lang.restore}}</a>
               <a class="btn del-btn" @click.stop="restore(session[0], false, true)">{{lang.delete}}</a>
@@ -66,7 +69,7 @@
                   <div class="fav"><img class="fav-img" :src="getFavicon(tab[1])" :onerror="`src='${WangYeIcon}'`"
                                         alt="">
                   </div>
-                  <span><a class="link" :href="tab[1]">{{ (tab[0] || tab[1]) | wrap }}</a></span>
+                  <span class="site-title"><a class="link" :href="tab[1]" v-html="highlight(tab[0] || tab[1])"></a></span>
                 </li>
                 </draggable>
               </ul>
@@ -97,6 +100,7 @@
 </template>
 
 <script>
+  import _ from 'lodash'
   import { VueLoading } from 'vue-loading-template'
   import draggable from 'vuedraggable'
   import LangData from '../lang.json'
@@ -120,11 +124,13 @@
         safariMainVersion: SafariVersion,
         msg: "",
         sessions: [],
+        displaySessions: [],
         lang: LangData[navigator.language.toLowerCase()] || LangData["en-us"],
         activeId: "",
         tmpText: "",
         tagEditorId: false,
         activeTag: "",
+        keyword: "",
         iframe: null,
         iframeLoaded: false,
         newSession: null,
@@ -173,7 +179,7 @@
       })
     },
     filters: {
-      wrap: function (value) {
+      wrap: (value) => {
         return (value.length > 53 ? value.slice(0, 50) + "..." : value)
       }
     },
@@ -185,12 +191,34 @@
         })
         return tags
       },
-      selectedSessions() {
-        return this.activeTag === '' ? this.sessions :
-          this.sessions.filter(session => session[3] && session[3].includes(this.activeTag))
+    },
+    watch: {
+      sessions() {
+        this.getDisplaySessions()
+      },
+      keyword() {
+        this.debouncedGetDisplaySessions()
       }
     },
+    created() {
+      this.debouncedGetDisplaySessions = _.debounce(this.getDisplaySessions, 300)
+    },
     methods: {
+      highlight(value) {
+        let re = new RegExp(this.keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), "i")
+        let res = value.match(re)
+        if (res) return value.replace(res[0], `<span style="background-color: #fadc23;">${res[0]}</span>`)
+        return value
+      },
+      getDisplaySessions() {
+        let displaySessions = this.sessions;
+        if (this.activeTag)
+          displaySessions = displaySessions.filter(session => session[3] && session[3].includes(this.activeTag))
+        if (this.keyword)
+          displaySessions = displaySessions.filter(session =>
+            JSON.stringify(session).toLowerCase().includes(this.keyword.toLowerCase()))
+        this.displaySessions = displaySessions
+      },
       syncBookmarks(evt) {
         if (this.iframeLoaded) {
           try {

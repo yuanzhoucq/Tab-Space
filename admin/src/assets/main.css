@@ -42,16 +42,17 @@ footer {
 }
 
 #title {
-    max-width: 600px;
-    margin: 0 auto;
-    margin-top: -20px;
+    max-width: 800px;
+    margin: -20px auto 0;
 }
 
 .sessions-container {
     display: flex;
     transition: 0.2s;
     flex-direction: row;
-    justify-content: center;
+    justify-content: left;
+    width: 800px;
+    margin: 0 auto;
 }
 
 .session-filter {
@@ -59,6 +60,7 @@ footer {
     margin-right: 25px;
     display: flex;
     flex-direction: column;
+    transition: 0.2s;
 }
 
 .tag-filter {
@@ -157,6 +159,12 @@ footer {
 
 .session-title:hover {
     cursor: pointer;
+}
+
+.site-title {
+    white-space: nowrap;
+    overflow-x: hidden;
+    text-overflow: ellipsis;
 }
 
 .btn {
@@ -301,4 +309,24 @@ footer {
 
 .sortable-chosen {
     opacity: .5;
+}
+
+#keyword {
+    margin: 10px 10px 10px 290px;
+    outline: none;
+    border-radius: 4px;
+    border-width: 0;
+    height: 30px;
+    font-size: 16px;
+    color: #444444;
+    width: 200px;
+    padding-left: 10px;
+}
+
+.session-placeholder {
+    position: absolute;
+    left: calc(50vw - 55px);
+    top: 120px;
+    color: #555555;
+    transition: 0.3s;
 }
