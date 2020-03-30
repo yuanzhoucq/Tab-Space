@@ -196,6 +196,9 @@
       sessions() {
         this.getDisplaySessions()
       },
+      activeTag() {
+        this.getDisplaySessions()
+      },
       keyword() {
         this.debouncedGetDisplaySessions()
       }
