@@ -153,6 +153,10 @@ footer {
     box-shadow: inset 0 -10px #fadc23;
     display: inline-block;
     min-height: 26px;
+    max-width: 300px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
     margin-right: 20px;
     margin-bottom: 5px;
 }
@@ -329,4 +333,67 @@ footer {
     top: 150px;
     color: #555555;
     transition: 0.3s;
+}
+
+.highlight {
+    background-color: #fadd23;
+}
+
+@media (prefers-color-scheme: dark) {
+    body {
+        background-image: linear-gradient(-45deg, #343434, #343536);
+        color: #eeeeee;
+    }
+
+    .session, input, .link, .tag-filter {
+        background-color: #252525;
+        color: #d0d0d0;
+    }
+
+    #keyword {
+        color: #eeeeee;
+    }
+
+    .active-tag {
+        background-color: rgba(250, 128, 114, 0.719);
+    }
+
+    .link {
+        background-color: #00000000;
+    }
+
+    .session-title {
+        color: #f5f5f5;
+        box-shadow: inset 0 -10px #685e02;
+    }
+
+    .btn {
+        opacity: 0.9;
+    }
+
+    .fav > img {
+        background-color: #aaaaaa;
+        border-radius: 2px;
+    }
+    .add-tag {
+        background-color: #aaaaaa;
+        border-radius: 8px;
+    }
+
+    .tag {
+        background-color: #555555;
+        border: #555555;
+        color: #eeeeee;
+    }
+
+    .tag-filter:hover {
+        color: #eeeeee;
+        background-color: rgba(255, 160, 122, 0.705);
+    }
+
+    .highlight {
+        background-color: #fadd236e;
+        color: #ffffff;
+    }
+    
 }

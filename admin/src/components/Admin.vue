@@ -2,20 +2,7 @@
   <div>
     <div id="main">
       <div class="msg" v-if="msg && safariMainVersion < 13"><span class="msg-prompt">Note:</span> {{msg}}</div>
-      <nav align="right">
-        <div class="export">
-          <span class="link">{{lang.export}}<small>▼</small></span>
-          <div class="export-dropdown">
-            <span class="link" href="#" @click="exportTabs('Text')">{{lang.exportText}}</span>
-            <br><span class="link" href="#" @click="exportTabs('MD')">{{lang.exportMD}}</span>
-            <br><span class="link" href="#" @click="exportTabs('HTML')">{{lang.exportHTML}}</span>
-            <br><span class="link" href="#" @click="exportTabs('JSON')">{{lang.exportJSON}}</span>
-          </div>
-        </div>
-        <label for="file-input" class="link">{{lang.import}}<small>(<code>.tabspace</code>)</small></label>
-        <input type="file" id="file-input" @change="importTabs" accept=".tabspace">
-        <a class="link" target="_blank" href="https://joyuer.cn/Tab-Space/settings.html">{{lang.settings}}</a>
-      </nav>
+      <navbar/>
       <div id="title">
         <h1 style="display: inline-block; padding-left: 130px">Tab Space</h1>
         <input type="text" name="keyword" id="keyword" v-model="keyword"
@@ -47,19 +34,23 @@
                             v-on:leave="leave"
           >
             <div class="session" v-for="session in displaySessions" :key="session[0]">
-              <div class="session-title" :id="'id'+session[0]" @click.stop="editSessionName(session[0])"
-                   @blur="updateSessionName" v-html='highlight(session[2] || (`${lang.saveAt} ${(new Date(Number(session[0]))).Format("yyyy-MM-dd hh:mm")}`))'
-              >
-              </div>
-              <a class="btn" @click.stop="restore(session[0], true, false)">{{lang.restore}}</a>
-              <a class="btn del-btn" @click.stop="restore(session[0], false, true)">{{lang.delete}}</a>
-              <a class="btn del-res-btn" @click.stop="restore(session[0], true, true)">{{lang.restoreAndDel}}</a>
-              <div class="export">
-                <a class="btn del-res-btn">{{lang.export}}<small>▼</small></a>
-                <div class="export-session-dropdown">
-                  <span class="link" href="#" @click="exportTabs('Text', [session])">{{lang.exportText}}</span><br>
-                  <span class="link" href="#" @click="exportTabs('MD', [session])">{{lang.exportMD}}</span><br>
-                  <span class="link" href="#" @click="exportTabs('HTML', [session])">{{lang.exportHTML}}</span>
+              <div style="display: flex; justify-content: space-between">
+                <div class="session-title" :id="'id'+session[0]" @click.stop="editSessionName(session[0])"
+                    @blur="updateSessionName" v-html='highlight(session[2] || (`${lang.saveAt} ${(new Date(Number(session[0]))).Format("yyyy-MM-dd hh:mm")}`))'
+                >
+                </div>
+                <div style="display:inline-block;">
+                  <a class="btn" @click.stop="restore(session[0], true, false)">{{lang.restore}}</a>
+                  <a class="btn del-btn" @click.stop="restore(session[0], false, true)">{{lang.delete}}</a>
+                  <a class="btn del-res-btn" @click.stop="restore(session[0], true, true)">{{lang.restoreAndDel}}</a>
+                  <div class="export">
+                    <a class="btn del-res-btn">{{lang.export}}<small>▼</small></a>
+                    <div class="export-session-dropdown">
+                      <span class="link" href="#" @click="exportTabs('Text', [session])">{{lang.exportText}}</span><br>
+                      <span class="link" href="#" @click="exportTabs('MD', [session])">{{lang.exportMD}}</span><br>
+                      <span class="link" href="#" @click="exportTabs('HTML', [session])">{{lang.exportHTML}}</span>
+                    </div>
+                  </div>
                 </div>
               </div>
               <ul class="session-sites" style="user-select: none">
@@ -107,6 +98,8 @@
   import Velocity from 'velocity-animate'
   import WangYeIcon from '../assets/img/icon_wangye.svg'
 
+  import Navbar from './Navbar'
+
   import {validateSessionsArray, download, Clipboard} from '../utility.js'
   let SafariVersion = 13;
   try {
@@ -117,7 +110,8 @@
   export default {
     components: {
       VueLoading,
-      draggable
+      draggable,
+      Navbar
     },
     data() {
       return {
@@ -210,7 +204,7 @@
       highlight(value) {
         let re = new RegExp(this.keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), "i")
         let res = value.match(re)
-        if (res) return value.replace(res[0], `<span style="background-color: #fadc23;">${res[0]}</span>`)
+        if (res) return value.replace(res[0], `<span class="highlight">${res[0]}</span>`)
         return value
       },
       getDisplaySessions() {
@@ -269,6 +263,7 @@
         this.activeId = id
         const div = document.querySelector(`#id${id}`)
         div.setAttribute('contentEditable', "true")
+        div.style.whiteSpace = "normal";
         div.style.minWidth = "150px";
         div.focus()
         this.tmpText = div.innerText
@@ -276,6 +271,7 @@
       },
       updateSessionName() {
         const div = document.querySelector(`#id${this.activeId}`)
+        div.style.whiteSpace = "nowrap";
         div.style.minWidth = "0";
         let session = this.getSessionById(this.activeId)
         session[2] = div.innerText
