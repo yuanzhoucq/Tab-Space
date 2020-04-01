@@ -243,6 +243,7 @@ footer {
     border: 1px solid gray;
     border-radius: 5px;
     text-align: left;
+    background-color: #fbfbfb;
 }
 
 .export-session-dropdown {
@@ -253,7 +254,7 @@ footer {
     border: 1px solid gray;
     border-radius: 5px;
     text-align: left;
-    background-color: white;
+    background-color: #fbfbfb;
 }
 
 .export:hover .export-dropdown {
@@ -396,4 +397,7 @@ footer {
         color: #ffffff;
     }
     
+    .export-dropdown, .export-session-dropdown {
+        background-color: #353535;
+    }
 }

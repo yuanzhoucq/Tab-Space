@@ -398,7 +398,7 @@
         }
       },
       getSessionIdFromDraggingSite(site) {
-        return site.parentElement.parentElement.firstElementChild.id.slice(2)
+        return site.parentElement.parentElement.firstElementChild.firstElementChild.id.slice(2)
       },
       endDragSite(e) {
         const fromId = this.getSessionIdFromDraggingSite(e.from)
