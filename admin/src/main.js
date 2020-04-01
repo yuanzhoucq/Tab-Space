@@ -1,11 +1,9 @@
 import Vue from 'vue'
-import App from './App.vue'
-
-import LangData from './lang.json'
-
+import App from './Admin.vue'
+import store from './store'
 Vue.config.productionTip = false
-Vue.prototype.$lang = LangData[navigator.language.toLowerCase() || "en-us"]
 
 new Vue({
+  store,
   render: h => h(App),
 }).$mount('#app')

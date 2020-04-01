@@ -2,26 +2,14 @@
   <nav>
     <div class="export">
       <span class="link">
-        {{$lang.export}}
+        {{lang.export}}
         <small>▼</small>
       </span>
-      <div class="export-dropdown">
-        <span class="link" href="#" @click="exportTabs('Text')">{{$lang.exportText}}</span>
-        <br />
-        <span class="link" href="#" @click="exportTabs('MD')">{{$lang.exportMD}}</span>
-        <br />
-        <span class="link" href="#" @click="exportTabs('HTML')">{{$lang.exportHTML}}</span>
-        <br />
-        <span class="link" href="#" @click="exportTabs('JSON')">{{$lang.exportJSON}}</span>
-      </div>
+      <export-dropdown></export-dropdown>
     </div>
     <div>
       <label for="file-input" class="link">
-        {{$lang.import}}
-        <small>
-          (
-          <code>.tabspace</code>)
-        </small>
+        {{lang.import}}<small>(<code>.tabspace</code>)</small>
       </label>
       <input type="file" id="file-input" @change="importTabs" accept=".tabspace" />
     </div>
@@ -30,24 +18,55 @@
         class="link"
         target="_blank"
         href="https://joyuer.cn/Tab-Space/settings.html"
-      >{{$lang.settings}}</a>
+      >{{lang.settings}}</a>
     </div>
   </nav>
 </template>
 
 <script>
+import { mapState } from "vuex"
+import ExportDropdown from "./ExportDropdown"
+import { validateSessionsArray } from '../utility.js'
+
 export default {
-  name: "Navbar"
+  name: "Navbar",
+  computed: mapState(["lang", "bridge"]),
+  components: {
+    ExportDropdown
+  },
+  methods: {
+    importTabs(e) {
+      const file = new FileReader();
+      file.onload = e => {
+        const importedSessions = JSON.parse(e.target.result);
+        if (!validateSessionsArray(importedSessions))
+          alert("Error: invalid data!");
+        else {
+          this.bridge.send({ cmd: "AppendSession", bookmarks: importedSessions });
+        }
+      };
+      file.readAsText(e.target.files[0]);
+    }
+  }
 };
 </script>
 
 <style scope>
-nav {
+  nav {
     display: flex;
     justify-content: flex-end;
-}
+  }
 
-nav > div {
+  nav > div {
     margin-right: 5px;
-}
+  }
+
+  .export {
+    display: inline-block;
+  }
+
+  #file-input {
+    position: fixed;
+    right: -500px;
+  }
 </style>
