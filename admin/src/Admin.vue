@@ -192,6 +192,10 @@
     padding-left: 10px;
   }
 
+  .highlight {
+    background-color: #fadd23;
+  }
+
   @media (prefers-color-scheme: dark) {
     body {
       background-image: linear-gradient(-45deg, #343434, #343536);
@@ -209,6 +213,11 @@
 
     #keyword {
       color: #eeeeee;
+    }
+
+    .highlight {
+      background-color: #fadd236e;
+      color: #ffffff;
     }
   }
 </style>

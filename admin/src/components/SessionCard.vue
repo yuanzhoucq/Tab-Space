@@ -371,11 +371,6 @@
       border: #555555;
       color: #eeeeee;
     }
-
-    .highlight {
-      background-color: #fadd236e;
-      color: #ffffff;
-    }
   }
 
 </style>
