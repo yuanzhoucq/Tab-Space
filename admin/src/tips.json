@@ -1,0 +1,16 @@
+{
+    "en-us": {
+        "importantTips": [],
+        "commonTips": [
+            "Your sessions are now synced across all your devices with iCloud.",
+            "You can now use Drag and Drop to reorganize your sessions or sites."
+        ]
+    },
+    "zh-cn": {
+        "importantTips": [],
+        "commonTips": [
+            "您的书签组现通过 iCloud 在设备间同步。",
+            "您现在可以通过拖拽保存的会话或站点以重新组织您的记录。"
+        ]
+    }
+}

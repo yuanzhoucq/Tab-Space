@@ -14,18 +14,36 @@
       :class="{'active-tag': activeTag===tag}"
       @click="setActiveTag(tag)"
     >{{tag}}</div>
-    <div class="tips">{{ lang.cloudTips }}</div>
+    <div v-if="tips.length > 0" class="tips">{{ displayTips }}</div>
   </div>
 </template>
 
 <script>
+import _ from 'lodash'
 import { mapState, mapGetters } from 'vuex'
 
 export default {
   name: "SessionSidebar",
+  data() {
+    return {
+      tips: []
+    }
+  },
   computed: {
     ...mapState(["lang", "activeTag"]),
-    ...mapGetters(["tags"])
+    ...mapGetters(["tags"]),
+    displayTips() {
+      return this.tips.reduce((s, item, id) => `${s} ${this.tips.length > 1 ? String(id+1)+"." : ""} ${String(item)}`,
+       this.lang["tips"])
+    }
+  },
+  mounted() {
+    fetch(this.$myConfig.staticResourceEndpoint + "/tips.json").then(r => r.json()).then(r => {
+      const allTips = r[navigator.language.toLowerCase()] || r["en-us"]
+      const { importantTips, commonTips } = allTips
+      if (Array.isArray(importantTips)) this.tips = importantTips
+      if (Array.isArray(commonTips)) this.tips.push(_.sample(allTips["commonTips"]))
+    })
   },
   methods: {
     setActiveTag(tag) {
@@ -74,6 +92,10 @@ export default {
   color: #aaaaaa;
 }
 
+.upper-border {
+  border-top: 1px solid #eeeeee;
+}
+
 @media (prefers-color-scheme: dark) {
   .tag-filter {
     background-color: #252525;
@@ -87,10 +109,6 @@ export default {
 
   .active-tag {
     background-color: rgba(250, 128, 114, 0.719);
-  }
-
-  .upper-border {
-    border-top: 1px solid #eeeeee;
   }
 }
 </style>

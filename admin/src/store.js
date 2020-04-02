@@ -6,7 +6,7 @@ import { validateSessionsArray } from './utility'
 Vue.use(Vuex);
 const store = new Vuex.Store({
     state: {
-        lang: LangData[navigator.language.toLowerCase() || "en-us"],
+        lang: LangData[navigator.language.toLowerCase()] || LangData["en-us"],
         bridge: null,
         sessions: [],
         keyword: "",

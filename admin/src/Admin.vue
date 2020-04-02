@@ -38,7 +38,7 @@
   import Navbar from './components/Navbar'
   import SessionSidebar from './components/SessionSidebar'
   import Sessions from './components/Sessions'
-  import TabSpaceBridge from './components/TabSpaceBridge';
+  import TabSpaceBridge from './components/TabSpaceBridge'
 
   let SafariVersion = 13;
   try {
@@ -71,17 +71,15 @@
     },
     mounted() {
       const info = {
-        "en-US": {
+        "en-us": {
           "msg": "Please export your tabs before upgrading to Safari 13, or your sessions may disappear."
         },
-        "zh-CN": {
+        "zh-cn": {
           "msg": "请在升级到 Safari 13 前导出您保存的标签，否则您保存的会话可能会消失。"
         }
       }
-      const localizedRes = info[navigator.language] || info["en-US"]
+      const localizedRes = info[navigator.language.toLowerCase()] || info["en-us"]
       this.msg = localizedRes.msg
-    },
-    methods: {
     }
   }
 </script>
@@ -131,7 +129,7 @@
   }
 
   #title {
-    max-width: 800px;
+    width: 800px;
     margin: -20px auto 0;
   }
 

@@ -1,6 +1,6 @@
 <template>
   <iframe id="bridgeStorage"
-          src="http://tabspacestatic.joyuer.cn/storage.html?method=get"
+          :src="`${$myConfig.staticResourceEndpoint}/storage.html?method=get`"
           height="0"
           style="border: none"
   >
