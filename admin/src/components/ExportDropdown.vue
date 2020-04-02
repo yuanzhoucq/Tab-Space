@@ -106,7 +106,7 @@ export default {
   position: absolute;
   margin-left: -40px;
   padding: 3px;
-  font-size: 14px;
+  font-size: 12px;
   border: 1px solid gray;
   border-radius: 5px;
   text-align: left;

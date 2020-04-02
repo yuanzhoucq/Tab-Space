@@ -8,12 +8,12 @@
         <input type="text" name="keyword" id="keyword" v-model="keyword"
                placeholder="Search title, url, tag...">
       </div>
-      <div v-if="!bridge" style="margin-top: 160px; color: #999999">
+      <div v-if="!bridge || !initialRefresh" style="margin-top: 160px; color: #999999">
         <vue-loading type="bars" color="#eb5205" :size="{ width: '50px', height: '50px' }"></vue-loading>
         <p align="center">Connecting to Tab Space App...</p>
       </div>
       <div class="lose-tabs" v-if="bridge && safariMainVersion === 13 && sessions.length < 1">
-        <span class="link"><a :href="lang.loseTabsLink" target="_blank">{{lang.loseTabs}}</a></span>
+        <span><a class="link" :href="lang.loseTabsLink" target="_blank">{{lang.loseTabs}}</a></span>
       </div>
       <div v-if="bridge" class="sessions-container">
         <session-sidebar></session-sidebar>
@@ -62,7 +62,7 @@
       }
     },
     computed: {
-      ...mapState(["lang", "bridge", "sessions"])
+      ...mapState(["lang", "bridge", "sessions", "initialRefresh"])
     },
     watch: {
       keyword(value) {

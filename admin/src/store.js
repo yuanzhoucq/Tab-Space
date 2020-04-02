@@ -8,6 +8,7 @@ const store = new Vuex.Store({
     state: {
         lang: LangData[navigator.language.toLowerCase()] || LangData["en-us"],
         bridge: null,
+        initialRefresh: false,
         sessions: [],
         keyword: "",
         activeTag: ""
@@ -38,7 +39,10 @@ const store = new Vuex.Store({
             state.bridge = bridge
         },
         setSessions(state, newSessions) {
-            if (validateSessionsArray(newSessions)) state.sessions = newSessions
+            if (validateSessionsArray(newSessions)) {
+                state.sessions = newSessions
+                state.initialRefresh = true
+            }
         },
         setKeyword(state, newKeyword) {
             state.keyword = newKeyword

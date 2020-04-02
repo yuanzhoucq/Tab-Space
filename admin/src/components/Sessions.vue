@@ -4,6 +4,7 @@
     <draggable
         :disabled="sessions.length!==displaySessions.length"
         :list="sessions"
+        fallbackTolerance="10"
         @end="endDragSession"
     >
       <transition-group
