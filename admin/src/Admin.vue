@@ -1,7 +1,6 @@
 <template>
   <div>
     <div id="main">
-      <div class="msg" v-if="msg && safariMainVersion < 13"><span class="msg-prompt">Note:</span> {{msg}}</div>
       <navbar></navbar>
       <div id="title">
         <h1 style="display: inline-block; padding-left: 130px">Tab Space</h1>
@@ -40,12 +39,6 @@
   import Sessions from './components/Sessions'
   import TabSpaceBridge from './components/TabSpaceBridge'
 
-  let SafariVersion = 13;
-  try {
-    SafariVersion = Number(navigator.appVersion.match(/Version\/(\d{1,2})\.\d+/)[1]) // "13" for the newest
-  } catch (e) {
-    console.log('Not using Safari.')
-  }
   export default {
     components: {
       VueLoading,
@@ -56,8 +49,6 @@
     },
     data() {
       return {
-        safariMainVersion: SafariVersion,
-        msg: "",
         keyword: "",
       }
     },
@@ -68,18 +59,6 @@
       keyword(value) {
         _.debounce(() => this.$store.commit('setKeyword', value), 300)()
       }
-    },
-    mounted() {
-      const info = {
-        "en-us": {
-          "msg": "Please export your tabs before upgrading to Safari 13, or your sessions may disappear."
-        },
-        "zh-cn": {
-          "msg": "请在升级到 Safari 13 前导出您保存的标签，否则您保存的会话可能会消失。"
-        }
-      }
-      const localizedRes = info[navigator.language.toLowerCase()] || info["en-us"]
-      this.msg = localizedRes.msg
     }
   }
 </script>
