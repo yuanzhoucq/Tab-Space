@@ -8,7 +8,7 @@
           @blur="updateSessionName"
           v-html="highlight(session[2] || (`${lang.saveAt} ${(new Date(Number(session[0]))).Format('yyyy-MM-dd hh:mm')}`))"
       ></div>
-      <div style="display:inline-block;">
+      <div style="display:inline-block; white-space: nowrap;">
         <a class="btn" @click.stop="restore(session[0], true, false)">{{lang.restore}}</a>
         <a class="btn del-btn" @click.stop="restore(session[0], false, true)">{{lang.delete}}</a>
         <a
@@ -194,7 +194,7 @@
     text-decoration: none;
     width: 600px;
     margin: 0 auto 20px;
-    padding: 15px 20px 10px 40px;
+    padding: 15px 20px 10px 30px;
     background-color: white;
     box-shadow: rgba(46, 41, 51, 0.0784314) 0 1px 2px, rgba(71, 63, 79, 0.0784314) 0 2px 4px;
     transition-duration: 250ms, 250ms, 250ms;

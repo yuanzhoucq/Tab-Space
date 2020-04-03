@@ -179,7 +179,7 @@
   }
 
   #keyword {
-    margin: 10px 10px 10px 290px;
+    margin: 10px 10px 10px 280px;
     outline: none;
     border-radius: 4px;
     border-width: 0;
