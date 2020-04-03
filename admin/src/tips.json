@@ -3,14 +3,16 @@
         "importantTips": [],
         "commonTips": [
             "Your sessions are now synced across all your devices with iCloud.",
-            "You can now use Drag and Drop to reorganize your sessions or sites."
+            "You can now use Drag and Drop to reorganize your sessions or sites.",
+            "Please rate Tab Space on Mac App Store if you like this app."
         ]
     },
     "zh-cn": {
         "importantTips": [],
         "commonTips": [
             "您的书签组现通过 iCloud 在设备间同步。",
-            "您现在可以通过拖拽保存的会话或站点以重新组织您的记录。"
+            "您现在可以通过拖拽保存的会话或站点以重新组织您的记录。",
+            "如果您喜欢 Tab Space，请在 Mac App Store 进行评分。"
         ]
     }
 }
