@@ -21,7 +21,7 @@
         <br />
         <small>{{lang.goTip}}</small>
         <p>
-          <a style="color: gray" href="https://joyuer.cn/translate.html">Help us translate Tab Space</a>
+          <a style="color: gray" href="https://joyuer.cn/Tab-Space/translate.html">Help us translate Tab Space</a>
         </p>
         <h3>{{lang.shortcuts}}</h3>
         <p>
