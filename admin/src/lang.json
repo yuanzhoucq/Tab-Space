@@ -39,7 +39,7 @@
         "ctrlB": "Save selected text to Bear",
         "bearTip": "* To use this feature, you need to upgrade to Tab Space 2.1 and install ",
         "bearUrl": "https://bear.app",
-        "goTip": "If you just want to set Tab Space as the default page of new tab, please use the address \"http://joyuer.cn/Tab-Space/redirect.html\"."
+        "goTip": "If you just want to set Tab Space as the default page of new tab, please use the address \"http://tabspacestatic.joyuer.cn/redirect.html\"."
     },
     "zh-cn": {
         "saveAt": "保存于",
@@ -81,6 +81,6 @@
         "ctrlB": "保存选中文字到 Bear 熊掌记",
         "bearTip": "* 此功能需要 Tab Space 升级到 2.1 及以上版本，并在 Mac 上安装 ",
         "bearUrl": "https://bear.app/cn/",
-        "goTip": "如果您想设置 Tab Space 为默认的新标签页，请使用地址“http://joyuer.cn/Tab-Space/redirect.html”。"
+        "goTip": "如果您想设置 Tab Space 为默认的新标签页，请使用地址“http://tabspacestatic.joyuer.cn/redirect.html”。"
     }
 }
