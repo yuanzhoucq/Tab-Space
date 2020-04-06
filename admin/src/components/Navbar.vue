@@ -14,11 +14,7 @@
       <input type="file" id="file-input" @change="importTabs" accept=".tabspace" />
     </div>
     <div>
-      <a
-        class="link"
-        target="_blank"
-        href="https://joyuer.cn/Tab-Space/settings.html"
-      >{{lang.settings}}</a>
+      <router-link class="link" to="/settings">{{lang.settings}}</router-link>
     </div>
   </nav>
 </template>

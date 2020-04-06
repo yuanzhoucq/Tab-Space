@@ -11,7 +11,7 @@
         <vue-loading type="bars" color="#eb5205" :size="{ width: '50px', height: '50px' }"></vue-loading>
         <p align="center">Connecting to Tab Space App...</p>
       </div>
-      <div class="lose-tabs" v-if="bridge && safariMainVersion === 13 && sessions.length < 1">
+      <div class="lose-tabs" v-if="bridge && sessions.length < 1">
         <span><a class="link" :href="lang.loseTabsLink" target="_blank">{{lang.loseTabs}}</a></span>
       </div>
       <div v-if="bridge" class="sessions-container">
@@ -25,7 +25,6 @@
         class="footer-sep"></span>
       <a class="link" href="https://joyuer.cn/Tab-Space" target="_blank">{{lang.about}}</a>
     </footer>
-    <tab-space-bridge></tab-space-bridge>
   </div>
 </template>
 
@@ -34,10 +33,9 @@
   import { VueLoading } from 'vue-loading-template'
   import { mapState } from 'vuex'
 
-  import Navbar from './components/Navbar'
-  import SessionSidebar from './components/SessionSidebar'
-  import Sessions from './components/Sessions'
-  import TabSpaceBridge from './components/TabSpaceBridge'
+  import Navbar from '../components/Navbar'
+  import SessionSidebar from '../components/SessionSidebar'
+  import Sessions from '../components/Sessions'
 
   export default {
     components: {
@@ -45,7 +43,6 @@
       Navbar,
       SessionSidebar,
       Sessions,
-      TabSpaceBridge
     },
     data() {
       return {

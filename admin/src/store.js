@@ -5,13 +5,15 @@ import { validateSessionsArray } from './utility'
 
 Vue.use(Vuex);
 const store = new Vuex.Store({
+    // strict: true,
     state: {
         lang: LangData[navigator.language.toLowerCase()] || LangData["en-us"],
         bridge: null,
         initialRefresh: false,
         sessions: [],
         keyword: "",
-        activeTag: ""
+        activeTag: "",
+        tabSpaceSettings: {}
     },
     getters: {
         tags: state => {
@@ -49,6 +51,11 @@ const store = new Vuex.Store({
         },
         setActiveTag(state, newTag) {
             state.activeTag = newTag
+        },
+        setTabSpaceSetting(state, {key, value}) {
+            let settings = { ...state.tabSpaceSettings }
+            settings[key] = value
+            state.tabSpaceSettings = settings
         }
     }
 })

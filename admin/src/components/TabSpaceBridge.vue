@@ -39,9 +39,13 @@ export default {
     window.addEventListener("message", evt => {
       // Filter out other sites' postMessage
       if (!evt.origin.includes("joyuer.cn") && !evt.origin.includes("yuanzhoucq.github.io")) return
-      if (evt.data.cmd === "ReturnBookmarks") {
-        console.log("Received checked bookmarks from Tab Space.app.")
-        this.syncBookmarks(evt)
+      switch (evt.data.cmd) {
+        case "ReturnBookmarks":
+          console.log("Received checked bookmarks from Tab Space.app.")
+          this.syncBookmarks(evt)
+          break
+        case "ReturnDefault":
+          this.$store.commit("setTabSpaceSetting", {key: evt.data.id, value: evt.data.value})
       }
     })
   },
