@@ -1,0 +1,21 @@
+name: Validate Tranlation File for Localization
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+      
+    - name: Setup Node.js environment
+      uses: actions/setup-node@v1.4.1
+      with:
+        node-version: '10.x'
+    
+    - name: Run script
+      run: node admin/validate_translation.js
