@@ -4,10 +4,15 @@ import LangData from './lang'
 import { validateSessionsArray } from './utility'
 
 Vue.use(Vuex);
+
+// fallback to en-us for lang.json
+let lang = LangData[navigator.language.toLowerCase()] || LangData["en-us"];
+for (let key in LangData["en-us"]) lang[key] = lang[key] || LangData["en-us"][key];
+
 const store = new Vuex.Store({
     // strict: true,
     state: {
-        lang: LangData[navigator.language.toLowerCase()] || LangData["en-us"],
+        lang,
         bridge: null,
         initialRefresh: false,
         sessions: [],
