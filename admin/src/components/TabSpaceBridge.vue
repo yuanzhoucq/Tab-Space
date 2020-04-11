@@ -8,7 +8,9 @@
 </template>
 
 <script>
+import { mapState } from 'vuex'
 import { validateSessionsArray } from '../utility';
+import Constants from '../constants'
 
 export default {
   name: "TabSpaceBridge",
@@ -18,6 +20,7 @@ export default {
     }
   },
   computed: {
+    ...mapState(["bridge"]),
     sessions: {
       get() {
         return this.$store.state.sessions;
@@ -48,8 +51,18 @@ export default {
           this.$store.commit("setTabSpaceSetting", {key: evt.data.id, value: evt.data.value})
       }
     })
+    this.checkDefaults()
   },
   methods: {
+    checkDefaults() {
+      if (this.bridge) {
+        this.bridge.send({cmd: "CheckDefault", name: Constants.preferredLanguageKey})
+        Constants.settings.forEach(setting => {
+          this.bridge.send({cmd: "CheckDefault", name: setting})
+        });
+      }
+      else setTimeout(this.checkDefaults, 200)
+    },
     syncBookmarks(evt) {
       if (this.iframeLoaded) {
         try {

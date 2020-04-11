@@ -21,31 +21,42 @@
 <script>
 import _ from 'lodash'
 import { mapState, mapGetters } from 'vuex'
+import Constants from '../constants'
 
 export default {
   name: "SessionSidebar",
   data() {
     return {
-      tips: []
+      tips: [],
+      tipLang: ""
     }
   },
   computed: {
-    ...mapState(["lang", "activeTag"]),
+    ...mapState(["lang", "activeTag", "tabSpaceSettings"]),
     ...mapGetters(["tags"]),
     displayTips() {
       return this.tips.reduce((s, item, id) => `${s} ${this.tips.length > 1 ? String(id+1)+"." : ""} ${String(item)}`,
        this.lang["tips"])
     }
   },
+  watch: {
+    tabSpaceSettings(settings) {
+      if (settings[Constants.preferredLanguageKey] !== this.tipLang) this.getTips()
+    }
+  },
   mounted() {
-    fetch(this.$myConfig.staticResourceEndpoint + "/tips.json").then(r => r.json()).then(r => {
-      const allTips = r[navigator.language.toLowerCase()] || r["en-us"]
-      const { importantTips, commonTips } = allTips
-      if (Array.isArray(importantTips)) this.tips = importantTips
-      if (Array.isArray(commonTips)) this.tips.push(_.sample(allTips["commonTips"]))
-    })
+    this.getTips();
   },
   methods: {
+    getTips() {
+      this.tipLang = this.tabSpaceSettings[Constants.preferredLanguageKey]
+      fetch(this.$myConfig.staticResourceEndpoint + "/tips.json").then(r => r.json()).then(r => {
+            const allTips = r[this.tipLang] || r["en-us"]
+            const { importantTips, commonTips } = allTips
+            if (Array.isArray(importantTips)) this.tips = importantTips
+            if (Array.isArray(commonTips)) this.tips.push(_.sample(allTips["commonTips"]))
+          })
+    },
     setActiveTag(tag) {
       this.$store.commit("setActiveTag", tag)
     }

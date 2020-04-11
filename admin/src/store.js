@@ -1,24 +1,33 @@
 import Vue from 'vue'
 import Vuex from 'vuex'
 import LangData from './lang'
+import Constants from './constants'
 import { validateSessionsArray } from './utility'
 
 Vue.use(Vuex);
 
-// fallback to en-us for lang.json
-let lang = LangData[navigator.language.toLowerCase()] || LangData["en-us"];
-for (let key in LangData["en-us"]) lang[key] = lang[key] || LangData["en-us"][key];
+const defaultTabSpaceSettings =  {
+    [Constants.preferredLanguageKey]: navigator.language.toLowerCase()
+}
+function setLang(languageCode) {
+    // fallback to en-us for lang.json
+    let lang = LangData[languageCode || defaultTabSpaceSettings[Constants.preferredLanguageKey]] || LangData["en-us"];
+    for (let key in LangData["en-us"]) lang[key] = lang[key] || LangData["en-us"][key];
+    return lang;
+}
 
 const store = new Vuex.Store({
     // strict: true,
     state: {
-        lang,
+        lang: setLang(),
         bridge: null,
         initialRefresh: false,
         sessions: [],
         keyword: "",
         activeTag: "",
-        tabSpaceSettings: {}
+        tabSpaceSettings: {
+            ...defaultTabSpaceSettings
+        }
     },
     getters: {
         tags: state => {
@@ -60,6 +69,9 @@ const store = new Vuex.Store({
         setTabSpaceSetting(state, {key, value}) {
             let settings = { ...state.tabSpaceSettings }
             settings[key] = value
+            if (key === Constants.preferredLanguageKey && Constants.languages.map(i=>i.code).includes(value)) {
+                state.lang = setLang(value)
+            }
             state.tabSpaceSettings = settings
         }
     }

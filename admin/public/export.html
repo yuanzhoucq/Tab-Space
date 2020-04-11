@@ -145,9 +145,6 @@
       margin-right: 20px;
     }
 
-    .session-title:hover {
-    }
-
     .btn {
       display: inline-block;
       padding: 3px 5px;
@@ -337,10 +334,10 @@
     },
     methods: {
       feedLang(lang) {
-        if (navigator.language === "zh-CN") {
-          this.lang = lang["zh-CN"]
+        if (navigator.language.toLowerCase() === "zh-cn") {
+          this.lang = lang["zh-cn"]
         } else {
-          this.lang = lang["en-US"]
+          this.lang = lang["en-us"]
         }
       },
       getSessionById(id) {

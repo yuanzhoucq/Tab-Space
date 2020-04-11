@@ -15,14 +15,21 @@
           @change="(e) => setDefault(e, setting)"
         ></toggle-button><label :id="setting" class="toggle-label">{{lang[setting]}}</label><br>
         </div>
+        <hr style="border-width: 0; height: 1px; background-color: #dddddd; margin: 20px 0;" />
+        <div>
+          <label id="language" style="margin-right: 10px;">Language</label>
+          <select name="languages" id="language-select" v-model="tabSpaceSettings[preferredLanguageKey]" @change="setLanguage">
+            <option v-for="language in languages" :key="`lang-${language.code}`" :value="language.code">{{language.name}}</option>
+          </select>
+          <p>
+            <a style="color: gray" href="https://joyuer.cn/Tab-Space/translate.html">Help us translate Tab Space</a>
+          </p>
+        </div>
       </div>
       <div class="tips">
-        <hr style="border-width: 0; height: 1px; background-color: #dddddd" />
-        <br />
+        <hr style="border-width: 0; height: 1px; background-color: #dddddd; margin: 20px 0;" />
         <small>{{lang.goTip}}</small>
-        <p>
-          <a style="color: gray" href="https://joyuer.cn/Tab-Space/translate.html">Help us translate Tab Space</a>
-        </p>
+
         <h3>{{lang.shortcuts}}</h3>
         <p>
           <small>{{lang.shortcutTip}}</small>
@@ -81,6 +88,7 @@
 <script>
 import { ToggleButton } from 'vue-js-toggle-button'
 import { mapState } from 'vuex'
+import Constants from '../constants'
 
 export default {
   name: "Settings",
@@ -89,12 +97,7 @@ export default {
   },
   data() {
     return {
-      settings: [
-        "keep-tabs-while-saving",
-        "ignore-pinned-tabs",
-        "save-all-windows",
-        "disable-shortcuts"
-      ]
+      ...Constants
     };
   },
   computed: mapState(["lang", "bridge", "tabSpaceSettings"]),
@@ -102,17 +105,12 @@ export default {
     this.checkDefaults()
   },
   methods: {
-    checkDefaults() {
-      if (this.bridge) {
-        this.settings.forEach(setting => {
-          this.bridge.send({cmd: "CheckDefault", name: setting})
-        });
-      }
-      else setTimeout(this.checkDefaults, 300)
-    },
     setDefault(e, setting) {
       const value = e.value ? "true" : "false";
       this.bridge.send({cmd: "SetDefault", name: setting, value})
+    },
+    setLanguage(e) {
+      this.bridge.send({cmd: "SetDefault", name: Constants.preferredLanguageKey, value: e.target.value})
     }
   }
 };
