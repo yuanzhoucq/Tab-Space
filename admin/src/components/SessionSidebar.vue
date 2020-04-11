@@ -41,7 +41,8 @@ export default {
   },
   watch: {
     tabSpaceSettings(settings) {
-      if (settings[Constants.preferredLanguageKey] !== this.tipLang) this.getTips()
+      const newLang = settings[Constants.preferredLanguageKey]
+      if (newLang && newLang !== this.tipLang) this.getTips()
     }
   },
   mounted() {

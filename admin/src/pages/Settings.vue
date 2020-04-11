@@ -101,9 +101,6 @@ export default {
     };
   },
   computed: mapState(["lang", "bridge", "tabSpaceSettings"]),
-  mounted() {
-    this.checkDefaults()
-  },
   methods: {
     setDefault(e, setting) {
       const value = e.value ? "true" : "false";
