@@ -1,19 +1,19 @@
 <template>
-  <div class="session">
+  <div class="session" :id="session.uuid">
     <div style="display: flex; justify-content: space-between">
       <div
           class="session-title"
-          :id="'id'+session[0]"
-          @click.stop="editSessionName(session[0])"
+          :id="'id'+session.uuid"
+          @click.stop="editSessionName(session.uuid)"
           @blur="updateSessionName"
-          v-html="highlight(session[2] || (`${lang.saveAt} ${(new Date(Number(session[0]))).Format('yyyy-MM-dd hh:mm')}`))"
+          v-html="highlight(session.title || (`${lang.saveAt} ${(new Date(Number(session.uuid))).Format('yyyy-MM-dd hh:mm')}`))"
       ></div>
       <div style="display:inline-block; white-space: nowrap;">
-        <a class="btn" @click.stop="restore(session[0], true, false)">{{lang.restore}}</a>
-        <a class="btn del-btn" @click.stop="restore(session[0], false, true)">{{lang.delete}}</a>
+        <a class="btn" @click.stop="restore(session.uuid, true, false)">{{lang.restore}}</a>
+        <a class="btn del-btn" @click.stop="restore(session.uuid, false, true)">{{lang.delete}}</a>
         <a
             class="btn del-res-btn"
-            @click.stop="restore(session[0], true, true)"
+            @click.stop="restore(session.uuid, true, true)"
         >{{lang.restoreAndDel}}</a>
         <div class="export">
           <a class="btn del-res-btn">
@@ -25,21 +25,21 @@
       </div>
     </div>
     <ul class="session-sites" style="user-select: none">
-      <draggable :forceFallback="true" :list="session[1]" group="shared" @end="endDragSite">
-        <li v-for="(tab, tid) in session[1]" v-bind:key="tid">
+      <draggable :forceFallback="true" :list="session.sites" group="shared" @end="endDragSite">
+        <li v-for="(tab, tid) in session.sites" v-bind:key="tid">
           <div class="del-item" @click="delItem(tid,session)">
             <small>X</small>
           </div>
           <div class="fav">
             <img
                 class="fav-img"
-                :src="getFavicon(tab[1])"
+                :src="getFavicon(tab.url)"
                 :onerror="`src='${WangYeIcon}'`"
                 alt
             />
           </div>
           <span class="site-title">
-                  <a class="link" :href="tab[1]" v-html="highlight(tab[0] || tab[1])"></a>
+                  <a class="link" :href="tab.url" v-html="highlight(tab.title || tab.url)"></a>
                 </span>
         </li>
       </draggable>
@@ -47,19 +47,19 @@
     <div class="session-tags">
       <div
           class="tag"
-          v-for="tag in (session[3] || [])"
-          @click="removeTag(tag, session)"
-          v-bind:key="tag"
+          v-for="tag in (session.tags || [])"
+          @click="removeTag(tag.name, session)"
+          v-bind:key="tag.name"
       >
-        {{ tag }}
+        {{ tag.name }}
       </div>
-      <div class="tag-prompt" v-if="!session[3] || session[3].length === 0">{{lang.tagPrompt}}</div>
+      <div class="tag-prompt" v-if="session.tags.length === 0">{{lang.tagPrompt}}</div>
       <div
           class="add-tag"
-          v-if="tagEditorId !== session[0]"
-          @click="e => addTag(e, session[0])"
+          v-if="tagEditorId !== session.uuid"
+          @click="e => addTag(e, session.uuid)"
       ></div>
-      <div class="tag-editor" v-if="tagEditorId === session[0]">
+      <div class="tag-editor" v-if="tagEditorId === session.uuid">
         <input type="text" @blur="saveTag" autofocus/>
       </div>
     </div>
@@ -69,7 +69,6 @@
 <script>
   import { mapState, mapGetters } from 'vuex'
 
-  import { validateSessionsArray } from '../utility'
   import WangYeIcon from '../assets/img/icon_wangye.svg';
   import Draggable from 'vuedraggable';
   import ExportDropdown from './ExportDropdown';
@@ -99,15 +98,15 @@
         return value
       },
       getSessionById(id) {
-        return this.sessions.find(session => session[0] === id)
+        return this.sessions.find(session => session.uuid === id)
       },
       removeSessions(sessions) {
         this.bridge.send({ cmd: 'DeleteSession', bookmarks: sessions })
       },
       updateSession(session) {
-        if (!validateSessionsArray([session])) throw Error("Invalid session!")
         // delete session without any sites
-        if (session[1].length === 0) {
+        console.log(session)
+        if (session.sites.length === 0) {
           this.removeSessions([session])
         } else {
           this.bridge.send({ cmd: 'UpdateSession', bookmarks: [session] })
@@ -119,11 +118,11 @@
       },
       restore(key, open, del) {
         if (open) {
-          let session = this.sessions.find(s => s[0] === key)
-          session && session[1].forEach(site => window.open(site[1]))
+          let session = this.sessions.find(s => s.uuid === key)
+          session && session.sites.forEach(site => window.open(site.url))
         }
         if (del) {
-          const sessionsToDelete = this.sessions.filter(session => session[0] === key)
+          const sessionsToDelete = this.sessions.filter(session => session.uuid === key)
           this.removeSessions(sessionsToDelete)
         }
       },
@@ -142,12 +141,12 @@
         div.style.whiteSpace = "nowrap";
         div.style.minWidth = "0";
         let session = this.getSessionById(this.activeId)
-        session[2] = div.innerText
-        if (session[2]) this.updateSession(session)
+        session.title = div.innerText
+        if (session.title) this.updateSession(session)
         else div.innerText = this.tmpText
       },
       delItem(tid, session) {
-        session[1].splice(tid, 1)
+        session.sites.splice(tid, 1)
         this.updateSession(session)
       },
       addTag(e, id) {
@@ -156,17 +155,15 @@
       saveTag(e) {
         if (e.target.value) {
           let session = this.getSessionById(this.tagEditorId)
-          if (session.length === 2) session.push("")
-          if (session.length === 3) session.push([e.target.value])
-          else {
-            !session[3].includes(e.target.value) && session[3].push(e.target.value)
+          if (!session.tags.map(t => t.name).includes(e.target.value)) {
+            session.tags.push({name: e.target.value})
           }
           this.updateSession(session)
         }
         this.tagEditorId = false
       },
       removeTag(tag, session) {
-        session[3].splice(session[3].indexOf(tag), 1)
+        session.tags = session.tags.filter(t => t.name !== tag)
         this.updateSession(session)
       },
       getSessionIdFromDraggingSite(site) {
@@ -177,11 +174,11 @@
         const toId = this.getSessionIdFromDraggingSite(e.to)
         if (fromId === toId) {
           if (e.newIndex !== e.oldIndex) {
-            this.updateSession(this.sessions.find(item => item[0] === fromId))
+            this.updateSession(this.sessions.find(item => item.uuid === fromId))
           }
         } else {
-          this.updateSession(this.sessions.find(item => item[0] === fromId))
-          this.updateSession(this.sessions.find(item => item[0] === toId))
+          this.updateSession(this.sessions.find(item => item.uuid === fromId))
+          this.updateSession(this.sessions.find(item => item.uuid === toId))
         }
       }
     }
@@ -317,8 +314,8 @@
   }
 
   .fav-img {
-    width: 100%;
-    max-height: 100%;
+    width: 16px;
+    height: 16px;
   }
 
   .del-item {

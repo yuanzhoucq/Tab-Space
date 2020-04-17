@@ -2,7 +2,7 @@
   <div>
     <div v-if="displaySessions.length===0" class="session-placeholder">Nothing here...</div>
     <draggable
-        :disabled="sessions.length!==displaySessions.length"
+        :disabled="sessions.length !== displaySessions.length"
         :list="sessions"
         fallbackTolerance="10"
         @end="endDragSession"
@@ -15,7 +15,7 @@
           v-on:enter="enter"
           v-on:leave="leave"
       >
-        <session-card v-for="session in displaySessions" :key="session[0]" :session="session"></session-card>
+        <session-card v-for="session in displaySessions" :key="session.uuid" :session="session"></session-card>
       </transition-group>
     </draggable>
   </div>
@@ -51,7 +51,7 @@
         if (e.newIndex !== e.oldIndex) {
           this.bridge.send({
             cmd: 'SwapSession',
-            index: [Number(e.newIndex), Number(e.oldIndex)]
+            uuids: [e.target.children[e.newIndex].id, e.target.children[e.oldIndex].id]
           })
         }
       },

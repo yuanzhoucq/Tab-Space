@@ -2,7 +2,6 @@ import Vue from 'vue'
 import Vuex from 'vuex'
 import LangData from './lang'
 import Constants from './constants'
-import { validateSessionsArray } from './utility'
 
 Vue.use(Vuex);
 
@@ -33,14 +32,15 @@ const store = new Vuex.Store({
         tags: state => {
             let tags = []
             state.sessions.forEach(session => {
-                session[3] && session[3].forEach(tag => !tags.includes(tag) && tags.push(tag))
+                session.tags.forEach(tag => !tags.includes(tag.name) && tags.push(tag.name))
             })
             return tags
         },
         displaySessions: state => {
             let displaySessions = state.sessions;
             if (state.activeTag)
-                displaySessions = displaySessions.filter(session => session[3] && session[3].includes(state.activeTag))
+                displaySessions = displaySessions.filter(session => session.tags.length > 0 
+                    && session.tags.map(tag => tag.name).includes(state.activeTag))
             if (state.keyword)
                 displaySessions = displaySessions.filter(session =>
                   JSON.stringify(session).toLowerCase().includes(state.keyword.toLowerCase()))
@@ -55,10 +55,8 @@ const store = new Vuex.Store({
             state.bridge = bridge
         },
         setSessions(state, newSessions) {
-            if (validateSessionsArray(newSessions)) {
-                state.sessions = newSessions
-                state.initialRefresh = true
-            }
+            state.sessions = newSessions
+            state.initialRefresh = true
         },
         setKeyword(state, newKeyword) {
             state.keyword = newKeyword

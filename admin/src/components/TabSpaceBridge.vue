@@ -9,7 +9,6 @@
 
 <script>
 import { mapState } from 'vuex'
-import { validateSessionsArray } from '../utility';
 import Constants from '../constants'
 
 export default {
@@ -67,9 +66,7 @@ export default {
       if (this.iframeLoaded) {
         try {
           const bookmarks = JSON.parse(evt.data.bookmarks)
-          if (validateSessionsArray(bookmarks)) {
-            this.sessions = bookmarks
-          }
+          this.sessions = bookmarks
         } catch (e) {
           console.log("Synced bookmarks are not valid.")
         }

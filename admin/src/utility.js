@@ -27,10 +27,6 @@ Date.prototype.Format = function (fmt) {
 
 
 module.exports = {
-  validateSessionsArray: function(data) {
-    return Array.isArray(data) && // sessions
-      (data.length === 0 || ((typeof data[0][0] === "string") && Array.isArray(data[0][1]))) // timestamp; sites
-  },
   Clipboard: (function (window, document, navigator) {
     var textArea,
       copy;

@@ -22,7 +22,6 @@
 <script>
 import { mapState } from "vuex"
 import ExportDropdown from "./ExportDropdown"
-import { validateSessionsArray } from '../utility.js'
 
 export default {
   name: "Navbar",
@@ -34,12 +33,19 @@ export default {
     importTabs(e) {
       const file = new FileReader();
       file.onload = e => {
-        const importedSessions = JSON.parse(e.target.result);
-        if (!validateSessionsArray(importedSessions))
-          alert("Error: invalid data!");
-        else {
-          this.bridge.send({ cmd: "AppendSession", bookmarks: importedSessions });
+        let importedSessions = JSON.parse(e.target.result);
+        if (Array.isArray(importedSessions[0])) {
+          importedSessions = importedSessions.map(session => {
+            return {
+              timestamp: parseInt(session[0] / 1000),
+              sites: session[1].map(s => { return {title: s[0], url: s[1]} }),
+              title: session[2],
+              tags: session[3] ? session[3].map(t => { return {name: t} }) : []
+            }
+          })
         }
+        console.log(importedSessions)
+        this.bridge.send({ cmd: "AppendSessions", bookmarks: importedSessions });
       };
       file.readAsText(e.target.files[0]);
     }

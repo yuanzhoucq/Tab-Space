@@ -22,15 +22,20 @@ export default {
     exportTabs(type) {
       let tabs = this.selectedSessions || this.sessions;
       let s = "";
-      let exported;
       switch (type.toLowerCase()) {
         case "html":
+          s = tabs.map(session => [
+            session.timestamp, 
+            session.sites.map(s => [s.title, s.url]),
+            session.title,
+            session.tags.map(t => t.name)
+            ])
           fetch("export.html")
             .then(r => r.text())
             .then(r => {
               let content = r.replace(
                 'JSON.parse(localStorage.getItem("bookmarks") || "[]")',
-                JSON.stringify(tabs)
+                JSON.stringify(s)
               );
               content = content.replace(
                 "<h1>Tab Space</h1>",
@@ -44,12 +49,7 @@ export default {
             });
           break;
         case "json":
-          exported = tabs.map(session => {
-            let s = [...session];
-            s[0] = String(1 + Number(s[0]));
-            return s;
-          });
-          download("backup.tabspace", JSON.stringify(exported));
+          download("backup.tabspace", JSON.stringify(tabs));
           break;
         case "text":
           tabs.forEach(i => (s += this.sessionTo("text", i) + "\n\n"));
@@ -71,26 +71,17 @@ export default {
       let s = "";
       switch (type.toLowerCase()) {
         case "text":
-          s +=
-            session[2] ||
-            `${this.lang.saveAt} ${new Date(Number(session[0])).Format(
-              "yyyy-MM-dd hh:mm"
-            )}`;
-          session[1].forEach(i => {
+          s += session.title;
+          session.sites.forEach(i => {
             s += "\n- ";
-            if (i[0]) s += i[0] + ": ";
-            s += i[1];
+            if (i.title) s += i.title + ": ";
+            s += i.url;
           });
           break;
         case "md":
-          s +=
-            "# " +
-            (session[2] ||
-              `${this.lang.saveAt} ${new Date(Number(session[0])).Format(
-                "yyyy-MM-dd hh:mm"
-              )}`);
-          session[1].forEach(i => {
-            s += `\n- [${i[0]}](${i[1]})`;
+          s += session.title;
+          session.sites.forEach(i => {
+            s += `\n- [${i.title}](${i.url})`;
           });
           break;
       }
