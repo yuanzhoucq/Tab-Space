@@ -28,6 +28,8 @@
       </div>
       <div class="tips">
         <hr style="border-width: 0; height: 1px; background-color: #dddddd; margin: 20px 0;" />
+        <span class="link" @click="manuallyMigrate"> ➡️ {{lang.manuallyMigrate}}</span> <br/><br/>
+
         <small>{{lang.goTip}}</small>
 
         <h3>{{lang.shortcuts}}</h3>
@@ -108,6 +110,10 @@ export default {
     },
     setLanguage(e) {
       this.bridge.send({cmd: "SetDefault", name: Constants.preferredLanguageKey, value: e.target.value})
+    },
+    manuallyMigrate() {
+      this.bridge.send({cmd: "ManuallyMigrate"})
+      this.$router.replace({path: "/"})
     }
   }
 };
@@ -170,5 +176,11 @@ code {
 
 .toggle-label {
   margin-left: 15px;
+}
+
+@media (prefers-color-scheme: dark) {
+  .link {
+    color: #eeeeee;
+  }
 }
 </style>

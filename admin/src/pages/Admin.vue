@@ -12,7 +12,8 @@
         <p align="center">Connecting to Tab Space App...</p>
       </div>
       <div class="lose-tabs" v-if="bridge && sessions.length < 1">
-        <span><a class="link" :href="lang.loseTabsLink" target="_blank">{{lang.loseTabs}}</a></span>
+        <span><a class="link" :href="lang.loseTabsLink" target="_blank">{{lang.loseTabs}}</a></span><br/><br/>
+        <router-link class="link" to="/settings">{{lang.migrateTip}}</router-link>
       </div>
       <div v-if="bridge" class="sessions-container">
         <session-sidebar></session-sidebar>

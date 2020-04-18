@@ -89,7 +89,7 @@
   .session-placeholder {
     position: absolute;
     left: calc(50vw - 55px);
-    top: 150px;
+    top: 180px;
     color: #555555;
     transition: 0.3s;
   }
