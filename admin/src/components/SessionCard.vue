@@ -39,7 +39,7 @@
             />
           </div>
           <span class="site-title">
-                  <a class="link" :href="tab.url" v-html="highlight(tab.title || tab.url)"></a>
+                  <a class="link" :href="wrapUrl(tab.url)" v-html="highlight(tab.title || tab.url)"></a>
                 </span>
         </li>
       </draggable>
@@ -91,6 +91,9 @@
       ...mapGetters(["displaySessions"]),
     },
     methods: {
+      wrapUrl(url) {
+        return (url.indexOf("://") === -1) ? "http://" + url : url
+      },
       highlight(value) {
         let re = new RegExp(this.keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), "i")
         let res = value.match(re)
@@ -113,8 +116,12 @@
         }
       },
       getFavicon(url) {
-        let origin = (new URL(url)).origin
-        return origin + "/favicon.ico"
+        try {
+          let origin = (new URL(this.wrapUrl(url))).origin
+          return origin + "/favicon.ico"
+        } catch {
+          return ""
+        }
       },
       restore(key, open, del) {
         if (open) {

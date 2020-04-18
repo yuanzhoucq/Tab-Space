@@ -130,6 +130,10 @@
     display: block;
   }
 
+  .import:hover .import-dropdown {
+    display: block;
+  }
+
 
   .msg-prompt {
     color: red;
