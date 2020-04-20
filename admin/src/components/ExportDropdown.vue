@@ -11,8 +11,9 @@
 </template>
 
 <script>
-import { mapState } from "vuex";
-import { download, Clipboard } from "../utility.js";
+import { mapState } from "vuex"
+import { encode } from "mdurl"
+import { download, Clipboard } from "../utility.js"
 
 export default {
   name: "ExportDropdown",
@@ -81,7 +82,8 @@ export default {
         case "md":
           s += session.title;
           session.sites.forEach(i => {
-            s += `\n- [${i.title}](${i.url})`;
+            // exclude default chars except `()`
+            s += `\n- [${i.title}](${encode(i.url, ";/?:@&=+$,-_.!~*'#")})`;
           });
           break;
       }
