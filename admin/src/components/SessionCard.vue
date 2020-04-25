@@ -178,13 +178,13 @@
         this.updateSession(session)
       },
       isFavorite(session) {
-        return Boolean(session.tags.find(t => t.name === "Favorite"))
+        return Boolean(session.tags.find(t => t.name === "@Favorite"))
       },
       toggleFavorite(session) {
         if (this.isFavorite(session)) {
-          session.tags = session.tags.filter(t => t.name !== "Favorite")
+          session.tags = session.tags.filter(t => t.name !== "@Favorite")
         } else {
-          session.tags.push({name: "Favorite"})
+          session.tags.push({name: "@Favorite"})
         }
         this.updateSession(session)
       },
