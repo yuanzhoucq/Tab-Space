@@ -47,7 +47,7 @@
     <div class="session-tags">
       <div
           class="tag"
-          v-for="tag in (session.tags || [])"
+          v-for="tag in session.tags"
           @click="removeTag(tag.name, session)"
           v-bind:key="tag.name"
       >
@@ -59,6 +59,10 @@
           v-if="tagEditorId !== session.uuid"
           @click="e => addTag(e, session.uuid)"
       ></div>
+      <div
+          :class="isFavorite(session) ? 'starfilled-tag' : 'star-tag'"
+          @click="e => toggleFavorite(session)"
+      ></div>
       <div class="tag-editor" v-if="tagEditorId === session.uuid">
         <input type="text" @blur="saveTag" autofocus/>
       </div>
@@ -69,7 +73,7 @@
 <script>
   import { mapState, mapGetters } from 'vuex'
 
-  import WangYeIcon from '../assets/img/icon_wangye.svg';
+  import WangYeIcon from '../assets/img/icon-webpage.svg';
   import Draggable from 'vuedraggable';
   import ExportDropdown from './ExportDropdown';
 
@@ -173,6 +177,17 @@
         session.tags = session.tags.filter(t => t.name !== tag)
         this.updateSession(session)
       },
+      isFavorite(session) {
+        return Boolean(session.tags.find(t => t.name === "Favorite"))
+      },
+      toggleFavorite(session) {
+        if (this.isFavorite(session)) {
+          session.tags = session.tags.filter(t => t.name !== "Favorite")
+        } else {
+          session.tags.push({name: "Favorite"})
+        }
+        this.updateSession(session)
+      },
       getSessionIdFromDraggingSite(site) {
         return site.parentElement.parentElement.firstElementChild.firstElementChild.id.slice(2)
       },
@@ -237,13 +252,37 @@
   }
 
   .add-tag {
-    background-image: url("../assets/img/icon_tianjia.svg");
+    background-image: url("../assets/img/icon-add.svg");
     background-repeat: no-repeat;
     background-size: cover;
     opacity: 0.5;
     margin-top: 4px;
     width: 18px;
     height: 18px;
+    cursor: pointer;
+  }
+
+  .star-tag {
+    background-image: url("../assets/img/icon-star.svg");
+    background-repeat: no-repeat;
+    background-size: cover;
+    opacity: 1;
+    margin-top: 2px;
+    margin-left: 2px;
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+  }
+
+  .starfilled-tag {
+    background-image: url("../assets/img/icon-starfilled.svg");
+    background-repeat: no-repeat;
+    background-size: cover;
+    opacity: 1;
+    margin-top: 2px;
+    margin-left: 2px;
+    width: 20px;
+    height: 20px;
     cursor: pointer;
   }
 
