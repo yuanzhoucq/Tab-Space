@@ -55,7 +55,7 @@
     },
     watch: {
       keyword(value) {
-        _.debounce(() => this.$store.commit('setKeyword', value), 300)()
+        _.debounce(() => this.$store.commit('setKeyword', value), 500)()
       }
     }
   }

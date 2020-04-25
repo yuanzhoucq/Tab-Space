@@ -35,8 +35,13 @@
       SessionCard,
     },
     computed: {
-      ...mapState(["bridge", "sessions"]),
+      ...mapState(["bridge", "sessions", "activeTag"]),
       ...mapGetters(["displaySessions"]),
+    },
+    watch: {
+      displaySessions(sessions) {
+        if (this.activeTag && sessions.length === 0) this.$store.commit("setActiveTag", "")
+      }
     },
     mounted() {
       document.addEventListener('keydown', e => {

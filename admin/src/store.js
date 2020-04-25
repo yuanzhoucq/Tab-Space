@@ -1,5 +1,6 @@
 import Vue from 'vue'
 import Vuex from 'vuex'
+import _ from 'lodash'
 import LangData from './lang'
 import Constants from './constants'
 
@@ -30,11 +31,11 @@ const store = new Vuex.Store({
     },
     getters: {
         tags: state => {
-            let tags = []
+            let tags = new Set()
             state.sessions.forEach(session => {
-                session.tags.forEach(tag => !tags.includes(tag.name) && tags.push(tag.name))
+                session.tags.forEach(tag => tags.add(tag.name))
             })
-            return tags
+            return Array.from(tags).sort()
         },
         displaySessions: state => {
             let displaySessions = state.sessions;
@@ -43,7 +44,16 @@ const store = new Vuex.Store({
                     && session.tags.map(tag => tag.name).includes(state.activeTag))
             if (state.keyword)
                 displaySessions = displaySessions.filter(session =>
-                  JSON.stringify(session).toLowerCase().includes(state.keyword.toLowerCase()))
+                    _.chain(session)
+                    .pick(["title", "sites", "tags"])
+                    .values()
+                    .flatten()
+                    .map(o => _.isObject(o) ? _.values(o) : o)
+                    .flatten()
+                    .value()
+                    .join("§")
+                    .toLowerCase()
+                    .includes(state.keyword.toLowerCase()))
             return  displaySessions
         }
     },
