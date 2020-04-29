@@ -6,7 +6,7 @@ import Constants from './constants'
 
 Vue.use(Vuex);
 
-const defaultTabSpaceSettings =  {
+const defaultTabSpaceSettings = {
     [Constants.preferredLanguageKey]: navigator.language.toLowerCase()
 }
 function setLang(languageCode) {

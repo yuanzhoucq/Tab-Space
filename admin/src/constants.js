@@ -1,6 +1,5 @@
 module.exports = {
     settings: [
-        "keep-tabs-while-saving",
         "ignore-pinned-tabs",
         "save-all-windows",
         "disable-shortcuts"
