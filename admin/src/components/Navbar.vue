@@ -1,5 +1,9 @@
 <template>
   <nav>
+    <div>
+      <a class="link" href="https://www.notion.so/joyuer/What-s-New-in-Tab-Space-66063fc8afea4f54906f32ef92915ea7" 
+        target="_blank" style="text-decoration: none; font-style: italic" v-html="lang.whatsNew"></a>
+    </div>
     <div class="export">
       <span class="link">
         {{lang.export}}

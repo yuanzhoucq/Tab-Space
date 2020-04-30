@@ -25,6 +25,7 @@ const store = new Vuex.Store({
         sessions: [],
         keyword: "",
         activeTag: "",
+        editingSessionUuid: "",
         tabSpaceSettings: {
             ...defaultTabSpaceSettings
         }
@@ -73,6 +74,9 @@ const store = new Vuex.Store({
         },
         setActiveTag(state, newTag) {
             state.activeTag = newTag
+        },
+        setEditingSessionUuid(state, newId) {
+            state.editingSessionUuid = newId
         },
         setTabSpaceSetting(state, {key, value}) {
             let settings = { ...state.tabSpaceSettings }

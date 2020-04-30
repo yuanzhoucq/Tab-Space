@@ -18,13 +18,17 @@
       <div v-if="bridge" class="sessions-container">
         <session-sidebar></session-sidebar>
         <sessions></sessions>
+        <session-hub></session-hub>
       </div>
     </div>
     <footer>
-      <a class="link" href="mailto:joyuercn@icloud.com">{{lang.contact}}</a><span class="footer-sep"></span>
-      <a class="link" href="https://twitter.com/joyuer/status/1164816334305157120" target="_blank">Twitter</a><span
-        class="footer-sep"></span>
-      <a class="link" href="https://joyuer.cn/Tab-Space" target="_blank">{{lang.about}}</a>
+      <a class="link" href="mailto:joyuercn@icloud.com">{{lang.contact}}</a>
+      <span class="footer-sep"></span>
+      <a class="link" href="https://twitter.com/joyuer/status/1164816334305157120" target="_blank">Twitter</a>
+      <span class="footer-sep"></span>
+      <a class="link" href="https://mytab.space" target="_blank">{{lang.about}}</a>
+      <span class="footer-sep"></span>
+      <a class="link" href="https://www.notion.so/joyuer/Tab-Space-FAQ-6d9383b54d704f6d85d404be96c31dd5" target="_blank">FAQ</a>
     </footer>
   </div>
 </template>
@@ -36,6 +40,7 @@
 
   import Navbar from '../components/Navbar'
   import SessionSidebar from '../components/SessionSidebar'
+  import SessionHub from '../components/SessionHub'
   import Sessions from '../components/Sessions'
 
   export default {
@@ -43,6 +48,7 @@
       VueLoading,
       Navbar,
       SessionSidebar,
+      SessionHub,
       Sessions,
     },
     data() {
@@ -119,7 +125,7 @@
     transition: 0.2s;
     flex-direction: row;
     justify-content: left;
-    width: 800px;
+    width: 840px;
     margin: 0 auto;
   }
 
@@ -160,7 +166,7 @@
   }
 
   #keyword {
-    margin: 10px 10px 10px 280px;
+    margin: 10px 10px 10px 260px;
     outline: none;
     border-radius: 4px;
     border-width: 0;

@@ -82,7 +82,11 @@
     <footer>
       <a class="link" href="mailto:joyuercn@icloud.com">{{lang.contact}}</a>
       <span class="footer-sep"></span>
-      <a class="link" href="http://joyuer.cn/Tab-Space" target="_blank">{{lang.about}}</a>
+      <a class="link" href="https://twitter.com/joyuer/status/1164816334305157120" target="_blank">Twitter</a>
+      <span class="footer-sep"></span>
+      <a class="link" href="https://mytab.space" target="_blank">{{lang.about}}</a>
+      <span class="footer-sep"></span>
+      <a class="link" href="https://www.notion.so/joyuer/Tab-Space-FAQ-6d9383b54d704f6d85d404be96c31dd5" target="_blank">FAQ</a>
     </footer>
   </div>
 </template>
