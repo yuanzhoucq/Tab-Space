@@ -43,10 +43,10 @@ const store = new Vuex.Store({
             if (state.activeTag)
                 displaySessions = displaySessions.filter(session => session.tags.length > 0 
                     && session.tags.map(tag => tag.name).includes(state.activeTag))
-            if (state.keyword)
+            if (state.keyword) {
                 displaySessions = displaySessions.filter(session =>
                     _.chain(session)
-                    .pick(["title", "sites", "tags"])
+                    .pick(["title", "sites", "tags", "comment"])
                     .values()
                     .flatten()
                     .map(o => _.isObject(o) ? _.values(o) : o)
@@ -54,8 +54,14 @@ const store = new Vuex.Store({
                     .value()
                     .join("§")
                     .toLowerCase()
-                    .includes(state.keyword.toLowerCase()))
-            return  displaySessions
+                    .includes(state.keyword.toLowerCase())
+                )
+                displaySessions = displaySessions.map(s => {
+                    s.comment = state.keyword
+                    return s
+                })
+            }
+            return displaySessions
         }
     },
     mutations: {
