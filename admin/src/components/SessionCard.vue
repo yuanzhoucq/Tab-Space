@@ -251,8 +251,6 @@
           tags: []
         }
         this.displaySessions.splice(this.crtId+1, 0, this.newSession)
-        document.querySelector(".sortable-fallback").style.transform= `translateY(-${40 + session.sites.length * 26}px)`
-        console.log(document.querySelector(".sortable-fallback").style.transform)
       },
       endDragSite(e) {
         if (this.newSession.sites.length === 0) this.displaySessions.splice(this.crtId+1, 1)
@@ -272,10 +270,6 @@
 </script>
 
 <style scoped>
-  .sortable-fallback {
-    position: relative !important;
-    height: 0 !important;
-  }
   .session {
     border-radius: 5px;
     text-decoration: none;
