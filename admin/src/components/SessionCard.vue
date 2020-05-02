@@ -148,7 +148,13 @@
         return this.sessions.find(session => session.uuid === id)
       },
       removeSessions(sessions) {
-        this.bridge.send({ cmd: 'DeleteSession', bookmarks: sessions })
+        sessions.forEach(session => {
+          if (session.uuid.slice(0,3) === "new") {
+            this.displaySessions.splice(this.displaySessions.findIndex(s => s.uuid = session.uuid), 1)
+          }
+        })
+        sessions = sessions.filter(s => s.uuid.slice(0,3) !== "new")
+        if (sessions.length > 0) this.bridge.send({ cmd: 'DeleteSession', bookmarks: sessions })
       },
       updateSession(session) {
         // delete session without any sites
