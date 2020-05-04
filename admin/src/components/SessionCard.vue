@@ -32,8 +32,8 @@
       </div>
     </div>
     <ul class="session-sites" style="user-select: none">
-      <draggable :disabled="isEditingSession(session)" :forceFallback="true" :list="session.sites" group="shared" 
-      @start="() => startDragSite(session)" @end="endDragSite">
+      <draggable :disabled="isEditingSession(session)" :forceFallback="true" fallbackTolerance="10" 
+      :list="session.sites" group="shared" @start="() => startDragSite(session)" @end="endDragSite">
         <li v-for="(tab, tid) in session.sites" v-bind:key="tid">
           <div v-if="editingSessionUuid === session.uuid">
             <v-icon name="compass" :stroke-width="1.5" style="margin-bottom: -3px"></v-icon>
