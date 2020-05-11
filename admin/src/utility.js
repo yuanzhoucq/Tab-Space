@@ -28,13 +28,15 @@ Date.prototype.Format = function (fmt) {
 
 module.exports = {
   validURL(str) {
-    var pattern = new RegExp('^(https?:\\/\\/)?'+ // protocol
-      '((([a-z\\d]([a-z\\d-]*[a-z\\d])*)\\.)+[a-z]{2,}|'+ // domain name
-      '((\\d{1,3}\\.){3}\\d{1,3}))'+ // OR ip (v4) address
-      '(\\:\\d+)?(\\/[-a-z\\d%_.~+]*)*'+ // port and path
-      '(\\?[;&a-z\\d%_.~+=-]*)?'+ // query string
-      '(\\#[-a-z\\d_]*)?$','i'); // fragment locator
-    return !!pattern.test(str);
+    // adopted from https://stackoverflow.com/a/43467144/12251250
+    // note that a scheme http or https must be present as a valid url here
+    let url;
+    try {
+      url = new URL(str);
+    } catch (_) {
+      return false;  
+    }
+    return url.protocol === "http:" || url.protocol === "https:";
   },
   validateSessions(sessions) {
     try {
