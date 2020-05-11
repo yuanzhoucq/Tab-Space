@@ -1,20 +1,123 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <title>Translate Tab Space</title>
   <style>
     body {
-      font-family: -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Oxygen-Sans,Ubuntu,Cantarell,"Helvetica Neue",sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
       width: 800px;
       margin: 0 auto;
     }
+
+    table.greyGridTable {
+      border: 2px solid #FFFFFF;
+      width: 100%;
+      text-align: center;
+      border-collapse: collapse;
+    }
+
+    table.greyGridTable td,
+    table.greyGridTable th {
+      border: 1px solid #FFFFFF;
+      padding: 3px 4px;
+    }
+
+    table.greyGridTable tbody td {
+      font-size: 13px;
+    }
+
+    table.greyGridTable td:nth-child(even) {
+      background: #EBEBEB;
+    }
+
+    table.greyGridTable thead {
+      background: #FFFFFF;
+      border-bottom: 4px solid #333333;
+    }
+
+    table.greyGridTable thead th {
+      font-size: 15px;
+      font-weight: bold;
+      color: #333333;
+      text-align: center;
+      border-left: 2px solid #333333;
+    }
+
+    table.greyGridTable thead th:first-child {
+      border-left: none;
+    }
+
+    table.greyGridTable tfoot {
+      font-size: 14px;
+      font-weight: bold;
+      color: #333333;
+      border-top: 4px solid #333333;
+    }
+
+    table.greyGridTable tfoot td {
+      font-size: 14px;
+    }
   </style>
 </head>
+
 <body>
   <h1>Help Us Translate Tab Space</h1>
-  <p>It is great to use localized software and often makes us more comfortable. We would like to offer support for more languages in Tab Space. But we speak very few languages ourselves. So it is very appreciated if you could help us to translate Tab Space.</p>
-  <p>Basically, adding a translation is to append a block in the following file [<a href="https://github.com/yuanzhoucq/Tab-Space/blob/master/admin/src/lang.json">file</a>]. Or more specific, just translate the red quoted text under "en-us" label. If you kindly add a translation, please send it to joyuercn@icloud.com, we will add it to Tab Space very soon. Thanks!</p>
-  <script src="https://emgithub.com/embed.js?target=https%3A%2F%2Fgithub.com%2Fyuanzhoucq%2FTab-Space%2Fblob%2Fmaster%2Fadmin%2Fsrc%2Flang.json&style=xcode&showBorder=on&showLineNumbers=on&showFileMeta=on"></script>
+  <p>It is great to use localized software and often makes us more comfortable. We would like to offer support for more
+    languages in Tab Space. But we speak very few languages ourselves. So it is very appreciated if you could help us to
+    translate Tab Space.</p>
+  <h2>Current Progress</h2>
+  <table class="greyGridTable">
+    <thead>
+      <tr>
+        <th class="lang-th">Language Code</th>
+        <th class="name-th">Lanuage</th>
+        <th class="progress-th">Progress</th>
+        <th class="missingkeys-th">Missing Keys</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="lang-td td_text">zh-cn</td>
+        <td class="name-td td_text">Chinese (PRC)</td>
+        <td class="progress-td td_text">97.92%</td>
+        <td class="missingkeys-td td_text">whatsNew</td>
+      </tr>
+      <tr>
+        <td class="lang-td td_text">uk</td>
+        <td class="name-td td_text">Ukrainian</td>
+        <td class="progress-td td_text">95.83%</td>
+        <td class="missingkeys-td td_text">tipContents, whatsNew</td>
+      </tr>
+      <tr>
+        <td class="lang-td td_text">es</td>
+        <td class="name-td td_text">Spanish</td>
+        <td class="progress-td td_text">95.83%</td>
+        <td class="missingkeys-td td_text">tipContents, whatsNew</td>
+      </tr>
+      <tr>
+        <td class="lang-td td_text">da</td>
+        <td class="name-td td_text">Danish</td>
+        <td class="progress-td td_text">95.83%</td>
+        <td class="missingkeys-td td_text">tipContents, whatsNew</td>
+      </tr>
+      <tr>
+        <td class="lang-td td_text">pl</td>
+        <td class="name-td td_text">Polish</td>
+        <td class="progress-td td_text">95.83%</td>
+        <td class="missingkeys-td td_text">tipContents, whatsNew</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <p>Basically, adding a translation is to append a block in the following file [<a
+      href="https://github.com/yuanzhoucq/Tab-Space/blob/master/admin/src/lang.json">file</a>]. Or more specific, just
+    translate the red quoted text under "en-us" label. If you kindly add a translation or improvement some translation,
+    please send it to joyuercn@icloud.com, we will add it to Tab Space very soon. Thanks!</p>
+  <h2>Translation Source</h2>
+  <script
+    src="https://emgithub.com/embed.js?target=https%3A%2F%2Fgithub.com%2Fyuanzhoucq%2FTab-Space%2Fblob%2Fmaster%2Fadmin%2Fsrc%2Flang.json&style=xcode&showBorder=on&showLineNumbers=on&showFileMeta=on"></script>
 </body>
+
 </html>

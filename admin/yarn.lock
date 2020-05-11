@@ -7454,6 +7454,11 @@ svgo@^1.0.0:
     unquote "~1.1.1"
     util.promisify "~1.0.0"
 
+table-builder@^2.1.1:
+  version "2.1.1"
+  resolved "https://registry.npm.taobao.org/table-builder/download/table-builder-2.1.1.tgz#f2598961bc014bd0d50e4378765ae36dbe73df49"
+  integrity sha1-8lmJYbwBS9DVDkN4dlrjbb5z30k=
+
 table@^5.2.3:
   version "5.4.6"
   resolved "https://registry.npm.taobao.org/table/download/table-5.4.6.tgz#1292d19500ce3f86053b05f0e8e7e4a3bb21079e"
