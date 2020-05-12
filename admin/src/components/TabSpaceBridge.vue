@@ -40,7 +40,12 @@ export default {
     }
     window.addEventListener("message", evt => {
       // Filter out other sites' postMessage
-      if (!evt.origin.includes("joyuer.cn") && !evt.origin.includes("yuanzhoucq.github.io")) return
+      if (
+        !evt.origin.includes("joyuer.cn") 
+        && !evt.origin.includes("mytab.space") 
+        && evt.origin !== "yuanzhoucq.github.io"
+      ) return
+
       switch (evt.data.cmd) {
         case "ReturnBookmarks":
           console.log("Received checked bookmarks from Tab Space.app.")
