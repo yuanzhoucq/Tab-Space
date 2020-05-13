@@ -1,3 +1,3 @@
 export default {
-    staticResourceEndpoint: process.env.TABSPACE === "prod" ? "http://tabspacestatic.joyuer.cn" : "http://static.mytab.space"
+    staticResourceEndpoint: process.env.NODE_ENV === "production" ? "http://tabspacestatic.joyuer.cn" : "http://static.mytab.space"
 }

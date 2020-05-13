@@ -226,14 +226,17 @@ for (let lang in LangData) {
 }
 
 try {
-    var Table = require('table-builder');
-    console.log(
-    (new Table({'class': 'greyGridTable'}))
+    const Table = require('table-builder');
+    const fs = require('fs')
+    const table = (new Table({'class': 'greyGridTable'}))
         .setHeaders(header) 
         .setData(data)
         .render()
-    );
+    // console.log('\n', table);
+    let tranlateHtml = fs.readFileSync('../translate.html').toString()
+    tranlateHtml = tranlateHtml.replace(/\<table[\s\S]+\<\/table\>/, table)
+    fs.writeFileSync('../translate.html', tranlateHtml)
 } catch (e) {
-    console.log("\nTable-builder not installed.")
+    console.log('\nTable-builder not installed.')
 }
 assert(extraKeysLength === 0)

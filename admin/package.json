@@ -4,8 +4,8 @@
   "private": true,
   "scripts": {
     "serve": "vue-cli-service serve",
-    "build": "export TABSPACE=prod && vue-cli-service build && bash deploy.sh",
-    "build-beta": "export TABSPACE=beta && vue-cli-service build && rm -r ../beta && mv dist ../beta",
+    "build": "vue-cli-service build && bash deploy.sh",
+    "build-beta": "vue-cli-service build --mode development && rm -r ../beta && mv dist ../beta",
     "lint": "vue-cli-service lint"
   },
   "dependencies": {
