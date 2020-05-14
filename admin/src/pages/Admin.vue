@@ -12,7 +12,7 @@
         <p align="center">Connecting to Tab Space App...</p>
       </div>
       <div class="lose-tabs" v-if="bridge && sessions.length < 1">
-        <span><a class="link" :href="lang.loseTabsLink" target="_blank">{{lang.loseTabs}}</a></span><br/><br/>
+        <span><a class="link" @click="reload" href="#">{{lang.loseTabs}}</a></span><br/><br/>
         <router-link class="link" to="/settings">{{lang.migrateTip}}</router-link>
       </div>
       <div v-if="bridge" class="sessions-container">
@@ -62,6 +62,11 @@
     watch: {
       keyword(value) {
         _.debounce(() => this.$store.commit('setKeyword', value), 500)()
+      }
+    },
+    methods: {
+      reload() {
+        window.location.reload()
       }
     }
   }

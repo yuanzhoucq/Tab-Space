@@ -59,9 +59,6 @@
         <p>
           <code>Ctrl + I</code>
           {{lang.ctrlI}}
-          <br />
-          <br />
-          <small>{{lang.braveTip}}</small>
         </p>
         <p>
           <code>Ctrl + T</code>
@@ -70,12 +67,6 @@
         <p>
           <code>Ctrl + B</code>
           {{lang.ctrlB}}
-          <br />
-          <br />
-          <small>
-            {{lang.bearTip}}
-            <a :href="lang.bearUrl" target="_blank">Bear</a>
-          </small>
         </p>
       </div>
     </div>
