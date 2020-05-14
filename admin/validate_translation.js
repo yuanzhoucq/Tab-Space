@@ -214,7 +214,7 @@ for (let lang in LangData) {
         let missingKeys = enUsKeys.filter(key => !langKeys.includes(key)).sort()
         const extraKeys = langKeys.filter(key => !enUsKeys.includes(key)).sort()
         const progress = `${(100 * (1 - missingKeys.length / enUsKeys.length)).toFixed(2)}%`
-        missingKeys = missingKeys.join(", ")
+        missingKeys = missingKeys.join(", ") || "-"
         console.log(`* Translation coverage: \x1b[32m${progress}\x1b[0m`)
         console.log(`* Missing keys: \x1b[35m${missingKeys}\x1b[0m`)
         extraKeys.length > 0 && console.log(`* Extra keys to remove: \x1b[31m${extraKeys}\x1b[0m`)
