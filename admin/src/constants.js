@@ -13,6 +13,7 @@ module.exports = {
         {code: "pl", name: "Polish"},
         {code: "ru", name: "Russian"},
         {code: "es", name: "Spanish"},
+        {code: "tr", name: "Turkish"},
         {code: "uk", name: "Ukrainian"},
     ]
 }

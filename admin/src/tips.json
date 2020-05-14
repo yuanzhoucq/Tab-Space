@@ -35,5 +35,17 @@
             "Пожалуйста оцените Tab Space на Mac App Store, если вам нравится это приложение.",
             "Быстрые комбинации Tab Space не будут работать при пустой поисковой строке Safari. Поскольку пустая поисковая строка означает особую страницу где расширения не работают. "
         ]
+    },
+    "tr": {
+        "importantTips": [
+        ],
+        "commonTips": [
+            "Tab Space 3.6, optimize edilmiş iCloud Sync, çalışmak için macOS 10.15 gerektirir. Eğer hala macOS 10.13/10.14 kullanıyorsanız ve Tab Space'nin iCloud Sync kullanmak istiyorsanız, lütfen \"Automatic Updates\" kapatınız, ve App Store ayarlarından Tab Space güncellemeyin.",
+            "Eğer \"save tabs\" tıklayıp hiç kayıtlı sekme bulamadıysanız, bunun nedeni Tab Space yeni güncellenmiş olmasıdır, lütfen Safari'yi yeniden başlatın. ",
+            "Oturumlarınız bütün cihazlarınız arasında iCloud üzerinden senkronize oluyor. (macOS 10.15 gerektirir)",
+            "Artık Tut ve Sürükle yaparak oturumlarınızı ve websitelerinizi organize edebilirsiniz.",
+            "Lütfen Tab Space'yi Mac App Store üzerinden yorumlamayı unutmayın.",
+            "Safari adres çubuğu boş iken kısayollar çalışmaz. Bunun nedeni boş adres çubuğu Safari uzantılarını bloklar."
+        ]
     }
 }

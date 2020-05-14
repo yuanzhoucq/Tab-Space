@@ -4,7 +4,8 @@
   "private": true,
   "scripts": {
     "serve": "vue-cli-service serve",
-    "build": "vue-cli-service build && bash deploy.sh",
+    "build": "vue-cli-service build",
+    "postbuild": "bash deploy.sh && node validate_translation.js",
     "build-beta": "vue-cli-service build --mode development && rm -r ../beta && mv dist ../beta",
     "lint": "vue-cli-service lint"
   },
