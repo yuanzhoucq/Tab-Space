@@ -1,6 +1,7 @@
 module.exports = {
     settings: [
         "ignore-pinned-tabs",
+        "ignore-duplicated-tabs",
         "save-all-windows",
         "disable-shortcuts"
     ],
