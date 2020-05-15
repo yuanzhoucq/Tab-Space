@@ -1,0 +1,569 @@
+@font-face {
+    font-family: "JetBrains Mono";
+    src: url('../JetBrainsMono-Regular.woff2')
+}
+
+body {
+    color: #000;
+    font-family: "JetBrains Mono", -apple-system, -apple-system-font, sans-serif;
+    font-size: 1em;
+    line-height: 1.5
+}
+
+h1, h2, h3, h4, h5, h6 {
+    font-family: "SF Pro Display", -apple-system, sans-serif;
+    font-size: 1em;
+    line-height: 1.2;
+    margin: 0 0 .75em;
+}
+
+h1 {
+    font-size: 2.375em;
+    font-weight: 600
+}
+
+h2 {
+    font-size: 2.125em;
+    font-weight: 600
+}
+
+
+p {
+    margin: 0 0 .75em;
+    color: #444444;
+}
+
+a {
+    color: #1C8BF3;
+    text-decoration: none;
+    transition: color 150ms ease
+}
+
+a:active, a:focus, a:hover {
+    color: #1568b6
+}
+
+hr {
+    border-bottom: 1px solid #ddd;
+    border-left: 0;
+    border-right: 0;
+    border-top: 0;
+    margin: 1.5em 0
+}
+
+img, picture {
+    margin: 0;
+    max-width: 100%
+}
+
+body, html {
+    background-color: #fff;
+    margin: 0;
+    overflow-x: hidden
+}
+
+html {
+    box-sizing: border-box
+}
+
+*, *:before, *:after {
+    box-sizing: inherit
+}
+
+.container {
+    display: flex;
+    margin: 0 auto;
+    max-width: 1440px
+}
+
+p {
+    font-size: 1.275em;
+    font-weight: 300;
+    line-height: 1.65;
+}
+
+p b {
+    font-weight: 500
+}
+
+header {
+    padding: 0 64px 28px;
+    display: flex;
+    align-items: flex-end
+}
+
+@media only screen and (max-width: 425px) {
+    header {
+        padding-left: 32px;
+        padding-right: 32px
+    }
+}
+
+header h1 {
+    font-size: 1.625em;
+    margin: 0;
+    font-weight: 300
+}
+
+header h1 b {
+    font-weight: 600
+}
+
+header .logo {
+    display: block;
+    float: left;
+    margin-right: 18px;
+    height: 56px;
+    width: 56px;
+    position: relative;
+    top: -1px
+}
+
+header .title {
+    clear: right;
+    display: block;
+    float: left;
+    margin-top: 11px
+}
+
+.button:hover, .button:active, .button:focus {
+    color: #fff
+}
+
+.app-main {
+    min-height: 735px;
+    margin: 7vh 0 0;
+    display: flex;
+    flex-direction: column;
+    align-content: center
+}
+
+.app-main .container {
+    flex: 1
+}
+
+@media only screen and (max-width: 1120px) {
+    .app-main .container {
+        display: block
+    }
+}
+
+.app-main .img {
+    background-position: top right;
+    background-repeat: no-repeat;
+    position: relative;
+    background-size: 100%;
+    margin-left: -3%;
+    width: 925px;
+    height: 535px;
+    transform: scale(1.2);
+    transform-origin: top right;
+    border-radius: 15px;
+}
+
+@media only screen and (max-width: 1120px) {
+    .app-main .img {
+        transform-origin: top center;
+        background-position: top center;
+        margin: 0 auto;
+        width: 96vw;
+        height: 68vw
+    }
+}
+
+.app-main video {
+    background: #000;
+    width: 100%;
+    margin-top: 4%;
+    transform-origin: top center;
+    transform: scale(0.76);
+    border-radius: 15px;
+}
+
+
+@media only screen and (-webkit-min-device-pixel-ratio: 1.3), only screen and (min--moz-device-pixel-ratio: 1.3), only screen and (-o-min-device-pixel-ratio: 1.3 / 1), only screen and (min-resolution: 125dpi), only screen and (min-resolution: 1.3dppx) {
+    .app-main .app {
+        background-size: 402px 259px
+    }
+}
+
+.app-main .app-article {
+    flex: 1;
+    padding: 0 30px 0 0
+}
+
+@media only screen and (max-width: 1120px) {
+    .app-main .app-article {
+        padding: 0
+    }
+}
+
+@media only screen and (max-width: 480px) {
+    .app-main .app-article {
+        min-width: inherit;
+        padding: 0 40px
+    }
+}
+
+.app-main .app-article .inner {
+    padding: 100px 30px 0 0;
+    max-width: 440px
+}
+
+@media only screen and (max-width: 1120px) {
+    .app-main .app-article .inner {
+        max-width: 480px;
+        padding-top: 80px;
+        padding-right: 0;
+        margin: 0 auto
+    }
+}
+
+.app-main .app-article h1 {
+    margin-bottom: 0.55em
+}
+
+.app-main .app-article p {
+    margin: 0 0 80px
+}
+
+@media only screen and (max-width: 1120px) {
+    .app-main .app-article p {
+        margin-bottom: 60px
+    }
+}
+
+.app-main .app-article .app-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-start
+}
+
+.app-main .app-article .app-buttons.full-width .button {
+    flex: 1
+}
+
+.app-main .app-article .tooltip {
+    background: #2D3741;
+    border-radius: 20px;
+    padding: 8px 20px;
+    position: absolute;
+    color: #fff;
+    font-size: 0.875rem;
+    box-shadow: 0 3px 7px 0 rgba(0, 0, 0, 0.16);
+    font-family: -apple-system, -apple-system-font, BlinkMacSystemFont, "Helvetica Neue", "Helvetica", "Roboto", "Arial", sans-serif;
+    top: -30px;
+    left: calc(50% - 63px);
+    opacity: 0;
+    transition: top 0.24s cubic-bezier(0.25, 0.46, 0.45, 0.94), opacity 0.24s cubic-bezier(0.25, 0.46, 0.45, 0.94)
+}
+
+.app-main .app-article .tooltip:after {
+    height: 0;
+    width: 0;
+    border-left: 6px solid transparent;
+    border-right: 6px solid transparent;
+    border-top: 6px solid #2D3741;
+    content: " ";
+    position: absolute;
+    top: 100%;
+    left: calc(50% - 6px)
+}
+
+.app-main .app-article .tooltip.show {
+    opacity: 1;
+    top: -45px
+}
+
+@media only screen and (max-width: 1120px) {
+    .app-main .app-article .button {
+        flex: 1
+    }
+}
+
+@media only screen and (max-width: 480px) {
+    .app-main .app-article .button {
+        width: 100%
+    }
+}
+
+.app-main .app-article .button.download {
+    flex: 1
+}
+
+@media only screen and (max-width: 480px) {
+    .app-main .app-article .button.download {
+        margin-bottom: 20px
+    }
+}
+
+.app-main .app-article .button.sign-up {
+    background: none;
+    box-shadow: inset 0 0 0 1px #1C8BF3;
+    color: #0c79df;
+    position: relative
+}
+
+@media only screen and (max-width: 1120px) {
+    .app-main .app-article .button.sign-up {
+        flex: 0.5
+    }
+}
+
+@media only screen and (max-width: 480px) {
+    .app-main .app-article .button.sign-up {
+        flex: 1
+    }
+}
+
+.app-main .app-article .requirements {
+    margin-top: 30px;
+    display: flex;
+    margin-bottom: 20px
+}
+
+.app-main .app-article .requirements img {
+    display: block;
+    margin-right: 8px;
+    height: 32px;
+    width: 32px
+}
+
+.app-main .app-article .requirements .title {
+    color: rgba(74, 74, 74, 0.95);
+    font-size: 0.875em;
+    font-weight: 400;
+    line-height: 1.1;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale
+}
+
+.app-main .app-article .requirements .subtitle {
+    color: #999;
+    font-size: 0.75em;
+    font-weight: 400;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale
+}
+
+.app-main .app-article .catalina-setup {
+    background: #F5F5F5;
+    border-radius: 50px;
+    padding: 10px 22px 10px 20px;
+    margin: 0px 11px 0 0;
+    font-size: 0.875em
+}
+
+.app-main .app-article .catalina-setup:hover .svg-arrow {
+    transform: translateY(2px) translateX(4px)
+}
+
+.app-main .app-article .catalina-setup a {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between
+}
+
+.app-main .app-article .catalina-setup .svg-arrow {
+    transform: translateY(2px) translateX(0px);
+    transition: all 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94)
+}
+
+.product-info {
+    background-color: #F5F5F5
+}
+
+.product-info .container {
+    align-items: center;
+    display: flex;
+    padding: 16vh 40px 18vh;
+    min-height: 660px
+}
+
+@media only screen and (max-width: 1120px) {
+    .product-info .container {
+        display: block
+    }
+}
+
+.product-info .product-copy {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: center;
+    margin-top: -76px
+}
+
+@media only screen and (max-width: 1120px) {
+    .product-info .product-copy {
+        margin-top: 0
+    }
+}
+
+.product-info .product-copy .inner {
+    max-width: 440px;
+    padding-right: 26px
+}
+
+@media only screen and (max-width: 1120px) {
+    .product-info .product-copy .inner {
+        max-width: 480px
+    }
+}
+
+@media only screen and (max-width: 425px) {
+    .product-info .product-copy .inner {
+        padding-right: 0
+    }
+}
+
+.product-info .product-preview {
+    flex: 1;
+    height: 400px;
+    max-width: 631px;
+    min-width: 631px
+}
+
+@media only screen and (max-width: 1120px) {
+    .product-info .product-preview {
+        margin: 60px auto 0;
+        position: relative;
+        left: -10px
+    }
+}
+
+.product-info .product-preview .wrapper {
+    width: 631px;
+    position: relative
+}
+
+.product-info .product-preview .product-image-white {
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 2;
+    will-change: transform
+}
+
+@media only screen and (max-width: 1120px) {
+    .product-info .product-preview .product-image-white {
+        left: 50px
+    }
+}
+
+@media only screen and (max-width: 500px) {
+    .product-info .product-preview .product-image-white {
+        left: 30px
+    }
+}
+
+.product-info .product-preview .product-image-dark {
+    position: absolute;
+    top: -50px;
+    left: 50px;
+    z-index: 1;
+    will-change: transform
+}
+
+@media only screen and (max-width: 1120px) {
+    .product-info .product-preview .product-image-dark {
+        left: 20px
+    }
+}
+
+@media only screen and (max-width: 500px) {
+    .product-info .product-preview .product-image-dark {
+        left: 0px
+    }
+}
+
+.download-footer {
+    background-color: #F5F5F5;
+    position: relative;
+    z-index: 1
+}
+
+.download-footer .container {
+    padding: 10vh 40px 0
+}
+
+.download-footer .inner {
+    text-align: center;
+    margin: 0 auto;
+    position: relative
+}
+
+.download-footer .button {
+    margin-bottom: 6vh;
+    padding: 20px 48px 21px
+}
+
+.download-footer .image {
+    height: 220px;
+    overflow: hidden;
+    transform: translateY(60px);
+    transition: all 0.45s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    opacity: 0
+}
+
+.download-footer .image.animate {
+    transform: translateY(0px);
+    opacity: 1
+}
+
+.download-footer img {
+    width: 672px;
+    margin: 0 auto;
+    display: block;
+    max-width: 100%;
+    height: auto
+}
+
+footer {
+    position: relative;
+    z-index: 2;
+    background: #fff;
+    height: 80px
+}
+
+footer .inner {
+    padding: 30px 64px 0;
+    width: 100%
+}
+
+footer .author {
+    text-align: center;
+    display: block;
+    font-size: 0.75em;
+    color: #4A4A4A;
+    font-weight: 400
+}
+
+footer .author b {
+    font-weight: 600
+}
+
+@media only screen and (max-width: 548px) {
+    footer .author {
+        float: none;
+        text-align: center;
+        margin: 30px 0
+    }
+}
+
+footer .author a {
+    color: #4A4A4A
+}
+
+footer .author a:hover {
+    border-bottom: 1px solid #999
+}
+
+@media only screen and (max-width: 548px) {
+    footer .sharing {
+        float: none;
+        text-align: center
+    }
+}
+
