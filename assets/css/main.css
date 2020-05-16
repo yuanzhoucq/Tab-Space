@@ -567,3 +567,23 @@ footer .author a:hover {
     }
 }
 
+body {
+    color: #777;
+}
+
+.loader {
+    position: absolute;
+    width: 5em;
+    text-align: center;
+    left: 28em;
+    top: 15em;
+    z-index: 10000;
+    background-color: rgba(0, 0, 0, 0.1);
+    padding: 0.5em;
+    border-radius: 1em;
+}
+
+svg path,
+svg rect {
+    fill: #FF6700;
+}
