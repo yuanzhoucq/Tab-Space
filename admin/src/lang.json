@@ -425,7 +425,7 @@
         "tips": "Tips:",
         "tipContents": [
             "Tab Space 3.6 behöver optimerad iCloud Sync som endast finns i macOS 10.15 och nyare. Om du använder äldre macOS än så och vill använda iCloud Sync behöver du stänga \"Automatiska uppdatering\" i AppStores inställningar och inte uppgradera Tab Space",
-            "Om du trycker på \Spara flikar\" och inga flikar sparas är det för att Tab Space precis uppgraderats. Starta om Safari för att aktivera det igen.",
+            "Om du trycker på \"Spara flikar\" och inga flikar sparas är det för att Tab Space precis uppgraderats. Starta om Safari för att aktivera det igen.",
             "Dina sessioner är nu synkade till alla dina enheter i iCloud (kräver macOS 10.15)",
             "Du kan dra och släppa för att organisera om dina sessioner och sidor",
             "Betygsätt gärna Tab Space i Mac Appstore om du gillar detta program",
