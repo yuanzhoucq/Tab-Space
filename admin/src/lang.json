@@ -24,7 +24,6 @@
         "migrateTip": "Or go to settings and manually migrate old sessions",
         "tips": "Tips:",
         "tipContents": [
-            "From Tab Space 3.6, optimized iCloud Sync will need macOS 10.15 to work. If you still use macOS 10.13/10.14 and want to use iCloud Sync of Tab Space, please turn off \"Automatic Updates\" in App Store's preferences and do not upgrade Tab Space.",
             "If you hit \"save tabs\" and found no tabs were saved, it is because Tab Space just upgraded, please restart Safari to enable it. ",
             "Your sessions are now synced across all your devices with iCloud. (macOS 10.15 required)",
             "You can now use Drag and Drop to reorganize your sessions or sites.",
@@ -52,6 +51,7 @@
         "saveCurrentTab": "Save Current Tab",
         "recentlySaved": "Recently Saved",
         "favorites": "Favorites",
+        "activeTabs": "Active Tabs",
         "openSafariPref": "Open in Safari Extension Preferences",
         "appIntroduction": "Born for improving your web browsing productivity.",
         "upgradeSafari": "Tab Space requires at least Safari 12.1.\n Please upgrade your Safari."
@@ -81,7 +81,6 @@
         "migrateTip": "或进入设置页面手动迁移旧数据",
         "tips": "提示：",
         "tipContents": [
-            "从 Tab Space 3.6 开始，优化的 iCloud 同步功能需要在 macOS 10.15 上运行。如果您仍在使用 macOS 10.13/19.14 并且需要使用 Tab Space 的 iCloud 同步功能，请在 App Store 的偏好设置中关闭“自动更新”，以及请勿升级 Tab Space。",
             "如果您发现点击“保存”按钮后标签页没有被保存，这很可能是由于 Tab Space 刚刚更新，重启 Safari 以使其生效即可恢复正常。",
             "您的书签组现通过 iCloud 在设备间同步。(要求 macOS 10.15 版本）",
             "您现在可以通过拖拽保存的会话或站点以重新组织您的记录。",
@@ -109,6 +108,7 @@
         "saveCurrentTab": "保存当前标签页",
         "recentlySaved": "最近保存",
         "favorites": "收藏",
+        "activeTabs": "活动标签页",
         "openSafariPref": "打开 Safari 扩展设置",
         "appIntroduction": "为提高网络浏览效率而生的 Safari 扩展",
         "upgradeSafari": "Tab Space 要求 Safari 12.1 或更高版本\n 请升级您的 Safari 浏览器"
@@ -314,7 +314,6 @@
         "migrateTip": "Или перейдите в настройки и перенесите старый сеанс в ручную",
         "tips": "Советы:",
         "tipContents": [
-            "Начиная с Tab Space 3.6, оптимизированная iCloud синхронизация потребует macOS 10.15. Если Вы все еще используете macOS 10.13/10.14 и хотите использовать iCloud синхронизацию для Tab Space, пожалуйста отключите \"Автоматические Обновления\" в настройках App Store и не обновляйте Tab Space. ",
             "Если вы нажали \"сохранить вкладки\" и обнаружили что вкладки не сохранились, это потому-что Tab Space только что обновился, пожалуйста перезапустите Safari, что-бы заработало.",
             "Ваш сеанс синхронизирован со всеми вашими устройствами через iCloud. (Требуется macOS 10.15)",
             "Вы теперь можете перетаскивать ссылки для организации сеансов или сайтов.",
@@ -367,7 +366,6 @@
         "migrateTip": " Veya ayarlara gidin ve el ile eski oturumlarınızı taşıyın",
         "tips": "İpuçları:",
         "tipContents": [
-            "Tab Space 3.6, optimize edilmiş iCloud Sync, çalışmak için macOS 10.15 gerektirir. Eğer hala macOS 10.13/10.14 kullanıyorsanız ve Tab Space'nin iCloud Sync kullanmak istiyorsanız, lütfen \"Automatic Updates\" kapatınız, ve App Store ayarlarından Tab Space güncellemeyin.",
             "Eğer \"save tabs\" tıklayıp hiç kayıtlı sekme bulamadıysanız, bunun nedeni Tab Space yeni güncellenmiş olmasıdır, lütfen Safari'yi yeniden başlatın. ",
             "Oturumlarınız bütün cihazlarınız arasında iCloud üzerinden senkronize oluyor. (macOS 10.15 gerektirir)",
             "Artık Tut ve Sürükle yaparak oturumlarınızı ve websitelerinizi organize edebilirsiniz.",
@@ -424,7 +422,6 @@
         "migrateTip": "Oder gehe zu Einstellungen, um dort vergangene vergangene Sitzungen zu migrieren",
         "tips": "Tips:",
         "tipContents": [
-            "Ab Tab Space 2.6 wird für eine optimierte iCloud Synchronisation macOS 10.15 benötigt. Wenn du noch macOS 10.13/10.14 nutzt, aber dennoch iCloud Sync für Tab Space benutzten willst, deaktiviere  \"automatische Updates\" in den App Store Einstellungen und upgrade Tabs Space nicht.",
             "Wenn du \"Tabs speichern\" drückst, aber keine Tabs gespeichert wurden, liegt es daran, dass Tab Space gerade aktualisiert wurde. Bitte schließe Safari und starte es erneut, um es zu aktivieren",
             "Deine Sitzungen sind nun auf all deinen Geräten über iCloud synchronisiert. (macOS 10.15 wird benötigt)",
             "Du kannst nun Drag and Drop nutzen, um deine Sitzungen und Seiten zu reorganisieren.",
@@ -481,7 +478,6 @@
         "migrateTip": "Eller gå till inställningar och manuellt migrera en gammal session",
         "tips": "Tips:",
         "tipContents": [
-            "Tab Space 3.6 behöver optimerad iCloud Sync som endast finns i macOS 10.15 och nyare. Om du använder äldre macOS än så och vill använda iCloud Sync behöver du stänga \"Automatiska uppdatering\" i AppStores inställningar och inte uppgradera Tab Space",
             "Om du trycker på \"Spara flikar\" och inga flikar sparas är det för att Tab Space precis uppgraderats. Starta om Safari för att aktivera det igen.",
             "Dina sessioner är nu synkade till alla dina enheter i iCloud (kräver macOS 10.15)",
             "Du kan dra och släppa för att organisera om dina sessioner och sidor",
@@ -538,7 +534,6 @@
         "migrateTip": "O vai nelle impostazioni per migrare da sessioni vecchie",
         "tips": "Suggerimenti:",
         "tipContents": [
-            "Da Tab Space 3.6, la sincronizzazione ottimizzata di iCloud necessita di macOS 10.15 per funzionare. Se usi ancora macOS 10.13/10.14 e vuoi usare Tab Space con la sincronizzazione di iCloud, per favore disattiva \"Aggiornamenti Automatici\" nelle preferenze di App Store e non aggiornare Tab Space.",
             "Se hai selezionato \"Salva le Tab\" e non hai trovato le tab salvate, è perchè Tab Space si è appena aggiornato. Riavvia Safari per rendere effettivo l'aggiornamento. ",
             "Le tue sessioni sono ora sincronizzate su tutti i tuoi device con iCloud (richiede macOS 10.15)",
             "Puoi ora usare il Drag and Drop per riorganizzare le tue sessioni o i tuoi siti",

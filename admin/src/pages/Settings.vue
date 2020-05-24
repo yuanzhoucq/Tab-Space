@@ -49,6 +49,14 @@
           {{lang.ctrlQ}}
         </p>
         <p>
+          <code>Ctrl + ;</code>
+          {{lang.saveAndCloseTabs}}
+        </p>
+        <p>
+          <code>Ctrl + S</code>
+          {{lang.saveCurrentTab}}
+        </p>
+        <p>
           <code>Ctrl + C</code>
           {{lang.ctrlC}}
         </p>
