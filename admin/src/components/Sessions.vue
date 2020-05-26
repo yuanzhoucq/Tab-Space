@@ -65,26 +65,19 @@
         el.style.opacity = 0
       },
       enter(el, done) {
-        setTimeout(function () {
-          Velocity(
-            el,
-            { opacity: 1 },
-            { complete: done }
-          )
-        }, 0)
+        Velocity(
+          el,
+          { opacity: 1 },
+          { complete: done }
+        )
       },
       leave(el, done) {
-        el.style.padding = 0
-        el.style.height = 0
-        el.style.margin = 0
-        el.style.opacity = 0.1
-        setTimeout(function () {
-          Velocity(
-            el,
-            { opacity: 0 },
-            { complete: done }
-          )
-        }, 0)
+        el.style.display = 'none'
+        Velocity(
+          el,
+          { opacity: 0 },
+          { complete: done }
+        )
       }
     }
   };
