@@ -31,17 +31,17 @@
         </div>
       </div>
     </div>
-    <ul class="session-sites" style="user-select: none">
-      <draggable :disabled="isEditingSession(session)" :forceFallback="true" fallbackTolerance="10" 
+    <ul :class="['session-sites', {'collapsed-sites': collapse}]">
+      <draggable :disabled="isEditingSession(session) || collapse" :forceFallback="true" fallbackTolerance="10" 
       :list="session.sites" group="shared" @start="() => startDragSite(session)" @end="endDragSite">
-        <li v-for="(tab, tid) in session.sites" v-bind:key="tid">
+        <li :class="{'collapsed-site': collapse}" v-for="(tab, tid) in session.sites" v-bind:key="tid">
           <div v-if="editingSessionUuid === session.uuid">
             <v-icon name="compass" :stroke-width="1.5" style="margin-bottom: -3px"></v-icon>
             <input class="tab-edit" placeholder="url" type="text" v-model="tab.url"><br>
             <v-icon name="corner-down-right" :stroke-width="1" style="margin-left: 30px"></v-icon>
             <input class="tab-edit" placeholder="title" type="text" v-model="tab.title">
           </div>
-          <div v-if="!isEditingSession(session)" class="del-item" @click="delItem(tid,session)">
+          <div v-if="!isEditingSession(session) && !collapse" class="del-item" @click="delItem(tid,session)" >
             <small>X</small>
           </div>
           <div v-if="!isEditingSession(session)" class="fav">
@@ -52,7 +52,7 @@
                 alt
             />
           </div>
-          <span v-if="!isEditingSession(session)" class="site-title">
+          <span v-if="!isEditingSession(session) && !collapse" class="site-title">
             <a class="link" :href="wrapUrl(tab.url)" v-html="highlight(tab.title || tab.url)"></a>
           </span>
         </li>
@@ -120,7 +120,7 @@
       }
     },
     computed: {
-      ...mapState(["lang", "bridge", "keyword", "sessions", "editingSessionUuid"]),
+      ...mapState(["lang", "bridge", "keyword", "collapse", "sessions", "editingSessionUuid"]),
       ...mapGetters(["displaySessions"]),
       editingSessionUuid: {
         get() {
@@ -365,6 +365,24 @@
     white-space: nowrap;
     overflow-x: hidden;
     text-overflow: ellipsis;
+  }
+
+  .session-sites {
+    user-select: none; 
+    transition: 0.2s;
+    margin: 0 0 0 -45px;
+  }
+
+  .collapsed-sites {
+    margin-left: -10px;
+    padding-right: 25px;
+  }
+
+  .collapsed-site {
+    display: inline-block;
+    margin: 0;
+    padding: 0;
+    transition: 0.2s;
   }
 
   .btn {

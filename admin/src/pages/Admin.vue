@@ -92,10 +92,6 @@
     transition: 0.3s;
   }
 
-  ul {
-    margin: 0 0 0 -45px;
-  }
-
   #main {
     min-height: calc(100vh - 35px);
   }

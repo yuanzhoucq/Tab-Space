@@ -4,6 +4,10 @@
           <v-icon class="button" :stroke-width="1.2" name="plus-circle" fill="rgba(0, 181, 29, 0.2)" 
       stroke="rgb(0, 181, 29)"></v-icon>
       </div>
+      <div @click="toggleCollapse">
+          <v-icon class="button" :stroke-width="1.2" name="align-justify" 
+      :stroke="collapse ? 'rgb(0, 181, 29)' : 'rgb(0, 0, 0)'"></v-icon>
+      </div>
   </div>
 </template>
 
@@ -11,7 +15,7 @@
 import { mapState, mapGetters } from 'vuex'
 export default {
     computed: {
-      ...mapState(["bridge", "sessions", "activeTag"]),
+      ...mapState(["bridge", "sessions", "collapse", "activeTag"]),
       ...mapGetters(["displaySessions"]),
     },
     methods: {
@@ -25,6 +29,9 @@ export default {
                 tags: []
             }
             this.displaySessions.unshift(newSession)
+        },
+        toggleCollapse() {
+            this.$store.commit("toggleCollapse")
         }
     }
 }

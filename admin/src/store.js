@@ -24,6 +24,7 @@ const store = new Vuex.Store({
         initialRefresh: false,
         sessions: [],
         keyword: "",
+        collapse: false,
         activeTag: "",
         editingSessionUuid: "",
         tabSpaceSettings: {
@@ -77,6 +78,9 @@ const store = new Vuex.Store({
         },
         setKeyword(state, newKeyword) {
             state.keyword = newKeyword
+        },
+        toggleCollapse(state) {
+            state.collapse = !state.collapse
         },
         setActiveTag(state, newTag) {
             state.activeTag = newTag
