@@ -12,6 +12,7 @@ module.exports = {
         {code: "en-us", name: "English"},
         {code: "de", name: "German"},
         {code: "it", name: "Italian"},
+        {code: "ko", name: "Korean"},
         {code: "pl", name: "Polish"},
         {code: "ru", name: "Russian"},
         {code: "es", name: "Spanish"},
