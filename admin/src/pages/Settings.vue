@@ -37,43 +37,47 @@
           <small>{{lang.shortcutTip}}</small>
         </p>
         <p>
-          <code>Ctrl + L</code>
+          <code>Ctrl + {{ tabSpaceSettings["shift-shortcuts"] === "true" ? "Shift +" : "" }} L</code>
           {{lang.ctrlL}}
         </p>
         <p>
-          <code>Ctrl + R</code>
+          <code>Ctrl + {{ tabSpaceSettings["shift-shortcuts"] === "true" ? "Shift +" : "" }} R</code>
           {{lang.ctrlR}}
         </p>
         <p>
-          <code>Ctrl + Q</code>
+          <code>Ctrl + {{ tabSpaceSettings["shift-shortcuts"] === "true" ? "Shift +" : "" }} Q</code>
           {{lang.ctrlQ}}
         </p>
         <p>
-          <code>Ctrl + ;</code>
+          <code>Ctrl + {{ tabSpaceSettings["shift-shortcuts"] === "true" ? "Shift +" : "" }} ;</code>
           {{lang.saveAndCloseTabs}}
         </p>
         <p>
-          <code>Ctrl + S</code>
+          <code>Ctrl + {{ tabSpaceSettings["shift-shortcuts"] === "true" ? "Shift +" : "" }} S</code>
           {{lang.saveCurrentTab}}
         </p>
         <p>
-          <code>Ctrl + C</code>
+          <code>Ctrl + {{ tabSpaceSettings["shift-shortcuts"] === "true" ? "Shift +" : "" }} C</code>
           {{lang.ctrlC}}
         </p>
         <p>
-          <code>Ctrl + F</code>
+          <code>Ctrl + {{ tabSpaceSettings["shift-shortcuts"] === "true" ? "Shift +" : "" }} W</code>
+          {{lang.ctrlW}}
+        </p>
+        <p>
+          <code>Ctrl + {{ tabSpaceSettings["shift-shortcuts"] === "true" ? "Shift +" : "" }} F</code>
           {{lang.ctrlF}}
         </p>
         <p>
-          <code>Ctrl + I</code>
+          <code>Ctrl + {{ tabSpaceSettings["shift-shortcuts"] === "true" ? "Shift +" : "" }} I</code>
           {{lang.ctrlI}}
         </p>
         <p>
-          <code>Ctrl + T</code>
+          <code>Ctrl + {{ tabSpaceSettings["shift-shortcuts"] === "true" ? "Shift +" : "" }} T</code>
           {{lang.ctrlT}}
         </p>
         <p>
-          <code>Ctrl + B</code>
+          <code>Ctrl + {{ tabSpaceSettings["shift-shortcuts"] === "true" ? "Shift +" : "" }} B</code>
           {{lang.ctrlB}}
         </p>
       </div>

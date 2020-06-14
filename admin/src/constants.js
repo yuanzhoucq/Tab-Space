@@ -3,6 +3,7 @@ module.exports = {
         "ignore-pinned-tabs",
         "ignore-duplicated-tabs",
         "save-all-windows",
+        "shift-shortcuts",
         "disable-shortcuts"
     ],
     preferredLanguageKey: "preferred-language",

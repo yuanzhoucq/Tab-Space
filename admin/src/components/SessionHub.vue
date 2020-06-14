@@ -6,7 +6,7 @@
       </div>
       <div @click="toggleCollapse">
           <v-icon class="button" :stroke-width="1.2" name="align-justify" 
-      :stroke="collapse ? 'rgb(0, 181, 29)' : 'rgb(0, 0, 0)'"></v-icon>
+      :stroke="collapse ? 'rgb(0, 181, 29)' : 'rgba(0, 181, 29, 0.5)'"></v-icon>
       </div>
   </div>
 </template>
