@@ -511,7 +511,10 @@
         "favorites": "Favoriter",
         "openSafariPref": "Öppna i Safaris inställningar för tillägg",
         "appIntroduction": "Skapad för att förbättra din produktivitet på webben.",
-        "upgradeSafari": "Tab Space kräver minst Safari 12.1.\n Vänligen uppgradera Safari."
+        "upgradeSafari": "Tab Space kräver minst Safari 12.1.\n Vänligen uppgradera Safari.",
+        "activeTabs": "Aktiva flikar",
+        "ctrlW": "Öppna i Edge",
+        "shift-shortcuts": "Använd Ctrl + Shift för kortkommandon"
     },
     "it": {
         "saveAt": "Salvato il",
