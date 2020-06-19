@@ -3,7 +3,7 @@ Tab Space is a Safari extension app which is born for improving web browsing pro
 > Note: this repo contains the project site and the web app cooperating with Tab Space in Safari. It **does not contain** the Xcode project which builds the entire app. 
 
 
-## Contribution
+## Contributing
 ### For translation
 - [Translation page](https://mytab.space/translate.html)
 ### For web app
