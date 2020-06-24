@@ -81,5 +81,15 @@
             "Tab Space가 마음에 드신다면 Mac App Store에 평가를 남겨주세요.",
             "Safari 주소창이 비어 있으면 Tab Space 단축키가 작동하지 않습니다. 빈 주소창은 확장 기능이 작동하지 않는 특수 페이지를 뜻하기 때문입니다."
         ]
+    },
+    "pl": {
+        "importantTips": [],
+        "commonTips": [
+            "Jeśli klikniesz \"zapisz karty\" i żadna z kart nie zostanie zapisana, to dlatego, że Tab Space właśnie został zaktualizowany. Zrestartuj Safari, aby móc używać Tab Space ponownie.",
+            "Twoje sesje zostały zsynchronizowane pomiędzy wszystkimi urządzeniami w iCloud. (wymagany macOS 10.15)",
+            "Teraz możesz Przeciągać i Upuszczać swoje sesje i strony, aby dowolnie nimi zarządzać.",
+            "Proszę oceń Tab Space w Mac App Store jeśli podoba ci się aplikacja.",
+            "Skróty Tab Space nie działają gdy pasek adresu Safari jest pusty. Pusty pasek adresu oznacza specjalną stronę, która nie obsługuje rozszerzeń."
+        ]
     }
 }

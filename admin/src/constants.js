@@ -8,6 +8,7 @@ module.exports = {
     ],
     preferredLanguageKey: "preferred-language",
     languages: [
+        {code: "ar-ae", name: "Arabic (U.A.E.)"},
         {code: "zh-cn", name: "Chinese"},
         {code: "da", name: "Danish"},
         {code: "en-us", name: "English"},
