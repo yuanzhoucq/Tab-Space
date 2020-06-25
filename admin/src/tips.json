@@ -91,5 +91,15 @@
             "Proszę oceń Tab Space w Mac App Store jeśli podoba ci się aplikacja.",
             "Skróty Tab Space nie działają gdy pasek adresu Safari jest pusty. Pusty pasek adresu oznacza specjalną stronę, która nie obsługuje rozszerzeń."
         ]
+    },
+    "es": {
+        "importantTips": [],
+        "commonTips": [
+            "Si pulsaste \"guardar pestañas\" y las pestañas no se guardaron puede ser porque Tab Space ha sido actualizado recientemente. Por favor reinica Safari para habilitarlo. ",
+            "Tus sesiones están ahora sincronizadas con todos tus dispositivos utilizando iCloud. (macOS 10.15 requerido)",
+            "Ahora puedes arrastrar y colocar para reorganizar tus sesiones o tus sitios.",
+            "Por favor califica Tab Space en el Mac App Store si te gusta la aplicación.",
+            "Los atajos de Tab Space no funcionan cuando la barra de dirección de Safarí está vacía. TabSpace interpreta una página vacía como algo especial donde la extensión no ha sido cargada."
+        ]
     }
 }
