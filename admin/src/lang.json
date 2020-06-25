@@ -185,11 +185,11 @@
         "migrateTip": "O vaya a la configuración y migre manualmente las sesiones antiguas",
         "tips": "Tips:",
         "tipContents": [
-            "Si pulsaste \"guardar pestañas\" y las pestañas no se guardaron puede ser porque Tab Space se ha actualizado recientemente. Por favor reinica Safari para habilitarlo. ",
+            "Si pulsaste \"guardar pestañas\" y las pestañas no se guardaron puede ser porque Tab Space ha sido actualizado recientemente. Por favor reinica Safari para habilitarlo. ",
             "Tus sesiones están ahora sincronizadas con todos tus dispositivos utilizando iCloud. (macOS 10.15 requerido)",
             "Ahora puedes arrastrar y colocar para reorganizar tus sesiones o tus sitios.",
             "Por favor califica Tab Space en el Mac App Store si te gusta la aplicación.",
-            "Los atajos de Tab Space no funcionan cuandp la barra de dirección de Safarí está vacía. TabSpace interpreta una página vacía como algo especia donde la extensión no ha sido cargada."
+            "Los atajos de Tab Space no funcionan cuando la barra de dirección de Safarí está vacía. TabSpace interpreta una página vacía como algo especial donde la extensión no ha sido cargada."
         ],
         "loading": "Cargando...",
         "ignore-pinned-tabs": "Ignorar las páginas web ancladas al guardar las pestañas",
