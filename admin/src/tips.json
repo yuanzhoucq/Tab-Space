@@ -101,5 +101,15 @@
             "Por favor califica Tab Space en el Mac App Store si te gusta la aplicación.",
             "Los atajos de Tab Space no funcionan cuando la barra de dirección de Safarí está vacía. TabSpace interpreta una página vacía como algo especial donde la extensión no ha sido cargada."
         ]
+    },
+    "nl": {
+        "importantTips": [],
+        "commonTips": [
+            "Als je op ‘Bewaar tabbladen' drukt en je ziet dat er geen tabbladen zijn opgeslagen, is het omdat Tab Space net is geüpgraded, start dan alsjeblieft Safari opnieuw op om het in te schakelen. ",
+            "Uw sessies worden nu op al uw apparaten gesynchroniseerd met iCloud. (macOS 10.15 vereist)",
+            "U kunt nu gebruik maken van Drag and Drop om uw sessies of sites te reorganiseren.",
+            "Beoordeel Tab Space op de Mac App Store als je dit programma leuk vindt.",
+            "Tab Space shortcuts werkt niet als de adresbalk van Safari leeg is. Omdat een lege adresbalk een speciale pagina betekent waardoor de extensie niet kon worden geladen."
+        ]
     }
 }

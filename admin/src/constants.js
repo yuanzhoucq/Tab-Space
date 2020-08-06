@@ -11,6 +11,7 @@ module.exports = {
         {code: "ar-ae", name: "Arabic (U.A.E.)"},
         {code: "zh-cn", name: "Chinese"},
         {code: "da", name: "Danish"},
+        {code: "nl", name: "Dutch"},
         {code: "en-us", name: "English"},
         {code: "de", name: "German"},
         {code: "it", name: "Italian"},
