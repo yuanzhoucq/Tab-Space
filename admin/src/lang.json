@@ -729,11 +729,6 @@
         "ctrlL": "Sluit de linkertabbladen",
         "ctrlR": "Sluit de rechtertabbladen",
         "ctrlQ": "Sluit alle andere tabbladen",
-        "ctrlC": "Open in Chrome",
-        "ctrlW": "Open in Edge",
-        "ctrlF": "Open in Firefox",
-        "ctrlI": "Open in Brave Browser",
-        "ctrlT": "Open Tab Space",
         "ctrlB": "Geselecteerde tekst opslaan in Bear",
         "goTip": "Als u gewoon Tab Space wilt instellen als de standaardpagina van een nieuw tabblad, gebruik dan het adres \"http://mytab.space/redirect.html\".",
         "saveAndCloseTabs": "Bewaar & sluit tabbladen",
@@ -742,7 +737,6 @@
         "recentlySaved": "Onlangs bewaard",
         "favorites": "Favorieten",
         "activeTabs": "Actieve Tabbladen",
-        "openSafariPref": "Open in Safari Extension Preferences",
         "appIntroduction": "Gemaakt om de productiviteit van het surfen op het web te verbeteren.",
         "upgradeSafari": "Tab Space vereist ten minste Safari 12.1.\n Gelieve Safari te upgraden."
     }
