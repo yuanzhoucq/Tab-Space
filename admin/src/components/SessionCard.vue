@@ -8,7 +8,7 @@
           @blur="updateSessionName"
           v-html="highlight(session.title || (`${lang.saveAt} ${(new Date(Number(session.timestamp))).Format('yyyy-MM-dd hh:mm')}`))"
       ></div>
-      <div style="display:inline-block; white-space: nowrap;">
+      <div style="display:inline-block; white-space:nowrap;">
         <a class="btn" @click.stop="restore(session.uuid, true, false)">
           <v-icon name="external-link" class="btn-icon"></v-icon>
         </a>
@@ -72,35 +72,68 @@
       >
         {{ tag.name }}
       </div>
-      <div class="tag-prompt" v-if="session.tags.length === 0">{{lang.tagPrompt}}</div>
-      <div class="tag-btn" v-if="tagEditorId !== session.uuid" @click="e => addTag(e, session.uuid)">
-        <v-icon name="plus-circle" :stroke-width="1.5"></v-icon>
+      <div class="tag-btn" :title="lang.tagPrompt" v-if="tagEditorId !== session.uuid" @click="e => addTag(e, session.uuid)">
+        <v-icon name="tag" style="margin-bottom: -4px" :stroke-width="1.5"></v-icon>
       </div>
-      <div class="tag-editor" v-if="tagEditorId === session.uuid">
-        <input type="text" @blur="saveTag" autofocus/>
-      </div>
-      <div class="tag-btn" @click="() => toggleFavorite(session)">
+      <vue-autosuggest
+        class="autosuggest"
+        v-if="tagEditorId === session.uuid"
+        v-model="tagKeyword"
+        :suggestions="[{data: tagOptions}]"
+        :should-render-suggestions="shouldRenderTagSuggestions" 
+        :input-props="{id: 'autosuggest__input', placeholder: lang.tagPrompt, autofocus: 'autofocus'}"
+        @blur="saveTag"
+        @selected="chooseTag"
+      >  
+        <template slot-scope="{suggestion}">
+          <span class="suggest-tag">{{suggestion.item}}</span>
+        </template>
+      </vue-autosuggest>
+      <div class="tag-btn" v-if="showTagBtns || isFavorite(session)" @click="() => toggleFavorite(session)">
         <v-icon name="star" :stroke-width="1.5"
         :fill="isFavorite(session) ? 'salmon' : 'none'"
         :stroke="isFavorite(session) ? 'salmon' : 'currentColor'"
         ></v-icon>
       </div>
-      <div class="tag-btn" @click="() => upSession(session)">
-        <v-icon name="arrow-up-circle" :stroke-width="1.5"></v-icon>
-      </div>
-      <div v-if="editingSessionUuid !== session.uuid" class="tag-btn" 
-      @click="() => { editingSessionUuid = session.uuid; session.sites.push({title: '', url: ''})}">
-        <v-icon name="edit" :stroke-width="1.5"></v-icon>
-      </div>
-      <div v-else class="tag-btn" @click="() => { editingSessionUuid = ''; updateSession(session) }">
-        <v-icon name="check" :stroke-width="4" stroke="green"></v-icon>
+      <div v-if="showTagBtns" style="display: flex; transition: 3s">
+        <div :title="lang.editPrompt" v-if="editingSessionUuid !== session.uuid" class="tag-btn" 
+        @click="() => { editingSessionUuid = session.uuid; session.sites.push({title: '', url: ''})}">
+          <v-icon name="edit" :stroke-width="1.5"></v-icon>
+        </div>
+        <div v-else class="tag-btn" @click="() => { editingSessionUuid = ''; updateSession(session) }">
+          <v-icon name="check" :stroke-width="4" stroke="green"></v-icon>
+        </div>
+        <div class="tag-btn" :title="lang.topPrompt" @click="() => upSession(session)">
+          <v-icon name="arrow-up-circle" :stroke-width="1.5"></v-icon>
+        </div>
+        <div class="tag-btn" :title="lang.mergePrompt" v-if="mergeEditorId !== session.uuid" 
+          @click="() => mergeEditorId = session.uuid">
+          <v-icon name="git-merge" :stroke-width="1.8"></v-icon>
+        </div>
+        <vue-autosuggest
+          class="autosuggest"
+          id="mergeSuggest"
+          v-if="mergeEditorId === session.uuid"
+          v-model="mergeKeyword"
+          :limit="25"
+          :suggestions="[{data: (() => mergeOptions(session.uuid))()}]"
+          :should-render-suggestions="shouldRenderMergeSuggestions" 
+          :input-props="{id: 'autosuggest__input_merge', placeholder: lang.mergePrompt, autofocus: 'autofocus'}"
+          @blur="saveMerge"
+          @selected="(s) => chooseMerge(s.item, session)"
+        >  
+          <template slot-scope="{suggestion}">
+            <span>{{suggestion.item.title}}</span>
+          </template>
+        </vue-autosuggest>
       </div>
     </div>
   </div>
 </template>
 
 <script>
-  import { mapState, mapGetters } from 'vuex'
+  import { mapState, mapGetters } from 'vuex';
+  import { VueAutosuggest } from 'vue-autosuggest';
 
   import WangYeIcon from '../assets/img/icon-webpage.svg';
   import Draggable from 'vuedraggable';
@@ -110,18 +143,22 @@
     name: "SessionCard",
     components: {
       Draggable,
-      ExportDropdown
+      ExportDropdown,
+      VueAutosuggest
     },
-    props: ["session"],
+    props: ["session", "showTagBtns"],
     data() {
       return {
         tagEditorId: false,
-        WangYeIcon: WangYeIcon
+        mergeEditorId: false,
+        WangYeIcon: WangYeIcon,
+        tagKeyword: "",
+        mergeKeyword: ""
       }
     },
     computed: {
       ...mapState(["lang", "bridge", "keyword", "collapse", "sessions", "editingSessionUuid"]),
-      ...mapGetters(["displaySessions"]),
+      ...mapGetters(["displaySessions", "tags"]),
       editingSessionUuid: {
         get() {
           return this.$store.state.editingSessionUuid
@@ -129,9 +166,36 @@
         set(id) {
           this.$store.commit("setEditingSessionUuid", id)
         }
+      },
+      tagOptions() {
+        if (Array.isArray(this.tags)) {
+          let pattern = ".*" + this.tagKeyword.toLowerCase().split("").join(".*") + ".*"
+          return this.tags.filter(tag => {
+            let res = tag.toLowerCase().match(new RegExp(pattern, "gi"))
+            console.log(pattern, tag, res)
+            return (res && res[0]) === tag.toLowerCase()
+          })
+        }
+        return []
+      }
+    },
+    watch: {
+      showTagBtns() {
+        this.tagEditorId = false
+        this.mergeEditorId = false
       }
     },
     methods: {
+      mergeOptions(selfUuid) {
+        if (Array.isArray(this.displaySessions)) {
+          let pattern = ".*" + this.mergeKeyword.toLowerCase().split("").join(".*") + ".*"
+          return this.displaySessions.filter(session => {
+            let res = session.title.toLowerCase().match(new RegExp(pattern, "gi"))
+            return session.uuid !== selfUuid && (res && res[0]) === session.title.toLowerCase()
+          })
+        }
+        return []
+      },
       isEditingSession(session) {
         return this.editingSessionUuid === session.uuid
       },
@@ -218,19 +282,43 @@
       addTag(e, id) {
         this.tagEditorId = id
       },
-      saveTag(e) {
-        if (e.target.value) {
-          let session = this.getSessionById(this.tagEditorId)
-          if (!session.tags.map(t => t.name).includes(e.target.value)) {
-            session.tags.push({name: e.target.value})
-          }
-          this.updateSession(session)
+      setTag(tagName) {
+        if (!tagName) return
+        let session = this.getSessionById(this.tagEditorId) 
+        if (!session.tags.map(t => t.name).includes(tagName)) {
+          session.tags.push({name: tagName})
         }
+        this.tagKeyword = ""
+        this.updateSession(session)
+      },
+      saveTag() {
+        setTimeout(() => {
+          this.setTag(this.tagKeyword)
+          this.tagEditorId = false
+        }, 100)
+      },
+      saveMerge() {
+        setTimeout(() => {
+          this.mergeEditorId = false
+        }, 100)
+      },
+      chooseTag(tag) {
+        this.setTag(tag.item)
         this.tagEditorId = false
+      },
+      chooseMerge(session, toSession) {
+        this.bridge.send({ cmd: 'MergeSessions', bookmarks: [toSession, session]})
+        this.mergeEditorId = false
       },
       removeTag(tag, session) {
         session.tags = session.tags.filter(t => t.name !== tag)
         this.updateSession(session)
+      },
+      shouldRenderTagSuggestions(size, loading) {
+        return this.tagKeyword === "" || (size >= 0 && !loading)
+      },
+      shouldRenderMergeSuggestions(size, loading) {
+        return this.mergeKeyword === "" || (size >= 0 && !loading)
       },
       isFavorite(session) {
         return Boolean(session.tags.find(t => t.name === "@Favorite"))
@@ -330,6 +418,7 @@
     width: 20px;
     height: 20px;
     cursor: pointer;
+    transition: 0.6s;
   }
 
   .tag-btn:hover {

@@ -1,6 +1,7 @@
 {
     "en-us": {
         "saveAt": "Saved at",
+        "location": "Location: ",
         "restore": "Restore",
         "delete": "Delete",
         "restoreAndDel": "Restore & Delete",
@@ -10,6 +11,9 @@
         "about": "About",
         "all": "All",
         "tagPrompt": "Add tags here...",
+        "editPrompt": "Edit session",
+        "topPrompt": "Move to top",
+        "mergePrompt": "Merge with session...",
         "whatsNew": "What's <strong style='color: salmon'>New</strong>",
         "export": "Export",
         "import": "Import",
@@ -60,6 +64,7 @@
     },
     "zh-cn": {
         "saveAt": "保存于",
+        "location": "位置：", 
         "restore": "恢复",
         "delete": "删除",
         "restoreAndDel": "恢复并删除",
@@ -69,6 +74,9 @@
         "about": "关于",
         "all": "全部",
         "tagPrompt": "添加标签...",
+        "editPrompt": "编辑会话",
+        "topPrompt": "移动到顶部",
+        "mergePrompt": "合并会话...",
         "whatsNew": "<strong style='color: salmon'>新功能</strong>",
         "export": "导出",
         "import": "导入",

@@ -15,7 +15,9 @@
           v-on:enter="enter"
           v-on:leave="leave"
       >
-        <session-card v-for="session in displaySessions" :key="session.uuid" :session="session"></session-card>
+        <session-card v-for="session in displaySessions" :key="session.uuid" :session="session"
+          :showTagBtns="hoverId===session.uuid" @mouseenter.native="setHoverId(session.uuid)" @mouseleave.native="() => hoverId=null"
+        ></session-card>
       </transition-group>
     </draggable>
   </div>
@@ -33,6 +35,11 @@
     components: {
       Draggable,
       SessionCard,
+    },
+    data() {
+      return {
+        hoverId: null,
+      }
     },
     computed: {
       ...mapState(["bridge", "sessions", "activeTag"]),
@@ -52,6 +59,9 @@
       })
     },
     methods: {
+      setHoverId(uuid) {
+        this.hoverId=uuid
+      },
       endDragSession(e) {
         if (e.newIndex !== e.oldIndex) {
           this.bridge.send({

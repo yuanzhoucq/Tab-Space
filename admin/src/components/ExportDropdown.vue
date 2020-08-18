@@ -106,6 +106,10 @@ export default {
   background-color: #fbfbfb;
 }
 
+.link {
+  cursor: pointer;
+}
+
 @media (prefers-color-scheme: dark) {
   .export-dropdown {
     background-color: #353535;
