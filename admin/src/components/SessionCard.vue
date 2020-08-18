@@ -1,13 +1,18 @@
 <template>
   <div class="session" :id="session.uuid">
     <div style="display: flex; justify-content: space-between">
-      <div
-          class="session-title"
-          :id="'id'+session.uuid"
-          @click.stop="editSessionName(session.uuid)"
-          @blur="updateSessionName"
-          v-html="highlight(session.title || (`${lang.saveAt} ${(new Date(Number(session.timestamp))).Format('yyyy-MM-dd hh:mm')}`))"
-      ></div>
+      <div>
+        <div class="tag-btn handle" v-if="showTagBtns" :title="lang.movePrompt">
+          <v-icon name="align-justify" :stroke-width="1.8"></v-icon>
+        </div>
+        <div
+            class="session-title"
+            :id="'id'+session.uuid"
+            @click.stop="editSessionName(session.uuid)"
+            @blur="updateSessionName"
+            v-html="highlight(session.title || (`${lang.saveAt} ${(new Date(Number(session.timestamp))).Format('yyyy-MM-dd hh:mm')}`))"
+        ></div>
+      </div>
       <div style="display:inline-block; white-space:nowrap;">
         <a class="btn" @click.stop="restore(session.uuid, true, false)">
           <v-icon name="external-link" class="btn-icon"></v-icon>
@@ -364,6 +369,11 @@
 </script>
 
 <style scoped>
+  .handle {
+    position: absolute;
+    margin-left: -24px;
+  }
+
   .session {
     border-radius: 5px;
     text-decoration: none;
