@@ -28,8 +28,6 @@
       </div>
       <div class="tips">
         <hr style="border-width: 0; height: 1px; background-color: #dddddd; margin: 20px 0;" />
-        <span class="link" @click="manuallyMigrate"> ➡️ {{lang.manuallyMigrate}}</span> <br/><br/>
-
         <small>{{lang.goTip}}</small>
 
         <h3>{{lang.shortcuts}}</h3>
@@ -80,7 +78,11 @@
           <code>Ctrl + {{ tabSpaceSettings["shift-shortcuts"] === "true" ? "Shift +" : "" }} B</code>
           {{lang.ctrlB}}
         </p>
+
+        <hr style="border-width: 0; height: 1px; background-color: #dddddd; margin: 20px 0;" />
+        <span class="link" @click="manuallyMigrate" style="cursor: pointer"><small>{{lang.manuallyMigrate}}</small></span> <br/><br/>
       </div>
+
     </div>
     <footer>
       <a class="link" href="mailto:joyuercn@icloud.com">{{lang.contact}}</a>

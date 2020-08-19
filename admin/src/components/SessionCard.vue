@@ -3,7 +3,7 @@
     <div style="display: flex; justify-content: space-between">
       <div>
         <div class="tag-btn handle" v-if="showTagBtns" :title="lang.movePrompt">
-          <v-icon name="align-justify" :stroke-width="1.8"></v-icon>
+          <v-icon name="align-justify" :stroke-width="1.8" style="margin-left:1px"></v-icon>
         </div>
         <div
             class="session-title"
@@ -84,7 +84,7 @@
         class="autosuggest"
         v-if="tagEditorId === session.uuid"
         v-model="tagKeyword"
-        :suggestions="[{data: tagOptions}]"
+        :suggestions="[{data: tagOptions(session.tags)}]"
         :should-render-suggestions="shouldRenderTagSuggestions" 
         :input-props="{id: 'autosuggest__input', placeholder: lang.tagPrompt, autofocus: 'autofocus'}"
         @blur="saveTag"
@@ -173,15 +173,17 @@
         }
       },
       tagOptions() {
-        if (Array.isArray(this.tags)) {
-          let pattern = ".*" + this.tagKeyword.toLowerCase().split("").join(".*") + ".*"
-          return this.tags.filter(tag => {
-            let res = tag.toLowerCase().match(new RegExp(pattern, "gi"))
-            console.log(pattern, tag, res)
-            return (res && res[0]) === tag.toLowerCase()
-          })
+        return function(exsitingTags) {
+          exsitingTags = exsitingTags.map(t => t.name)
+          if (Array.isArray(this.tags)) {
+            let pattern = ".*" + this.tagKeyword.toLowerCase().split("").join(".*") + ".*"
+            return this.tags.filter(tag => {
+              let res = tag.toLowerCase().match(new RegExp(pattern, "gi"))
+              return exsitingTags.indexOf(tag) === -1 && (res && res[0]) === tag.toLowerCase()
+            })
+          }
+          return []
         }
-        return []
       }
     },
     watch: {
@@ -192,9 +194,9 @@
     },
     methods: {
       mergeOptions(selfUuid) {
-        if (Array.isArray(this.displaySessions)) {
+        if (Array.isArray(this.sessions)) {
           let pattern = ".*" + this.mergeKeyword.toLowerCase().split("").join(".*") + ".*"
-          return this.displaySessions.filter(session => {
+          return this.sessions.filter(session => {
             let res = session.title.toLowerCase().match(new RegExp(pattern, "gi"))
             return session.uuid !== selfUuid && (res && res[0]) === session.title.toLowerCase()
           })
@@ -320,10 +322,10 @@
         this.updateSession(session)
       },
       shouldRenderTagSuggestions(size, loading) {
-        return this.tagKeyword === "" || (size >= 0 && !loading)
+        return size > 0 && (this.tagKeyword === "" || !loading)
       },
       shouldRenderMergeSuggestions(size, loading) {
-        return this.mergeKeyword === "" || (size >= 0 && !loading)
+        return size > 0 && (this.mergeKeyword === "" || !loading)
       },
       isFavorite(session) {
         return Boolean(session.tags.find(t => t.name === "@Favorite"))
@@ -337,7 +339,7 @@
         this.updateSession(session)
       },
       getSessionIdFromDraggingSite(site) {
-        return site.parentElement.parentElement.firstElementChild.firstElementChild.id.slice(2)
+        return site.parentElement.parentElement.firstElementChild.firstElementChild.lastElementChild.id.slice(2)
       },
       startDragSite(session) {
         this.crtId = this.displaySessions.findIndex(i => i.uuid === session.uuid)
@@ -473,6 +475,7 @@
   }
 
   .collapsed-sites {
+    margin-top: 5px;
     margin-left: -10px;
     padding-right: 25px;
   }

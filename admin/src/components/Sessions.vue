@@ -4,7 +4,7 @@
     <draggable
         :disabled="sessions.length !== displaySessions.length"
         handle=".handle"
-        :list="displaySessions"
+        :list="sessions"
         :supportPointer="false"
         @end="endDragSession"
     >

@@ -5,8 +5,8 @@
       stroke="rgb(0, 181, 29)"></v-icon>
       </div>
       <div @click="toggleCollapse">
-          <v-icon class="button" :stroke-width="1.2" name="align-justify" 
-      :stroke="collapse ? 'rgb(0, 181, 29)' : 'rgba(0, 181, 29, 0.5)'"></v-icon>
+          <v-icon class="button" :stroke-width="1.5" :name="collapse ? 'maximize' : 'minimize'" 
+      :stroke="'rgb(0, 181, 29)'" style="width:26px;margin-left:2px"></v-icon>
       </div>
   </div>
 </template>
