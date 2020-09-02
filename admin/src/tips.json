@@ -14,7 +14,7 @@
     "zh-cn": {
         "importantTips": [],
         "commonTips": [
-            "从 Tab Space 3.6 开始，优化的 iCloud 同步功能需要在 macOS 10.15 上运行。如果您仍在使用 macOS 10.13/19.14 并且需要使用 Tab Space 的 iCloud 同步功能，请在 App Store 的偏好设置中关闭“自动更新”，以及请勿升级 Tab Space。",
+            "从 Tab Space 3.6 开始，优化的 iCloud 同步功能需要在 macOS 10.15 上运行。如果您仍在使用 macOS 10.13/10.14 并且需要使用 Tab Space 的 iCloud 同步功能，请在 App Store 的偏好设置中关闭“自动更新”，以及请勿升级 Tab Space。",
             "如果您发现点击“保存”按钮后标签页没有被保存，这很可能是由于 Tab Space 刚刚更新，重启 Safari 以使其生效即可恢复正常。",
             "您的书签组现通过 iCloud 在设备间同步。(要求 macOS 10.15 版本）",
             "您现在可以通过拖拽保存的会话或站点以重新组织您的记录。",
