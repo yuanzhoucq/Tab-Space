@@ -1,25 +1,19 @@
-const fs = require('fs');
-const COS = require('cos-nodejs-sdk-v5');
+const OSS = require('ali-oss')
 
-const auth = {
-    SecretId: process.env['COS_SECRETID'],
-    SecretKey: process.env['COS_SECRETKEY']
-  };
-const options = {
-Bucket: 'tab-space-1251731927',
-Region: 'ap-shanghai',
-};
-
-const cos = new COS(auth);
-
-cos.putObject({
-    ...options,
-    Key: 'tips.json',
-    StorageClass: 'STANDARD',
-    Body: fs.createReadStream('src/tips.json'),
-    onProgress: function(progressData) {
-        console.log(JSON.stringify(progressData));
-    }
-}, function(err, data) {
-    console.log(err || data);
+const client = new OSS({
+  bucket: process.env['TS_BUCKET'],
+  region: process.env['TS_BUCKET_LOCATION'],
+  accessKeyId: process.env['ALI_ACCESSKEY'],
+  accessKeySecret: process.env['ALI_ACCESSSECRET'],
 });
+
+async function put () {
+  try {
+    let result = await client.put('tips.json', 'src/tips.json');
+    console.log(result);
+  } catch (e) {
+    console.log(e);
+  }
+}
+
+put();
