@@ -8,7 +8,7 @@
         <h1>Tab Space {{lang.settings}}</h1>
       </div>
       <div id="settings">
-        <div class="setting" v-for="setting in settings" :key="setting">
+        <div class="setting" v-for="setting in displaySettings" :key="setting">
           <toggle-button
           :value="tabSpaceSettings[setting]==='true'"
           :sync="true"
@@ -26,7 +26,7 @@
           </p>
         </div>
       </div>
-      <div class="tips">
+      <div class="tips" v-if="isSafari">
         <hr style="border-width: 0; height: 1px; background-color: #dddddd; margin: 20px 0;" />
         <small>{{lang.goTip}}</small>
 
@@ -100,6 +100,7 @@
 import { ToggleButton } from 'vue-js-toggle-button'
 import { mapState } from 'vuex'
 import Constants from '../constants'
+import { isSafari } from '../utility'
 
 export default {
   name: "Settings",
@@ -108,10 +109,16 @@ export default {
   },
   data() {
     return {
+      isSafari: isSafari(),
       ...Constants
     };
   },
-  computed: mapState(["lang", "bridge", "tabSpaceSettings"]),
+  computed: {
+    displaySettings() {
+      return this.isSafari ? Constants.settings : Constants.settings.filter(s => s.indexOf("shortcuts") === -1)
+    },
+    ...mapState(["lang", "bridge", "tabSpaceSettings"])
+  },
   methods: {
     setDefault(e, setting) {
       const value = e.value ? "true" : "false";
@@ -135,7 +142,7 @@ body {
 }
 
 #main {
-  min-height: calc(100vh - 80px);
+  min-height: calc(100vh - 36px);
 }
 
 footer {

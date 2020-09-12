@@ -1,23 +1,18 @@
 <template>
-  <iframe id="bridgeStorage"
-          :src="`${$myConfig.staticResourceEndpoint}/storage.html?method=get`"
-          height="0"
-          style="border: none"
-  >
-  </iframe>
+  <div id="bridgeStorage" height="0" style="border: none"></div>
 </template>
 
 <script>
-import { mapState } from 'vuex'
-import Constants from '../constants'
+import { mapState } from "vuex";
+import Constants from "../constants";
+import Config from "../config"
+
+let port = Config.webSocketInitPort;
+let connected = false   // to differentiate "really close" and "fail to connect then close"
+let retry = 0;
 
 export default {
   name: "TabSpaceBridge",
-  data() {
-    return {
-      iframeLoaded: false
-    }
-  },
   computed: {
     ...mapState(["bridge"]),
     sessions: {
@@ -25,64 +20,88 @@ export default {
         return this.$store.state.sessions;
       },
       set(value) {
-        this.$store.commit("setSessions", value)
-      }
+        this.$store.commit("setSessions", value);
+      },
     },
   },
   mounted() {
-    this.iframe = document.querySelector("#bridgeStorage")
-    this.iframe.onload = () => {
-      console.log("Bridge iframe loaded.")
-      this.iframeLoaded = true
-      this.$store.commit("setBridge", {
-        send: msg => this.iframe.contentWindow.postMessage(msg, "*")
-      })
-    }
-    window.addEventListener("message", evt => {
-      // Filter out other sites' postMessage
-      if (
-        !evt.origin.includes("joyuer.cn") 
-        && !evt.origin.includes("mytab.space") 
-        && evt.origin !== "yuanzhoucq.github.io"
-      ) return
-
-      switch (evt.data.cmd) {
-        case "ReturnBookmarks":
-          console.log("Received checked bookmarks from Tab Space.app.")
-          this.syncBookmarks(evt)
-          break
-        case "ReturnDefault":
-          this.$store.commit("setTabSpaceSetting", {key: evt.data.id, value: evt.data.value})
-      }
-    })
-    this.checkDefaults()
+    this.connectWebSocketServer();
   },
   methods: {
-    checkDefaults() {
-      if (this.bridge) {
-        this.bridge.send({cmd: "CheckDefault", name: Constants.preferredLanguageKey})
-        Constants.settings.forEach(setting => {
-          this.bridge.send({cmd: "CheckDefault", name: setting})
+    connectWebSocketServer() {
+      let ws = new WebSocket(`ws://localhost:${port + 17 * retry++}`);
+      ws.onopen = () => {
+        console.log("Connection open ...");
+        connected = true
+        this.$store.commit("setBridge", {
+          send: (msg) => {
+            msg.bookmarks = JSON.stringify(msg.bookmarks);
+            ws.send(JSON.stringify(msg));
+          },
         });
-      }
-      else setTimeout(this.checkDefaults, 200)
+        this.checkDefaults();
+      };
+
+      ws.onmessage = (evt) => {
+        console.log("Received Message: " + evt.data.slice(0, 100) + "...");
+        try {
+          const nevt = { data: JSON.parse(evt.data) };
+          switch (nevt.data.cmd) {
+            case "ReturnBookmarks":
+              console.log("Received checked bookmarks from Tab Space.app.");
+              this.syncBookmarks(nevt);
+              break;
+            case "ReturnDefault":
+              this.$store.commit("setTabSpaceSetting", {
+                key: nevt.data.id,
+                value: nevt.data.value,
+              });
+          }
+        } catch (e) {
+          console.log(e);
+        }
+      };
+      ws.onclose = () => {
+        console.log("Connection closed.");
+        if (connected) {
+          retry = 0
+          connected = false
+          this.connectWebSocketServer()
+        }
+      };
+      ws.onerror = () => {
+        if (retry <= 10) this.connectWebSocketServer();
+        else {
+          alert("Tab Space not running. Continue to open Tab Space and reconnect.")
+          window.location.href = "tabspace://"
+          setInterval(() => {
+            window.location.reload()
+          }, 1000)
+        }
+      };
+    },
+    checkDefaults() {
+      this.bridge.send({
+        cmd: "CheckDefault",
+        name: Constants.preferredLanguageKey,
+      });
+      Constants.settings.forEach((setting) => {
+        this.bridge.send({ cmd: "CheckDefault", name: setting });
+      });
+      this.bridge.send({ cmd: "CheckBookmarks" });
     },
     syncBookmarks(evt) {
-      if (this.iframeLoaded) {
+      if (this.iframeLoaded || 2 > 1) {
         try {
-          const bookmarks = JSON.parse(evt.data.bookmarks)
-          this.sessions = bookmarks
+          const bookmarks = evt.data.bookmarks;
+          this.sessions = bookmarks;
         } catch (e) {
-          console.log("Synced bookmarks are not valid.")
+          console.log("Synced bookmarks are not valid.");
         }
       } else {
-        setTimeout(() => this.syncBookmarks(evt), 200)
+        setTimeout(() => this.syncBookmarks(evt), 200);
       }
-    }
-  }
-}
+    },
+  },
+};
 </script>
-
-<style>
-
-</style>

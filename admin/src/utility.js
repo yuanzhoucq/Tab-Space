@@ -92,7 +92,6 @@ module.exports = {
       copy: copy
     };
   })(window, document, navigator),
-
   download(filename, text) {
     var element = document.createElement('a');
     element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(text));
@@ -104,5 +103,8 @@ module.exports = {
     element.click();
 
     document.body.removeChild(element);
+  },
+  isSafari() {
+    return navigator.userAgent.split(" ").reverse()[0].split("/")[0] === "Safari" && navigator.userAgent.indexOf("Chrome") < 0
   }
 }

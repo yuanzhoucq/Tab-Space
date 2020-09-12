@@ -6,7 +6,7 @@
     "serve": "vue-cli-service serve",
     "build": "vue-cli-service build",
     "postbuild": "node validate_translation.js",
-    "build-beta": "vue-cli-service build --mode development && rm -r ../beta && mv dist ../beta",
+    "build-web-extension": "vue-cli-service build && bash deploy_web_extension.sh",
     "lint": "vue-cli-service lint"
   },
   "dependencies": {

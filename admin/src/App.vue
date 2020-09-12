@@ -17,6 +17,10 @@
 </script>
 
 <style>
+body {
+  /* Compatible with Chrome extension page. */
+  font-size: 100%;
+}
 .icon {
   color:#666;
   width: 18px;
