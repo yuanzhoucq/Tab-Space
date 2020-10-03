@@ -220,16 +220,14 @@
       },
       removeSessions(sessions) {
         sessions.forEach(session => {
-          if (session.uuid.slice(0,3) === "new") {
-            this.displaySessions.splice(this.displaySessions.findIndex(s => s.uuid = session.uuid), 1)
-          }
+          // fake deletion on webpage
+          this.displaySessions.splice(this.displaySessions.findIndex(s => s.uuid = session.uuid), 1)
         })
         sessions = sessions.filter(s => s.uuid.slice(0,3) !== "new")
         if (sessions.length > 0) this.bridge.send({ cmd: 'DeleteSession', bookmarks: sessions })
       },
       updateSession(session) {
         // delete session without any sites
-        console.log(session)
         session.sites = session.sites.map(site => {
           if (site.url && !site.title) return {url: site.url, title: site.url}
           else return site

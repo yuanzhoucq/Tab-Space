@@ -5,10 +5,10 @@
 <script>
 import { mapState } from "vuex";
 import Constants from "../constants";
-import Config from "../config"
+import Config from "../config";
 
 let port = Config.webSocketInitPort;
-let connected = false   // to differentiate "really close" and "fail to connect then close"
+let connected = false; // to differentiate "really close" and "fail to connect then close"
 let retry = 0;
 
 export default {
@@ -32,20 +32,23 @@ export default {
       let ws = new WebSocket(`ws://localhost:${port + 17 * retry++}`);
       ws.onopen = () => {
         console.log("Connection open ...");
-        connected = true
+        connected = true;
         this.$store.commit("setBridge", {
           send: (msg) => {
+            console.log(msg)
             msg.bookmarks = JSON.stringify(msg.bookmarks);
             ws.send(JSON.stringify(msg));
           },
         });
         this.checkDefaults();
       };
-
       ws.onmessage = (evt) => {
         console.log("Received Message: " + evt.data.slice(0, 100) + "...");
         try {
           const nevt = { data: JSON.parse(evt.data) };
+          if (typeof nevt.data.bookmarks === "string") {
+            nevt.data.bookmarks = JSON.parse(nevt.data.bookmarks)
+          }
           switch (nevt.data.cmd) {
             case "ReturnBookmarks":
               console.log("Received checked bookmarks from Tab Space.app.");
@@ -64,19 +67,21 @@ export default {
       ws.onclose = () => {
         console.log("Connection closed.");
         if (connected) {
-          retry = 0
-          connected = false
-          this.connectWebSocketServer()
+          retry = 0;
+          connected = false;
+          this.connectWebSocketServer();
         }
       };
       ws.onerror = () => {
         if (retry <= 10) this.connectWebSocketServer();
         else {
-          alert("Tab Space not running. Continue to open Tab Space and reconnect.")
-          window.location.href = "tabspace://"
+          alert(
+            "Tab Space not running. Continue to open Tab Space and reconnect."
+          );
+          window.location.href = "tabspace://";
           setInterval(() => {
-            window.location.reload()
-          }, 1000)
+            window.location.reload();
+          }, 1000);
         }
       };
     },
@@ -91,15 +96,11 @@ export default {
       this.bridge.send({ cmd: "CheckBookmarks" });
     },
     syncBookmarks(evt) {
-      if (this.iframeLoaded || 2 > 1) {
-        try {
-          const bookmarks = evt.data.bookmarks;
-          this.sessions = bookmarks;
-        } catch (e) {
-          console.log("Synced bookmarks are not valid.");
-        }
-      } else {
-        setTimeout(() => this.syncBookmarks(evt), 200);
+      try {
+        const bookmarks = evt.data.bookmarks;
+        this.sessions = bookmarks;
+      } catch (e) {
+        console.log("Synced bookmarks are not valid.");
       }
     },
   },
