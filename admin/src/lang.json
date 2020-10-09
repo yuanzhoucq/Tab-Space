@@ -751,8 +751,8 @@
         "activeTabs": "Actieve Tabbladen",
         "appIntroduction": "Gemaakt om de productiviteit van het surfen op het web te verbeteren.",
         "upgradeSafari": "Tab Space vereist ten minste Safari 12.1.\n Gelieve Safari te upgraden."
-    }
-    "fr-Fr": {
+    },
+    "fr": {
         "saveAt": "Sauvegarder dans",
         "location": "Adresse: ",
         "newSession": "Nouvelle Session",
@@ -787,7 +787,7 @@
             "Vos sessions sont maintenant synchronisées sur tous vos appareils iCloud. (macOS 10.15 obligatoire)",
             "Vous pouvez maintenant utiliser Glisser-Déposer pour réorganiser vos sessions ou sites.",
             "Donnez une note à Tab Space sur le Mac App Store si vous aimez l'application.",
-            "Les raccourcis Tab Space ne marcherons pas quand la barre d'adresse Safari est vide. Parce que une barre d'adresse vide est une page spéciale où les extensions ne peuvent pas êtres chargés.",
+            "Les raccourcis Tab Space ne marcherons pas quand la barre d'adresse Safari est vide. Parce que une barre d'adresse vide est une page spéciale où les extensions ne peuvent pas êtres chargés."
         ],
         "loading": "chargement...",
         "ignore-pinned-tabs": "Ignorer les pages web épinglés en sauvegardant les onglets",
@@ -816,5 +816,5 @@
         "openSafariPref": "Ouvrir dans les préférences d'extension Safari",
         "appIntroduction": "Née pour améliorer votre productivité sur navigateur.",
         "upgradeSafari": "Tab Space nécéssite au moins Safari 12.1.\n Mettez à jour Safari."
-    },
+    }
 }
