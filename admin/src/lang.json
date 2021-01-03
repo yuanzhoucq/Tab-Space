@@ -42,6 +42,7 @@
         "save-all-windows": "Save tabs from all windows",
         "shift-shortcuts": "Trigger shortcuts with Ctrl + Shift",
         "disable-shortcuts": "Disable shortcuts",
+        "disable-context-menus": "Disable context menus",
         "shortcuts": "Shortcuts",
         "shortcutTip": "Note: shortcuts do not work when Safari address bar is empty.",
         "ctrlL": "Close left tabs",
@@ -66,7 +67,7 @@
     },
     "zh-cn": {
         "saveAt": "保存于",
-        "location": "位置：", 
+        "location": "位置：",
         "newSession": "新会话",
         "restore": "恢复",
         "delete": "删除",
@@ -107,6 +108,7 @@
         "save-all-windows": "点击时保存所有窗口的标签页",
         "shift-shortcuts": "使用 Ctrl + Shift 触发快捷键",
         "disable-shortcuts": "禁用快捷键",
+        "disable-context-menus": "禁用右键菜单",
         "shortcuts": "快捷键",
         "shortcutTip": "注意：Safari 地址栏为空时快捷键无法使用。",
         "ctrlL": "关闭左侧标签页",
@@ -783,7 +785,7 @@
         "migrateTip": "Ou allez dans paramètres et migrez manuellement vos anciennes sessions",
         "tips": "Astuces:",
         "tipContents": [
-            "Si vous cliquez \"Sauvergarder onglets\" et qu'aucun onglet n'est sauvegardé, c'est parce que Tab Space vient d'être mis à jour, redémarrez Safari pour le réactiver s'il vous plaît. ", 
+            "Si vous cliquez \"Sauvergarder onglets\" et qu'aucun onglet n'est sauvegardé, c'est parce que Tab Space vient d'être mis à jour, redémarrez Safari pour le réactiver s'il vous plaît. ",
             "Vos sessions sont maintenant synchronisées sur tous vos appareils iCloud. (macOS 10.15 obligatoire)",
             "Vous pouvez maintenant utiliser Glisser-Déposer pour réorganiser vos sessions ou sites.",
             "Donnez une note à Tab Space sur le Mac App Store si vous aimez l'application.",

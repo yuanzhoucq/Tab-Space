@@ -4,7 +4,8 @@ module.exports = {
         "ignore-duplicated-tabs",
         "save-all-windows",
         "shift-shortcuts",
-        "disable-shortcuts"
+        "disable-shortcuts",
+        "disable-context-menus"
     ],
     preferredLanguageKey: "preferred-language",
     languages: [
