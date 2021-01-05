@@ -61,6 +61,8 @@
 
 #mergeSuggest .autosuggest__results-container {
   width: 12em;
+  max-height: 300px;
+  overflow-y: scroll;
 }
 
 #mergeSuggest input {

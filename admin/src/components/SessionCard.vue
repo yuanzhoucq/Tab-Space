@@ -120,11 +120,9 @@
           id="mergeSuggest"
           v-if="mergeEditorId === session.uuid"
           v-model="mergeKeyword"
-          :limit="25"
           :suggestions="[{data: (() => mergeOptions(session.uuid))()}]"
           :should-render-suggestions="shouldRenderMergeSuggestions" 
           :input-props="{id: 'autosuggest__input_merge', placeholder: lang.mergePrompt, autofocus: 'autofocus'}"
-          @blur="saveMerge"
           @selected="(s) => chooseMerge(s.item, session)"
         >  
           <template slot-scope="{suggestion}">
@@ -302,11 +300,6 @@
         setTimeout(() => {
           this.setTag(this.tagKeyword)
           this.tagEditorId = false
-        }, 100)
-      },
-      saveMerge() {
-        setTimeout(() => {
-          this.mergeEditorId = false
         }, 100)
       },
       chooseTag(tag) {
