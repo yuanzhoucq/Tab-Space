@@ -3,6 +3,7 @@ module.exports = {
         "ignore-pinned-tabs",
         "ignore-duplicated-tabs",
         "save-all-windows",
+        "remove-site-after-click",
         "shift-shortcuts",
         "disable-shortcuts",
         "disable-context-menus"

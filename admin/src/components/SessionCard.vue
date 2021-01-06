@@ -58,7 +58,9 @@
             />
           </div>
           <span v-if="!isEditingSession(session) && !collapse" class="site-title">
-            <a class="link" :href="wrapUrl(tab.url)" v-html="highlight(tab.title || tab.url)"></a>
+            <span v-if="tabSpaceSettings['remove-site-after-click'] === 'true'" class="link" v-html="highlight(tab.title || tab.url)"
+            @click="() => removeAndOpen(tid, session, tab.url)" style="text-decoration: underline; cursor: pointer"></span>
+            <a v-else class="link" :href="wrapUrl(tab.url)" v-html="highlight(tab.title || tab.url)"></a>
           </span>
         </li>
         <li v-if="isEditingSession(session)">
@@ -160,7 +162,7 @@
       }
     },
     computed: {
-      ...mapState(["lang", "bridge", "keyword", "collapse", "sessions", "editingSessionUuid"]),
+      ...mapState(["lang", "bridge", "keyword", "collapse", "sessions", "editingSessionUuid", "tabSpaceSettings"]),
       ...mapGetters(["displaySessions", "tags"]),
       editingSessionUuid: {
         get() {
@@ -279,6 +281,10 @@
         session.title = div.innerText
         if (session.title) this.updateSession(session)
         else div.innerText = this.tmpText
+      },
+      removeAndOpen(tid, session, url) {
+        this.delItem(tid, session)
+        window.open(url)
       },
       delItem(tid, session) {
         session.sites.splice(tid, 1)
