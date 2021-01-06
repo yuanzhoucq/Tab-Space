@@ -80,8 +80,8 @@
 
   li {
     list-style: none;
-    padding: 4px 0 4px 40px;
-    margin-right: 100px;
+    padding: 4px 0 4px 15px;
+    margin-right: 60px;
     display: flex;
     align-items: center;
   }
@@ -105,6 +105,13 @@
   .link {
     color: rgb(54, 49, 61);
     font-weight: normal;
+    cursor: pointer;
+    text-decoration: none;
+  }
+
+  li .link {
+    font-size: 14px;
+    font-weight: 500;
   }
 
   .link:hover {

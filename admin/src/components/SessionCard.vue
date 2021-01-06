@@ -59,7 +59,7 @@
           </div>
           <span v-if="!isEditingSession(session) && !collapse" class="site-title">
             <span v-if="tabSpaceSettings['remove-site-after-click'] === 'true'" class="link" v-html="highlight(tab.title || tab.url)"
-            @click="() => removeAndOpen(tid, session, tab.url)" style="text-decoration: underline; cursor: pointer"></span>
+            @click="() => removeAndOpen(tid, session, tab.url)"></span>
             <a v-else class="link" :href="wrapUrl(tab.url)" v-html="highlight(tab.title || tab.url)"></a>
           </span>
         </li>
@@ -397,7 +397,7 @@
     display: flex;
     flex-direction: row;
     flex-wrap: wrap;
-    margin-top: 3px;
+    margin-top: 6px;
   }
 
   .tag {
@@ -426,6 +426,7 @@
   .tag-btn {
     opacity: 1;
     margin-top: 2px;
+    margin-right: 4px;
     width: 20px;
     height: 20px;
     cursor: pointer;
@@ -443,13 +444,13 @@
   }
 
   .session-title {
-    font-size: 20px;
+    font-size: 18px;
     font-weight: bold;
     transition: box-shadow .2s linear;
     box-shadow: inset 0 -10px #fadc23;
     display: inline-block;
-    min-height: 26px;
-    max-width: 300px;
+    min-height: 22px;
+    max-width: 350px;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -527,13 +528,13 @@
   .fav {
     display: inline-block;
     margin-right: 5px;
-    width: 16px;
-    height: 16px;
+    width: 14px;
+    height: 14px;
   }
 
   .fav-img {
-    width: 16px;
-    height: 16px;
+    width: 14px;
+    height: 14px;
   }
 
   .del-item {
