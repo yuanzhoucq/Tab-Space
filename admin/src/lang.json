@@ -822,7 +822,7 @@
         "upgradeSafari": "Tab Space nécéssite au moins Safari 12.1.\n Mettez à jour Safari."
     },
     "ja": {
-        "saveAt": "名称未設定, 保存日時: ",
+        "saveAt": "保存日時: ",
         "location": "場所: ",
         "newSession": "新しいセッション",
         "restore": "復元",
