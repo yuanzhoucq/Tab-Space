@@ -18,6 +18,7 @@ module.exports = {
         {code: "fr", name: "French"},
         {code: "de", name: "German"},
         {code: "it", name: "Italian"},
+        {code: "ja", name: "Japanese"},
         {code: "ko", name: "Korean"},
         {code: "pl", name: "Polish"},
         {code: "ru", name: "Russian"},
