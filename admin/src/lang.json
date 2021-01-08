@@ -820,7 +820,7 @@
         "openSafariPref": "Ouvrir dans les préférences d'extension Safari",
         "appIntroduction": "Née pour améliorer votre productivité sur navigateur.",
         "upgradeSafari": "Tab Space nécéssite au moins Safari 12.1.\n Mettez à jour Safari."
-    }
+    },
     "ja": {
         "saveAt": "名称未設定, 保存日時: ",
         "location": "場所: ",
@@ -887,5 +887,5 @@
         "openSafariPref": "Safari 機能拡張の設定を開く",
         "appIntroduction": "ウェブ閲覧効率化のために",
         "upgradeSafari": "Tab Space は Safari 12.1 以降が必要です。\n Safari を更新してください。"
-    },
+    }
 }
