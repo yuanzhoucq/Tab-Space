@@ -497,6 +497,7 @@
         "ignore-duplicated-tabs": "Speichere keine duplizierten Tabs (bezieht sich auch auf die in anderen Sitzungen gespeicherten)",
         "save-all-windows": "Sichere Tabs aus allen Fenstern",
         "disable-shortcuts": "Deaktiviere Shortcuts",
+        "disable-context-menus": "Deaktiviere Kontextmenü",
         "shortcuts": "Shortcuts",
         "shortcutTip": "Anmerkung: Shortcuts funktionieren nicht, wenn die Safari Adress-Leiste leer ist.",
         "ctrlL": "Schließe Tabs links",
