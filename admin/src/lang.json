@@ -746,7 +746,7 @@
         "ctrlI": "فتح في Brave Browser",
         "ctrlT": "فتح Tab Space",
         "ctrlB": "Save selected text to Bear",
-        "goTip": "إذا كنت تريد فقط تعيين Tab Space كصفحة افتراضية لعلامة تبويب جديدة ، فيرجى استخدام العنوان \ "http://mytab.space/redirect.html\".",
+        "goTip": "إذا كنت تريد فقط تعيين Tab Space كصفحة افتراضية لعلامة تبويب جديدة ، فيرجى استخدام العنوان \"http://mytab.space/redirect.html\".",
         "saveAndCloseTabs": "حفظ & الغاء علامات التبويب",
         "saveAndKeepTabs": "حفظ & بقاء علامات التبويب",
         "saveCurrentTab": "حفظ تاب الحالي",
