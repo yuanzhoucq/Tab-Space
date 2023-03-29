@@ -76,6 +76,12 @@ const store = new Vuex.Store({
             state.sessions = newSessions
             state.initialRefresh = true
         },
+        spliceSessions(state, payload) {
+            const {start, deleteCount, items} = payload
+            console.log(items)
+            state.sessions.splice(start, deleteCount, ...items)
+            console.log(state.sessions)
+        },
         setKeyword(state, newKeyword) {
             state.keyword = newKeyword
         },

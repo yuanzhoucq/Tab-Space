@@ -162,8 +162,8 @@
       }
     },
     computed: {
-      ...mapState(["lang", "bridge", "keyword", "collapse", "sessions", "editingSessionUuid", "tabSpaceSettings"]),
-      ...mapGetters(["displaySessions", "tags"]),
+      ...mapState(["lang", "bridge", "keyword", "collapse", "sessions", "activeTag", "editingSessionUuid", "tabSpaceSettings"]),
+      ...mapGetters(["tags"]),
       editingSessionUuid: {
         get() {
           return this.$store.state.editingSessionUuid
@@ -221,7 +221,7 @@
       removeSessions(sessions) {
         sessions.forEach(session => {
           if (session.uuid.slice(0,3) === "new") {
-            this.displaySessions.splice(this.displaySessions.findIndex(s => s.uuid = session.uuid), 1)
+            this.$store.commit("spliceSessions", {start: this.sessions.findIndex(s => s.uuid = session.uuid), deleteCount: 1, items: []})
           }
         })
         sessions = sessions.filter(s => s.uuid.slice(0,3) !== "new")
@@ -341,19 +341,19 @@
         return site.parentElement.parentElement.firstElementChild.firstElementChild.lastElementChild.id.slice(2)
       },
       startDragSite(session) {
-        this.crtId = this.displaySessions.findIndex(i => i.uuid === session.uuid)
         let timestamp = (new Date()).getTime()
         this.newSession = {
           uuid: "new-" + timestamp,
           title: "",
           timestamp,
           sites: [],
-          tags: []
+          tags: this.activeTag ? [{name: this.activeTag}] : []
         }
-        this.displaySessions.splice(this.crtId+1, 0, this.newSession)
+        this.crtId = this.sessions.findIndex(i => i.uuid === session.uuid)
+        this.$store.commit("spliceSessions", {start: this.crtId + 1, deleteCount: 0, items: [this.newSession]})
       },
       endDragSite(e) {
-        if (this.newSession.sites.length === 0) this.displaySessions.splice(this.crtId+1, 1)
+        if (this.newSession.sites.length === 0) this.$store.commit("spliceSessions", {start: this.crtId + 1, deleteCount: 1, items: []})
         const fromId = this.getSessionIdFromDraggingSite(e.from)
         const toId = this.getSessionIdFromDraggingSite(e.to)
         if (fromId === toId) {

@@ -26,9 +26,9 @@ export default {
                 title: "",
                 timestamp,
                 sites: [],
-                tags: []
+                tags: this.activeTag ? [{name: this.activeTag}] : []
             }
-            this.displaySessions.unshift(newSession)
+            this.$store.commit("spliceSessions", {start: 0, deleteCount: 0, items: [newSession]})
         },
         toggleCollapse() {
             this.$store.commit("toggleCollapse")
