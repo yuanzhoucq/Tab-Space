@@ -225,7 +225,12 @@
           }
         })
         sessions = sessions.filter(s => s.uuid.slice(0,3) !== "new")
-        if (sessions.length > 0) this.bridge.send({ cmd: 'DeleteSession', bookmarks: sessions })
+        if (sessions.filter(s => s.sites.length === 0).length > 0)
+          this.bridge.send({ cmd: 'DeleteSession', bookmarks: sessions.filter(s => s.sites.length === 0) })
+        sessions.filter(s => s.sites.length > 0).forEach(s => {
+          if (s.tags.map(t => t.name).includes("@Trash")) this.bridge.send({ cmd: 'DeleteSession', bookmarks: [s] })
+          else this.setTag("@Trash", s)
+        })
       },
       updateSession(session) {
         // delete session without any sites
@@ -293,9 +298,8 @@
       addTag(e, id) {
         this.tagEditorId = id
       },
-      setTag(tagName) {
+      setTag(tagName, session) {
         if (!tagName) return
-        let session = this.getSessionById(this.tagEditorId) 
         if (!session.tags.map(t => t.name).includes(tagName)) {
           session.tags.push({name: tagName})
         }
@@ -304,12 +308,14 @@
       },
       saveTag() {
         setTimeout(() => {
-          this.setTag(this.tagKeyword)
+          let session = this.getSessionById(this.tagEditorId) 
+          this.setTag(this.tagKeyword, session)
           this.tagEditorId = false
         }, 100)
       },
       chooseTag(tag) {
-        this.setTag(tag.item)
+        let session = this.getSessionById(this.tagEditorId) 
+        this.setTag(tag.item, session)
         this.tagEditorId = false
       },
       chooseMerge(session, toSession) {

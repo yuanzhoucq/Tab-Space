@@ -44,6 +44,9 @@ const store = new Vuex.Store({
             if (state.activeTag)
                 displaySessions = displaySessions.filter(session => session.tags.length > 0 
                     && session.tags.map(tag => tag.name).includes(state.activeTag))
+            if (state.activeTag !== '@Trash')
+                displaySessions = displaySessions.filter(session =>  
+                    !session.tags.map(tag => tag.name).includes('@Trash'))
             if (state.keyword) {
                 displaySessions = displaySessions.filter(session =>
                     _.chain(session)
@@ -78,9 +81,7 @@ const store = new Vuex.Store({
         },
         spliceSessions(state, payload) {
             const {start, deleteCount, items} = payload
-            console.log(items)
             state.sessions.splice(start, deleteCount, ...items)
-            console.log(state.sessions)
         },
         setKeyword(state, newKeyword) {
             state.keyword = newKeyword

@@ -8,6 +8,10 @@
           <v-icon class="button" :stroke-width="1.5" :name="collapse ? 'maximize' : 'minimize'" 
       :stroke="'rgb(0, 181, 29)'" style="width:26px;margin-left:2px"></v-icon>
       </div>
+      <div @click="emptyTrash" v-if="activeTag === '@Trash'">
+          <v-icon class="button" :stroke-width="1.2" name="trash" fill="rgba(0, 181, 29, 0.2)" 
+      stroke="rgb(0, 181, 29)"></v-icon>
+      </div>
   </div>
 </template>
 
@@ -32,6 +36,9 @@ export default {
         },
         toggleCollapse() {
             this.$store.commit("toggleCollapse")
+        },
+        emptyTrash() {
+            this.bridge.send({ cmd: "DeleteSession", bookmarks: this.sessions.filter(s => s.tags.map(t => t.name).includes("@Trash")) })
         }
     }
 }
