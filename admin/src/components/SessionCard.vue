@@ -438,11 +438,6 @@
     transition: 0.1s;
   }
 
-  .tag-editor input {
-    width: 40px;
-    margin-left: 5px;
-  }
-
   .session-title {
     font-size: 18px;
     font-weight: bold;
