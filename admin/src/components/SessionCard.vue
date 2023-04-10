@@ -2,7 +2,7 @@
   <div class="session" :id="session.uuid">
     <div style="display: flex; justify-content: space-between">
       <div>
-        <div class="tag-btn handle" v-if="showTagBtns" :title="lang.movePrompt">
+        <div class="tag-btn handle" v-if="showTagBtns && activeTag === ''" :title="lang.movePrompt">
           <v-icon name="align-justify" :stroke-width="1.8" style="margin-left:1px"></v-icon>
         </div>
         <div
