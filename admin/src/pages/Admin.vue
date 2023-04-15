@@ -3,9 +3,14 @@
     <div id="main">
       <navbar></navbar>
       <div id="title">
-        <h1 style="display: inline-block; padding-left: 130px">Tab Space</h1>
+        <h1 style="display: inline-block; margin-left: 125px;">Tab Space</h1>
+        <div id="notification" v-if="notificationCount && notificationCount !== tabSpaceSettings['notification-count']">
+          <span @click="openNewMsgPage">New message</span>&nbsp;
+          <span v-if="showCloseMsg" @click="closeNewMsgBox">×</span>
+        </div>
         <input type="text" name="keyword" id="keyword" v-model="keyword"
                placeholder="Search title, url, tag...">
+        <div style="width: 55px"></div>
       </div>
       <div v-if="!bridge || !initialRefresh" style="margin-top: 160px; color: #999999">
         <vue-loading type="bars" color="#eb5205" :size="{ width: '50px', height: '50px' }"></vue-loading>
@@ -54,19 +59,35 @@
     data() {
       return {
         keyword: "",
+        notificationCount: "",
+        showCloseMsg: false
       }
     },
     computed: {
-      ...mapState(["lang", "bridge", "sessions", "initialRefresh"])
+      ...mapState(["lang", "bridge", "sessions", "initialRefresh", "tabSpaceSettings"])
     },
     watch: {
       keyword(value) {
         _.debounce(() => this.$store.commit('setKeyword', value), 500)()
       }
     },
+    mounted() {
+      setTimeout(() => {
+        fetch(this.$myConfig.staticResourceEndpoint + "/notificationCount.json").then(r => r.json()).then(r => {
+          this.notificationCount = String(r["count"])
+        })
+      }, 1000)
+    },
     methods: {
       reload() {
         window.location.reload()
+      },
+      openNewMsgPage() {
+        this.showCloseMsg = true
+        window.open("https://joyuer.notion.site/Tab-Space-Messages-cfd1c7fec58d4b36876b8484637745c2")
+      },
+      closeNewMsgBox() {
+        this.bridge.send({cmd: "SetDefault", name: "notification-count", value: this.notificationCount})
       }
     }
   }
@@ -120,8 +141,11 @@
   }
 
   #title {
-    width: 800px;
+    width: 840px;
     margin: -20px auto 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: end;
   }
 
   .footer-sep {
@@ -174,7 +198,7 @@
   }
 
   #keyword {
-    margin: 10px 10px 10px 260px;
+    margin: 10px;
     outline: none;
     border-radius: 4px;
     border-width: 0;
@@ -183,11 +207,25 @@
     color: #444444;
     width: 200px;
     padding-left: 10px;
+    margin-left: auto;
   }
 
   .highlight {
     background-color: #fadd23;
   }
+
+  #notification {
+      display: inline-block;
+      background-color: #eb2405;
+      margin-left: 10px;
+      margin-bottom: 40px;
+      width: 120px;
+      text-align: center;
+      padding: 2px;
+      border-radius: 5px;
+      color: white;
+      cursor: pointer;
+    }
 
   @media (prefers-color-scheme: dark) {
     body {

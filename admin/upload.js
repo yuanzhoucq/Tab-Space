@@ -9,8 +9,9 @@ const client = new OSS({
 
 async function put () {
   try {
-    let result = await client.put('tips.json', 'src/tips.json');
-    console.log(result);
+    let result1 = await client.put('tips.json', 'src/tips.json');
+    let result2 = await client.put('notificationCount.json', 'src/notificationCount.json');
+    console.log(result1, result2);
   } catch (e) {
     console.log(e);
   }

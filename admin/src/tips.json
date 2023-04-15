@@ -1,6 +1,6 @@
 {
     "en-us": {
-        "importantTips": [],
+        "importantTips": ["After the recent Safari update, restoring Tab Space may not work properly. Please refer to  https://bit.ly/tb-msg  for instructions on how to fix this."],
         "commonTips": [
             "You can help us translate Tab Space to your mother tongue in settings page.",
             "From Tab Space 3.6, optimized iCloud Sync will need macOS 10.15 to work. If you still use macOS 10.13/10.14 and want to use iCloud Sync of Tab Space, please turn off \"Automatic Updates\" in App Store's preferences and do not upgrade Tab Space.",
@@ -12,7 +12,7 @@
         ]
     },
     "zh-cn": {
-        "importantTips": [],
+        "importantTips": ["Safari 的最近更新可能导致恢复标签页异常，请参照 https://bit.ly/tb-msg 进行设置。"],
         "commonTips": [
             "从 Tab Space 3.6 开始，优化的 iCloud 同步功能需要在 macOS 10.15 上运行。如果您仍在使用 macOS 10.13/10.14 并且需要使用 Tab Space 的 iCloud 同步功能，请在 App Store 的偏好设置中关闭“自动更新”，以及请勿升级 Tab Space。",
             "如果您发现点击“保存”按钮后标签页没有被保存，这很可能是由于 Tab Space 刚刚更新，重启 Safari 以使其生效即可恢复正常。",
@@ -23,7 +23,7 @@
         ]
     },
     "ru": {
-        "importantTips": [],
+        "importantTips": ["After the recent Safari update, restoring Tab Space may not work properly. Please refer to  https://bit.ly/tb-msg  for instructions on how to fix this."],
         "commonTips": [
             "Если вы нажали \"сохранить вкладки\" и обнаружили что вкладки не сохранились, это потому-что Tab Space только что обновился, пожалуйста перезапустите Safari, что-бы заработало.",
             "Ваш сеанс синхронизирован со всеми вашими устройствами через iCloud. (Требуется macOS 10.15)",
@@ -33,7 +33,7 @@
         ]
     },
     "tr": {
-        "importantTips": [],
+        "importantTips": ["After the recent Safari update, restoring Tab Space may not work properly. Please refer to  https://bit.ly/tb-msg  for instructions on how to fix this."],
         "commonTips": [
             "Eğer \"save tabs\" tıklayıp hiç kayıtlı sekme bulamadıysanız, bunun nedeni Tab Space yeni güncellenmiş olmasıdır, lütfen Safari'yi yeniden başlatın. ",
             "Oturumlarınız bütün cihazlarınız arasında iCloud üzerinden senkronize oluyor. (macOS 10.15 gerektirir)",
@@ -43,7 +43,7 @@
         ]
     },
     "de": {
-        "importantTips": [],
+        "importantTips": ["After the recent Safari update, restoring Tab Space may not work properly. Please refer to  https://bit.ly/tb-msg  for instructions on how to fix this."],
         "commonTips": [
             "Wenn du \"Tabs speichern\" drückst, aber keine Tabs gespeichert wurden, liegt es daran, dass Tab Space gerade aktualisiert wurde. Bitte schließe Safari und starte es erneut, um es zu aktivieren",
             "Deine Sitzungen sind nun auf all deinen Geräten über iCloud synchronisiert. (macOS 10.15 wird benötigt)",
@@ -53,7 +53,7 @@
         ]
     },
     "sv": {
-        "importantTips": [],
+        "importantTips": ["After the recent Safari update, restoring Tab Space may not work properly. Please refer to  https://bit.ly/tb-msg  for instructions on how to fix this."],
         "commonTips": [
             "Om du trycker på \"Spara flikar\" och inga flikar sparas är det för att Tab Space precis uppgraderats. Starta om Safari för att aktivera det igen.",
             "Dina sessioner är nu synkade till alla dina enheter i iCloud (kräver macOS 10.15)",
@@ -63,7 +63,7 @@
         ]
     },
     "it": {
-        "importantTips": [],
+        "importantTips": ["After the recent Safari update, restoring Tab Space may not work properly. Please refer to  https://bit.ly/tb-msg  for instructions on how to fix this."],
         "commonTips": [
             "Se hai selezionato \"Salva le Tab\" e non hai trovato le tab salvate, è perchè Tab Space si è appena aggiornato. Riavvia Safari per rendere effettivo l'aggiornamento. ",
             "Le tue sessioni sono ora sincronizzate su tutti i tuoi device con iCloud (richiede macOS 10.15)",
@@ -73,7 +73,7 @@
         ]
     },
     "ko": {
-        "importantTips": [],
+        "importantTips": ["After the recent Safari update, restoring Tab Space may not work properly. Please refer to  https://bit.ly/tb-msg  for instructions on how to fix this."],
         "commonTips": [
             "Tab Space가 방금 업그레이드 된 경우 \"탭 저장\"을 클릭해도 탭이 저장되지 않을 수 있습니다. Safari를 재시작하여 활성화 하십시오. ",
             "저장된 세션은 이제 iCloud를 통해 여러분이 연결한 모든 장치로 동기화 됩니다. (macOS 10.15 필요)",
@@ -83,7 +83,7 @@
         ]
     },
     "pl": {
-        "importantTips": [],
+        "importantTips": ["After the recent Safari update, restoring Tab Space may not work properly. Please refer to  https://bit.ly/tb-msg  for instructions on how to fix this."],
         "commonTips": [
             "Jeśli klikniesz \"zapisz karty\" i żadna z kart nie zostanie zapisana, to dlatego, że Tab Space właśnie został zaktualizowany. Zrestartuj Safari, aby móc używać Tab Space ponownie.",
             "Twoje sesje zostały zsynchronizowane pomiędzy wszystkimi urządzeniami w iCloud. (wymagany macOS 10.15)",
@@ -93,7 +93,7 @@
         ]
     },
     "es": {
-        "importantTips": [],
+        "importantTips": ["After the recent Safari update, restoring Tab Space may not work properly. Please refer to  https://bit.ly/tb-msg  for instructions on how to fix this."],
         "commonTips": [
             "Si pulsaste \"guardar pestañas\" y las pestañas no se guardaron puede ser porque Tab Space ha sido actualizado recientemente. Por favor reinica Safari para habilitarlo. ",
             "Tus sesiones están ahora sincronizadas con todos tus dispositivos utilizando iCloud. (macOS 10.15 requerido)",
@@ -103,7 +103,7 @@
         ]
     },
     "nl": {
-        "importantTips": [],
+        "importantTips": ["After the recent Safari update, restoring Tab Space may not work properly. Please refer to  https://bit.ly/tb-msg  for instructions on how to fix this."],
         "commonTips": [
             "Als je op ‘Bewaar tabbladen' drukt en je ziet dat er geen tabbladen zijn opgeslagen, is het omdat Tab Space net is geüpgraded, start dan alsjeblieft Safari opnieuw op om het in te schakelen. ",
             "Uw sessies worden nu op al uw apparaten gesynchroniseerd met iCloud. (macOS 10.15 vereist)",
