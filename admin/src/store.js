@@ -35,7 +35,13 @@ const store = new Vuex.Store({
         tags: state => {
             let tags = new Set()
             state.sessions.forEach(session => {
-                session.tags.forEach(tag => tags.add(tag.name))
+                if (session.tags.map(t => t.name).includes("@Trash")) {
+                    // Tags of session in @Trash should not display
+                    tags.add("@Trash")
+                } else {
+                    session.tags.forEach(tag => tags.add(tag.name))
+                }
+                
             })
             return Array.from(tags).sort()
         },
