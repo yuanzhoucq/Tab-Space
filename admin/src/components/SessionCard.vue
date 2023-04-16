@@ -261,7 +261,9 @@
       restore(key, open, del) {
         if (open) {
           let session = this.sessions.find(s => s.uuid === key)
-          session && session.sites.forEach(site => window.open(site.url))
+          if (session) {
+            this.bridge.send({ cmd: 'RestoreSession', bookmarks: [session]})
+          }
         }
         if (del) {
           const sessionsToDelete = this.sessions.filter(session => session.uuid === key)

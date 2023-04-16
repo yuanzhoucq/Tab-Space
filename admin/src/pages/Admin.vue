@@ -4,7 +4,7 @@
       <navbar></navbar>
       <div id="title">
         <h1 style="display: inline-block; margin-left: 125px;">Tab Space</h1>
-        <div id="notification" v-if="notificationCount && notificationCount !== tabSpaceSettings['notification-count']">
+        <div id="notification" v-if="notificationCount && notificationCount !== '0' && notificationCount !== tabSpaceSettings['notification-count']">
           <span @click="openNewMsgPage">New message</span>&nbsp;
           <span v-if="showCloseMsg" @click="closeNewMsgBox">×</span>
         </div>
