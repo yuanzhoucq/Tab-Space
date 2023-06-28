@@ -867,6 +867,8 @@
         "save-all-windows": "Sauvegarder les onglets de toutes les fenêtres",
         "shift-shortcuts": "Activez les raccourcis avec Ctrl + Shift",
         "disable-shortcuts": "Désactiver les raccourcis",
+        "disable-context-menus": "Désactiver les menus contextuels",
+        "remove-site-after-click": "Supprimer un onglet sauvegardé de la session quand il est cliqué",
         "shortcuts": "Raccourcis",
         "shortcutTip": "Note: Les raccourcis ne fonctionnent pas quand la barre d'adresse Safari est vide.",
         "ctrlL": "Fermer les onglets de gauche",
