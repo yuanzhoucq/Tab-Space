@@ -33,7 +33,7 @@
       <span class="footer-sep"></span>
       <a class="link" href="https://mytab.space" target="_blank">{{lang.about}}</a>
       <span class="footer-sep"></span>
-      <a class="link" href="https://www.notion.so/joyuer/Tab-Space-FAQ-6d9383b54d704f6d85d404be96c31dd5" target="_blank">FAQ</a>
+      <a class="link" href="https://joyuer.notion.site/Tab-Space-FAQ-6d9383b54d704f6d85d404be96c31dd5" target="_blank">FAQ</a>
     </footer>
   </div>
 </template>

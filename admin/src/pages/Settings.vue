@@ -35,12 +35,20 @@
           <small>{{lang.shortcutTip}}</small>
         </p>
         <p>
+          <code>Ctrl + {{ tabSpaceSettings["shift-shortcuts"] === "true" ? "Shift +" : "" }} D</code>
+          {{lang.ctrlD}}
+        </p>
+        <p>
           <code>Ctrl + {{ tabSpaceSettings["shift-shortcuts"] === "true" ? "Shift +" : "" }} L</code>
           {{lang.ctrlL}}
         </p>
         <p>
           <code>Ctrl + {{ tabSpaceSettings["shift-shortcuts"] === "true" ? "Shift +" : "" }} R</code>
           {{lang.ctrlR}}
+        </p>
+        <p>
+          <code>Ctrl + {{ tabSpaceSettings["shift-shortcuts"] === "true" ? "Shift +" : "" }} K</code>
+          {{lang.ctrlK}}
         </p>
         <p>
           <code>Ctrl + {{ tabSpaceSettings["shift-shortcuts"] === "true" ? "Shift +" : "" }} Q</code>
