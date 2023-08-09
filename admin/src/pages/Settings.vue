@@ -64,19 +64,17 @@
         </p>
         <p>
           <code>Ctrl + {{ tabSpaceSettings["shift-shortcuts"] === "true" ? "Shift +" : "" }} C</code>
-          {{lang.ctrlC}}
-        </p>
-        <p>
-          <code>Ctrl + {{ tabSpaceSettings["shift-shortcuts"] === "true" ? "Shift +" : "" }} W</code>
-          {{lang.ctrlW}}
+          {{lang.openIn}} 
+          <select name="browser1" id="browser1-select" v-model="tabSpaceSettings[externalBrowser1Key]" @change="(e) => setExternalBrowser(1, e)">
+            <option v-for="browser in browsers" :key="`lang-${browser}`" :value="browser">{{browser}}</option>
+          </select>
         </p>
         <p>
           <code>Ctrl + {{ tabSpaceSettings["shift-shortcuts"] === "true" ? "Shift +" : "" }} F</code>
-          {{lang.ctrlF}}
-        </p>
-        <p>
-          <code>Ctrl + {{ tabSpaceSettings["shift-shortcuts"] === "true" ? "Shift +" : "" }} I</code>
-          {{lang.ctrlI}}
+          {{lang.openIn}}
+          <select name="browser2" id="browser2-select" v-model="tabSpaceSettings[externalBrowser2Key]" @change="(e) => setExternalBrowser(2, e)">
+            <option v-for="browser in browsers" :key="`lang-${browser}`" :value="browser">{{browser}}</option>
+          </select>
         </p>
         <p>
           <code>Ctrl + {{ tabSpaceSettings["shift-shortcuts"] === "true" ? "Shift +" : "" }} T</code>
@@ -127,6 +125,10 @@ export default {
     },
     setLanguage(e) {
       this.bridge.send({cmd: "SetDefault", name: Constants.preferredLanguageKey, value: e.target.value})
+    },
+    setExternalBrowser(number, e) {
+      let key = number == 1 ? Constants.externalBrowser1Key : Constants.externalBrowser2Key
+      this.bridge.send({cmd: "SetDefault", name: key, value: e.target.value})
     },
     manuallyMigrate() {
       this.bridge.send({cmd: "ManuallyMigrate"})

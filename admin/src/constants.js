@@ -26,5 +26,14 @@ module.exports = {
         {code: "sv", name: "Swedish"},
         {code: "tr", name: "Turkish"},
         {code: "uk", name: "Ukrainian"},
+    ],
+    externalBrowser1Key: "externalBrowser1",
+    externalBrowser2Key: "externalBrowser2",
+    browsers: [
+        "Google Chrome",
+        "Microsoft Edge",
+        "FireFox",
+        "Arc",
+        "Brave Browser"
     ]
 }

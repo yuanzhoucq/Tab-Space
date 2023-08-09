@@ -61,6 +61,8 @@ export default {
     checkDefaults() {
       if (this.bridge) {
         this.bridge.send({cmd: "CheckDefault", name: Constants.preferredLanguageKey})
+        this.bridge.send({cmd: "CheckDefault", name: Constants.externalBrowser1Key})
+        this.bridge.send({cmd: "CheckDefault", name: Constants.externalBrowser2Key})
         Constants.settings.forEach(setting => {
           this.bridge.send({cmd: "CheckDefault", name: setting})
         });
