@@ -7,6 +7,15 @@
     >
       <b>{{ lang.all }}</b>
     </div>
+    
+    <div
+      class="tag-filter upper-border"
+      :class="{'active-tag': activeTag==='untagged'}"
+      @click="setActiveTag('untagged')"
+    >
+      {{ lang.untagged }}
+    </div>
+    
     <div
       class="tag-filter upper-border"
       v-for="tag in tags"

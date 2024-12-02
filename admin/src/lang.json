@@ -63,7 +63,8 @@
         "activeTabs": "Active Tabs",
         "openSafariPref": "Open in Safari Extension Preferences",
         "appIntroduction": "Born for improving your web browsing productivity.",
-        "upgradeSafari": "Tab Space requires at least Safari 12.1.\n Please upgrade your Safari."
+        "upgradeSafari": "Tab Space requires at least Safari 12.1.\n Please upgrade your Safari.",
+        "untagged": "Untagged"
     },
     "zh-cn": {
         "saveAt": "保存于",
@@ -129,7 +130,8 @@
         "activeTabs": "活动标签页",
         "openSafariPref": "打开 Safari 扩展设置",
         "appIntroduction": "为提高网络浏览效率而生的 Safari 扩展",
-        "upgradeSafari": "Tab Space 要求 Safari 12.1 或更高版本\n 请升级您的 Safari 浏览器"
+        "upgradeSafari": "Tab Space 要求 Safari 12.1 或更高版本\n 请升级您的 Safari 浏览器",
+        "untagged": "无标签"
     },
     "uk": {
         "saveAt": "Збережено",
@@ -170,7 +172,8 @@
         "saveAndKeepTabs": "Зберегти і залишити вкладки",
         "saveCurrentTab": "Зберегти поточну вкладку",
         "openSafariPref": "Відкрити в налаштуваннях розширень Safari",
-        "appIntroduction": "Народжений для покращення Вашої продуктивності у веб-браузингу."
+        "appIntroduction": "Народжений для покращення Вашої продуктивності у веб-браузингу.",
+        "untagged": "Без тегів"
     },
     "es": {
         "saveAt": "Guardar como",
@@ -224,7 +227,8 @@
         "activeTabs": "Pestañas Activas",
         "openSafariPref": "Abrir las preferencias de extensión en Safari",
         "appIntroduction": "Creado para mejorar la productividad de tu navegación web.",
-        "upgradeSafari": "Tab Space requiere al menos Safari 12.1.\n Por favor actualiza Safari."
+        "upgradeSafari": "Tab Space requiere al menos Safari 12.1.\n Por favor actualiza Safari.",
+        "untagged": "Sin etiquetas"
     },
     "da": {
         "saveAt": "Gemt ved",
@@ -265,7 +269,8 @@
         "saveAndKeepTabs": "Gem & behold faner",
         "saveCurrentTab": "Gem nuværende fane",
         "openSafariPref": "Åben i Safari´s udvidelses præferencer",
-        "appIntroduction": "Skabt for forbedringen af din web browsings produktivitet."
+        "appIntroduction": "Skabt for forbedringen af din web browsings produktivitet.",
+        "untagged": "Uden tags"
     },
     "pl": {
         "saveAt": "Zapisano",
@@ -320,7 +325,8 @@
         "activeTabs": "Aktywne karty",
         "openSafariPref": "Otwórz w Ustawieniach Rozszerzeń Safari",
         "appIntroduction": "Urodzeni, aby poprawić wydajności przeglądania stron internetowych.",
-        "upgradeSafari": "Tab Space wymaga co najmniej Safari 12.1.\n Proszę uaktualnij Safari."
+        "upgradeSafari": "Tab Space wymaga co najmniej Safari 12.1.\n Proszę uaktualnij Safari.",
+        "untagged": "Bez tagów"
     },
     "ru": {
         "saveAt": "Сохранено в",
@@ -383,7 +389,8 @@
         "openSafariPref": "Открыть в Настройках Расширений Safari",
         "appIntroduction": "Рождены для улучшения Вашей продуктивности.",
         "upgradeSafari": "Для работы Tab Space необходима версия Safari не ниже 12.1.\n. Пожалуйста, обновите Safari.",
-        "remove-site-after-click": "Удалить сохраненную вкладку из сессии после нажатия"
+        "remove-site-after-click": "Удалить сохраненную вкладку из сессии после нажатия",
+        "untagged": "Без тегов"
     },
     "tr": {
         "saveAt": "Kayıt edilme zamanı",
@@ -436,7 +443,8 @@
         "favorites": "Favoriler",
         "openSafariPref": "Safari Uzatma Ayarlarında Aç",
         "appIntroduction": "Internet tarama verimliğinizi artırmak için yaratıldı.",
-        "upgradeSafari": "Tab Space en azından Safari 12.1. gerektirir\n Lütfen Safari'yi güncelleyin."
+        "upgradeSafari": "Tab Space en azından Safari 12.1. gerektirir\n Lütfen Safari'yi güncelleyin.",
+        "untagged": "Etiketlenmemiş"
     },
     "de": {
         "saveAt": "Gespeichert Unter",
@@ -490,7 +498,8 @@
         "favorites": "Favoriten",
         "openSafariPref": "Öffne in Safari-Erweiterungen Einstellungen",
         "appIntroduction": "Geboren, um deine Webbrowsing-Produktivität zu steigern.",
-        "upgradeSafari": "Tab Space benötigt mindestens Safari 12.1.\n Bitte upgrade dein Safari."
+        "upgradeSafari": "Tab Space benötigt mindestens Safari 12.1.\n Bitte upgrade dein Safari.",
+        "untagged": "Ohne Tags"
     },
     "sv": {
         "saveAt": "Sparad",
@@ -545,7 +554,8 @@
         "appIntroduction": "Skapad för att förbättra din produktivitet på webben.",
         "upgradeSafari": "Tab Space kräver minst Safari 12.1.\n Vänligen uppgradera Safari.",
         "activeTabs": "Aktiva flikar",
-        "shift-shortcuts": "Använd Ctrl + Shift för kortkommandon"
+        "shift-shortcuts": "Använd Ctrl + Shift för kortkommandon",
+        "untagged": "Utan taggar"
     },
     "it": {
         "saveAt": "Salvato il",
@@ -598,7 +608,8 @@
         "favorites": "Preferiti",
         "openSafariPref": "Apri nelle preferenze delle estensioni di Safari",
         "appIntroduction": "Nato per migliorare la tua produttività nel browser.",
-        "upgradeSafari": "Tab Space richiede la versione di Safari 12.1.\n Per favore, aggiorna Safari."
+        "upgradeSafari": "Tab Space richiede la versione di Safari 12.1.\n Per favore, aggiorna Safari.",
+        "untagged": "Senza tag"
     },
     "ko": {
         "saveAt": "저장 시점",
@@ -755,12 +766,12 @@
             "De Tab Space-snelkoppelingen werken niet als de adresbalk van Safari leeg is, omdat een pagina met een lege adresbalk gezien wordt als een speciale pagina waarin de extensie niet kan worden geladen."
         ],
         "loading": "laden…",
-        "ignore-pinned-tabs": "Vastgemaakte webpagina’s negeren bij het opslaan van tabbladen",
+        "ignore-pinned-tabs": "Vastgemaakte webpagina's negeren bij het opslaan van tabbladen",
         "ignore-duplicated-tabs": "Gedupliceerde tabbladen niet opslaan (ook niet als ze in andere sessies voorkomen)",
         "save-all-windows": "Tabbladen van alle vensters opslaan",
         "shift-shortcuts": "Snelkoppelingen gebruiken met Ctrl + Shift",
         "disable-shortcuts": "Snelkoppelingen uitschakelen",
-        "disable-context-menus": "Contextuele menu’s uitschakelen",
+        "disable-context-menus": "Contextuele menu's uitschakelen",
         "remove-site-after-click": "Klik op opgeslagen tabblad om te openen en uit sessie te verwijderen",
         "shortcuts": "Snelkoppelingen",
         "shortcutTip": "Opmerking: snelkoppelingen werken niet als de adresbalk van Safari leeg is.",
@@ -839,7 +850,8 @@
         "activeTabs": "Onglets ouverts",
         "openSafariPref": "Ouvrir dans les préférences d'extension Safari",
         "appIntroduction": "Née pour améliorer votre productivité sur navigateur.",
-        "upgradeSafari": "Tab Space nécéssite au moins Safari 12.1.\n Mettez à jour Safari."
+        "upgradeSafari": "Tab Space nécéssite au moins Safari 12.1.\n Mettez à jour Safari.",
+        "untagged": "Sans étiquette"
     },
     "ja": {
         "saveAt": "保存日時: ",

@@ -48,8 +48,12 @@ const store = new Vuex.Store({
         displaySessions: state => {
             let displaySessions = state.sessions;
             if (state.activeTag)
-                displaySessions = displaySessions.filter(session => session.tags.length > 0 
-                    && session.tags.map(tag => tag.name).includes(state.activeTag))
+                if (state.activeTag === 'untagged') {
+                    displaySessions = state.sessions.filter(session => session.tags.length === 0)
+                } else {
+                    displaySessions = displaySessions.filter(session => session.tags.length > 0 
+                        && session.tags.map(tag => tag.name).includes(state.activeTag))
+                }
             if (state.activeTag !== '@Trash')
                 displaySessions = displaySessions.filter(session =>  
                     !session.tags.map(tag => tag.name).includes('@Trash'))
