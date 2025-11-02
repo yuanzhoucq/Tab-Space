@@ -26,12 +26,10 @@
         "exportText": "Copy as Text",
         "exportMD": "Copy as Markdown",
         "loseTabs": "Lost your tabs? Maybe Tab Space just upgraded, please wait for a moment and refresh ...",
-        "manuallyMigrate": "Manually migrate sessions before Tab Space 3.5",
-        "migrateTip": "Or go to settings and manually migrate old sessions",
         "tips": "Tips:",
         "tipContents": [
             "If you hit \"save tabs\" and found no tabs were saved, it is because Tab Space just upgraded, please restart Safari to enable it. ",
-            "Your sessions are now synced across all your devices with iCloud. (macOS 10.15 required)",
+            "Your sessions are now synced across all your devices with iCloud.",
             "You can now use Drag and Drop to reorganize your sessions or sites.",
             "Please rate Tab Space on Mac App Store if you like this app.",
             "Tab Space shortcuts will not work when Safari address bar is empty. Because empty address bar means a special page where extension could not be loaded."
@@ -49,7 +47,7 @@
         "ctrlD": "Duplicate tab",
         "ctrlL": "Close left tabs",
         "ctrlR": "Close right tabs",
-        "ctrlK": "Close same domain tabs (macOS 10.15 or later)",
+        "ctrlK": "Close same domain tabs",
         "ctrlQ": "Close all other tabs",
         "openIn": "Open current tab in ",
         "ctrlT": "Open Tab Space",
@@ -93,12 +91,10 @@
         "exportText": "复制为文字",
         "exportMD": "复制为 Markdown",
         "loseTabs": "标签页不见了？可能是 Tab Space 刚刚更新，请稍侯刷新...",
-        "manuallyMigrate": "手动迁移 Tab Space 3.5 之前保存的会话",
-        "migrateTip": "或进入设置页面手动迁移旧数据",
         "tips": "提示：",
         "tipContents": [
             "如果您发现点击“保存”按钮后标签页没有被保存，这很可能是由于 Tab Space 刚刚更新，重启 Safari 以使其生效即可恢复正常。",
-            "您的书签组现通过 iCloud 在设备间同步。(要求 macOS 10.15 版本）",
+            "您的书签组现通过 iCloud 在设备间同步。",
             "您现在可以通过拖拽保存的会话或站点以重新组织您的记录。",
             "如果您喜欢 Tab Space，请在 Mac App Store 进行评分。",
             "Tab Space 在 Safari 地址栏为空时无法使用，因为空地址栏意味着当前处于插件无法访问的特殊页面。"
@@ -116,7 +112,7 @@
         "ctrlD": "复制标签页",
         "ctrlL": "关闭左侧标签页",
         "ctrlR": "关闭右侧标签页",
-        "ctrlK": "关闭相同域名标签页（macOS 10.15 及更新版本）",
+        "ctrlK": "关闭相同域名标签页",
         "ctrlQ": "关闭其它所有标签页",
         "openIn": "打开当前标签页于",
         "ctrlT": "打开 Tab Space",
@@ -153,8 +149,6 @@
         "exportText": "Копіювати як текст",
         "exportMD": "Копіювати як Markdown",
         "loseTabs": "Загубили свої вкладки? Можливо, Tab Space тільки-но обновлено, будь ласка, трохи зачекайте...",
-        "manuallyMigrate": "Ручна міграція сеансів перед Tab Space 3.5",
-        "migrateTip": "Або перейдіть до налаштувань і вручну перемістіть старі сеанси",
         "tips": "Поради:",
         "loading": "завантаження...",
         "ignore-pinned-tabs": "Ігнорувати прикріплені вкладки при збереженні",
@@ -195,12 +189,10 @@
         "exportText": "Copiar como texto",
         "exportMD": "Copiar como Markdown",
         "loseTabs": "¿Perdiste tus pestañas? Quizás Tab Space acaba de actualizarse, por favor espera un momento y dale refrescar a Safari...",
-        "manuallyMigrate": "Migrar sesiones manualmente a Tab Space 3.5",
-        "migrateTip": "O vaya a la configuración y migre manualmente las sesiones antiguas",
         "tips": "Tips:",
         "tipContents": [
             "Si pulsaste \"guardar pestañas\" y las pestañas no se guardaron puede ser porque Tab Space ha sido actualizado recientemente. Por favor reinica Safari para habilitarlo. ",
-            "Tus sesiones están ahora sincronizadas con todos tus dispositivos utilizando iCloud. (macOS 10.15 requerido)",
+            "Tus sesiones están ahora sincronizadas con todos tus dispositivos utilizando iCloud.",
             "Ahora puedes arrastrar y colocar para reorganizar tus sesiones o tus sitios.",
             "Por favor califica Tab Space en el Mac App Store si te gusta la aplicación.",
             "Los atajos de Tab Space no funcionan cuando la barra de dirección de Safarí está vacía. TabSpace interpreta una página vacía como algo especial donde la extensión no ha sido cargada."
@@ -250,8 +242,6 @@
         "exportText": "Kopier som tekst",
         "exportMD": "Kopier som Markdown",
         "loseTabs": "Mistet dine faner? Måske har en opgradering af Tab Space lige fundet sted, vent venligst et øjeblik og genindlæs siden ...",
-        "manuallyMigrate": "Migrere manuelt sessions før Tab Space 3.5",
-        "migrateTip": "Eller gå til indstillinger og migrere manuelt ældre sessions",
         "tips": "Tips:",
         "loading": "indlæser...",
         "ignore-pinned-tabs": "Ignorer fastgjorte web sider under lagring af faner",
@@ -293,12 +283,10 @@
         "exportText": "Kopiuj jako tekst",
         "exportMD": "Kopiuj jako Markdown",
         "loseTabs": "Straciłeś swoje karty? Tab Space jest prawdopodobnie uaktualniany. Proszę poczekaj chwilę, a następnie odśwież stronę ...",
-        "manuallyMigrate": "Przenieś sesje ręcznie przed Tab Space 3.5",
-        "migrateTip": "Lub przejdź do ustawień i przenieś stare sesje ręcznie",
         "tips": "Podpowiedzi:",
         "tipContents": [
             "Jeśli klikniesz \"zapisz karty\" i żadna z kart nie zostanie zapisana, to dlatego, że Tab Space właśnie został zaktualizowany. Zrestartuj Safari, aby móc używać Tab Space ponownie.",
-            "Twoje sesje zostały zsynchronizowane pomiędzy wszystkimi urządzeniami w iCloud. (wymagany macOS 10.15)",
+            "Twoje sesje zostały zsynchronizowane pomiędzy wszystkimi urządzeniami w iCloud.",
             "Teraz możesz Przeciągać i Upuszczać swoje sesje i strony, aby dowolnie nimi zarządzać.",
             "Proszę oceń Tab Space w Mac App Store jeśli podoba ci się aplikacja.",
             "Skróty Tab Space nie działają gdy pasek adresu Safari jest pusty. Pusty pasek adresu oznacza specjalną stronę, która nie obsługuje rozszerzeń."
@@ -355,12 +343,10 @@
         "exportText": "Скопировать как Текст",
         "exportMD": "Скопировать как Маркдаун",
         "loseTabs": "Потеряли свои вкладки? Возможно Tab Space просто обновился. Подождите и перезапустите…",
-        "manuallyMigrate": "Откатить сессию вручную до Tab Space 3.5",
-        "migrateTip": "Или перейдите в настройки и откатите старую сессию вручную",
         "tips": "Советы:",
         "tipContents": [
             "Если вы нажали \"сохранить вкладки\" и обнаружили, что вкладки не сохранились, это потому, что Tab Space только что обновился. Пожалуйста, перезапустите Safari, чтобы заработало.",
-            "Ваша сессия синхронизирована со всеми вашими устройствами через iCloud. (Требуется macOS 10.15)",
+            "Ваша сессия синхронизирована со всеми вашими устройствами через iCloud.",
             "Вы теперь можете перетаскивать ссылки для организации сессий или сайтов.",
             "Пожалуйста оцените Tab Space на Mac App Store, если вам нравится это приложение.",
             "Быстрые комбинации Tab Space не будут работать при пустой поисковой строке Safari. Пустая поисковая строка означает особую страницу где расширения не работают."
@@ -413,12 +399,10 @@
         "exportText": "Text olarak kopyala",
         "exportMD": "Markdown olarak kopyala",
         "loseTabs": "Sekmelerini mi kayıp etdin? Tab Space gücellenmiş olabilir, lütfen bekleyin ve sayfayı yenileyin...",
-        "manuallyMigrate": "El ile Tab Space 3.5 oturumlarınızı geçirin",
-        "migrateTip": "Veya ayarlara gidin ve el ile eski oturumlarınızı taşıyın",
         "tips": "İpuçları:",
         "tipContents": [
             "Eğer \"save tabs\" tıklayıp hiç kayıtlı sekme bulamadıysanız, bunun nedeni Tab Space yeni güncellenmiş olmasıdır, lütfen Safari'yi yeniden başlatın. ",
-            "Oturumlarınız bütün cihazlarınız arasında iCloud üzerinden senkronize oluyor. (macOS 10.15 gerektirir)",
+            "Oturumlarınız bütün cihazlarınız arasında iCloud üzerinden senkronize oluyor.",
             "Artık Tut ve Sürükle yaparak oturumlarınızı ve websitelerinizi organize edebilirsiniz.",
             "Lütfen Tab Space'yi Mac App Store üzerinden yorumlamayı unutmayın.",
             "Safari adres çubuğu boş iken kısayollar çalışmaz. Bunun nedeni boş adres çubuğu Safari uzantılarını bloklar."
@@ -467,12 +451,10 @@
         "exportText": "als Text kopieren",
         "exportMD": "als Markdown kopieren",
         "loseTabs": "Sind deine Tabs verschwunden? Vielleicht führt Tab Space im Moment gerade ein Upgrade durch, bitte warte einen Moment und lade es erneut...",
-        "manuallyMigrate": "Manuell Sitzungen vor Tab Space 3.5 migrieren",
-        "migrateTip": "Oder gehe zu Einstellungen, um dort vergangene vergangene Sitzungen zu migrieren",
         "tips": "Tips:",
         "tipContents": [
             "Wenn du \"Tabs speichern\" drückst, aber keine Tabs gespeichert wurden, liegt es daran, dass Tab Space gerade aktualisiert wurde. Bitte schließe Safari und starte es erneut, um es zu aktivieren",
-            "Deine Sitzungen sind nun auf all deinen Geräten über iCloud synchronisiert. (macOS 10.15 wird benötigt)",
+            "Deine Sitzungen sind nun auf all deinen Geräten über iCloud synchronisiert.",
             "Du kannst nun Drag and Drop nutzen, um deine Sitzungen und Seiten zu reorganisieren.",
             "Bitte bewerte Tab Space im Mac App Store, wenn dir die App gefällt.",
             "Tab Space Shortcuts funktionieren nicht, wenn die Safari Address-Leiste leer ist. Denn eine leere Adress-Leiste bedeutet, dass eine besondere Seite offen ist. Hier können Erweiterungen nicht geladen werden."
@@ -522,12 +504,10 @@
         "exportText": "Kopiera som Text",
         "exportMD": "Kopiera som Markdown",
         "loseTabs": "Är dina flikar borta? Tab Space kanske precis uppgraderats, vänta en stund och ladda om på nytt ...",
-        "manuallyMigrate": "Manuellt migrerade sessioner från innan Tab Space 3.5",
-        "migrateTip": "Eller gå till inställningar och manuellt migrera en gammal session",
         "tips": "Tips:",
         "tipContents": [
             "Om du trycker på \"Spara flikar\" och inga flikar sparas är det för att Tab Space precis uppgraderats. Starta om Safari för att aktivera det igen.",
-            "Dina sessioner är nu synkade till alla dina enheter i iCloud (kräver macOS 10.15)",
+            "Dina sessioner är nu synkade till alla dina enheter i iCloud",
             "Du kan dra och släppa för att organisera om dina sessioner och sidor",
             "Betygsätt gärna Tab Space i Mac Appstore om du gillar detta program",
             "Tab Space kortkommandon kommer inte fungera om Safaris adressfält är tomt. Detta för att ett tomt adressfält laddar in en speciell sida som inte laddar in Safaris tillägg."
@@ -578,12 +558,10 @@
         "exportText": "Copia come Testo",
         "exportMD": "Copia come Markdown",
         "loseTabs": "Hai perso le tue tab? Forse Tab Space si è appena aggiornato, aspetta un momento e ricarica la pagina ...",
-        "manuallyMigrate": "Migra sessioni precedenti a Tab Space 3.5",
-        "migrateTip": "O vai nelle impostazioni per migrare da sessioni vecchie",
         "tips": "Suggerimenti:",
         "tipContents": [
             "Se hai selezionato \"Salva le Tab\" e non hai trovato le tab salvate, è perchè Tab Space si è appena aggiornato. Riavvia Safari per rendere effettivo l'aggiornamento. ",
-            "Le tue sessioni sono ora sincronizzate su tutti i tuoi device con iCloud (richiede macOS 10.15)",
+            "Le tue sessioni sono ora sincronizzate su tutti i tuoi device con iCloud.",
             "Puoi ora usare il Drag and Drop per riorganizzare le tue sessioni o i tuoi siti",
             "Per favore, dai un voto a Tab Space sul Mac App Store se ti piace quest'app.",
             "Le scorciatoie di Tab Space non funzionano quando la barra di navigazione di Safari è vuota. Questo perchè quando la barra di navigazione è vuota si è in una speciale pagina dove le estensioni sono disattivate"
@@ -632,12 +610,10 @@
         "exportText": "텍스트로 복사",
         "exportMD": "마크다운으로 복사",
         "loseTabs": "탭이 보이지 않습니까? Tab Space가 방금 업그레이드 되어 아직 안 보일 수 있습니다. 잠시 기다린 후 페이지를 새로 고쳐보세요...",
-        "manuallyMigrate": "Tab Space 3.5 이전의 세션은 수동으로 이전해야 합니다",
-        "migrateTip": "또는, 설정에 가서 수동으로 이전 세션을 이전하세요",
         "tips": "팁:",
         "tipContents": [
             "Tab Space가 방금 업그레이드 된 경우 \"탭 저장\"을 클릭해도 탭이 저장되지 않을 수 있습니다. Safari를 재시작하여 활성화 하십시오. ",
-            "저장된 세션은 이제 iCloud를 통해 여러분이 연결한 모든 장치로 동기화 됩니다. (macOS 10.15 필요)",
+            "저장된 세션은 이제 iCloud를 통해 여러분이 연결한 모든 장치로 동기화 됩니다.",
             "드래그 앤 드롭으로 세션이나 사이트 위치를 바꿀 수 있습니다.",
             "Tab Space가 마음에 드신다면 Mac App Store에 평가를 남겨주세요.",
             "Safari 주소창이 비어 있으면 Tab Space 단축키가 작동하지 않습니다. 빈 주소창은 확장 기능이 작동하지 않는 특수 페이지를 뜻하기 때문입니다."
@@ -692,12 +668,10 @@
         "exportText": "نسخ كنص",
         "exportMD": "نسخ  Markdown",
         "loseTabs": "هل فقدت تبوبياتك؟ ربما قد تم ترقية Tab Space، انتظر برهة وقم بإعادة تحديث…",
-        "manuallyMigrate": "انتقال يدوي للجلسات لما قبل Tab Space 3.5",
-        "migrateTip": "أذهب إلى إعدادات ويدويا دمج انتقال الجلسات القديمة",
         "tips": "تلميحات:",
         "tipContents": [
             "إذا ضغطت على \"save tabs\" ووجدت أنه لم يتم حفظ أي علامات تبويب، فذلك بسبب أن تم ترقية Tab Space للتو، يرجى إعادة تشغيل Safari لتفعيله. ",
-            "جلساتك الان تم تزامنها مع كل أجهزتك عبر سحابة اي كلود (macOS 10.15 يتطلب)",
+            "جلساتك الان تم تزامنها مع كل أجهزتك عبر سحابة اي كلود",
             "يمكنك الان استخدام السحب والإفلات لإعادة تنظيم الجلسات أو المواقع.",
             "قم بعمل تقييم Tab Space على استور ابل اذا احببته",
             "الاختصارات Tab Space لا تعمل عندما يكون شريط عنوان متصفح سفاري فارغ. لأن شريط العنوان الفارغ يعني صفحة خاصة لا يمكن تحميل الأداة فيها."
@@ -755,12 +729,10 @@
         "exportText": "Kopieer als tekst",
         "exportMD": "Kopieer als Markdown",
         "loseTabs": "Ben je je tabbladen kwijt? Misschien is Tab Space net geüpgraded, wacht even en ververs...",
-        "manuallyMigrate": "Handmatige migratie van sessies vóór Tab Space 3.5",
-        "migrateTip": "Of ga naar Instellingen en migreer handmatig oude sessies",
         "tips": "Tips:",
         "tipContents": [
             "Als je op \"Tabbladen opslaan… \" klikt en er zijn geen tabbladen opgeslagen, dan is Tab Space net geüpgraded. Start Safari dan opnieuw op om Tab Space in te schakelen. ",
-            "Je sessies worden nu via iCloud op al je apparaten gesynchroniseerd. (macOS 10.15 vereist)",
+            "Je sessies worden nu via iCloud op al je apparaten gesynchroniseerd.",
             "Je kunt nu gebruikmaken van Drag and Drop om je sessies of sites te reorganiseren.",
             "Beoordeel Tab Space in de Mac App Store als je deze app leuk vindt.",
             "De Tab Space-snelkoppelingen werken niet als de adresbalk van Safari leeg is, omdat een pagina met een lege adresbalk gezien wordt als een speciale pagina waarin de extensie niet kan worden geladen."
@@ -818,12 +790,10 @@
         "exportText": "Copier en texte",
         "exportMD": "Copier en Markdown",
         "loseTabs": "Vous-avez perdu vos onglets ? Peut-être que Tab Space a été mis à jour, attendez un peu s'il vous plaît et rafraichissez votre navigateur...",
-        "manuallyMigrate": "Migrez manuellement vos sessions avant Tab Space 3.5",
-        "migrateTip": "Ou allez dans paramètres et migrez manuellement vos anciennes sessions",
         "tips": "Astuces:",
         "tipContents": [
             "Si vous cliquez \"Sauvergarder onglets\" et qu'aucun onglet n'est sauvegardé, c'est parce que Tab Space vient d'être mis à jour, redémarrez Safari pour le réactiver s'il vous plaît. ",
-            "Vos sessions sont maintenant synchronisées sur tous vos appareils iCloud. (macOS 10.15 obligatoire)",
+            "Vos sessions sont maintenant synchronisées sur tous vos appareils iCloud.",
             "Vous pouvez maintenant utiliser Glisser-Déposer pour réorganiser vos sessions ou sites.",
             "Donnez une note à Tab Space sur le Mac App Store si vous aimez l'application.",
             "Les raccourcis Tab Space ne marcherons pas quand la barre d'adresse Safari est vide. Parce que une barre d'adresse vide est une page spéciale où les extensions ne peuvent pas êtres chargés."
@@ -880,12 +850,10 @@
         "exportText": "テキスト形式でコピー",
         "exportMD": "Markdown 形式でコピー",
         "loseTabs": "タブが表示されませんか?  先ほど Tab Space が更新されたため、データ処理に少し時間がかかっています。完了までしばらくお待ちください。",
-        "manuallyMigrate": "Tab Space 3.5 以前のセッションは、手動で移行する必要があります。",
-        "migrateTip": "「設定」を選択して、古いセッションを手動で移行してください。",
         "tips": "豆知識:",
         "tipContents": [
             "Tab Space が更新された直後には、「タブを保存」を選択しても保存されたタブが表示されないことがあります。その時には、Safari を再起動してください。",
-            "保存されたセッションは、iCloud を有効にした機器間で同期されます（macOS 10.15 以降）",
+            "保存されたセッションは、iCloud を有効にした機器間で同期されます",
             "セッションやサイトは、ドラッグアンドドロップで編集できます。",
             "Tab Space を気に入ったら、Mac App Store で評価をお願いします。",
             "Tab Space ショートカットは、Safari のアドレスバーが空だと動作しません。アドレスバーが空の状態で表示されているページでは、機能拡張が使えないからです。"

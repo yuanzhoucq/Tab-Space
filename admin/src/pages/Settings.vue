@@ -85,8 +85,6 @@
           {{lang.ctrlB}}
         </p>
 
-        <hr style="border-width: 0; height: 1px; background-color: #dddddd; margin: 20px 0;" />
-        <span class="link" @click="manuallyMigrate" style="cursor: pointer"><small>{{lang.manuallyMigrate}}</small></span> <br/><br/>
       </div>
 
     </div>
@@ -129,10 +127,6 @@ export default {
     setExternalBrowser(number, e) {
       let key = number == 1 ? Constants.externalBrowser1Key : Constants.externalBrowser2Key
       this.bridge.send({cmd: "SetDefault", name: key, value: e.target.value})
-    },
-    manuallyMigrate() {
-      this.bridge.send({cmd: "ManuallyMigrate"})
-      this.$router.replace({path: "/"})
     }
   }
 };
