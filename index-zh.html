@@ -1,102 +1,154 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-Hans">
+
 <head>
-  <!-- Global site tag (gtag.js) - Google Analytics -->
+  <!-- Google Analytics -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=UA-120186346-2"></script>
   <script>
     window.dataLayer = window.dataLayer || [];
-    function gtag(){dataLayer.push(arguments);}
+    function gtag() { dataLayer.push(arguments); }
     gtag('js', new Date());
     gtag('config', 'UA-120186346-2');
   </script>
-  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+
+  <!-- SEO -->
   <title>Tab Space - Safari 的标签页和书签管理扩展</title>
-  <meta name="description"
-        content="Tab Space是一个为 Safari 浏览器提供标签页保存、会话管理和快捷键的应用程序。">
-  <meta name="keywords"
-        content="Tab Space, app, os x, mac, macOS, high sierra, mojave, catalina, tool, extension, Safari, onetab, 浏览器, 扩展">
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta name="description" content="Tab Space 是一个为 Safari 浏览器提供标签页保存、会话管理和快捷键的应用程序。">
+  <meta name="keywords" content="Tab Space, Safari 扩展, 标签管理, 书签管理, macOS, onetab 替代">
+
+  <!-- Social -->
   <meta name="twitter:site" content="@joyuer">
+  <meta name="twitter:card" content="summary_large_image">
   <meta property="og:title" content="Tab Space - Safari 的标签页和书签管理扩展">
-  <meta property="og:description"
-        content="Tab Space是一个为 Safari 浏览器提供标签页保存、会话管理和快捷键的应用程序。">
+  <meta property="og:description" content="把浏览器标签页保存为工作空间。一个强大的 Safari 标签页和会话管理扩展。">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://mytab.space">
   <meta property="og:image" content="https://mytab.space/icon.png">
-  <link rel="shortcut icon" type="image/png" href="https://mytab.space/icon.png">
-  <link rel="apple-touch-icon" href="https://mytab.space/icon.png">
+
+  <!-- Icons -->
+  <link rel="icon" type="image/png" href="icon.png">
+  <link rel="apple-touch-icon" href="icon.png">
+
+  <!-- Styles -->
   <link rel="stylesheet" href="assets/css/main.css">
 </head>
-<body data-attr="body">
-<header style="position: absolute; right: 0; top: 20px"><a href="index.html">English</a></header>
-<!--The video styles refer to https://recentsapp.com-->
-<section id="app" class="app-main">
-  <div class="container" id="app-container" style="transform: translateX(0px);">
-    <div class="img flex">
-      <div class="loader loader--style5" title="4">
-        <svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
-             width="24px" height="30px" viewBox="0 0 24 30" style="enable-background:new 0 0 50 50;" xml:space="preserve">
-    <rect x="0" y="0" width="4" height="10" fill="#333">
-      <animateTransform attributeType="xml"
-                        attributeName="transform" type="translate"
-                        values="0 0; 0 20; 0 0"
-                        begin="0" dur="0.6s" repeatCount="indefinite" />
-    </rect>
-          <rect x="10" y="0" width="4" height="10" fill="#333">
-      <animateTransform attributeType="xml"
-                        attributeName="transform" type="translate"
-                        values="0 0; 0 20; 0 0"
-                        begin="0.2s" dur="0.6s" repeatCount="indefinite" />
-    </rect>
-          <rect x="20" y="0" width="4" height="10" fill="#333">
-      <animateTransform attributeType="xml"
-                        attributeName="transform" type="translate"
-                        values="0 0; 0 20; 0 0"
-                        begin="0.4s" dur="0.6s" repeatCount="indefinite" />
-    </rect>
-  </svg>
-      </div>
-      <video id="app-video" width="700" preload="auto" poster="assets/img/desktop.png" autoplay=""
-             loop="" muted="" playsinline="" onplay="document.querySelector('.loader').style.display = 'none';">
-        <source src="./assets/Tab_Space_Demo.mp4" type="video/mp4">
-      </video>
-    </div>
 
-    <article class="app-article flex">
-      <div class="inner">
-        <h1 style="margin-top: -50px; display: flex">
-          <img class="logo" src="icon.png" width="120" height="120" alt="Tab Space Logo">
-          <span style="margin-top: 40px; display: inline-block;"><b>Tab Space</b></span>
-        </h1>
-        <p><span style="color: salmon; font-weight: 700;">把浏览器标签页保存为工作空间 </span><br><br><b>Tab
-          Space</b> 是一个为 Safari 浏览器提供标签页保存、会话管理和快捷键的应用程序。</p>
-        <div class="app-buttons">
-          <a href="https://apps.apple.com/cn/app/tab-space/id1473726602?mt=12" onclick="gtag('event', 'view_item', { method : 'Mac App Store' });" target="_blank"><img
-              src="assets/img/Download_on_the_Mac_App_Store_Badge_US-UK_RGB_blk_092917.svg" alt="Tab Space download badge"></a>
+<body>
+  <!-- Header -->
+  <header>
+    <a href="index.html">English</a>
+  </header>
+
+  <!-- Hero Section -->
+  <section id="app" class="app-main">
+    <div class="container">
+      <!-- Video Demo -->
+      <div class="img">
+        <div class="loader" id="video-loader">
+          <svg width="24" height="30" viewBox="0 0 24 30" xmlns="http://www.w3.org/2000/svg">
+            <rect x="0" y="0" width="4" height="10">
+              <animateTransform attributeType="xml" attributeName="transform" type="translate" values="0 0; 0 20; 0 0"
+                begin="0" dur="0.6s" repeatCount="indefinite" />
+            </rect>
+            <rect x="10" y="0" width="4" height="10">
+              <animateTransform attributeType="xml" attributeName="transform" type="translate" values="0 0; 0 20; 0 0"
+                begin="0.2s" dur="0.6s" repeatCount="indefinite" />
+            </rect>
+            <rect x="20" y="0" width="4" height="10">
+              <animateTransform attributeType="xml" attributeName="transform" type="translate" values="0 0; 0 20; 0 0"
+                begin="0.4s" dur="0.6s" repeatCount="indefinite" />
+            </rect>
+          </svg>
         </div>
-        <div style="margin-left: 200px; margin-top: -2em;"><a
-            href="https://joyuer.notion.site/What-s-New-in-Tab-Space-66063fc8afea4f54906f32ef92915ea7"
-            target="_blank">更新日志（英文）</a>
-        </div>
-        <div class="requirements">
-          <div class="copy">
-            <div class="subtitle">要求 macOS 10.13 或更新版本</div>
+        <video id="app-video" preload="auto" poster="assets/img/desktop.png" autoplay loop muted playsinline
+          onplay="document.getElementById('video-loader').style.display='none';">
+          <source src="./assets/Tab_Space_Demo.mp4" type="video/mp4">
+        </video>
+      </div>
+
+      <!-- Content -->
+      <article class="app-article">
+        <div class="inner">
+          <!-- Logo & Title -->
+          <div class="logo-title">
+            <img class="logo" src="icon.png" width="96" height="96" alt="Tab Space">
+            <span class="title-text">Tab Space</span>
+          </div>
+
+          <!-- Tagline -->
+          <span class="tagline">把浏览器标签页保存为工作空间</span>
+
+          <!-- Description -->
+          <p class="description">
+            <strong>Tab Space</strong> 是一个为 Safari 浏览器提供标签页保存、会话管理和快捷键的应用程序。
+          </p>
+
+          <!-- Download -->
+          <div class="app-buttons">
+            <a href="https://apps.apple.com/cn/app/tab-space/id1473726602?mt=12"
+              onclick="gtag('event', 'view_item', { method: 'Mac App Store' });" target="_blank" rel="noopener">
+              <img src="assets/img/Download_on_the_Mac_App_Store_Badge_US-UK_RGB_blk_092917.svg"
+                alt="在 Mac App Store 下载">
+            </a>
+          </div>
+
+          <!-- Changelog -->
+          <a href="https://joyuer.notion.site/What-s-New-in-Tab-Space-66063fc8afea4f54906f32ef92915ea7"
+            class="changelog-link" target="_blank" rel="noopener">
+            更新日志（英文）
+          </a>
+
+          <!-- Requirements -->
+          <div class="requirements">
+            <p class="subtitle">要求 macOS 11 或更新版本</p>
           </div>
         </div>
-      </div>
-    </article>
-  </div>
-</section>
-
-<footer>
-  <div class="container">
-    <div class="inner">
-      <p class="author">Developed by️ <a href="https://joyuer.cn/" target="_blank">Joyuer</a> 📮
-        <a href="mailto:joyuercn@icloud.com" target="_blank">联系我们</a>  🤖
-        View️ on <a href="https://github.com/yuanzhoucq/Tab-Space" target="_blank">GitHub</a></p>
+      </article>
     </div>
-  </div>
-</footer>
+  </section>
+
+  <!-- Features Section -->
+  <section class="features">
+    <div class="container">
+      <h2>为什么选择 Tab Space？</h2>
+      <div class="features-grid">
+        <div class="feature-card">
+          <div class="feature-icon">💾</div>
+          <h3>保存会话</h3>
+          <p>一键保存所有打开的标签页为一个会话。随时返回继续工作。</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">🗂️</div>
+          <h3>组织工作空间</h3>
+          <p>为不同项目创建独立的会话。保持浏览整洁有序。</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">⌨️</div>
+          <h3>键盘快捷键</h3>
+          <p>高级用户喜爱的可自定义快捷键。无需离开键盘即可保存、恢复和管理标签页。</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer>
+    <div class="container">
+      <div class="inner">
+        <p class="author">
+          开发者 <a href="https://joyuer.cn/" target="_blank" rel="noopener">Joyuer</a>
+          <span class="divider">•</span>
+          <a href="mailto:joyuercn@icloud.com">联系我们</a>
+          <span class="divider">•</span>
+          <a href="https://github.com/yuanzhoucq/Tab-Space" target="_blank" rel="noopener">GitHub</a>
+        </p>
+      </div>
+    </div>
+  </footer>
 </body>
+
 </html>

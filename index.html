@@ -1,102 +1,158 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-  <!-- Global site tag (gtag.js) - Google Analytics -->
+  <!-- Google Analytics -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=UA-120186346-2"></script>
   <script>
     window.dataLayer = window.dataLayer || [];
-    function gtag(){dataLayer.push(arguments);}
+    function gtag() { dataLayer.push(arguments); }
     gtag('js', new Date());
     gtag('config', 'UA-120186346-2');
   </script>
-  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
-  <title>Tab Space - Tab saver & Bookmark manager for Safari</title>
+
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+
+  <!-- SEO -->
+  <title>Tab Space - Tab Saver & Bookmark Manager for Safari</title>
   <meta name="description"
-        content="Tab Space is an extension app which could save tabs, manage saved sessions and provide some useful shortcuts for Safari.">
-  <meta name="keywords"
-        content="Tab Space, app, os x, mac, macOS, high sierra, mojave, catalina, tool, extension, Safari, onetab">
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    content="Tab Space is a Safari extension that saves your browser tabs as workspaces, manages sessions, and provides handy shortcuts.">
+  <meta name="keywords" content="Tab Space, Safari extension, tab manager, bookmark manager, macOS, onetab alternative">
+
+  <!-- Social -->
   <meta name="twitter:site" content="@joyuer">
-  <meta property="og:title" content="Tab Space - Tab saver & Bookmark manager for Safari">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta property="og:title" content="Tab Space - Tab Saver & Bookmark Manager for Safari">
   <meta property="og:description"
-        content="Tab Space is an extension app which could save tabs, manage saved sessions and provide some useful shortcuts for Safari.">
+    content="Save browser tabs as workspaces. A powerful Safari extension for tab and session management.">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://mytab.space">
   <meta property="og:image" content="https://mytab.space/icon.png">
-  <link rel="shortcut icon" type="image/png" href="https://mytab.space/icon.png">
-  <link rel="apple-touch-icon" href="https://mytab.space/icon.png">
+
+  <!-- Icons -->
+  <link rel="icon" type="image/png" href="icon.png">
+  <link rel="apple-touch-icon" href="icon.png">
+
+  <!-- Styles -->
   <link rel="stylesheet" href="assets/css/main.css">
 </head>
-<body data-attr="body">
-<header style="position: absolute; right: 0; top: 20px"><a href="index-zh.html">中文</a></header>
-<!--The video styles refer to https://recentsapp.com-->
-<section id="app" class="app-main">
-  <div class="container" id="app-container" style="transform: translateX(0px);">
-    <div class="img flex">
-      <div class="loader loader--style5" title="4">
-        <svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
-             width="24px" height="30px" viewBox="0 0 24 30" style="enable-background:new 0 0 50 50;" xml:space="preserve">
-    <rect x="0" y="0" width="4" height="10" fill="#333">
-      <animateTransform attributeType="xml"
-                        attributeName="transform" type="translate"
-                        values="0 0; 0 20; 0 0"
-                        begin="0" dur="0.6s" repeatCount="indefinite" />
-    </rect>
-          <rect x="10" y="0" width="4" height="10" fill="#333">
-      <animateTransform attributeType="xml"
-                        attributeName="transform" type="translate"
-                        values="0 0; 0 20; 0 0"
-                        begin="0.2s" dur="0.6s" repeatCount="indefinite" />
-    </rect>
-          <rect x="20" y="0" width="4" height="10" fill="#333">
-      <animateTransform attributeType="xml"
-                        attributeName="transform" type="translate"
-                        values="0 0; 0 20; 0 0"
-                        begin="0.4s" dur="0.6s" repeatCount="indefinite" />
-    </rect>
-  </svg>
-      </div>
-      <video id="app-video" width="700" preload="auto" poster="assets/img/desktop.png" autoplay=""
-             loop="" muted="" playsinline="" onplay="document.querySelector('.loader').style.display = 'none';">
-        <source src="./assets/Tab_Space_Demo.mp4" type="video/mp4">
-      </video>
-    </div>
 
-    <article class="app-article flex">
-      <div class="inner">
-        <h1 style="margin-top: -50px; display: flex">
-          <img class="logo" src="icon.png" width="120" height="120" alt="Tab Space Logo">
-          <span style="margin-top: 40px; display: inline-block;"><b>Tab Space</b></span>
-        </h1>
-        <p><span style="color: salmon; font-weight: 700;">Save browser tabs as a workspace. </span><br><br><b>Tab
-          Space</b> is a nifty extension app that helps you save and manage your tabs as separate sessions, as well as providing some handy shortcuts for Safari.</p>
-        <div class="app-buttons">
-          <a href="https://apps.apple.com/app/tab-space/id1473726602?mt=12" onclick="gtag('event', 'view_item', { method : 'Mac App Store' });" target="_blank"><img
-              src="assets/img/Download_on_the_Mac_App_Store_Badge_US-UK_RGB_blk_092917.svg" alt="Tab Space download badge"></a>
+<body>
+  <!-- Header -->
+  <header>
+    <a href="index-zh.html">中文</a>
+  </header>
+
+  <!-- Hero Section -->
+  <section id="app" class="app-main">
+    <div class="container">
+      <!-- Video Demo -->
+      <div class="img">
+        <div class="loader" id="video-loader">
+          <svg width="24" height="30" viewBox="0 0 24 30" xmlns="http://www.w3.org/2000/svg">
+            <rect x="0" y="0" width="4" height="10">
+              <animateTransform attributeType="xml" attributeName="transform" type="translate" values="0 0; 0 20; 0 0"
+                begin="0" dur="0.6s" repeatCount="indefinite" />
+            </rect>
+            <rect x="10" y="0" width="4" height="10">
+              <animateTransform attributeType="xml" attributeName="transform" type="translate" values="0 0; 0 20; 0 0"
+                begin="0.2s" dur="0.6s" repeatCount="indefinite" />
+            </rect>
+            <rect x="20" y="0" width="4" height="10">
+              <animateTransform attributeType="xml" attributeName="transform" type="translate" values="0 0; 0 20; 0 0"
+                begin="0.4s" dur="0.6s" repeatCount="indefinite" />
+            </rect>
+          </svg>
         </div>
-        <div style="margin-left: 200px; margin-top: -2em;"><a
-            href="https://joyuer.notion.site/What-s-New-in-Tab-Space-66063fc8afea4f54906f32ef92915ea7"
-            target="_blank">Changelog</a>
-        </div>
-        <div class="requirements">
-          <div class="copy">
-            <div class="subtitle">Requires macOS 10.13 or later</div>
+        <video id="app-video" preload="auto" poster="assets/img/desktop.png" autoplay loop muted playsinline
+          onplay="document.getElementById('video-loader').style.display='none';">
+          <source src="./assets/Tab_Space_Demo.mp4" type="video/mp4">
+        </video>
+      </div>
+
+      <!-- Content -->
+      <article class="app-article">
+        <div class="inner">
+          <!-- Logo & Title -->
+          <div class="logo-title">
+            <img class="logo" src="icon.png" width="96" height="96" alt="Tab Space">
+            <span class="title-text">Tab Space</span>
+          </div>
+
+          <!-- Tagline -->
+          <span class="tagline">Save browser tabs as a workspace.</span>
+
+          <!-- Description -->
+          <p class="description">
+            <strong>Tab Space</strong> is a nifty extension app that helps you save and manage your tabs as separate
+            sessions, as well as providing some handy shortcuts for Safari.
+          </p>
+
+          <!-- Download -->
+          <div class="app-buttons">
+            <a href="https://apps.apple.com/app/tab-space/id1473726602?mt=12"
+              onclick="gtag('event', 'view_item', { method: 'Mac App Store' });" target="_blank" rel="noopener">
+              <img src="assets/img/Download_on_the_Mac_App_Store_Badge_US-UK_RGB_blk_092917.svg"
+                alt="Download on the Mac App Store">
+            </a>
+          </div>
+
+          <!-- Changelog -->
+          <a href="https://joyuer.notion.site/What-s-New-in-Tab-Space-66063fc8afea4f54906f32ef92915ea7"
+            class="changelog-link" target="_blank" rel="noopener">
+            Changelog
+          </a>
+
+          <!-- Requirements -->
+          <div class="requirements">
+            <p class="subtitle">Requires macOS 11 or later</p>
           </div>
         </div>
-      </div>
-    </article>
-  </div>
-</section>
-
-<footer>
-  <div class="container">
-    <div class="inner">
-      <p class="author">Developed by️ <a href="https://joyuer.cn/" target="_blank">Joyuer</a> 📮
-       <a href="mailto:joyuercn@icloud.com" target="_blank">Contact</a> 🤖
-        View️ on <a href="https://github.com/yuanzhoucq/Tab-Space" target="_blank">GitHub</a></p>
+      </article>
     </div>
-  </div>
-</footer>
+  </section>
+
+  <!-- Features Section -->
+  <section class="features">
+    <div class="container">
+      <h2>Why Tab Space?</h2>
+      <div class="features-grid">
+        <div class="feature-card">
+          <div class="feature-icon">💾</div>
+          <h3>Save Sessions</h3>
+          <p>Quickly save all your open tabs as a session with a single click. Return to your work anytime.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">🗂️</div>
+          <h3>Organize Workspaces</h3>
+          <p>Create separate sessions for different projects. Keep your browsing organized and clutter-free.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">⌨️</div>
+          <h3>Keyboard Shortcuts</h3>
+          <p>Power users love our customizable shortcuts. Save, restore, and manage tabs without leaving the keyboard.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer>
+    <div class="container">
+      <div class="inner">
+        <p class="author">
+          Developed by <a href="https://joyuer.cn/" target="_blank" rel="noopener">Joyuer</a>
+          <span class="divider">•</span>
+          <a href="mailto:joyuercn@icloud.com">Contact</a>
+          <span class="divider">•</span>
+          <a href="https://github.com/yuanzhoucq/Tab-Space" target="_blank" rel="noopener">GitHub</a>
+        </p>
+      </div>
+    </div>
+  </footer>
 </body>
+
 </html>
