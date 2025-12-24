@@ -18,6 +18,13 @@
       </span>
       <import-dropdown></import-dropdown>
     </div>
+    <div class="backup">
+      <span class="link">
+        {{lang.backup || 'Backup'}}
+        <small>▼</small>
+      </span>
+      <backup-dropdown></backup-dropdown>
+    </div>
     <div>
       <router-link class="link" to="/settings">{{lang.settings}}</router-link>
     </div>
@@ -28,13 +35,15 @@
 import { mapState } from "vuex"
 import ExportDropdown from "./ExportDropdown"
 import ImportDropdown from "./ImportDropdown"
+import BackupDropdown from "./BackupDropdown"
 
 export default {
   name: "Navbar",
   computed: mapState(["lang", "bridge"]),
   components: {
     ExportDropdown,
-    ImportDropdown
+    ImportDropdown,
+    BackupDropdown
   }
 };
 </script>
@@ -49,8 +58,14 @@ export default {
     margin-right: 5px;
   }
 
-  .export, .import {
+  .export, .import, .backup {
     display: inline-block;
+  }
+
+  .export:hover .export-dropdown,
+  .import:hover .import-dropdown,
+  .backup:hover .backup-dropdown {
+    display: block;
   }
 
   #file-input {
@@ -58,3 +73,4 @@ export default {
     right: -500px;
   }
 </style>
+

@@ -62,7 +62,20 @@
         "openSafariPref": "Open in Safari Extension Preferences",
         "appIntroduction": "Born for improving your web browsing productivity.",
         "upgradeSafari": "Tab Space requires at least Safari 12.1.\n Please upgrade your Safari.",
-        "untagged": "Untagged"
+        "untagged": "Untagged",
+        "backup": "Backup",
+        "backupNow": "Backup Now",
+        "viewBackups": "View Backups",
+        "backupHistory": "Backup History",
+        "noBackups": "No backups available",
+        "sessions": "sessions",
+        "backupComplete": "Backup created successfully",
+        "backupStarted": "Creating backup...",
+        "restoreConfirm": "Are you sure you want to restore this backup? This will add all sessions from the backup.",
+        "restoreComplete": "Backup restored successfully",
+        "backupInfoAuto": "Backups are created automatically when you save sessions (max every 5 min).",
+        "backupInfoRetention": "Retention: 7 hourly, 7 daily, 4 weekly, 12 monthly backups.",
+        "backupInfoPath": "Location:"
     },
     "zh-cn": {
         "saveAt": "保存于",
