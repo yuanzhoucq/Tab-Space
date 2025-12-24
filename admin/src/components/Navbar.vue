@@ -48,29 +48,47 @@ export default {
 };
 </script>
 
-<style scope>
+<style scoped>
   nav {
     display: flex;
     justify-content: flex-end;
+    margin-top: 8px;
   }
 
   nav > div {
     margin-right: 5px;
   }
 
+  .link {
+    padding: 4px 8px;
+    border-radius: 4px;
+    transition: background-color 0.15s ease;
+    cursor: pointer;
+  }
+
+  .link:hover {
+    background-color: rgba(0, 0, 0, 0.06);
+  }
+
   .export, .import, .backup {
     display: inline-block;
   }
 
-  .export:hover .export-dropdown,
-  .import:hover .import-dropdown,
-  .backup:hover .backup-dropdown {
+  .export:hover ::v-deep .export-dropdown,
+  .import:hover ::v-deep .import-dropdown,
+  .backup:hover ::v-deep .backup-dropdown {
     display: block;
   }
 
   #file-input {
     position: fixed;
     right: -500px;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    .link:hover {
+      background-color: rgba(255, 255, 255, 0.08);
+    }
   }
 </style>
 

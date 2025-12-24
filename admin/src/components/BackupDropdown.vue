@@ -2,7 +2,6 @@
   <div>
     <div class="backup-dropdown">
       <span class="link" @click="forceBackup">{{lang.backupNow || 'Backup Now'}}</span>
-      <br />
       <span class="link" @click="openBackupList">
         {{lang.viewBackups || 'View Backups'}} ({{backups.length}})
       </span>
@@ -27,9 +26,9 @@
               </span>
             </div>
             <div class="backup-actions">
-              <button class="restore-btn" @click="restoreBackup(backup.filename)">
+              <span class="link restore-link" @click="restoreBackup(backup.filename)">
                 {{lang.restore || 'Restore'}}
-              </button>
+              </span>
             </div>
           </div>
         </div>
@@ -143,17 +142,26 @@ export default {
   display: none;
   position: absolute;
   margin-left: -40px;
-  padding: 3px;
+  padding: 4px 8px;
   font-size: 12px;
-  border: 1px solid gray;
-  border-radius: 5px;
+  border: 1px solid var(--border-color, gray);
+  border-radius: 6px;
   text-align: left;
-  background-color: #fbfbfb;
+  background-color: var(--card-bg, #fbfbfb);
   z-index: 100;
+  min-width: 120px;
 }
 
-.link {
+.backup-dropdown .link {
   cursor: pointer;
+  display: block;
+  padding: 4px 8px;
+  border-radius: 4px;
+  transition: background-color 0.15s ease;
+}
+
+.backup-dropdown .link:hover {
+  background-color: rgba(0, 0, 0, 0.06);
 }
 
 .backup-modal {
@@ -216,7 +224,7 @@ export default {
 .backup-item {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
   padding: 12px 0;
   border-bottom: 1px solid #eee;
 }
@@ -240,18 +248,18 @@ export default {
   margin-top: 4px;
 }
 
-.restore-btn {
-  background: #007AFF;
-  color: white;
-  border: none;
-  padding: 6px 12px;
+.restore-link {
+  color: var(--primary-color, #00b51d);
+  padding: 4px 8px;
   border-radius: 4px;
   cursor: pointer;
-  font-size: 12px;
+  font-size: 13px;
+  font-weight: 500;
+  transition: background-color 0.15s ease;
 }
 
-.restore-btn:hover {
-  background: #0056b3;
+.restore-link:hover {
+  background-color: rgba(0, 181, 29, 0.1);
 }
 
 .backup-info-footer {
@@ -275,7 +283,12 @@ export default {
 
 @media (prefers-color-scheme: dark) {
   .backup-dropdown {
-    background-color: #353535;
+    background-color: #2d2d2d;
+    border-color: #444;
+  }
+  
+  .backup-dropdown .link:hover {
+    background-color: rgba(255, 255, 255, 0.08);
   }
   
   .backup-modal-content {
@@ -301,6 +314,10 @@ export default {
   
   .backup-meta {
     color: #999;
+  }
+
+  .restore-link:hover {
+    background-color: rgba(0, 181, 29, 0.15);
   }
   
   .backup-info-footer {

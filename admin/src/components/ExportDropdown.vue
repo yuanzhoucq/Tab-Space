@@ -1,11 +1,8 @@
 <template>
   <div class="export-dropdown">
     <span class="link" href="#" @click="exportTabs('Text')">{{lang.exportText}}</span>
-    <br />
     <span class="link" href="#" @click="exportTabs('MD')">{{lang.exportMD}}</span>
-    <br />
     <span class="link" href="#" @click="exportTabs('HTML')">{{lang.exportHTML}}</span>
-    <br />
     <span class="link" href="#" @click="exportTabs('JSON')">{{lang.exportJSON}}</span>
   </div>
 </template>
@@ -98,21 +95,35 @@ export default {
   display: none;
   position: absolute;
   margin-left: -40px;
-  padding: 3px;
+  padding: 4px;
   font-size: 12px;
-  border: 1px solid gray;
-  border-radius: 5px;
+  border: 1px solid var(--border-color, gray);
+  border-radius: 6px;
   text-align: left;
-  background-color: #fbfbfb;
+  background-color: var(--card-bg, #fbfbfb);
+  min-width: 100px;
+  z-index: 100;
 }
 
 .link {
   cursor: pointer;
+  display: block;
+  padding: 4px 8px;
+  border-radius: 4px;
+  transition: background-color 0.15s ease;
+}
+
+.link:hover {
+  background-color: rgba(0, 0, 0, 0.06);
 }
 
 @media (prefers-color-scheme: dark) {
   .export-dropdown {
-    background-color: #353535;
+    background-color: #2d2d2d;
+    border-color: #444;
+  }
+  .link:hover {
+    background-color: rgba(255, 255, 255, 0.08);
   }
 }
 </style>

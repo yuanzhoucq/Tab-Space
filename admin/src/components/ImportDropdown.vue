@@ -7,7 +7,6 @@
       </label>
       <input type="file" id="file-input" @change="importTabs" accept=".tabspace" />
     </span>
-    <br />
     <span class="link" href="#" @click="displayImportOneTab">{{lang.import}} OneTab</span>
     </div>
     <div id="import-modal">
@@ -97,12 +96,31 @@ export default {
   display: none;
   position: absolute;
   margin-left: -40px;
-  padding: 3px;
+  padding: 4px;
   font-size: 12px;
-  border: 1px solid gray;
-  border-radius: 5px;
+  border: 1px solid var(--border-color, gray);
+  border-radius: 6px;
   text-align: left;
-  background-color: #fbfbfb;
+  background-color: var(--card-bg, #fbfbfb);
+  white-space: nowrap;
+  z-index: 100;
+}
+
+.import-dropdown .link {
+  display: block;
+  padding: 4px 8px;
+  border-radius: 4px;
+  transition: background-color 0.15s ease;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.import-dropdown .link:hover {
+  background-color: rgba(0, 0, 0, 0.06);
+}
+
+#file-input {
+  display: none;
 }
 
 #import-modal {
@@ -120,7 +138,11 @@ export default {
 
 @media (prefers-color-scheme: dark) {
   .import-dropdown, #import-modal {
-    background-color: #353535;
+    background-color: #2d2d2d;
+    border-color: #444;
+  }
+  .import-dropdown .link:hover {
+    background-color: rgba(255, 255, 255, 0.08);
   }
 }
 </style>

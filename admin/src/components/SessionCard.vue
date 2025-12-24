@@ -1,7 +1,7 @@
 <template>
   <div class="session" :id="session.uuid">
-    <div style="display: flex; justify-content: space-between">
-      <div>
+    <div class="session-header">
+      <div class="session-header-left">
         <div class="tag-btn handle" v-if="showTagBtns && activeTag === ''" :title="lang.movePrompt">
           <v-icon name="align-justify" :stroke-width="1.8" style="margin-left:1px"></v-icon>
         </div>
@@ -13,23 +13,15 @@
             v-html="highlight(session.title || (`${lang.saveAt} ${(new Date(Number(session.timestamp))).Format('yyyy-MM-dd hh:mm')}`))"
         ></div>
       </div>
-      <div style="display:inline-block; white-space:nowrap;">
-        <a class="btn" @click.stop="restore(session.uuid, true, false)">
+      <div class="session-header-right">
+        <a class="btn" @click.stop="restore(session.uuid, true, false)" :title="lang.openSession || 'Open'">
           <v-icon name="external-link" class="btn-icon"></v-icon>
         </a>
-        <a class="btn del-btn" @click.stop="restore(session.uuid, false, true)">
-          <v-icon name="trash-2" class="btn-icon"></v-icon>
-        </a>
-        <a
-            class="btn del-res-btn"
-            @click.stop="restore(session.uuid, true, true)"
-        >
-          <v-icon name="external-link" class="btn-icon"></v-icon>
-          <span style="display: inline-block; transform: translateY(-3px); margin: 0 2px;"> + </span>
+        <a class="btn del-btn" @click.stop="restore(session.uuid, false, true)" :title="lang.deleteSession || 'Delete'">
           <v-icon name="trash-2" class="btn-icon"></v-icon>
         </a>
         <div class="export">
-          <a class="btn del-res-btn">
+          <a class="btn" :title="lang.exportSession || 'Export'">
             <v-icon name="share-2" class="btn-icon"></v-icon>
           </a>
           <export-dropdown :selectedSessions="[session]"></export-dropdown>
@@ -47,7 +39,7 @@
             <input class="tab-edit" placeholder="title" type="text" v-model="tab.title">
           </div>
           <div v-if="!isEditingSession(session) && !collapse" class="del-item" @click="delItem(tid,session)" >
-            <small>X</small>
+            <v-icon name="x" :stroke-width="2" size="14"></v-icon>
           </div>
           <div v-if="!isEditingSession(session)" class="fav">
             <img
@@ -378,45 +370,76 @@
 </script>
 
 <style scoped>
+  .session-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+  }
+
+  .session-header-left {
+    display: flex;
+    align-items: center;
+    position: relative;
+  }
+
+  .session-header-right {
+    display: flex;
+    align-items: center;
+    white-space: nowrap;
+    position: relative;
+    z-index: 10;
+  }
+
   .handle {
     position: absolute;
     margin-left: -24px;
+    margin-top: 5px;
+    display: flex;
+    align-items: center;
+    cursor: grab !important;
   }
 
   .session {
-    border-radius: 5px;
+    border-radius: var(--radius-lg, 12px);
     text-decoration: none;
     width: 600px;
-    margin: 0 auto 20px;
-    padding: 15px 20px 10px 30px;
-    background-color: white;
-    box-shadow: rgba(46, 41, 51, 0.0784314) 0 1px 2px, rgba(71, 63, 79, 0.0784314) 0 2px 4px;
-    transition-duration: 250ms, 250ms, 250ms;
-    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1), cubic-bezier(0.4, 0, 0.2, 1), cubic-bezier(0.4, 0, 0.2, 1);
-    transition-property: transform, box-shadow, padding;
+    margin: 0 auto 16px;
+    padding: 14px 18px 10px 28px;
+    background-color: var(--card-bg, white);
+    border: 1px solid var(--border-color, #e2e8f0);
+    box-shadow: var(--shadow-sm, 0 1px 2px 0 rgba(0, 0, 0, 0.05));
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    position: relative;
   }
 
   .session:hover {
-    /* transform: translateY(-0.5px); */
-    box-shadow: rgba(46, 41, 51, 0.0784314) 0 2px 4px, rgba(71, 63, 79, 0.156863) 0 5px 10px;
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md, 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06));
+    z-index: 50;
   }
 
   .session-tags {
     display: flex;
     flex-direction: row;
     flex-wrap: wrap;
+    align-items: center;
     margin-top: 6px;
   }
 
   .tag {
-    background-color: #f5f5f5;
-    border: 1px solid #dddddd;
-    padding: 3px;
-    color: #333333;
-    font-size: 12px;
-    border-radius: 8px;
+    background-color: #f0f0f0;
+    border: 1px solid #e0e0e0;
+    padding: 5px 10px;
+    color: #666666;
+    font-size: 11px;
+    border-radius: 999px;
     margin-right: 5px;
+    margin-top: 1px;
     margin-bottom: 5px;
+    display: inline-flex;
+    align-items: center;
+    line-height: 1;
   }
 
   .tag:hover {
@@ -433,12 +456,17 @@
 
   .tag-btn {
     opacity: 1;
-    margin-top: 2px;
     margin-right: 4px;
+    margin-bottom: 5px;
     width: 20px;
     height: 20px;
+    min-height: 20px;
     cursor: pointer;
     transition: 0.6s;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
   }
 
   .tag-btn:hover {
@@ -458,7 +486,6 @@
     overflow: hidden;
     text-overflow: ellipsis;
     margin-right: 20px;
-    margin-bottom: 5px;
   }
 
   .session-title:hover {
@@ -466,9 +493,16 @@
   }
 
   .site-title {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .site-title .link {
+    display: block;
     white-space: nowrap;
-    overflow-x: hidden;
+    overflow: hidden;
     text-overflow: ellipsis;
+    max-width: calc(100% - 50px);
   }
 
   .session-sites {
@@ -491,34 +525,61 @@
   }
 
   .btn {
-    display: inline-block;
-    padding: 3px 5px;
-    margin-right: 5px;
-    color: rgb(255, 255, 255);
-    font-family: Helvetica, Arial, sans-serif;
-    font-size: 12px;
-    height: 16px;
-    line-height: 16px;
-    background-color: rgb(0, 181, 29);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 6px;
+    margin-right: 4px;
+    color: var(--text-secondary, #718096);
     cursor: pointer;
-    font-weight: 400;
-    border-radius: 2px;
-    min-width: 40px;
-    text-align: center;
-    box-shadow: 0.5px 0.5px 0.5px rgba(46, 41, 51, 0.0784314);
+    border-radius: 6px;
+    transition: background-color 0.15s ease, color 0.15s ease;
+    background: transparent;
   }
 
   .btn:hover {
-    opacity: 0.8;
-    transition: 0.1s;
+    background-color: rgba(0, 0, 0, 0.06);
+    color: var(--text-primary, #2d3748);
   }
 
-  .del-btn {
-    background-color: #eb5205;
+  .btn-icon {
+    width: 16px;
+    height: 16px;
+  }
+
+  .btn svg,
+  .btn .btn-icon {
+    stroke: var(--text-secondary, #718096) !important;
+    transition: stroke 0.15s ease;
+  }
+
+  .btn:hover svg,
+  .btn:hover .btn-icon {
+    stroke: var(--text-primary, #2d3748) !important;
+  }
+
+  .del-btn:hover svg,
+  .del-btn:hover .btn-icon {
+    stroke: #eb5205 !important;
+  }
+
+  .del-res-btn:hover svg,
+  .del-res-btn:hover .btn-icon {
+    stroke: #35abe5 !important;
+  }
+
+  .del-btn:hover {
+    background-color: rgba(235, 82, 5, 0.1);
+    color: #eb5205;
   }
 
   .del-res-btn {
-    background-color: #35abe5;
+    gap: 2px;
+  }
+
+  .del-res-btn:hover {
+    background-color: rgba(53, 171, 229, 0.1);
+    color: #35abe5;
   }
 
   .tag-prompt {
@@ -529,24 +590,37 @@
   }
 
   .fav {
-    display: inline-block;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     margin-right: 5px;
     width: 14px;
     height: 14px;
+    flex-shrink: 0;
   }
 
   .fav-img {
     width: 14px;
     height: 14px;
+    vertical-align: middle;
   }
 
   .del-item {
-    padding:0 10px;
-    color: #eb5205;
+    padding: 4px;
+    color: var(--text-secondary, #999);
     display: none;
-    font-weight: bold;
-    font-style: italic;
     cursor: pointer;
+    align-items: center;
+    justify-content: center;
+    transition: color 0.15s ease;
+  }
+
+  .del-item:hover {
+    color: #eb5205;
+  }
+
+  .del-item svg {
+    stroke: currentColor;
   }
 
   .tab-edit {
@@ -570,6 +644,7 @@
     .session {
       background-color: #252525;
       color: #d0d0d0;
+      border-color: #3a3a3a;
     }
 
     .link {
@@ -582,7 +657,42 @@
     }
 
     .btn {
-      opacity: 0.9;
+      color: var(--text-secondary, #a0aec0);
+    }
+
+    .btn svg,
+    .btn .btn-icon {
+      stroke: var(--text-secondary, #a0aec0) !important;
+    }
+
+    .btn:hover {
+      background-color: rgba(255, 255, 255, 0.08);
+      color: var(--text-primary, #f7fafc);
+    }
+
+    .btn:hover svg,
+    .btn:hover .btn-icon {
+      stroke: var(--text-primary, #f7fafc) !important;
+    }
+
+    .del-btn:hover {
+      background-color: rgba(235, 82, 5, 0.15);
+      color: #ff7043;
+    }
+
+    .del-btn:hover svg,
+    .del-btn:hover .btn-icon {
+      stroke: #ff7043 !important;
+    }
+
+    .del-res-btn:hover {
+      background-color: rgba(53, 171, 229, 0.15);
+      color: #64b5f6;
+    }
+
+    .del-res-btn:hover svg,
+    .del-res-btn:hover .btn-icon {
+      stroke: #64b5f6 !important;
     }
 
     .fav > img {
@@ -591,9 +701,9 @@
     }
 
     .tag {
-      background-color: #555555;
-      border: #555555;
-      color: #eeeeee;
+      background-color: #404040;
+      border-color: #555555;
+      color: #d0d0d0;
     }
   }
 

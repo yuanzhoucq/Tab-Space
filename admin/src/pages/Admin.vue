@@ -10,7 +10,6 @@
         </div>
         <input type="text" name="keyword" id="keyword" v-model="keyword"
                placeholder="Search title, url, tag...">
-        <div style="width: 55px"></div>
       </div>
       <div v-if="!bridge || !initialRefresh" style="margin-top: 160px; color: #999999">
         <vue-loading type="bars" color="#eb5205" :size="{ width: '50px', height: '50px' }"></vue-loading>
@@ -101,16 +100,27 @@
 
   li {
     list-style: none;
-    padding: 4px 0 4px 15px;
-    margin-right: 60px;
+    padding: 2px 8px 2px 8px;
+    margin-right: 8px;
+    margin-left: 8px;
     display: flex;
     align-items: center;
+    border-radius: 4px;
+    transition: background-color 0.15s ease;
+    position: relative;
+  }
+
+  li:hover {
+    background-color: rgba(0, 0, 0, 0.06);
   }
 
   li:hover .del-item {
-    display: block;
-    margin-left: -29.5px;
-    transition: 0.3s;
+    display: flex;
+    position: absolute;
+    left: -24px;
+    top: 0;
+    bottom: 0;
+    align-items: center;
   }
 
   #main {
@@ -128,6 +138,9 @@
     font-weight: normal;
     cursor: pointer;
     text-decoration: none;
+    padding: 2px 4px;
+    border-radius: 4px;
+    transition: background-color 0.15s ease;
   }
 
   li .link {
@@ -135,17 +148,17 @@
     font-weight: 500;
   }
 
-  .link:hover {
-    box-shadow: inset 0 -10px rgba(0, 181, 29, 0.17451);
-    color: rgb(0, 181, 29);
-  }
-
   #title {
+    height: 80px;
     width: 840px;
-    margin: -20px auto 0;
+    margin: 10px auto 0;
     display: flex;
     justify-content: space-between;
-    align-items: end;
+    align-items: start;
+  }
+
+  #title input {
+    margin-top: 35px;
   }
 
   .footer-sep {
@@ -199,6 +212,7 @@
 
   #keyword {
     margin: 10px;
+    margin-top: 20px;
     outline: none;
     border-radius: 4px;
     border-width: 0;
@@ -208,6 +222,7 @@
     width: 200px;
     padding-left: 10px;
     margin-left: auto;
+    margin-right: 64px;
   }
 
   .highlight {
@@ -240,6 +255,14 @@
 
     .link {
       color: #d0d0d0;
+    }
+
+    .link:hover {
+      background-color: transparent;
+    }
+
+    li:hover {
+      background-color: rgba(255, 255, 255, 0.08);
     }
 
     #keyword {

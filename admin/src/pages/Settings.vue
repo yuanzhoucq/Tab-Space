@@ -1,102 +1,169 @@
 <template>
-  <div>
-    <div id="main">
-      <nav>
-        <router-link class="link" to="/">{{lang.back}}</router-link>
+  <div class="settings-page">
+    <div class="container">
+      <nav class="nav-header">
+        <router-link class="back-link" to="/">
+          <v-icon name="arrow-left" class="back-icon"></v-icon>
+          {{lang.back}}
+        </router-link>
       </nav>
-      <div id="title">
+      
+      <header class="page-header">
         <h1>Tab Space {{lang.settings}}</h1>
-      </div>
-      <div id="settings">
-        <div class="setting" v-for="setting in settings" :key="setting">
-          <toggle-button
-          :value="tabSpaceSettings[setting]==='true'"
-          :sync="true"
-          @change="(e) => setDefault(e, setting)"
-        ></toggle-button><label :id="setting" class="toggle-label">{{lang[setting]}}</label><br>
+      </header>
+
+      <div class="settings-content">
+        <!-- General Preferences -->
+        <div class="card">
+          <h2 class="section-title">General Preferences</h2>
+          <div class="setting-list">
+            <div class="setting-item" v-for="setting in settings" :key="setting">
+              <label :for="setting" class="setting-label">{{lang[setting]}}</label>
+              <toggle-button 
+                :id="setting"
+                :value="tabSpaceSettings[setting]==='true'"
+                :sync="true"
+                :color="{checked: '#00b51d', unchecked: '#ccc'}"
+                @change="(e) => setDefault(e, setting)"
+              />
+            </div>
+          </div>
         </div>
-        <hr style="border-width: 0; height: 1px; background-color: #dddddd; margin: 20px 0;" />
-        <div>
-          <label id="language" style="margin-right: 10px;">Language</label>
-          <select name="languages" id="language-select" v-model="tabSpaceSettings[preferredLanguageKey]" @change="setLanguage">
-            <option v-for="language in languages" :key="`lang-${language.code}`" :value="language.code">{{language.name}}</option>
-          </select>
-          <p>
-            <a style="color: gray" href="https://joyuer.cn/Tab-Space/translate.html">Help us translate Tab Space</a>
-          </p>
+
+        <!-- Localization -->
+        <div class="card">
+          <h2 class="section-title">Localization</h2>
+          <div class="form-group">
+            <label for="language-select" class="form-label">Language</label>
+            <div class="custom-select-wrapper">
+              <select name="languages" id="language-select" class="custom-select" v-model="tabSpaceSettings[preferredLanguageKey]" @change="setLanguage">
+                <option v-for="language in languages" :key="`lang-${language.code}`" :value="language.code">{{language.name}}</option>
+              </select>
+              <v-icon name="chevron-down" class="select-arrow-icon"></v-icon>
+            </div>
+            <p class="help-text">
+              <a href="https://joyuer.cn/Tab-Space/translate.html" target="_blank">Help us translate Tab Space</a>
+            </p>
+          </div>
+        </div>
+
+        <!-- Shortcuts -->
+        <div class="card">
+          <h2 class="section-title">{{lang.shortcuts}}</h2>
+          <p class="text-muted text-sm mb-4">{{lang.shortcutTip}}</p>
+          
+          <div class="shortcuts-grid">
+            <div class="shortcut-item">
+              <div class="shortcut-keys">
+                <kbd>Ctrl</kbd><span class="key-sep">+</span><template v-if="tabSpaceSettings['shift-shortcuts'] === 'true'"><kbd>Shift</kbd><span class="key-sep">+</span></template><kbd>D</kbd>
+              </div>
+              <div class="shortcut-desc">{{lang.ctrlD}}</div>
+            </div>
+            
+            <div class="shortcut-item">
+              <div class="shortcut-keys">
+                <kbd>Ctrl</kbd><span class="key-sep">+</span><template v-if="tabSpaceSettings['shift-shortcuts'] === 'true'"><kbd>Shift</kbd><span class="key-sep">+</span></template><kbd>L</kbd>
+              </div>
+              <div class="shortcut-desc">{{lang.ctrlL}}</div>
+            </div>
+
+            <div class="shortcut-item">
+              <div class="shortcut-keys">
+                <kbd>Ctrl</kbd><span class="key-sep">+</span><template v-if="tabSpaceSettings['shift-shortcuts'] === 'true'"><kbd>Shift</kbd><span class="key-sep">+</span></template><kbd>R</kbd>
+              </div>
+              <div class="shortcut-desc">{{lang.ctrlR}}</div>
+            </div>
+
+            <div class="shortcut-item">
+              <div class="shortcut-keys">
+                <kbd>Ctrl</kbd><span class="key-sep">+</span><template v-if="tabSpaceSettings['shift-shortcuts'] === 'true'"><kbd>Shift</kbd><span class="key-sep">+</span></template><kbd>K</kbd>
+              </div>
+              <div class="shortcut-desc">{{lang.ctrlK}}</div>
+            </div>
+
+            <div class="shortcut-item">
+              <div class="shortcut-keys">
+                <kbd>Ctrl</kbd><span class="key-sep">+</span><template v-if="tabSpaceSettings['shift-shortcuts'] === 'true'"><kbd>Shift</kbd><span class="key-sep">+</span></template><kbd>Q</kbd>
+              </div>
+              <div class="shortcut-desc">{{lang.ctrlQ}}</div>
+            </div>
+            
+            <div class="shortcut-item">
+              <div class="shortcut-keys">
+                <kbd>Ctrl</kbd><span class="key-sep">+</span><template v-if="tabSpaceSettings['shift-shortcuts'] === 'true'"><kbd>Shift</kbd><span class="key-sep">+</span></template><kbd>;</kbd>
+              </div>
+              <div class="shortcut-desc">{{lang.saveAndCloseTabs}}</div>
+            </div>
+
+            <div class="shortcut-item">
+              <div class="shortcut-keys">
+                <kbd>Ctrl</kbd><span class="key-sep">+</span><template v-if="tabSpaceSettings['shift-shortcuts'] === 'true'"><kbd>Shift</kbd><span class="key-sep">+</span></template><kbd>S</kbd>
+              </div>
+              <div class="shortcut-desc">{{lang.saveCurrentTab}}</div>
+            </div>
+
+            <div class="shortcut-item">
+              <div class="shortcut-keys">
+                <kbd>Ctrl</kbd><span class="key-sep">+</span><template v-if="tabSpaceSettings['shift-shortcuts'] === 'true'"><kbd>Shift</kbd><span class="key-sep">+</span></template><kbd>T</kbd>
+              </div>
+              <div class="shortcut-desc">{{lang.ctrlT}}</div>
+            </div>
+
+            <div class="shortcut-item">
+              <div class="shortcut-keys">
+                <kbd>Ctrl</kbd><span class="key-sep">+</span><template v-if="tabSpaceSettings['shift-shortcuts'] === 'true'"><kbd>Shift</kbd><span class="key-sep">+</span></template><kbd>B</kbd>
+              </div>
+              <div class="shortcut-desc">{{lang.ctrlB}}</div>
+            </div>
+
+            <!-- External Browser Shortcuts -->
+            <div class="shortcut-item">
+              <div class="shortcut-keys">
+                <kbd>Ctrl</kbd><span class="key-sep">+</span><template v-if="tabSpaceSettings['shift-shortcuts'] === 'true'"><kbd>Shift</kbd><span class="key-sep">+</span></template><kbd>C</kbd>
+              </div>
+              <div class="shortcut-desc">
+                 {{lang.openIn}} 
+                 <div class="custom-select-wrapper inline-select-wrapper">
+                   <select class="custom-select inline-select" v-model="tabSpaceSettings[externalBrowser1Key]" @change="(e) => setExternalBrowser(1, e)">
+                      <option v-for="browser in browsers" :key="`b1-${browser}`" :value="browser">{{browser}}</option>
+                   </select>
+                   <v-icon name="chevron-down" class="select-arrow-icon inline"></v-icon>
+                 </div>
+              </div>
+            </div>
+
+            <div class="shortcut-item">
+              <div class="shortcut-keys">
+                <kbd>Ctrl</kbd><span class="key-sep">+</span><template v-if="tabSpaceSettings['shift-shortcuts'] === 'true'"><kbd>Shift</kbd><span class="key-sep">+</span></template><kbd>F</kbd>
+              </div>
+              <div class="shortcut-desc">
+                 {{lang.openIn}} 
+                 <div class="custom-select-wrapper inline-select-wrapper">
+                   <select class="custom-select inline-select" v-model="tabSpaceSettings[externalBrowser2Key]" @change="(e) => setExternalBrowser(2, e)">
+                      <option v-for="browser in browsers" :key="`b2-${browser}`" :value="browser">{{browser}}</option>
+                   </select>
+                   <v-icon name="chevron-down" class="select-arrow-icon inline"></v-icon>
+                 </div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="tips-footer">
+             <small>{{lang.goTip}}</small>
+          </div>
         </div>
       </div>
-      <div class="tips">
-        <hr style="border-width: 0; height: 1px; background-color: #dddddd; margin: 20px 0;" />
-        <small>{{lang.goTip}}</small>
 
-        <h3>{{lang.shortcuts}}</h3>
-        <p>
-          <small>{{lang.shortcutTip}}</small>
-        </p>
-        <p>
-          <code>Ctrl + {{ tabSpaceSettings["shift-shortcuts"] === "true" ? "Shift +" : "" }} D</code>
-          {{lang.ctrlD}}
-        </p>
-        <p>
-          <code>Ctrl + {{ tabSpaceSettings["shift-shortcuts"] === "true" ? "Shift +" : "" }} L</code>
-          {{lang.ctrlL}}
-        </p>
-        <p>
-          <code>Ctrl + {{ tabSpaceSettings["shift-shortcuts"] === "true" ? "Shift +" : "" }} R</code>
-          {{lang.ctrlR}}
-        </p>
-        <p>
-          <code>Ctrl + {{ tabSpaceSettings["shift-shortcuts"] === "true" ? "Shift +" : "" }} K</code>
-          {{lang.ctrlK}}
-        </p>
-        <p>
-          <code>Ctrl + {{ tabSpaceSettings["shift-shortcuts"] === "true" ? "Shift +" : "" }} Q</code>
-          {{lang.ctrlQ}}
-        </p>
-        <p>
-          <code>Ctrl + {{ tabSpaceSettings["shift-shortcuts"] === "true" ? "Shift +" : "" }} ;</code>
-          {{lang.saveAndCloseTabs}}
-        </p>
-        <p>
-          <code>Ctrl + {{ tabSpaceSettings["shift-shortcuts"] === "true" ? "Shift +" : "" }} S</code>
-          {{lang.saveCurrentTab}}
-        </p>
-        <p>
-          <code>Ctrl + {{ tabSpaceSettings["shift-shortcuts"] === "true" ? "Shift +" : "" }} C</code>
-          {{lang.openIn}} 
-          <select name="browser1" id="browser1-select" v-model="tabSpaceSettings[externalBrowser1Key]" @change="(e) => setExternalBrowser(1, e)">
-            <option v-for="browser in browsers" :key="`lang-${browser}`" :value="browser">{{browser}}</option>
-          </select>
-        </p>
-        <p>
-          <code>Ctrl + {{ tabSpaceSettings["shift-shortcuts"] === "true" ? "Shift +" : "" }} F</code>
-          {{lang.openIn}}
-          <select name="browser2" id="browser2-select" v-model="tabSpaceSettings[externalBrowser2Key]" @change="(e) => setExternalBrowser(2, e)">
-            <option v-for="browser in browsers" :key="`lang-${browser}`" :value="browser">{{browser}}</option>
-          </select>
-        </p>
-        <p>
-          <code>Ctrl + {{ tabSpaceSettings["shift-shortcuts"] === "true" ? "Shift +" : "" }} T</code>
-          {{lang.ctrlT}}
-        </p>
-        <p>
-          <code>Ctrl + {{ tabSpaceSettings["shift-shortcuts"] === "true" ? "Shift +" : "" }} B</code>
-          {{lang.ctrlB}}
-        </p>
-
-      </div>
-
+      <footer class="page-footer">
+        <a class="footer-link" href="mailto:joyuercn@icloud.com">{{lang.contact}}</a>
+        <span class="footer-sep">·</span>
+        <a class="footer-link" href="https://twitter.com/joyuer/status/1164816334305157120" target="_blank">Twitter</a>
+        <span class="footer-sep">·</span>
+        <a class="footer-link" href="https://mytab.space" target="_blank">{{lang.about}}</a>
+        <span class="footer-sep">·</span>
+        <a class="footer-link" href="https://joyuer.notion.site/Tab-Space-FAQ-6d9383b54d704f6d85d404be96c31dd5" target="_blank">FAQ</a>
+      </footer>
     </div>
-    <footer>
-      <a class="link" href="mailto:joyuercn@icloud.com">{{lang.contact}}</a>
-      <span class="footer-sep"></span>
-      <a class="link" href="https://twitter.com/joyuer/status/1164816334305157120" target="_blank">Twitter</a>
-      <span class="footer-sep"></span>
-      <a class="link" href="https://mytab.space" target="_blank">{{lang.about}}</a>
-      <span class="footer-sep"></span>
-      <a class="link" href="https://www.notion.so/joyuer/Tab-Space-FAQ-6d9383b54d704f6d85d404be96c31dd5" target="_blank">FAQ</a>
-    </footer>
   </div>
 </template>
 
@@ -133,67 +200,267 @@ export default {
 </script>
 
 <style scoped>
-body {
-  background-color: #fbfbfb;
-  font-family: "PingFang SC", sans-serif;
+.settings-page {
+  padding: 24px 20px;
+  min-height: 100vh;
 }
 
-#main {
-  min-height: calc(100vh - 80px);
+.container {
+  max-width: 700px;
+  margin: 0 auto;
 }
 
-footer {
+.nav-header {
+  margin-bottom: 16px;
+}
+
+.back-link {
+  display: inline-flex;
+  align-items: center;
+  color: var(--text-primary);
+  font-weight: 500;
+  font-size: 0.9rem;
+  padding: 4px 8px;
+  border-radius: 4px;
+  transition: background-color 0.15s ease;
+}
+
+.back-link:hover {
+  background-color: rgba(0, 0, 0, 0.06);
+}
+
+.back-icon {
+  margin-right: 6px;
+  width: 18px;
+  height: 18px;
+}
+
+.page-header h1 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-bottom: 24px;
+}
+
+.section-title {
+  font-size: 1rem;
+  font-weight: 600;
+  margin-bottom: 16px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.setting-list {
   display: flex;
-  justify-content: center;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.setting-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  background-color: var(--bg-color);
+  border-radius: var(--radius-md);
+}
+
+.setting-label {
+  font-weight: 500;
+  font-size: 0.9rem;
+  color: var(--text-primary);
+}
+
+.form-group {
+  margin-bottom: 1rem;
+}
+
+.form-label {
+  display: block;
+  margin-bottom: 0.4rem;
+  font-weight: 500;
+  font-size: 0.9rem;
+  color: var(--text-primary);
+}
+
+/* Custom Select Styles */
+.custom-select-wrapper {
+  position: relative;
+  display: inline-block;
+  width: 100%;
+  max-width: 240px;
+}
+
+.custom-select {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  width: 100%;
+  padding: 8px 32px 8px 12px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  line-height: 1.4;
+  color: var(--text-primary);
+  background-color: var(--bg-color);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: border-color 0.2s, box-shadow 0.2s, background-color 0.2s;
+}
+
+.custom-select:hover {
+  border-color: var(--primary-color);
+  background-color: var(--card-bg);
+}
+
+.custom-select:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 2px rgba(0, 181, 29, 0.15);
+}
+
+.select-arrow-icon {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+  color: var(--text-secondary);
+  width: 14px;
+  height: 14px;
+}
+
+.select-arrow-icon.inline {
+  right: 6px;
+  width: 12px;
+  height: 12px;
+}
+
+/* Inline select for shortcuts */
+.inline-select-wrapper {
+  width: auto;
+  max-width: none;
+  display: inline-flex;
+  vertical-align: middle;
+}
+
+.inline-select {
+  padding: 4px 24px 4px 8px;
+  font-size: 0.8rem;
+  min-width: 90px;
+}
+
+.help-text {
+  margin-top: 0.5rem;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+.help-text a {
+  color: var(--text-secondary);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.help-text a:hover {
+  color: var(--primary-color);
+}
+
+.text-muted {
+  color: var(--text-secondary);
+}
+
+.text-sm {
+  font-size: 0.8rem;
+}
+
+.mb-4 {
+  margin-bottom: 0.75rem;
+}
+
+.shortcuts-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 10px;
+}
+
+.shortcut-item {
+  padding: 10px 12px;
+  background-color: var(--bg-color);
+  border-radius: var(--radius-md);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  align-items: flex-start;
+}
+
+.shortcut-keys {
+  display: flex;
+  align-items: center;
+  color: var(--text-secondary);
+  font-size: 0.8em;
+  justify-content: flex-start;
+}
+
+.key-sep {
+  margin: 0 3px;
+  color: var(--text-secondary);
+  opacity: 0.6;
+}
+
+.shortcut-desc {
+  font-weight: 500;
+  font-size: 0.9rem;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 6px;
+  flex-wrap: wrap;
+  width: 100%;
+  text-align: left;
+  margin-left: 5px;
+}
+
+.tips-footer {
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border-color);
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+}
+
+.page-footer {
+  margin-top: 40px;
+  text-align: center;
+  color: var(--text-secondary);
+  padding-bottom: 24px;
+  font-size: 0.85rem;
+}
+
+.footer-link {
+  color: var(--text-secondary);
+  margin: 0 4px;
+}
+
+.footer-link:hover {
+  color: var(--primary-color);
 }
 
 .footer-sep {
-  width: 10px;
+  margin: 0 6px;
+  opacity: 0.5;
 }
 
-.link {
-  color: rgb(54, 49, 61);
-  font-weight: normal;
-}
-
-.link:hover {
-  box-shadow: inset 0 -10px rgba(0, 181, 29, 0.17451);
-  color: rgb(0, 181, 29);
-}
-
-#title {
-  max-width: 600px;
-  margin: 0 auto;
-}
-
-#settings {
-  max-width: 600px;
-  margin: 0 auto;
-}
-
-.tips {
-  max-width: 600px;
-  margin: 0 auto;
-}
-
-code {
-  background-color: darkorange;
-  padding: 4px;
-  border-radius: 3px;
-  color: whitesmoke;
-}
-
-.setting {
-  margin-bottom: 10px;
-}
-
-.toggle-label {
-  margin-left: 15px;
+@media (max-width: 600px) {
+  .shortcuts-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 @media (prefers-color-scheme: dark) {
-  .link {
-    color: #eeeeee;
+  .back-link:hover {
+    background-color: rgba(255, 255, 255, 0.08);
   }
 }
 </style>
+
