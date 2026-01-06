@@ -116,6 +116,13 @@
               <div class="shortcut-desc">{{lang.ctrlB}}</div>
             </div>
 
+            <div class="shortcut-item">
+              <div class="shortcut-keys">
+                <kbd>Ctrl</kbd><span class="key-sep">+</span><template v-if="tabSpaceSettings['shift-shortcuts'] === 'true'"><kbd>Shift</kbd><span class="key-sep">+</span></template><kbd>M</kbd>
+              </div>
+              <div class="shortcut-desc">{{lang.ctrlM}}</div>
+            </div>
+
             <!-- External Browser Shortcuts -->
             <div class="shortcut-item">
               <div class="shortcut-keys">

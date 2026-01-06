@@ -16,7 +16,7 @@ $ npm run serve
 Note that you need to have Tab Space installed and activated in Safari or the web app will not work properly.
 
 ## Related links
-- [Tab Space Homepage](http://mytab.space)
+- [Tab Space Homepage](https://mytab.space)
 - [Product Hunt page](https://www.producthunt.com/posts/tab-sapce)
 - [中文介绍](https://sspai.com/post/56315)
 
