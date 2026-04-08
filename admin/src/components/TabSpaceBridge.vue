@@ -43,7 +43,7 @@ export default {
       if (
         !evt.origin.includes("joyuer.cn") 
         && !evt.origin.includes("mytab.space") 
-        && evt.origin !== "yuanzhoucq.github.io"
+        && !evt.origin.includes("yuanzhoucq.github.io")
       ) return
 
       switch (evt.data.cmd) {
