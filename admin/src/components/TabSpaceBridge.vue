@@ -1,6 +1,8 @@
 <template>
   <iframe id="bridgeStorage"
+          ref="bridgeStorage"
           :src="`${$myConfig.staticResourceEndpoint}/storage.html?method=get`"
+          @load="onIframeLoad"
           height="0"
           style="border: none"
   >
@@ -30,14 +32,7 @@ export default {
     },
   },
   mounted() {
-    this.iframe = document.querySelector("#bridgeStorage")
-    this.iframe.onload = () => {
-      console.log("Bridge iframe loaded.")
-      this.iframeLoaded = true
-      this.$store.commit("setBridge", {
-        send: msg => this.iframe.contentWindow.postMessage(msg, "*")
-      })
-    }
+    this.iframe = this.$refs.bridgeStorage
     window.addEventListener("message", evt => {
       // Filter out other sites' postMessage
       if (
@@ -58,6 +53,15 @@ export default {
     this.checkDefaults()
   },
   methods: {
+    onIframeLoad() {
+      if (this.iframeLoaded) return
+      console.log("Bridge iframe loaded.")
+      this.iframeLoaded = true
+      const iframe = this.iframe || this.$refs.bridgeStorage
+      this.$store.commit("setBridge", {
+        send: msg => iframe.contentWindow.postMessage(msg, "*")
+      })
+    },
     checkDefaults() {
       if (this.bridge) {
         this.bridge.send({cmd: "CheckDefault", name: Constants.preferredLanguageKey})

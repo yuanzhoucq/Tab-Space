@@ -14,6 +14,10 @@
       <div v-if="!bridge || !initialRefresh" style="margin-top: 160px; color: #999999">
         <vue-loading type="bars" color="#eb5205" :size="{ width: '50px', height: '50px' }"></vue-loading>
         <p align="center">Connecting to Tab Space App...</p>
+        <p v-if="showConnectRetry" align="center" style="font-size: 13px;">
+          Taking longer than expected.
+          <a class="link" href="#" @click.prevent="reload">Click to retry</a>
+        </p>
       </div>
       <div class="lose-tabs" v-if="bridge && sessions.length < 1">
         <span><a class="link" @click="reload" href="#">{{lang.loseTabs}}</a></span><br/><br/>
@@ -59,7 +63,8 @@
       return {
         keyword: "",
         notificationCount: "",
-        showCloseMsg: false
+        showCloseMsg: false,
+        showConnectRetry: false
       }
     },
     computed: {
@@ -76,6 +81,11 @@
           this.notificationCount = String(r["count"])
         })
       }, 1000)
+      setTimeout(() => {
+        if (!this.bridge || !this.initialRefresh) {
+          this.showConnectRetry = true
+        }
+      }, 8000)
     },
     methods: {
       reload() {
