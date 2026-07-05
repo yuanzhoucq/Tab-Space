@@ -154,10 +154,6 @@
               </div>
             </div>
           </div>
-          
-          <div class="tips-footer">
-             <small>{{lang.goTip}}</small>
-          </div>
         </div>
       </div>
 
@@ -428,14 +424,6 @@ export default {
   margin-left: 5px;
 }
 
-.tips-footer {
-  margin-top: 16px;
-  padding-top: 12px;
-  border-top: 1px solid var(--border-color);
-  color: var(--text-secondary);
-  font-size: 0.8rem;
-}
-
 .page-footer {
   margin-top: 40px;
   text-align: center;
@@ -470,4 +458,3 @@ export default {
   }
 }
 </style>
-

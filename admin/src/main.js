@@ -28,3 +28,43 @@ new Vue({
   router,
   render: h => h(App),
 }).$mount('#app')
+
+if (window.__tabspace_bridge && typeof window.__tabspace_bridge.markReady === 'function') {
+  window.__tabspace_bridge.markReady()
+}
+window.dispatchEvent(new CustomEvent('tabspace:dashboard-ready'))
+
+if ('serviceWorker' in navigator && window.location.protocol === 'https:') {
+  let updatePromptShown = false
+  const promptForDashboardUpdate = () => {
+    if (updatePromptShown) return
+    updatePromptShown = true
+    window.dispatchEvent(new CustomEvent('tabspace:sw-update-ready'))
+    if (window.confirm('A new Tab Space dashboard is available. Refresh now?')) {
+      window.location.reload()
+    }
+  }
+
+  navigator.serviceWorker.addEventListener('message', event => {
+    if (event.data && event.data.type === 'TABSPACE_APP_UPDATE_READY') {
+      promptForDashboardUpdate()
+    }
+  })
+
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register(`${process.env.BASE_URL}service-worker.js`).then(registration => {
+      registration.update().catch(() => {})
+      registration.addEventListener('updatefound', () => {
+        const worker = registration.installing
+        if (!worker) return
+        worker.addEventListener('statechange', () => {
+          if (worker.state === 'installed' && navigator.serviceWorker.controller) {
+            promptForDashboardUpdate()
+          }
+        })
+      })
+    }).catch(error => {
+      console.log('Service worker registration failed:', error)
+    })
+  })
+}

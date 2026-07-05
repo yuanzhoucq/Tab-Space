@@ -56,22 +56,20 @@ export default {
   },
   computed: mapState(["lang", "bridge"]),
   mounted() {
-    // Listen for backup responses
-    window.addEventListener("message", this.handleMessage)
+    // Listen for native responses forwarded by TabSpaceBridge.
+    window.addEventListener("tabspace:native-message", this.handleNativeMessage)
     // Request backup list when component mounts
     this.loadBackups()
   },
   beforeDestroy() {
-    window.removeEventListener("message", this.handleMessage)
+    window.removeEventListener("tabspace:native-message", this.handleNativeMessage)
   },
   methods: {
-    handleMessage(evt) {
-      if (!evt.origin.includes("joyuer.cn") && !evt.origin.includes("mytab.space") && evt.origin !== "yuanzhoucq.github.io") return
-      
-      switch (evt.data.cmd) {
+    handleNativeMessage(evt) {
+      switch (evt.detail.cmd) {
         case "ReturnBackups":
           try {
-            this.backups = JSON.parse(evt.data.backups)
+            this.backups = JSON.parse(evt.detail.backups)
           } catch (e) {
             console.log("Failed to parse backups:", e)
           }
