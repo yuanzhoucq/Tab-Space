@@ -1,0 +1,17 @@
+/index.html
+  Cache-Control: no-cache, no-transform
+
+/
+  Cache-Control: no-cache, no-transform
+
+/service-worker.js
+  Cache-Control: no-cache
+
+/js/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/css/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/img/*
+  Cache-Control: public, max-age=31536000, immutable
