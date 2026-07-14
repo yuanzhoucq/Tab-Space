@@ -165,6 +165,10 @@
         <a class="footer-link" href="https://mytab.space" target="_blank">{{lang.about}}</a>
         <span class="footer-sep">·</span>
         <a class="footer-link" href="https://joyuer.notion.site/Tab-Space-FAQ-6d9383b54d704f6d85d404be96c31dd5" target="_blank">FAQ</a>
+        <p class="build-info">
+          <a v-if="buildInfo.commitUrl" :href="buildInfo.commitUrl" target="_blank" rel="noopener">Build {{buildInfo.shortSha}}{{buildInfo.time ? ` · ${buildInfo.time}` : ''}}</a>
+          <span v-else>Build {{buildInfo.shortSha}}</span>
+        </p>
       </footer>
     </div>
   </div>
@@ -174,6 +178,7 @@
 import { ToggleButton } from 'vue-js-toggle-button'
 import { mapState } from 'vuex'
 import Constants from '../constants'
+import buildInfo from '../build-info'
 
 export default {
   name: "Settings",
@@ -182,7 +187,8 @@ export default {
   },
   data() {
     return {
-      ...Constants
+      ...Constants,
+      buildInfo
     };
   },
   computed: mapState(["lang", "bridge", "tabSpaceSettings"]),
@@ -430,6 +436,7 @@ export default {
   color: var(--text-secondary);
   padding-bottom: 24px;
   font-size: 0.85rem;
+  flex-wrap: wrap;
 }
 
 .footer-link {
@@ -444,6 +451,22 @@ export default {
 .footer-sep {
   margin: 0 6px;
   opacity: 0.5;
+}
+
+.build-info {
+  flex-basis: 100%;
+  margin-top: 8px;
+  font-size: 0.75rem;
+  opacity: 0.7;
+}
+
+.build-info a,
+.build-info span {
+  color: var(--text-secondary);
+}
+
+.build-info a:hover {
+  color: var(--primary-color);
 }
 
 @media (max-width: 600px) {

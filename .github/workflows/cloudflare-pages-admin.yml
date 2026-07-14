@@ -27,7 +27,7 @@ jobs:
 
       - run: npm install
 
-      - run: NODE_OPTIONS=--openssl-legacy-provider npm run build
+      - run: NODE_OPTIONS=--openssl-legacy-provider VUE_APP_BUILD_SHA=$GITHUB_SHA VUE_APP_BUILD_TIME=$(date -u +%Y-%m-%d) npm run build
 
       - name: Ensure Cloudflare Pages project exists
         run: npx --yes wrangler@3.90.0 pages project create tab-space-admin --production-branch=master || true

@@ -2,16 +2,19 @@
   <div>
     <router-view></router-view>
     <tab-space-bridge></tab-space-bridge>
+    <update-toast></update-toast>
   </div>
 </template>
 
 <script>
   import TabSpaceBridge from './components/TabSpaceBridge'
+  import UpdateToast from './components/UpdateToast'
 
   export default {
     name: "App",
     components: {
-      TabSpaceBridge
+      TabSpaceBridge,
+      UpdateToast
     }
   }
 </script>

@@ -8,6 +8,7 @@ import feather from 'vue-icon'
 
 import store from './store'
 import config from './config'
+import buildInfo from './build-info'
 Vue.config.productionTip = false
 Vue.prototype.$myConfig = config
 
@@ -34,15 +35,14 @@ if (window.__tabspace_bridge && typeof window.__tabspace_bridge.markReady === 'f
 }
 window.dispatchEvent(new CustomEvent('tabspace:dashboard-ready'))
 
+console.log(`Tab Space dashboard build ${buildInfo.shortSha}${buildInfo.time ? ` (${buildInfo.time})` : ''}`)
+
 if ('serviceWorker' in navigator && window.location.protocol === 'https:') {
   let updatePromptShown = false
   const promptForDashboardUpdate = () => {
     if (updatePromptShown) return
     updatePromptShown = true
     window.dispatchEvent(new CustomEvent('tabspace:sw-update-ready'))
-    if (window.confirm('A new Tab Space dashboard is available. Refresh now?')) {
-      window.location.reload()
-    }
   }
 
   navigator.serviceWorker.addEventListener('message', event => {
