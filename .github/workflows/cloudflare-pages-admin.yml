@@ -2,7 +2,9 @@ name: Deploy Admin Dashboard to Cloudflare Pages
 
 on:
   push:
-    branches: [ master ]
+    paths:
+      - 'admin/**'
+      - '.github/workflows/cloudflare-pages-admin.yml'
   workflow_dispatch:
 
 jobs:
@@ -37,5 +39,5 @@ jobs:
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: pages deploy admin/dist --project-name=tab-space-admin --commit-dirty=true
+          command: pages deploy admin/dist --project-name=tab-space-admin --branch=${{ github.ref_name }} --commit-dirty=true
           gitHubToken: ${{ secrets.GITHUB_TOKEN }}
