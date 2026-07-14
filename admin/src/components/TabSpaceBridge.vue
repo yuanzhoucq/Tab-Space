@@ -138,6 +138,12 @@ export default {
         case "ReturnDefault":
           this.handleDefault(data)
           break
+        case "SessionsChangedRemotely":
+          // Native side merged an iCloud / app-group change (Tab Space 3.16+)
+          // and asks us to pick up the fresh data.
+          console.log("Sessions changed remotely; refreshing bookmarks.")
+          if (this.bridge) this.bridge.send({cmd: "CheckBookmarks"})
+          break
       }
     },
     handleDefault(data) {
