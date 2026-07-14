@@ -89,7 +89,7 @@ async function warmAppAssets(response) {
     await Promise.all(assetUrls.map(async assetUrl => {
       try {
         if (!await assetCache.match(assetUrl)) {
-          const assetResponse = await fetch(assetUrl)
+          const assetResponse = await fetch(assetUrl, { cache: "no-cache" })
           if (isCacheableAsset(assetResponse)) await assetCache.put(assetUrl, assetResponse)
         }
       } catch (error) {
@@ -106,7 +106,9 @@ async function cacheFirst(request) {
   const cached = await cache.match(request)
   if (cached) return cached
 
-  const response = await fetch(request)
+  // cache: "no-cache" skips the browser HTTP cache, which may hold a poisoned
+  // immutable copy from a past outage that curl/network checks would never see.
+  const response = await fetch(request, { cache: "no-cache" })
   if (isCacheableAsset(response)) await cache.put(request, response.clone())
   return response
 }
