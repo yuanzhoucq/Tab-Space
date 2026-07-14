@@ -1,4 +1,4 @@
-const CACHE_VERSION = "tab-space-admin-v2"
+const CACHE_VERSION = "tab-space-admin-v3"
 const APP_SHELL_CACHE = `${CACHE_VERSION}-shell`
 const ASSET_CACHE = `${CACHE_VERSION}-assets`
 const INDEX_URL = "./index.html"
@@ -90,7 +90,7 @@ async function warmAppAssets(response) {
       try {
         if (!await assetCache.match(assetUrl)) {
           const assetResponse = await fetch(assetUrl)
-          if (assetResponse.ok) await assetCache.put(assetUrl, assetResponse)
+          if (isCacheableAsset(assetResponse)) await assetCache.put(assetUrl, assetResponse)
         }
       } catch (error) {
         // Asset warming should not block app shell installation or refresh.
@@ -107,8 +107,16 @@ async function cacheFirst(request) {
   if (cached) return cached
 
   const response = await fetch(request)
-  if (response.ok) await cache.put(request, response.clone())
+  if (isCacheableAsset(response)) await cache.put(request, response.clone())
   return response
+}
+
+// A missing hashed asset rewritten to index.html by an SPA fallback must never
+// be cached under the asset's URL, or the poisoned entry outlives the outage.
+function isCacheableAsset(response) {
+  if (!response.ok) return false
+  const contentType = (response.headers.get("content-type") || "").toLowerCase()
+  return !contentType.includes("text/html")
 }
 
 async function appShellChanged(previous, next) {
