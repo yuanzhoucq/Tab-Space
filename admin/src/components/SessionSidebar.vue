@@ -2,6 +2,7 @@
   <div class="session-sidebar">
     <div
       class="tag-filter"
+      data-testid="filter-all"
       :class="{'active-tag': activeTag===''}"
       @click="setActiveTag('')"
     >
@@ -10,6 +11,7 @@
     
     <div
       class="tag-filter upper-border"
+      data-testid="filter-untagged"
       :class="{'active-tag': activeTag==='untagged'}"
       @click="setActiveTag('untagged')"
     >
@@ -20,11 +22,12 @@
       class="tag-filter upper-border"
       v-for="tag in tags"
       :key="tag"
+      :data-testid="`filter-${tag}`"
       :class="{'active-tag': activeTag===tag}"
       @click="setActiveTag(tag)"
     >{{tag}}</div>
     
-    <div class="stats">
+    <div class="stats" data-testid="session-stats">
       <transition name="fade" mode="out-in">
         <div class="stat-item" :key="sessionCount">{{ sessionCount }} {{ sessionCount === 1 ? (lang.session || 'session') : (lang.sessions || 'sessions') }}</div>
       </transition>

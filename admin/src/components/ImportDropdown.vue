@@ -7,15 +7,15 @@
       </label>
       <input type="file" id="file-input" @change="importTabs" accept=".tabspace" />
     </span>
-    <span class="link" href="#" @click="displayImportOneTab">{{lang.import}} OneTab</span>
+    <span class="link" data-testid="import-onetab" href="#" @click="displayImportOneTab">{{lang.import}} OneTab</span>
     </div>
-    <div id="import-modal">
+    <div id="import-modal" data-testid="import-modal">
       <h3 style="margin-left: 20px">{{lang.import}} OneTab</h3>
       <textarea name="" id="import-content" cols="80" rows="30" 
       style="margin: 0 auto; display: block;"></textarea>
        <span class="link" href="#" @click="cancelImport" 
       style="float:right; margin: 10px; border: #dddddd 1px solid; padding: 3px 8px; border-radius: 4px;">{{lang.cancel}}</span>
-      <span class="link" href="#" @click="importOneTab" 
+      <span class="link" data-testid="import-submit" href="#" @click="importOneTab"
       style="float:right; margin: 10px 0px 10px 10px; border: #dddddd 1px solid; padding: 3px 8px; border-radius: 4px;">{{lang.import}}</span>
     </div>
   </div>

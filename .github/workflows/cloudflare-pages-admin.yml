@@ -7,6 +7,10 @@ on:
       - '.github/workflows/cloudflare-pages-admin.yml'
   workflow_dispatch:
 
+concurrency:
+  group: cloudflare-pages-admin-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
@@ -19,23 +23,31 @@ jobs:
         working-directory: admin
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with:
-          node-version: 18
+          node-version: 22
+          cache: yarn
+          cache-dependency-path: admin/yarn.lock
 
-      - run: npm install
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
 
-      - run: NODE_OPTIONS=--openssl-legacy-provider VUE_APP_BUILD_SHA=$GITHUB_SHA VUE_APP_BUILD_TIME=$(date -u +%Y-%m-%d) npm run build
+      - name: Install test browser
+        run: yarn playwright install --with-deps chromium
 
-      - name: Ensure Cloudflare Pages project exists
-        run: npx --yes wrangler@3.90.0 pages project create tab-space-admin --production-branch=master || true
-        env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      - name: Lint
+        run: yarn lint
 
-      - uses: cloudflare/wrangler-action@v3
+      - name: Build and validate translations
+        run: VUE_APP_BUILD_SHA=$GITHUB_SHA VUE_APP_BUILD_TIME=$(date -u +%Y-%m-%d) yarn build
+
+      - name: Run browser tests
+        run: yarn test:e2e
+
+      - name: Deploy tested build to Cloudflare Pages
+        uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}

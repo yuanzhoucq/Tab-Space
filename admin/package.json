@@ -7,6 +7,8 @@
     "build": "NODE_OPTIONS=--openssl-legacy-provider vue-cli-service build",
     "postbuild": "node validate_translation.js",
     "i18n:check": "node validate_translation.js",
+    "test": "playwright test",
+    "test:e2e": "playwright test",
     "build-beta": "vue-cli-service build --mode development && rm -r ../beta && mv dist ../beta",
     "lint": "vue-cli-service lint"
   },
@@ -25,6 +27,7 @@
     "vuex": "^3.1.3"
   },
   "devDependencies": {
+    "@playwright/test": "1.61.1",
     "@vue/cli-plugin-babel": "^4.2.0",
     "@vue/cli-plugin-eslint": "^4.2.0",
     "@vue/cli-service": "^4.2.0",

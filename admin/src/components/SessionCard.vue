@@ -1,5 +1,5 @@
 <template>
-  <div class="session" :id="session.uuid">
+  <div class="session" :id="session.uuid" :data-testid="`session-${session.uuid}`">
     <div class="session-header">
       <div class="session-header-left">
         <div class="tag-btn handle" v-if="showTagBtns && activeTag === ''" :title="lang.movePrompt">
@@ -14,10 +14,10 @@
         ></div>
       </div>
       <div class="session-header-right">
-        <a class="btn" @click.stop="restore(session.uuid, true, false)" :title="lang.openSession || 'Open'">
+        <a class="btn" data-testid="restore-session" @click.stop="restore(session.uuid, true, false)" :title="lang.openSession || 'Open'">
           <v-icon name="external-link" class="btn-icon"></v-icon>
         </a>
-        <a class="btn del-btn" @click.stop="restore(session.uuid, false, true)" :title="lang.deleteSession || 'Delete'">
+        <a class="btn del-btn" data-testid="delete-session" @click.stop="restore(session.uuid, false, true)" :title="lang.deleteSession || 'Delete'">
           <v-icon name="trash-2" class="btn-icon"></v-icon>
         </a>
         <div class="export">
@@ -71,7 +71,7 @@
       >
         {{ tag.name }}
       </div>
-      <div class="tag-btn" :title="lang.tagPrompt" v-if="tagEditorId !== session.uuid" @click="e => addTag(e, session.uuid)">
+      <div class="tag-btn" data-testid="add-tag" :title="lang.tagPrompt" v-if="tagEditorId !== session.uuid" @click="e => addTag(e, session.uuid)">
         <v-icon name="tag" style="margin-bottom: -4px" :stroke-width="1.5"></v-icon>
       </div>
       <vue-autosuggest
@@ -88,21 +88,21 @@
           <span class="suggest-tag">{{suggestion.item}}</span>
         </template>
       </vue-autosuggest>
-      <div class="tag-btn" v-if="showTagBtns || isFavorite(session)" @click="() => toggleFavorite(session)">
+      <div class="tag-btn" data-testid="toggle-favorite" v-if="showTagBtns || isFavorite(session)" @click="() => toggleFavorite(session)">
         <v-icon name="star" :stroke-width="1.5"
         :fill="isFavorite(session) ? 'salmon' : 'none'"
         :stroke="isFavorite(session) ? 'salmon' : 'currentColor'"
         ></v-icon>
       </div>
       <div v-if="showTagBtns" style="display: flex; transition: 3s">
-        <div :title="lang.editPrompt" v-if="editingSessionUuid !== session.uuid" class="tag-btn" 
+        <div data-testid="edit-session" :title="lang.editPrompt" v-if="editingSessionUuid !== session.uuid" class="tag-btn"
         @click="() => { editingSessionUuid = session.uuid; session.sites.push({title: '', url: ''})}">
           <v-icon name="edit" :stroke-width="1.5"></v-icon>
         </div>
-        <div v-else class="tag-btn" @click="() => { editingSessionUuid = ''; updateSession(session) }">
+        <div v-else class="tag-btn" data-testid="save-session" @click="() => { editingSessionUuid = ''; updateSession(session) }">
           <v-icon name="check" :stroke-width="4" stroke="green"></v-icon>
         </div>
-        <div class="tag-btn" :title="lang.topPrompt" @click="() => upSession(session)">
+        <div class="tag-btn" data-testid="pin-session" :title="lang.topPrompt" @click="() => upSession(session)">
           <v-icon name="arrow-up-circle" :stroke-width="1.5"></v-icon>
         </div>
         <div class="tag-btn" :title="lang.mergePrompt" v-if="mergeEditorId !== session.uuid" 

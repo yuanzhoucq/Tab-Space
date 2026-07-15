@@ -1,9 +1,9 @@
 <template>
   <div class="export-dropdown">
-    <span class="link" href="#" @click="exportTabs('Text')">{{lang.exportText}}</span>
-    <span class="link" href="#" @click="exportTabs('MD')">{{lang.exportMD}}</span>
-    <span class="link" href="#" @click="exportTabs('HTML')">{{lang.exportHTML}}</span>
-    <span class="link" href="#" @click="exportTabs('JSON')">{{lang.exportJSON}}</span>
+    <span class="link" data-testid="export-text" href="#" @click="exportTabs('Text')">{{lang.exportText}}</span>
+    <span class="link" data-testid="export-markdown" href="#" @click="exportTabs('MD')">{{lang.exportMD}}</span>
+    <span class="link" data-testid="export-html" href="#" @click="exportTabs('HTML')">{{lang.exportHTML}}</span>
+    <span class="link" data-testid="export-json" href="#" @click="exportTabs('JSON')">{{lang.exportJSON}}</span>
   </div>
 </template>
 

@@ -4,21 +4,21 @@
       <a class="link" href="https://joyuer.notion.site/What-s-New-in-Tab-Space-66063fc8afea4f54906f32ef92915ea7" 
         target="_blank" style="text-decoration: none; font-style: italic" v-html="lang.whatsNew"></a>
     </div>
-    <div class="export">
+    <div class="export" data-testid="export-menu">
       <span class="link">
         {{lang.export}}
         <small>▼</small>
       </span>
       <export-dropdown></export-dropdown>
     </div>
-    <div class="import">
+    <div class="import" data-testid="import-menu">
       <span class="link">
         {{lang.import}}
         <small>▼</small>
       </span>
       <import-dropdown></import-dropdown>
     </div>
-    <div class="backup">
+    <div class="backup" data-testid="backup-menu">
       <span class="link">
         {{lang.backup || 'Backup'}}
         <small>▼</small>
@@ -26,7 +26,7 @@
       <backup-dropdown></backup-dropdown>
     </div>
     <div>
-      <router-link class="link" to="/settings">{{lang.settings}}</router-link>
+      <router-link class="link" data-testid="settings-link" to="/settings">{{lang.settings}}</router-link>
     </div>
   </nav>
 </template>
@@ -91,4 +91,3 @@ export default {
     }
   }
 </style>
-

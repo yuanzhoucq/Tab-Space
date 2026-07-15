@@ -1,14 +1,14 @@
 <template>
   <div>
     <div class="backup-dropdown">
-      <span class="link" @click="forceBackup">{{lang.backupNow || 'Backup Now'}}</span>
-      <span class="link" @click="openBackupList">
+      <span class="link" data-testid="backup-now" @click="forceBackup">{{lang.backupNow || 'Backup Now'}}</span>
+      <span class="link" data-testid="view-backups" @click="openBackupList">
         {{lang.viewBackups || 'View Backups'}} ({{backups.length}})
       </span>
     </div>
     
     <!-- Backup list modal -->
-    <div v-if="showBackupList" class="backup-modal" @click.self="showBackupList = false">
+    <div v-if="showBackupList" class="backup-modal" data-testid="backup-modal" @click.self="showBackupList = false">
       <div class="backup-modal-content">
         <div class="backup-modal-header">
           <h3>{{lang.backupHistory || 'Backup History'}}</h3>
@@ -26,7 +26,7 @@
               </span>
             </div>
             <div class="backup-actions">
-              <span class="link restore-link" @click="restoreBackup(backup.filename)">
+              <span class="link restore-link" data-testid="restore-backup" @click="restoreBackup(backup.filename)">
                 {{lang.restore || 'Restore'}}
               </span>
             </div>
