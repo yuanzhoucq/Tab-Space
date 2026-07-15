@@ -6,6 +6,7 @@
     "serve": "vue-cli-service serve",
     "build": "NODE_OPTIONS=--openssl-legacy-provider vue-cli-service build",
     "postbuild": "node validate_translation.js",
+    "i18n:check": "node validate_translation.js",
     "build-beta": "vue-cli-service build --mode development && rm -r ../beta && mv dist ../beta",
     "lint": "vue-cli-service lint"
   },

@@ -3,90 +3,51 @@
 
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Translate Tab Space</title>
   <style>
     body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
-      width: 800px;
+      box-sizing: border-box;
+      max-width: 760px;
       margin: 0 auto;
+      padding: 48px 24px;
+      color: #222;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      line-height: 1.6;
     }
 
-    table.greyGridTable {
-      border: 2px solid #FFFFFF;
-      width: 100%;
-      text-align: center;
-      border-collapse: collapse;
+    h1, h2 { line-height: 1.25; }
+    h2 { margin-top: 2rem; }
+    a { color: #d75f4b; }
+    code {
+      padding: 0.15rem 0.35rem;
+      border-radius: 4px;
+      background: #f1f1f1;
     }
-
-    table.greyGridTable td,
-    table.greyGridTable th {
-      border: 1px solid #FFFFFF;
-      padding: 3px 4px;
-    }
-
-    table.greyGridTable tbody td {
-      font-size: 13px;
-    }
-
-    table.greyGridTable td:nth-child(even) {
-      background: #EBEBEB;
-    }
-
-    table.greyGridTable thead {
-      background: #FFFFFF;
-      border-bottom: 4px solid #333333;
-    }
-
-    table.greyGridTable thead th {
-      font-size: 15px;
-      font-weight: bold;
-      color: #333333;
-      text-align: center;
-      border-left: 2px solid #333333;
-    }
-
-    table.greyGridTable thead th:first-child {
-      border-left: none;
-    }
-
-    table.greyGridTable tfoot {
-      font-size: 14px;
-      font-weight: bold;
-      color: #333333;
-      border-top: 4px solid #333333;
-    }
-
-    table.greyGridTable tfoot td {
-      font-size: 14px;
+    .email {
+      margin-top: 2rem;
+      padding: 1rem 1.25rem;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      background: #fafafa;
     }
   </style>
 </head>
 
 <body>
-  <h1>Help Us Translate Tab Space</h1>
-  <p>It's great to have software that's available in our native language as it can make us feel more comfortable. We would like to offer support for more languages in Tab Space, but unfortunately, we don't speak many languages ourselves. That's why we would greatly appreciate your help in translating Tab Space into your language.</p>
-  <h2>Current Progress</h2>
-  <table class="greyGridTable"><thead><tr><th class="lang-th">Language Code</th><th class="name-th">Lanuage</th><th class="progress-th">Progress</th><th class="missingkeys-th">Missing Keys</th></tr></thead><tbody ><tr ><td class="lang-td td_text">zh-cn</td><td class="name-td td_text">Chinese (PRC)</td><td class="progress-td td_text">100.00%</td><td class="missingkeys-td td_text">-</td></tr>
-<tr ><td class="lang-td td_text">uk</td><td class="name-td td_text">Ukrainian</td><td class="progress-td td_text">97.22%</td><td class="missingkeys-td td_text">refresh, updateReady</td></tr>
-<tr ><td class="lang-td td_text">es</td><td class="name-td td_text">Spanish</td><td class="progress-td td_text">97.22%</td><td class="missingkeys-td td_text">refresh, updateReady</td></tr>
-<tr ><td class="lang-td td_text">da</td><td class="name-td td_text">Danish</td><td class="progress-td td_text">97.22%</td><td class="missingkeys-td td_text">refresh, updateReady</td></tr>
-<tr ><td class="lang-td td_text">pl</td><td class="name-td td_text">Polish</td><td class="progress-td td_text">97.22%</td><td class="missingkeys-td td_text">refresh, updateReady</td></tr>
-<tr ><td class="lang-td td_text">ru</td><td class="name-td td_text">Russian</td><td class="progress-td td_text">97.22%</td><td class="missingkeys-td td_text">refresh, updateReady</td></tr>
-<tr ><td class="lang-td td_text">tr</td><td class="name-td td_text">Turkish</td><td class="progress-td td_text">97.22%</td><td class="missingkeys-td td_text">refresh, updateReady</td></tr>
-<tr ><td class="lang-td td_text">de</td><td class="name-td td_text">German (Standard)</td><td class="progress-td td_text">97.22%</td><td class="missingkeys-td td_text">refresh, updateReady</td></tr>
-<tr ><td class="lang-td td_text">sv</td><td class="name-td td_text">Swedish</td><td class="progress-td td_text">97.22%</td><td class="missingkeys-td td_text">refresh, updateReady</td></tr>
-<tr ><td class="lang-td td_text">it</td><td class="name-td td_text">Italian (Standard)</td><td class="progress-td td_text">97.22%</td><td class="missingkeys-td td_text">refresh, updateReady</td></tr>
-<tr ><td class="lang-td td_text">ko</td><td class="name-td td_text">Korean</td><td class="progress-td td_text">97.22%</td><td class="missingkeys-td td_text">refresh, updateReady</td></tr>
-<tr ><td class="lang-td td_text">ar-ae</td><td class="name-td td_text">Arabic (U.A.E.)</td><td class="progress-td td_text">97.22%</td><td class="missingkeys-td td_text">refresh, updateReady</td></tr>
-<tr ><td class="lang-td td_text">nl</td><td class="name-td td_text">Dutch (Standard)</td><td class="progress-td td_text">97.22%</td><td class="missingkeys-td td_text">refresh, updateReady</td></tr>
-<tr ><td class="lang-td td_text">fr</td><td class="name-td td_text">French (Standard)</td><td class="progress-td td_text">97.22%</td><td class="missingkeys-td td_text">refresh, updateReady</td></tr>
-<tr ><td class="lang-td td_text">ja</td><td class="name-td td_text">Japanese</td><td class="progress-td td_text">97.22%</td><td class="missingkeys-td td_text">refresh, updateReady</td></tr></tbody></table>
+  <h1>Help Translate Tab Space</h1>
+  <p>Tab Space uses AI to prepare translation drafts and automated checks to keep every language complete. Suggestions from people who use the language are still the best way to improve wording and tone.</p>
 
-  <p>To add a translation, you simply need to append a block to the [<a
-    href="https://github.com/yuanzhoucq/Tab-Space/blob/master/admin/src/lang.json">file</a>] and translate the red text under the "en-us" label. If you have any translations or improvements to offer, please send them to joyuercn@icloud.com, and we will quickly add them to Tab Space. Thank you!</p>
-  <h2>Translation Source</h2>
-  <script
-    src="https://emgithub.com/embed.js?target=https%3A%2F%2Fgithub.com%2Fyuanzhoucq%2FTab-Space%2Fblob%2Fmaster%2Fadmin%2Fsrc%2Flang.json&style=xcode&showBorder=on&showLineNumbers=on&showFileMeta=on"></script>
+  <h2>For developers</h2>
+  <p>Each language has its own file in the <a href="https://github.com/yuanzhoucq/Tab-Space/tree/master/admin/src/locales">locales directory</a>. Edit one locale, run <code>npm run i18n:check</code> from the <code>admin</code> directory, and open a pull request. See <a href="https://github.com/yuanzhoucq/Tab-Space/blob/master/TRANSLATING.md">the translation guide</a> for details.</p>
+
+  <h2>For everyone else</h2>
+  <p>No GitHub account or technical knowledge is needed. In your message, please include the language, the current text, and your suggested translation. A screenshot or a short description of where the text appears is helpful.</p>
+
+  <div class="email">
+    Send translation suggestions to
+    <a href="mailto:joyuercn@icloud.com?subject=Tab%20Space%20translation%20suggestion">joyuercn@icloud.com</a>.
+  </div>
 </body>
 
 </html>

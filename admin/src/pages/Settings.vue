@@ -15,7 +15,7 @@
       <div class="settings-content">
         <!-- General Preferences -->
         <div class="card">
-          <h2 class="section-title">General Preferences</h2>
+          <h2 class="section-title">{{lang.generalPreferences}}</h2>
           <div class="setting-list">
             <div class="setting-item" v-for="setting in settings" :key="setting">
               <label :for="setting" class="setting-label">{{lang[setting]}}</label>
@@ -32,9 +32,9 @@
 
         <!-- Localization -->
         <div class="card">
-          <h2 class="section-title">Localization</h2>
+          <h2 class="section-title">{{lang.localization}}</h2>
           <div class="form-group">
-            <label for="language-select" class="form-label">Language</label>
+            <label for="language-select" class="form-label">{{lang.language}}</label>
             <div class="custom-select-wrapper">
               <select name="languages" id="language-select" class="custom-select" v-model="tabSpaceSettings[preferredLanguageKey]" @change="setLanguage">
                 <option v-for="language in languages" :key="`lang-${language.code}`" :value="language.code">{{language.name}}</option>
@@ -42,7 +42,7 @@
               <v-icon name="chevron-down" class="select-arrow-icon"></v-icon>
             </div>
             <p class="help-text">
-              <a href="https://joyuer.cn/Tab-Space/translate.html" target="_blank">Help us translate Tab Space</a>
+              <a href="https://mytab.space/translate.html" target="_blank">{{lang.helpTranslate}}</a>
             </p>
           </div>
         </div>

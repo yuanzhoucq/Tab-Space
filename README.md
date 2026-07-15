@@ -5,7 +5,8 @@ Tab Space is a Safari extension app which is born for improving web browsing pro
 
 ## Contributing
 ### For translation
-- [Translation page](https://mytab.space/translate.html)
+- [Translation page](https://mytab.space/translate.html) for email suggestions
+- [Translation guide](TRANSLATING.md) for pull requests
 ### For web app
 ```
 $ git clone https://github.com/yuanzhoucq/Tab-Space.git
@@ -19,5 +20,4 @@ Note that you need to have Tab Space installed and activated in Safari or the we
 - [Tab Space Homepage](https://mytab.space)
 - [Product Hunt page](https://www.producthunt.com/posts/tab-sapce)
 - [中文介绍](https://sspai.com/post/56315)
-
 

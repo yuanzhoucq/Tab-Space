@@ -1,7 +1,7 @@
 import Vue from 'vue'
 import Vuex from 'vuex'
 import _ from 'lodash'
-import LangData from './lang'
+import LangData from './locales'
 import Constants from './constants'
 
 Vue.use(Vuex);
@@ -10,10 +10,10 @@ const defaultTabSpaceSettings = {
     [Constants.preferredLanguageKey]: navigator.language.toLowerCase()
 }
 function setLang(languageCode) {
-    // fallback to en-us for lang.json
-    let lang = LangData[languageCode || defaultTabSpaceSettings[Constants.preferredLanguageKey]] || LangData["en-us"];
-    for (let key in LangData["en-us"]) lang[key] = lang[key] || LangData["en-us"][key];
-    return lang;
+    const requestedLanguage = (languageCode || defaultTabSpaceSettings[Constants.preferredLanguageKey]).toLowerCase()
+    const baseLanguage = requestedLanguage.split("-")[0]
+    const translation = LangData[requestedLanguage] || LangData[baseLanguage] || {}
+    return { ...LangData["en-us"], ...translation }
 }
 
 const store = new Vuex.Store({

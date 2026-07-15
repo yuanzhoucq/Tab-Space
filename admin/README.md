@@ -1,5 +1,7 @@
 # tab-space-admin
 
+Translation files live in `src/locales`. See [`../TRANSLATING.md`](../TRANSLATING.md), and run `npm run i18n:check` after changing user-facing text.
+
 ## Project setup
 ```
 npm install

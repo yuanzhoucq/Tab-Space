@@ -1,242 +1,197 @@
-const assert = require("assert")
-const LangData = require("./src/lang.json")
+const fs = require('fs')
+const path = require('path')
 
-var langCodes = {
-    "af":    "Afrikaans",
-    "sq":    "Albanian",
-    "an":    "Aragonese",
-    "ar":    "Arabic (Standard)",
-    "ar-dz": "Arabic (Algeria)",
-    "ar-bh": "Arabic (Bahrain)",
-    "ar-eg": "Arabic (Egypt)",
-    "ar-iq": "Arabic (Iraq)",
-    "ar-jo": "Arabic (Jordan)",
-    "ar-kw": "Arabic (Kuwait)",
-    "ar-lb": "Arabic (Lebanon)",
-    "ar-ly": "Arabic (Libya)",
-    "ar-ma": "Arabic (Morocco)",
-    "ar-om": "Arabic (Oman)",
-    "ar-qa": "Arabic (Qatar)",
-    "ar-sa": "Arabic (Saudi Arabia)",
-    "ar-sy": "Arabic (Syria)",
-    "ar-tn": "Arabic (Tunisia)",
-    "ar-ae": "Arabic (U.A.E.)",
-    "ar-ye": "Arabic (Yemen)",
-    "hy":    "Armenian",
-    "as":    "Assamese",
-    "ast":   "Asturian",
-    "az":    "Azerbaijani",
-    "eu":    "Basque",
-    "bg":    "Bulgarian",
-    "be":    "Belarusian",
-    "bn":    "Bengali",
-    "bs":    "Bosnian",
-    "br":    "Breton",
-    "bg":    "Bulgarian",
-    "my":    "Burmese",
-    "ca":    "Catalan",
-    "ch":    "Chamorro",
-    "ce":    "Chechen",
-    "zh":    "Chinese",
-    "zh-hk": "Chinese (Hong Kong)",
-    "zh-cn": "Chinese (PRC)",
-    "zh-sg": "Chinese (Singapore)",
-    "zh-tw": "Chinese (Taiwan)",
-    "cv":    "Chuvash",
-    "co":    "Corsican",
-    "cr":    "Cree",
-    "hr":    "Croatian",
-    "cs":    "Czech",
-    "da":    "Danish",
-    "nl":    "Dutch (Standard)",
-    "nl-be": "Dutch (Belgian)",
-    "en":    "English",
-    "en-au": "English (Australia)",
-    "en-bz": "English (Belize)",
-    "en-ca": "English (Canada)",
-    "en-ie": "English (Ireland)",
-    "en-jm": "English (Jamaica)",
-    "en-nz": "English (New Zealand)",
-    "en-ph": "English (Philippines)",
-    "en-za": "English (South Africa)",
-    "en-tt": "English (Trinidad & Tobago)",
-    "en-gb": "English (United Kingdom)",
-    "en-us": "English (United States)",
-    "en-zw": "English (Zimbabwe)",
-    "eo":    "Esperanto",
-    "et":    "Estonian",
-    "fo":    "Faeroese",
-    "fa":    "Farsi",
-    "fj":    "Fijian",
-    "fi":    "Finnish",
-    "fr":    "French (Standard)",
-    "fr-be": "French (Belgium)",
-    "fr-ca": "French (Canada)",
-    "fr-fr": "French (France)",
-    "fr-lu": "French (Luxembourg)",
-    "fr-mc": "French (Monaco)",
-    "fr-ch": "French (Switzerland)",
-    "fy":    "Frisian",
-    "fur":   "Friulian",
-    "gd":    "Gaelic (Scots)",
-    "gd-ie": "Gaelic (Irish)",
-    "gl":    "Galacian",
-    "ka":    "Georgian",
-    "de":    "German (Standard)",
-    "de-at": "German (Austria)",
-    "de-de": "German (Germany)",
-    "de-li": "German (Liechtenstein)",
-    "de-lu": "German (Luxembourg)",
-    "de-ch": "German (Switzerland)",
-    "el":    "Greek",
-    "gu":    "Gujurati",
-    "ht":    "Haitian",
-    "he":    "Hebrew",
-    "hi":    "Hindi",
-    "hu":    "Hungarian",
-    "is":    "Icelandic",
-    "id":    "Indonesian",
-    "iu":    "Inuktitut",
-    "ga":    "Irish",
-    "it":    "Italian (Standard)",
-    "it-ch": "Italian (Switzerland)",
-    "ja":    "Japanese",
-    "kn":    "Kannada",
-    "ks":    "Kashmiri",
-    "kk":    "Kazakh",
-    "km":    "Khmer",
-    "ky":    "Kirghiz",
-    "tlh":   "Klingon",
-    "ko":    "Korean",
-    "ko-kp": "Korean (North Korea)",
-    "ko-kr": "Korean (South Korea)",
-    "la":    "Latin",
-    "lv":    "Latvian",
-    "lt":    "Lithuanian",
-    "lb":    "Luxembourgish",
-    "mk":    "FYRO Macedonian",
-    "ms":    "Malay",
-    "ml":    "Malayalam",
-    "mt":    "Maltese",
-    "mi":    "Maori",
-    "mr":    "Marathi",
-    "mo":    "Moldavian",
-    "nv":    "Navajo",
-    "ng":    "Ndonga",
-    "ne":    "Nepali",
-    "no":    "Norwegian",
-    "nb":    "Norwegian (Bokmal)",
-    "nn":    "Norwegian (Nynorsk)",
-    "oc":    "Occitan",
-    "or":    "Oriya",
-    "om":    "Oromo",
-    "fa":    "Persian",
-    "fa-ir": "Persian/Iran",
-    "pl":    "Polish",
-    "pt":    "Portuguese",
-    "pt-br": "Portuguese (Brazil)",
-    "pa":    "Punjabi",
-    "pa-in": "Punjabi (India)",
-    "pa-pk": "Punjabi (Pakistan)",
-    "qu":    "Quechua",
-    "rm":    "Rhaeto-Romanic",
-    "ro":    "Romanian",
-    "ro-mo": "Romanian (Moldavia)",
-    "ru":    "Russian",
-    "ru-mo": "Russian (Moldavia)",
-    "sz":    "Sami (Lappish)",
-    "sg":    "Sango",
-    "sa":    "Sanskrit",
-    "sc":    "Sardinian",
-    "gd":    "Scots Gaelic",
-    "sd":    "Sindhi",
-    "si":    "Singhalese",
-    "sr":    "Serbian",
-    "sk":    "Slovak",
-    "sl":    "Slovenian",
-    "so":    "Somani",
-    "sb":    "Sorbian",
-    "es":    "Spanish",
-    "es-ar": "Spanish (Argentina)",
-    "es-bo": "Spanish (Bolivia)",
-    "es-cl": "Spanish (Chile)",
-    "es-co": "Spanish (Colombia)",
-    "es-cr": "Spanish (Costa Rica)",
-    "es-do": "Spanish (Dominican Republic)",
-    "es-ec": "Spanish (Ecuador)",
-    "es-sv": "Spanish (El Salvador)",
-    "es-gt": "Spanish (Guatemala)",
-    "es-hn": "Spanish (Honduras)",
-    "es-mx": "Spanish (Mexico)",
-    "es-ni": "Spanish (Nicaragua)",
-    "es-pa": "Spanish (Panama)",
-    "es-py": "Spanish (Paraguay)",
-    "es-pe": "Spanish (Peru)",
-    "es-pr": "Spanish (Puerto Rico)",
-    "es-es": "Spanish (Spain)",
-    "es-uy": "Spanish (Uruguay)",
-    "es-ve": "Spanish (Venezuela)",
-    "sx":    "Sutu",
-    "sw":    "Swahili",
-    "sv":    "Swedish",
-    "sv-fi": "Swedish (Finland)",
-    "sv-sv": "Swedish (Sweden)",
-    "ta":    "Tamil",
-    "tt":    "Tatar",
-    "te":    "Teluga",
-    "th":    "Thai",
-    "tig":   "Tigre",
-    "ts":    "Tsonga",
-    "tn":    "Tswana",
-    "tr":    "Turkish",
-    "tk":    "Turkmen",
-    "uk":    "Ukrainian",
-    "hsb":   "Upper Sorbian",
-    "ur":    "Urdu",
-    "ve":    "Venda",
-    "vi":    "Vietnamese",
-    "vo":    "Volapuk",
-    "wa":    "Walloon",
-    "cy":    "Welsh",
-    "xh":    "Xhosa",
-    "ji":    "Yiddish",
-    "zu":    "Zulu",
-};
+const sourceLocale = 'en-us'
+const localesDirectory = path.join(__dirname, 'src', 'locales')
+const metadataPath = path.join(localesDirectory, 'metadata.json')
+const hardcodedAllowlistPath = path.join(__dirname, 'i18n-hardcoded-allowlist.json')
+const sourceDirectory = path.join(__dirname, 'src')
+const errors = []
+const warnings = []
 
-const enUsKeys = Object.keys(LangData["en-us"])
-let extraKeysLength = 0
-let header = {lang: "Language Code", name: "Lanuage", progress: "Progress", missingKeys: "Missing Keys"}
-let data = []
-for (let lang in LangData) {
-    if (lang !== "en-us") {
-        console.log(`\x1b[1m\x1b[33m\n### Progress of Language "${lang}":\x1b[0m`)
-        const langKeys = Object.keys(LangData[lang])
-        let missingKeys = enUsKeys.filter(key => !langKeys.includes(key)).sort()
-        const extraKeys = langKeys.filter(key => !enUsKeys.includes(key)).sort()
-        const progress = `${(100 * (1 - missingKeys.length / enUsKeys.length)).toFixed(2)}%`
-        missingKeys = missingKeys.join(", ") || "-"
-        console.log(`* Translation coverage: \x1b[32m${progress}\x1b[0m`)
-        console.log(`* Missing keys: \x1b[35m${missingKeys}\x1b[0m`)
-        extraKeys.length > 0 && console.log(`* Extra keys to remove: \x1b[31m${extraKeys}\x1b[0m`)
-        extraKeysLength += extraKeys.length
-        data.push({
-            lang, name: langCodes[lang], progress, missingKeys
-        })
+function readJson(filePath) {
+  try {
+    return JSON.parse(fs.readFileSync(filePath, 'utf8'))
+  } catch (error) {
+    errors.push(`${path.relative(__dirname, filePath)}: ${error.message}`)
+    return null
+  }
+}
+
+function findDuplicateTopLevelKeys(filePath) {
+  const source = fs.readFileSync(filePath, 'utf8')
+  const keys = Array.from(source.matchAll(/^ {2}"([^"]+)"\s*:/gm), match => match[1])
+  return keys.filter((key, index) => keys.indexOf(key) !== index)
+}
+
+function valueType(value) {
+  return Array.isArray(value) ? 'array' : typeof value
+}
+
+function tokens(value) {
+  if (typeof value !== 'string') return []
+  return value.match(/\{\{?\s*[\w.-]+\s*\}?\}|%(?:\d+\$)?[a-z]/gi) || []
+}
+
+function htmlTags(value) {
+  if (typeof value !== 'string') return []
+  return Array.from(value.matchAll(/<\s*(\/?)\s*([a-z][\w-]*)\b[^>]*>/gi), match => `${match[1]}${match[2].toLowerCase()}`)
+}
+
+function validateString(code, key, source, translation) {
+  if (!translation.trim()) errors.push(`${code}.${key}: translation is empty`)
+
+  const sourceTokens = tokens(source).sort()
+  const translationTokens = tokens(translation).sort()
+  if (JSON.stringify(sourceTokens) !== JSON.stringify(translationTokens)) {
+    errors.push(`${code}.${key}: placeholders differ (${sourceTokens.join(', ')} -> ${translationTokens.join(', ')})`)
+  }
+
+  const sourceTags = htmlTags(source)
+  const translationTags = htmlTags(translation)
+  if (JSON.stringify(sourceTags) !== JSON.stringify(translationTags)) {
+    errors.push(`${code}.${key}: HTML tags differ (${sourceTags.join(', ')} -> ${translationTags.join(', ')})`)
+  }
+
+  if (code !== sourceLocale && translation === source) warnings.push(`${code}.${key}: identical to English`)
+}
+
+function validateValue(code, key, source, translation) {
+  if (valueType(source) !== valueType(translation)) {
+    errors.push(`${code}.${key}: expected ${valueType(source)}, found ${valueType(translation)}`)
+    return
+  }
+
+  if (Array.isArray(source)) {
+    if (source.length !== translation.length) {
+      errors.push(`${code}.${key}: expected ${source.length} items, found ${translation.length}`)
+      return
     }
+    source.forEach((item, index) => {
+      if (typeof item !== 'string' || typeof translation[index] !== 'string') {
+        errors.push(`${code}.${key}[${index}]: array items must be strings`)
+      } else {
+        validateString(code, `${key}[${index}]`, item, translation[index])
+      }
+    })
+    return
+  }
+
+  if (typeof source !== 'string') {
+    errors.push(`${sourceLocale}.${key}: only strings and arrays of strings are supported`)
+    return
+  }
+  validateString(code, key, source, translation)
 }
 
-try {
-    const Table = require('table-builder');
-    const fs = require('fs')
-    const table = (new Table({'class': 'greyGridTable'}))
-        .setHeaders(header) 
-        .setData(data)
-        .render()
-    // console.log('\n', table);
-    let tranlateHtml = fs.readFileSync('../translate.html').toString()
-    tranlateHtml = tranlateHtml.replace(/\<table[\s\S]+\<\/table\>/, table)
-    fs.writeFileSync('../translate.html', tranlateHtml)
-} catch (e) {
-    console.log('\nTable-builder not installed.')
+function walk(directory, extension) {
+  return fs.readdirSync(directory, { withFileTypes: true }).flatMap(entry => {
+    const filePath = path.join(directory, entry.name)
+    if (entry.isDirectory()) return walk(filePath, extension)
+    return entry.name.endsWith(extension) ? [filePath] : []
+  })
 }
-assert(extraKeysLength === 0)
+
+function normalizeLiteral(value) {
+  return value.replace(/\s+/g, ' ').trim()
+}
+
+function findHardcodedUserFacingText(filePath) {
+  const source = fs.readFileSync(filePath, 'utf8')
+  const template = source.split('<script>')[0].replace(/<!--[\s\S]*?-->/g, '')
+  const literals = []
+
+  let text = ''
+  let insideTag = false
+  let quote = null
+  for (const character of template) {
+    if (!insideTag && character === '<') {
+      const literal = normalizeLiteral(text.replace(/\{\{[\s\S]*?\}\}/g, ''))
+      if (literal) literals.push(literal)
+      text = ''
+      insideTag = true
+      continue
+    }
+    if (insideTag) {
+      if (quote && character === quote) quote = null
+      else if (!quote && (character === '"' || character === "'")) quote = character
+      else if (!quote && character === '>') insideTag = false
+      continue
+    }
+    text += character
+  }
+  for (const match of template.matchAll(/(?:^|\s)(?:placeholder|title|aria-label)="([^"{}]*[A-Za-z][^"{}]*)"/gm)) {
+    literals.push(normalizeLiteral(match[1]))
+  }
+  return literals.filter(literal =>
+    /[A-Za-z]/.test(literal) &&
+    !/^(?:&[a-z]+;|\s|·)+$/i.test(literal) &&
+    !/^[A-Z]$/.test(literal)
+  )
+}
+
+const metadata = readJson(metadataPath) || []
+const allowedHardcodedText = new Set(readJson(hardcodedAllowlistPath) || [])
+const metadataCodes = metadata.map(locale => locale.code)
+const duplicateCodes = metadataCodes.filter((code, index) => metadataCodes.indexOf(code) !== index)
+if (duplicateCodes.length) errors.push(`metadata.json: duplicate locale codes: ${[...new Set(duplicateCodes)].join(', ')}`)
+
+const localeFiles = fs.readdirSync(localesDirectory)
+  .filter(fileName => fileName.endsWith('.json') && fileName !== 'metadata.json')
+const fileCodes = localeFiles.map(fileName => path.basename(fileName, '.json'))
+
+for (const code of metadataCodes.filter(code => !fileCodes.includes(code))) {
+  errors.push(`metadata.json: missing locale file for ${code}`)
+}
+for (const code of fileCodes.filter(code => !metadataCodes.includes(code))) {
+  errors.push(`${code}.json: locale is missing from metadata.json`)
+}
+
+const locales = {}
+for (const fileName of localeFiles) {
+  const filePath = path.join(localesDirectory, fileName)
+  const code = path.basename(fileName, '.json')
+  const duplicateKeys = findDuplicateTopLevelKeys(filePath)
+  if (duplicateKeys.length) errors.push(`${fileName}: duplicate keys: ${[...new Set(duplicateKeys)].join(', ')}`)
+  locales[code] = readJson(filePath)
+}
+
+const english = locales[sourceLocale]
+if (!english) {
+  errors.push(`Missing source locale: ${sourceLocale}.json`)
+} else {
+  const sourceKeys = Object.keys(english)
+  for (const code of metadataCodes) {
+    const translation = locales[code]
+    if (!translation) continue
+    const translationKeys = Object.keys(translation)
+    const missingKeys = sourceKeys.filter(key => !translationKeys.includes(key))
+    const extraKeys = translationKeys.filter(key => !sourceKeys.includes(key))
+    if (missingKeys.length) errors.push(`${code}.json: missing keys: ${missingKeys.join(', ')}`)
+    if (extraKeys.length) errors.push(`${code}.json: extra keys: ${extraKeys.join(', ')}`)
+    for (const key of sourceKeys.filter(key => translationKeys.includes(key))) {
+      validateValue(code, key, english[key], translation[key])
+    }
+  }
+}
+
+for (const filePath of walk(sourceDirectory, '.vue')) {
+  for (const literal of findHardcodedUserFacingText(filePath)) {
+    if (!allowedHardcodedText.has(literal)) {
+      errors.push(`${path.relative(__dirname, filePath)}: hardcoded user-facing text: "${literal}"`)
+    }
+  }
+}
+
+if (warnings.length) {
+  console.warn(`Translation warnings (${warnings.length}):`)
+  warnings.forEach(warning => console.warn(`- ${warning}`))
+}
+
+if (errors.length) {
+  console.error(`Translation validation failed (${errors.length}):`)
+  errors.forEach(error => console.error(`- ${error}`))
+  process.exit(1)
+}
+
+console.log(`Translation validation passed: ${metadataCodes.length} locales, ${Object.keys(english).length} keys each.`)
