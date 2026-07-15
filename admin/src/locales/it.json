@@ -19,14 +19,6 @@
   "exportText": "Copia come Testo",
   "exportMD": "Copia come Markdown",
   "loseTabs": "Hai perso le tue tab? Forse Tab Space si è appena aggiornato, aspetta un momento e ricarica la pagina ...",
-  "tips": "Suggerimenti:",
-  "tipContents": [
-    "Se hai selezionato \"Salva le Tab\" e non hai trovato le tab salvate, è perchè Tab Space si è appena aggiornato. Riavvia Safari per rendere effettivo l'aggiornamento. ",
-    "Le tue sessioni sono ora sincronizzate su tutti i tuoi device con iCloud.",
-    "Puoi ora usare il Drag and Drop per riorganizzare le tue sessioni o i tuoi siti",
-    "Per favore, dai un voto a Tab Space sul Mac App Store se ti piace quest'app.",
-    "Le scorciatoie di Tab Space non funzionano quando la barra di navigazione di Safari è vuota. Questo perchè quando la barra di navigazione è vuota si è in una speciale pagina dove le estensioni sono disattivate"
-  ],
   "loading": "caricamento...",
   "ignore-pinned-tabs": "Ignora le pagine web ancorate quando si salvano le tab",
   "ignore-duplicated-tabs": "Non salvare le tab duplicate (anche quelle di sessioni differenti)",

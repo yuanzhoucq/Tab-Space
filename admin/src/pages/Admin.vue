@@ -4,10 +4,6 @@
       <navbar></navbar>
       <div id="title">
         <h1 style="display: inline-block; margin-left: 125px;">Tab Space</h1>
-        <div id="notification" v-if="notificationCount && notificationCount !== '0' && notificationCount !== tabSpaceSettings['notification-count']">
-          <span @click="openNewMsgPage">New message</span>&nbsp;
-          <span v-if="showCloseMsg" @click="closeNewMsgBox">×</span>
-        </div>
         <input type="text" name="keyword" id="keyword" v-model="keyword"
                placeholder="Search title, url, tag...">
       </div>
@@ -62,13 +58,11 @@
     data() {
       return {
         keyword: "",
-        notificationCount: "",
-        showCloseMsg: false,
         showConnectRetry: false
       }
     },
     computed: {
-      ...mapState(["lang", "bridge", "sessions", "initialRefresh", "tabSpaceSettings"])
+      ...mapState(["lang", "bridge", "sessions", "initialRefresh"])
     },
     watch: {
       keyword(value) {
@@ -76,11 +70,6 @@
       }
     },
     mounted() {
-      setTimeout(() => {
-        fetch(this.$myConfig.staticResourceEndpoint + "/notificationCount.json").then(r => r.json()).then(r => {
-          this.notificationCount = String(r["count"])
-        })
-      }, 1000)
       setTimeout(() => {
         if (!this.bridge || !this.initialRefresh) {
           this.showConnectRetry = true
@@ -90,13 +79,6 @@
     methods: {
       reload() {
         window.location.reload()
-      },
-      openNewMsgPage() {
-        this.showCloseMsg = true
-        window.open("https://joyuer.notion.site/Tab-Space-Messages-cfd1c7fec58d4b36876b8484637745c2")
-      },
-      closeNewMsgBox() {
-        this.bridge.send({cmd: "SetDefault", name: "notification-count", value: this.notificationCount})
       }
     }
   }
@@ -238,19 +220,6 @@
   .highlight {
     background-color: #fadd23;
   }
-
-  #notification {
-      display: inline-block;
-      background-color: #eb2405;
-      margin-left: 10px;
-      margin-bottom: 40px;
-      width: 120px;
-      text-align: center;
-      padding: 2px;
-      border-radius: 5px;
-      color: white;
-      cursor: pointer;
-    }
 
   @media (prefers-color-scheme: dark) {
     body {

@@ -36,25 +36,16 @@
       </transition>
     </div>
     
-    <div v-if="tips.length > 0" class="tips">{{ displayTips }}</div>
   </div>
 </template>
 
 <script>
-import _ from 'lodash'
 import { mapState, mapGetters } from 'vuex'
-import Constants from '../constants'
 
 export default {
   name: "SessionSidebar",
-  data() {
-    return {
-      tips: [],
-      tipLang: ""
-    }
-  },
   computed: {
-    ...mapState(["lang", "activeTag", "tabSpaceSettings"]),
+    ...mapState(["lang", "activeTag"]),
     ...mapGetters(["tags", "displaySessions"]),
     sessionCount() {
       return this.displaySessions ? this.displaySessions.length : 0
@@ -64,31 +55,9 @@ export default {
       return this.displaySessions.reduce((total, session) => {
         return total + (session.sites ? session.sites.length : 0)
       }, 0)
-    },
-    displayTips() {
-      return this.tips.reduce((s, item, id) => `${s} ${this.tips.length > 1 ? String(id+1)+"." : ""} ${String(item)}`,
-       this.lang["tips"])
     }
-  },
-  watch: {
-    tabSpaceSettings(settings) {
-      const newLang = settings[Constants.preferredLanguageKey]
-      if (newLang && newLang !== this.tipLang) this.getTips()
-    }
-  },
-  mounted() {
-    this.getTips();
   },
   methods: {
-    getTips() {
-      this.tipLang = this.tabSpaceSettings[Constants.preferredLanguageKey]
-      fetch(this.$myConfig.staticResourceEndpoint + "/tips.json").then(r => r.json()).then(r => {
-        const allTips = r[this.tipLang] || r["en-us"]
-        const { importantTips, commonTips } = allTips
-        if (Array.isArray(importantTips)) this.tips = importantTips
-        if (Array.isArray(commonTips)) this.tips.push(_.sample(allTips["commonTips"]))
-      })
-    },
     setActiveTag(tag) {
       this.$store.commit("setActiveTag", tag)
     }
@@ -131,18 +100,6 @@ export default {
 
 .active-tag:hover {
   background-color: #e07060;
-}
-
-.tips {
-  margin-top: 16px;
-  font-size: 11px;
-  color: var(--text-secondary, #666);
-  line-height: 1.5;
-  padding: 10px 12px;
-  background-color: rgba(250, 128, 114, 0.08);
-  border-left: 3px solid salmon;
-  border-radius: 0 6px 6px 0;
-  font-style: italic;
 }
 
 .stats {

@@ -25,14 +25,6 @@
   "exportText": "Copy as Text",
   "exportMD": "Copy as Markdown",
   "loseTabs": "Lost your tabs? Maybe Tab Space just upgraded, please wait for a moment and refresh ...",
-  "tips": "Tips:",
-  "tipContents": [
-    "If you hit \"save tabs\" and found no tabs were saved, it is because Tab Space just upgraded, please restart Safari to enable it. ",
-    "Your sessions are now synced across all your devices with iCloud.",
-    "You can now use Drag and Drop to reorganize your sessions or sites.",
-    "Please rate Tab Space on Mac App Store if you like this app.",
-    "Tab Space shortcuts will not work when Safari address bar is empty. Because empty address bar means a special page where extension could not be loaded."
-  ],
   "loading": "loading...",
   "ignore-pinned-tabs": "Ignore pinned web pages while saving tabs",
   "ignore-duplicated-tabs": "Don't save duplicated tabs (even for those in different sessions)",

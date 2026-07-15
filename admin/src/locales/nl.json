@@ -25,14 +25,6 @@
   "exportText": "Kopieer als tekst",
   "exportMD": "Kopieer als Markdown",
   "loseTabs": "Ben je je tabbladen kwijt? Misschien is Tab Space net geüpgraded, wacht even en ververs...",
-  "tips": "Tips:",
-  "tipContents": [
-    "Als je op \"Tabbladen opslaan… \" klikt en er zijn geen tabbladen opgeslagen, dan is Tab Space net geüpgraded. Start Safari dan opnieuw op om Tab Space in te schakelen. ",
-    "Je sessies worden nu via iCloud op al je apparaten gesynchroniseerd.",
-    "Je kunt nu gebruikmaken van Drag and Drop om je sessies of sites te reorganiseren.",
-    "Beoordeel Tab Space in de Mac App Store als je deze app leuk vindt.",
-    "De Tab Space-snelkoppelingen werken niet als de adresbalk van Safari leeg is, omdat een pagina met een lege adresbalk gezien wordt als een speciale pagina waarin de extensie niet kan worden geladen."
-  ],
   "loading": "laden…",
   "ignore-pinned-tabs": "Vastgemaakte webpagina's negeren bij het opslaan van tabbladen",
   "ignore-duplicated-tabs": "Gedupliceerde tabbladen niet opslaan (ook niet als ze in andere sessies voorkomen)",

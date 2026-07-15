@@ -19,14 +19,6 @@
   "exportText": "Text olarak kopyala",
   "exportMD": "Markdown olarak kopyala",
   "loseTabs": "Sekmelerinizi mi kaybettiniz? Tab Space güncellenmiş olabilir, lütfen bekleyin ve sayfayı yenileyin...",
-  "tips": "İpuçları:",
-  "tipContents": [
-    "Eğer \"save tabs\" tıklayıp hiç kayıtlı sekme bulamadıysanız, bunun nedeni Tab Space yeni güncellenmiş olmasıdır, lütfen Safari'yi yeniden başlatın. ",
-    "Oturumlarınız bütün cihazlarınız arasında iCloud üzerinden senkronize oluyor.",
-    "Artık Tut ve Sürükle yaparak oturumlarınızı ve websitelerinizi organize edebilirsiniz.",
-    "Lütfen Tab Space'yi Mac App Store üzerinden yorumlamayı unutmayın.",
-    "Safari adres çubuğu boş iken kısayollar çalışmaz. Bunun nedeni boş adres çubuğu Safari uzantılarını bloklar."
-  ],
   "loading": "yükleniyor...",
   "ignore-pinned-tabs": "Kaydederken sabitlenmiş sekmeleri atla",
   "ignore-duplicated-tabs": "Aynı adresli sekmeleri kayıt etme (farklı oturumlar için dahi geçerlidir)",

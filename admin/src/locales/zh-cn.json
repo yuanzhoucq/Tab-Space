@@ -25,14 +25,6 @@
   "exportText": "复制为文字",
   "exportMD": "复制为 Markdown",
   "loseTabs": "标签页不见了？可能是 Tab Space 刚刚更新，请稍侯刷新...",
-  "tips": "提示：",
-  "tipContents": [
-    "如果您发现点击“保存”按钮后标签页没有被保存，这很可能是由于 Tab Space 刚刚更新，重启 Safari 以使其生效即可恢复正常。",
-    "您的书签组现通过 iCloud 在设备间同步。",
-    "您现在可以通过拖拽保存的会话或站点以重新组织您的记录。",
-    "如果您喜欢 Tab Space，请在 Mac App Store 进行评分。",
-    "Tab Space 在 Safari 地址栏为空时无法使用，因为空地址栏意味着当前处于插件无法访问的特殊页面。"
-  ],
   "loading": "加载中...",
   "ignore-pinned-tabs": "保存标签时忽略置顶页",
   "ignore-duplicated-tabs": "不保存重复的标签页（即使是在不同的会话中重复）",

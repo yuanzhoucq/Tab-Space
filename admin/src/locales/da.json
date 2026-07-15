@@ -18,7 +18,6 @@
   "exportText": "Kopier som tekst",
   "exportMD": "Kopier som Markdown",
   "loseTabs": "Mistet dine faner? Måske har en opgradering af Tab Space lige fundet sted, vent venligst et øjeblik og genindlæs siden ...",
-  "tips": "Tips:",
   "loading": "indlæser...",
   "ignore-pinned-tabs": "Ignorer fastgjorte web sider under lagring af faner",
   "save-all-windows": "Gem faner fra alle vinduer",
@@ -44,13 +43,6 @@
   "topPrompt": "Flyt til toppen",
   "mergePrompt": "Flet med session...",
   "whatsNew": "Hvad er <strong style='color: salmon'>Nyt</strong>",
-  "tipContents": [
-    "Hvis du trykker \"gem faner\" og ingen faner blev gemt, er det fordi Tab Space lige er blevet opdateret. Genstart Safari for at aktivere det.",
-    "Dine sessioner synkroniseres nu på tværs af alle dine enheder med iCloud.",
-    "Du kan nu bruge Træk og Slip til at omorganisere dine sessioner eller sider.",
-    "Bedøm venligst Tab Space i Mac App Store, hvis du kan lide appen.",
-    "Tab Space genveje virker ikke, når Safari-adresselinjen er tom."
-  ],
   "ignore-duplicated-tabs": "Gem ikke duplikerede faner (heller ikke i forskellige sessioner)",
   "shift-shortcuts": "Aktivér genveje med Ctrl + Shift",
   "disable-context-menus": "Deaktiver kontekstmenuer",

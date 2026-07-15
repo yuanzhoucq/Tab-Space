@@ -164,18 +164,6 @@ async function openDashboard(page, options = {}) {
     malformedBookmarks: Boolean(options.malformedBookmarks)
   })
 
-  await page.route('https://static.mytab.space/**', route => {
-    const pathname = new URL(route.request().url()).pathname
-    if (pathname.endsWith('/tips.json')) {
-      route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify({ 'en-us': { importantTips: [], commonTips: [] } })
-      })
-      return
-    }
-    route.fulfill({ status: 200, contentType: 'application/json', body: '{"count":0}' })
-  })
   await page.route('**/favicon.ico', route => route.fulfill({ status: 204, body: '' }))
   await page.goto('/')
 

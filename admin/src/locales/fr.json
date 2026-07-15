@@ -25,14 +25,6 @@
   "exportText": "Copier en texte",
   "exportMD": "Copier en Markdown",
   "loseTabs": "Vous-avez perdu vos onglets ? Peut-être que Tab Space a été mis à jour, attendez un peu s'il vous plaît et rafraichissez votre navigateur...",
-  "tips": "Astuces:",
-  "tipContents": [
-    "Si vous cliquez \"Sauvegarder onglets\" et qu'aucun onglet n'est sauvegardé, c'est parce que Tab Space vient d'être mis à jour, redémarrez Safari pour le réactiver s'il vous plaît. ",
-    "Vos sessions sont maintenant synchronisées sur tous vos appareils iCloud.",
-    "Vous pouvez maintenant utiliser Glisser-Déposer pour réorganiser vos sessions ou sites.",
-    "Donnez une note à Tab Space sur le Mac App Store si vous aimez l'application.",
-    "Les raccourcis Tab Space ne marcherons pas quand la barre d'adresse Safari est vide. Parce que une barre d'adresse vide est une page spéciale où les extensions ne peuvent pas êtres chargés."
-  ],
   "loading": "chargement...",
   "ignore-pinned-tabs": "Ignorer les pages web épinglés en sauvegardant les onglets",
   "ignore-duplicated-tabs": "Ne pas sauvegarder les onglets dupliqués (même pour ceux présents dans des sessions différentes)",

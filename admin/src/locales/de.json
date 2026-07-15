@@ -19,14 +19,6 @@
   "exportText": "als Text kopieren",
   "exportMD": "als Markdown kopieren",
   "loseTabs": "Sind deine Tabs verschwunden? Vielleicht führt Tab Space im Moment gerade ein Upgrade durch, bitte warte einen Moment und lade es erneut...",
-  "tips": "Tips:",
-  "tipContents": [
-    "Wenn du \"Tabs speichern\" drückst, aber keine Tabs gespeichert wurden, liegt es daran, dass Tab Space gerade aktualisiert wurde. Bitte schließe Safari und starte es erneut, um es zu aktivieren",
-    "Deine Sitzungen sind nun auf all deinen Geräten über iCloud synchronisiert.",
-    "Du kannst nun Drag and Drop nutzen, um deine Sitzungen und Seiten zu reorganisieren.",
-    "Bitte bewerte Tab Space im Mac App Store, wenn dir die App gefällt.",
-    "Tab Space Shortcuts funktionieren nicht, wenn die Safari Address-Leiste leer ist. Denn eine leere Adress-Leiste bedeutet, dass eine besondere Seite offen ist. Hier können Erweiterungen nicht geladen werden."
-  ],
   "loading": "Lädt...",
   "ignore-pinned-tabs": "Ignoriere gepinnte Webseiten, wenn Tabs gespeichert werden",
   "ignore-duplicated-tabs": "Speichere keine duplizierten Tabs (bezieht sich auch auf die in anderen Sitzungen gespeicherten)",

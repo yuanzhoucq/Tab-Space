@@ -187,7 +187,6 @@ export default {
         Constants.settings.forEach(setting => {
           bridge.send({cmd: "CheckDefault", name: setting})
         });
-        bridge.send({cmd: "CheckDefault", name: "notification-count"})
       }
       else setTimeout(() => this.checkDefaults(), 200)
     },
