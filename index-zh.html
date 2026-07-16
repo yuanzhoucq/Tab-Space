@@ -17,7 +17,8 @@
 
   <!-- SEO -->
   <title>Tab Space - Safari 的标签页和书签管理扩展</title>
-  <meta name="description" content="Tab Space 是一个为 Safari 浏览器提供标签页保存、会话管理和快捷键的应用程序。">
+  <meta name="description"
+    content="Tab Space 是一个为 Safari 浏览器提供标签页保存、会话管理和快捷键的应用程序。支持 iCloud 同步、标签、搜索和自动备份。">
   <meta name="keywords" content="Tab Space, Safari 扩展, 标签管理, 书签管理, macOS, onetab 替代">
 
   <!-- Social -->
@@ -26,7 +27,7 @@
   <meta property="og:title" content="Tab Space - Safari 的标签页和书签管理扩展">
   <meta property="og:description" content="把浏览器标签页保存为工作空间。一个强大的 Safari 标签页和会话管理扩展。">
   <meta property="og:type" content="website">
-  <meta property="og:url" content="https://mytab.space">
+  <meta property="og:url" content="https://mytab.space/index-zh.html">
   <meta property="og:image" content="https://mytab.space/icon.png">
 
   <!-- Icons -->
@@ -35,17 +36,67 @@
 
   <!-- Styles -->
   <link rel="stylesheet" href="assets/css/main.css">
+
+  <!-- Structured data -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "Tab Space",
+    "operatingSystem": "macOS 11.0 or later",
+    "applicationCategory": "UtilitiesApplication",
+    "url": "https://mytab.space/index-zh.html",
+    "downloadUrl": "https://apps.apple.com/cn/app/tab-space/id1473726602?mt=12",
+    "description": "Tab Space 是一个为 Safari 浏览器提供标签页保存、会话管理和快捷键的应用程序。",
+    "author": { "@type": "Person", "name": "Joyuer", "url": "https://joyuer.cn/" }
+  }
+  </script>
 </head>
 
 <body>
   <!-- Header -->
   <header>
-    <a href="index.html">English</a>
+    <a class="nav-brand" href="#">
+      <img src="icon.png" width="28" height="28" alt="">
+      <span>Tab Space</span>
+    </a>
+    <nav class="nav-links">
+      <a class="nav-hide-mobile" href="#features">功能</a>
+      <a class="nav-hide-mobile" href="#faq">常见问题</a>
+      <a href="index.html">English</a>
+      <a class="nav-cta" href="https://apps.apple.com/cn/app/tab-space/id1473726602?mt=12" target="_blank"
+        rel="noopener">下载</a>
+    </nav>
   </header>
 
   <!-- Hero Section -->
   <section id="app" class="app-main">
     <div class="container">
+      <article class="app-article">
+        <div class="inner">
+          <h1>保存标签页，<br><span class="brand-text">释放注意力。</span></h1>
+          <p class="description">
+            <strong>Tab Space</strong> 把打开的 Safari 标签页保存为一个个可搜索、可加标签、自动备份并通过
+            iCloud 同步的会话——现在关掉满屏的杂乱，之后随时从原处继续。
+          </p>
+
+          <!-- Download -->
+          <div class="app-buttons">
+            <a href="https://apps.apple.com/cn/app/tab-space/id1473726602?mt=12"
+              onclick="gtag('event', 'view_item', { method: 'Mac App Store' });" target="_blank" rel="noopener">
+              <img src="assets/img/Download_on_the_Mac_App_Store_Badge_US-UK_RGB_blk_092917.svg"
+                alt="在 Mac App Store 下载">
+            </a>
+            <a href="https://joyuer.notion.site/What-s-New-in-Tab-Space-66063fc8afea4f54906f32ef92915ea7"
+              class="changelog-link" target="_blank" rel="noopener">
+              更新日志（英文）
+            </a>
+          </div>
+
+          <p class="subtitle">要求 macOS 11 或更新版本 · iPhone 和 iPad 版即将推出</p>
+        </div>
+      </article>
+
       <!-- Video Demo -->
       <div class="img">
         <div class="loader" id="video-loader">
@@ -64,73 +115,206 @@
             </rect>
           </svg>
         </div>
-        <video id="app-video" preload="auto" poster="assets/img/desktop.png" autoplay loop muted playsinline
+        <video id="app-video" preload="auto" poster="assets/img/poster.jpg" autoplay loop muted playsinline
           onplay="document.getElementById('video-loader').style.display='none';">
           <source src="./assets/Tab_Space_Demo.mp4" type="video/mp4">
         </video>
       </div>
-
-      <!-- Content -->
-      <article class="app-article">
-        <div class="inner">
-          <!-- Logo & Title -->
-          <div class="logo-title">
-            <img class="logo" src="icon.png" width="96" height="96" alt="Tab Space">
-            <span class="title-text">Tab Space</span>
-          </div>
-
-          <!-- Tagline -->
-          <span class="tagline">把浏览器标签页保存为工作空间</span>
-
-          <!-- Description -->
-          <p class="description">
-            <strong>Tab Space</strong> 是一个为 Safari 浏览器提供标签页保存、会话管理和快捷键的应用程序。
-          </p>
-
-          <!-- Download -->
-          <div class="app-buttons">
-            <a href="https://apps.apple.com/cn/app/tab-space/id1473726602?mt=12"
-              onclick="gtag('event', 'view_item', { method: 'Mac App Store' });" target="_blank" rel="noopener">
-              <img src="assets/img/Download_on_the_Mac_App_Store_Badge_US-UK_RGB_blk_092917.svg"
-                alt="在 Mac App Store 下载">
-            </a>
-          </div>
-
-          <!-- Changelog -->
-          <a href="https://joyuer.notion.site/What-s-New-in-Tab-Space-66063fc8afea4f54906f32ef92915ea7"
-            class="changelog-link" target="_blank" rel="noopener">
-            更新日志（英文）
-          </a>
-
-          <!-- Requirements -->
-          <div class="requirements">
-            <p class="subtitle">要求 macOS 11 或更新版本</p>
-          </div>
-        </div>
-      </article>
     </div>
   </section>
 
   <!-- Features Section -->
-  <section class="features">
+  <section class="features" id="features">
     <div class="container">
       <h2>为什么选择 Tab Space？</h2>
       <div class="features-grid">
         <div class="feature-card">
-          <div class="feature-icon">💾</div>
+          <div class="feature-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"
+              stroke-linejoin="round" aria-hidden="true">
+              <path d="M12 3v10" />
+              <path d="m8 9 4 4 4-4" />
+              <path d="M4 15v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3" />
+            </svg>
+          </div>
           <h3>保存会话</h3>
-          <p>一键保存所有打开的标签页为一个会话。随时返回继续工作。</p>
+          <p>一次点击——或一个快捷键——把所有打开的标签页保存为一个命名会话并清空窗口，随时回来继续。</p>
         </div>
         <div class="feature-card">
-          <div class="feature-icon">🗂️</div>
-          <h3>组织工作空间</h3>
-          <p>为不同项目创建独立的会话。保持浏览整洁有序。</p>
+          <div class="feature-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"
+              stroke-linejoin="round" aria-hidden="true">
+              <path d="M17.5 19a4.5 4.5 0 0 0 .42-8.98 6 6 0 0 0-11.7 1.62A4 4 0 0 0 7 19h10.5Z" />
+            </svg>
+          </div>
+          <h3>iCloud 同步</h3>
+          <p>会话通过你自己的 iCloud 在多台 Mac 之间同步，无需注册账号。iPhone 和 iPad 版即将推出。</p>
         </div>
         <div class="feature-card">
-          <div class="feature-icon">⌨️</div>
-          <h3>键盘快捷键</h3>
-          <p>高级用户喜爱的可自定义快捷键。无需离开键盘即可保存、恢复和管理标签页。</p>
+          <div class="feature-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"
+              stroke-linejoin="round" aria-hidden="true">
+              <path d="m3.5 12.5 8-8.8a1.5 1.5 0 0 1 1.1-.5h6.4a1.5 1.5 0 0 1 1.5 1.5v6.4a1.5 1.5 0 0 1-.5 1.1l-8.8 8a1.5 1.5 0 0 1-2.1-.07l-5.53-5.53a1.5 1.5 0 0 1-.07-2.1Z" />
+              <circle cx="16" cy="8" r="1.3" />
+            </svg>
+          </div>
+          <h3>标签与搜索</h3>
+          <p>按自己的方式给会话加标签，再按标题、网址或标签瞬间找回任何保存过的标签页。</p>
         </div>
+        <div class="feature-card">
+          <div class="feature-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"
+              stroke-linejoin="round" aria-hidden="true">
+              <path d="M12 3 5 6v5c0 4.5 3 8.6 7 10 4-1.4 7-5.5 7-10V6l-7-3Z" />
+              <path d="M12 8v4l2.5 2.5" />
+            </svg>
+          </div>
+          <h3>自动备份</h3>
+          <p>按小时、天、周、月智能保留的自动备份守护你保存的标签页——任何一份都能一键恢复。</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"
+              stroke-linejoin="round" aria-hidden="true">
+              <path d="M8 7h13" />
+              <path d="m17 3 4 4-4 4" />
+              <path d="M16 17H3" />
+              <path d="m7 13-4 4 4 4" />
+            </svg>
+          </div>
+          <h3>导出与导入</h3>
+          <p>会话可导出为纯文本、Markdown、HTML 或 JSON。从 OneTab 迁移？列表可直接导入。</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"
+              stroke-linejoin="round" aria-hidden="true">
+              <path d="M15 6a3 3 0 1 1 3 3h-3V6Z" />
+              <path d="M9 6a3 3 0 1 0-3 3h3V6Z" />
+              <path d="M15 18a3 3 0 1 0 3-3h-3v3Z" />
+              <path d="M9 18a3 3 0 1 1-3-3h3v3Z" />
+              <path d="M9 9h6v6H9z" />
+            </svg>
+          </div>
+          <h3>Safari 快捷键</h3>
+          <p>为日常标签页整理准备的实用快捷键——复制标签页、关闭相同域名标签页、复制链接为 Markdown 等等。</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Showcase Section -->
+  <section class="showcase">
+    <div class="container">
+      <div class="showcase-row">
+        <div class="showcase-media">
+          <img src="assets/img/dashboard-light.webp" width="1200" height="800"
+            alt="Tab Space 仪表盘：保存的会话、标签和搜索" loading="lazy">
+        </div>
+        <div class="showcase-copy">
+          <h2>每一段浏览，都有整洁的归宿</h2>
+          <p>资料调研、旅行规划、周末阅读——每件事都是一个独立会话。置顶收藏、随手打标签，需要时按标题、网址或标签一搜即达。</p>
+        </div>
+      </div>
+
+      <div class="showcase-row reverse">
+        <div class="showcase-media">
+          <img src="assets/img/dashboard-dark.webp" width="1200" height="800"
+            alt="Tab Space 深色模式仪表盘：备份与导出菜单" loading="lazy">
+        </div>
+        <div class="showcase-copy">
+          <h2>有备份，可导出，不丢失。</h2>
+          <p>自动备份按小时到月的智能计划运行，任何会话都能导出为纯文本、Markdown、HTML 或 JSON。深色模式随系统自动切换，昼夜皆宜。</p>
+        </div>
+      </div>
+
+      <div class="showcase-row">
+        <div class="showcase-media">
+          <div class="kbd-panel" aria-label="Tab Space 键盘快捷键">
+            <div class="kbd-item"><span><kbd>⌃</kbd><kbd>T</kbd></span><em>打开 Tab Space</em></div>
+            <div class="kbd-item"><span><kbd>⌃</kbd><kbd>K</kbd></span><em>关闭相同域名标签页</em></div>
+            <div class="kbd-item"><span><kbd>⌃</kbd><kbd>Q</kbd></span><em>关闭其它所有标签页</em></div>
+            <div class="kbd-item"><span><kbd>⌃</kbd><kbd>D</kbd></span><em>复制标签页</em></div>
+            <div class="kbd-item"><span><kbd>⌃</kbd><kbd>M</kbd></span><em>复制链接为 Markdown 格式</em></div>
+          </div>
+        </div>
+        <div class="showcase-copy">
+          <h2>让 Safari 拥有高手的反应速度</h2>
+          <p>双手不离键盘：打开你的会话、清理嘈杂的窗口、把链接复制成 Markdown——这些每天都在做的标签页琐事，Tab Space 都给了快捷键。</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Coming Soon Section -->
+  <section class="coming" id="ios">
+    <div class="container">
+      <div class="coming-inner">
+        <span class="badge">即将推出</span>
+        <h2>Tab Space 即将登陆 iPhone 和 iPad</h2>
+        <p>在 Mac 前保存会话，到沙发上继续。iOS 和 iPadOS 版 Tab Space 正在路上——同样通过你自己的 iCloud 同步，无需账号。</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Compare Section -->
+  <section class="compare">
+    <div class="container">
+      <h2>和其他方案比一比</h2>
+      <div class="compare-grid">
+        <a class="compare-card" href="tab-space-vs-safari-tab-groups.html">
+          <h3>Tab Space vs Safari 标签页组</h3>
+          <p>标签页组让标签一直开着；Tab Space 把它们保存下来，好让你安心关掉。看看哪种更适合你的浏览习惯——也有很多人两者都用。</p>
+          <span class="card-link">阅读对比（英文）</span>
+        </a>
+        <a class="compare-card" href="tab-space-vs-onetab.html">
+          <h3>Tab Space vs OneTab</h3>
+          <p>OneTab 带火的"保存并关闭"工作流，为 Safari 原生重建——加上 iCloud 同步、标签和备份，还能直接导入你的 OneTab 列表。</p>
+          <span class="card-link">阅读对比（英文）</span>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Privacy Section -->
+  <section class="privacy">
+    <div class="container">
+      <div class="privacy-inner">
+        <h2>你的标签页，只属于你。</h2>
+        <p>Tab Space 把会话保存在设备上浏览器之外的原生应用数据库中，并通过你自己的 iCloud 同步。没有账号、没有广告、不收集数据。一次买断，没有订阅。</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- FAQ Section -->
+  <section class="faq" id="faq">
+    <div class="container">
+      <h2>常见问题</h2>
+      <div class="faq-list">
+        <details>
+          <summary>Tab Space 能在 Mac、iPhone 和 iPad 之间同步吗？</summary>
+          <p>目前会话通过 iCloud 在多台 Mac 之间同步，无需账号。iPhone/iPad 版 Tab Space 即将推出，届时将以同样的方式同步。</p>
+        </details>
+        <details>
+          <summary>我的数据保存在哪里？</summary>
+          <p>会话保存在设备上浏览器之外的原生应用数据库中，并通过你自己的 iCloud 同步。没有账号、没有广告、不收集数据。</p>
+        </details>
+        <details>
+          <summary>Tab Space 是订阅制吗？</summary>
+          <p>不是。Tab Space 在 Mac App Store 一次买断。</p>
+        </details>
+        <details>
+          <summary>支持哪些 macOS 版本？</summary>
+          <p>Tab Space 要求 macOS 11 或更新版本。iPhone 和 iPad 版即将推出。</p>
+        </details>
+        <details>
+          <summary>能导入 OneTab 的数据吗？</summary>
+          <p>能。从 OneTab 导出列表后，使用 Tab Space 的"从 OneTab 导入"功能，保存的标签组会变成 Tab Space 会话。</p>
+        </details>
+        <details>
+          <summary>能导出我保存的标签页吗？</summary>
+          <p>能。会话随时可以导出为纯文本、Markdown、HTML 或 JSON，自动备份还会保留按小时、天、周、月的副本。</p>
+        </details>
       </div>
     </div>
   </section>
