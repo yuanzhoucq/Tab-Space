@@ -9,6 +9,16 @@ Vue.use(Vuex);
 const defaultTabSpaceSettings = {
     [Constants.preferredLanguageKey]: navigator.language.toLowerCase()
 }
+const sessionCollapseStorageKey = "tabspace-session-cards-collapsed"
+
+function getInitialCollapseState() {
+    try {
+        return localStorage.getItem(sessionCollapseStorageKey) === "true"
+    } catch {
+        return false
+    }
+}
+
 function setLang(languageCode) {
     const requestedLanguage = (languageCode || defaultTabSpaceSettings[Constants.preferredLanguageKey]).toLowerCase()
     const baseLanguage = requestedLanguage.split("-")[0]
@@ -26,7 +36,7 @@ const store = new Vuex.Store({
         initialRefresh: false,
         sessions: [],
         keyword: "",
-        collapse: false,
+        collapse: getInitialCollapseState(),
         activeTag: "",
         editingSessionUuid: "",
         tabSpaceSettings: {
@@ -106,6 +116,11 @@ const store = new Vuex.Store({
         },
         toggleCollapse(state) {
             state.collapse = !state.collapse
+            try {
+                localStorage.setItem(sessionCollapseStorageKey, String(state.collapse))
+            } catch {
+                // Keep the in-memory state usable when browser storage is unavailable.
+            }
         },
         setActiveTag(state, newTag) {
             state.activeTag = newTag

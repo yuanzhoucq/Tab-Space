@@ -216,6 +216,70 @@ test('loads, searches, filters and counts sessions', async ({ page }) => {
   await expect(page.locator('.session')).toHaveCount(2)
 })
 
+test('collapses session favicons into an iOS-style stack after ten tabs', async ({ page }) => {
+  const manyTabsSession = {
+    ...sessions[0],
+    uuid: 'session-many-tabs',
+    sites: Array.from({ length: 12 }, (_, index) => ({
+      title: `Tab ${index + 1}`,
+      url: `https://example${index + 1}.com`
+    }))
+  }
+  const tenTabsSession = {
+    ...manyTabsSession,
+    uuid: 'session-ten-tabs',
+    sites: manyTabsSession.sites.slice(0, 10)
+  }
+
+  await openDashboard(page, { initialSessions: [manyTabsSession, tenTabsSession] })
+  await page.getByTestId('toggle-collapse').click()
+
+  const card = page.getByTestId('session-session-many-tabs')
+  const icons = card.getByTestId('collapsed-site-icon')
+  await expect(icons).toHaveCount(10)
+  await expect(card.getByTestId('collapsed-site-overflow')).toHaveText('+2')
+  await expect(card.locator('.site-title')).toHaveCount(0)
+  await expect(page.getByTestId('session-session-ten-tabs').getByTestId('collapsed-site-overflow')).toHaveCount(0)
+  await expect.poll(() => icons.first().evaluate(element => getComputedStyle(element).borderRadius)).toBe('50%')
+
+  const iconStyle = await icons.first().evaluate(element => {
+    const style = getComputedStyle(element)
+    const faviconStyle = getComputedStyle(element.querySelector('img'))
+    return {
+      width: style.width,
+      height: style.height,
+      borderRadius: style.borderRadius,
+      faviconWidth: faviconStyle.width,
+      faviconHeight: faviconStyle.height
+    }
+  })
+  expect(iconStyle).toEqual({
+    width: '28px',
+    height: '28px',
+    borderRadius: '50%',
+    faviconWidth: '16px',
+    faviconHeight: '16px'
+  })
+
+  const firstBox = await icons.nth(0).boundingBox()
+  const secondBox = await icons.nth(1).boundingBox()
+  const faviconBox = await icons.nth(0).locator('img').boundingBox()
+  const overflowBox = await card.getByTestId('collapsed-site-overflow').boundingBox()
+  const titleBox = await card.locator('.session-title').boundingBox()
+  expect(Math.round(secondBox.x - firstBox.x)).toBe(20)
+  expect(Math.round(firstBox.x)).toBe(Math.round(titleBox.x))
+  expect(Math.round(faviconBox.x + faviconBox.width / 2)).toBe(Math.round(firstBox.x + firstBox.width / 2))
+  expect(Math.round(faviconBox.y + faviconBox.height / 2)).toBe(Math.round(firstBox.y + firstBox.height / 2))
+  expect(Math.round(overflowBox.y)).toBe(Math.round(firstBox.y))
+  expect(Math.round(overflowBox.height)).toBe(Math.round(firstBox.height))
+  await expect(card.locator('.collapsed-fav-img').first()).toHaveAttribute('src', /icon-webpage/)
+
+  await expect.poll(() => page.evaluate(() => localStorage.getItem('tabspace-session-cards-collapsed'))).toBe('true')
+  await page.reload()
+  await expect(page.getByTestId('session-session-many-tabs').getByTestId('collapsed-site-icon')).toHaveCount(10)
+  await expect(page.getByTestId('session-session-many-tabs').getByTestId('collapsed-site-overflow')).toHaveText('+2')
+})
+
 test('creates a session and appends it through the native bridge', async ({ page }) => {
   await openDashboard(page, { initialSessions: sessions })
 

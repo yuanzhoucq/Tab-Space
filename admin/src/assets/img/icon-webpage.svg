@@ -1,1 +1,9 @@
-<?xml version="1.0" standalone="no"?><!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd"><svg class="icon" width="200px" height="200.00px" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg"><path d="M896 64H128a64 64 0 0 0-64 64v768a64 64 0 0 0 64 64h768a64 64 0 0 0 64-64V128a64 64 0 0 0-64-64zM128 128h768v192H128V128z m768 768H128V384h768v512z"  /><path d="M256 576h512a32 32 0 0 0 0-64H256a32 32 0 0 0 0 64zM256 736h512a32 32 0 0 0 0-64H256a32 32 0 0 0 0 64zM768 192h-64a32 32 0 0 0 0 64h64a32 32 0 0 0 0-64z"  /></svg>
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none">
+  <style>
+    path { stroke: #667085; }
+    @media (prefers-color-scheme: dark) { path { stroke: #d0d5dd; } }
+  </style>
+  <path d="M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18Z" stroke-width="1.65"/>
+  <path d="M3.6 9h16.8M3.6 15h16.8M12 3c2.05 2.47 3.1 5.47 3.1 9S14.05 18.53 12 21c-2.05-2.47-3.1-5.47-3.1-9S9.95 5.47 12 3Z" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

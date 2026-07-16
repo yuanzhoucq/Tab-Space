@@ -31,7 +31,13 @@
     <ul :class="['session-sites', {'collapsed-sites': collapse}]">
       <draggable :disabled="isEditingSession(session) || collapse" :forceFallback="true" fallbackTolerance="10" 
       :list="session.sites" group="shared" @start="() => startDragSite(session)" @end="endDragSite">
-        <li :class="{'collapsed-site': collapse}" v-for="(tab, tid) in session.sites" v-bind:key="tid">
+        <li
+          v-for="(tab, tid) in visibleSites(session)"
+          v-bind:key="tid"
+          :class="{'collapsed-site': collapse}"
+          :style="collapse ? { zIndex: tid + 1 } : null"
+          :data-testid="collapse ? 'collapsed-site-icon' : null"
+        >
           <div v-if="editingSessionUuid === session.uuid">
             <v-icon name="compass" :stroke-width="1.5" style="margin-bottom: -3px"></v-icon>
             <input class="tab-edit" placeholder="url" type="text" v-model="tab.url"><br>
@@ -41,9 +47,9 @@
           <div v-if="!isEditingSession(session) && !collapse" class="del-item" @click="delItem(tid,session)" >
             <v-icon name="x" :stroke-width="2" size="14"></v-icon>
           </div>
-          <div v-if="!isEditingSession(session)" class="fav">
+          <div v-if="!isEditingSession(session)" :class="['fav', {'collapsed-fav': collapse}]">
             <img
-                class="fav-img"
+                :class="['fav-img', {'collapsed-fav-img': collapse}]"
                 :src="getFavicon(tab.url)"
                 :onerror="`src='${WangYeIcon}'`"
                 alt
@@ -54,6 +60,15 @@
             @click="() => removeAndOpen(tid, session, tab.url)"></span>
             <a v-else class="link" :href="wrapUrl(tab.url)" v-html="highlight(tab.title || tab.url)"></a>
           </span>
+        </li>
+        <li
+          slot="footer"
+          v-if="collapse && !isEditingSession(session) && collapsedOverflowCount(session) > 0"
+          class="collapsed-site collapsed-site-overflow"
+          :style="{ zIndex: collapsedVisibleLimit + 1 }"
+          data-testid="collapsed-site-overflow"
+        >
+          +{{ collapsedOverflowCount(session) }}
         </li>
         <li v-if="isEditingSession(session)">
           <div class="tag-btn" @click="() => { session.sites.push({title: '', url: ''}) }">
@@ -146,6 +161,7 @@
     props: ["session", "showTagBtns"],
     data() {
       return {
+        collapsedVisibleLimit: 10,
         tagEditorId: false,
         mergeEditorId: false,
         WangYeIcon: WangYeIcon,
@@ -185,6 +201,15 @@
       }
     },
     methods: {
+      visibleSites(session) {
+        if (this.collapse && !this.isEditingSession(session)) {
+          return session.sites.slice(0, this.collapsedVisibleLimit)
+        }
+        return session.sites
+      },
+      collapsedOverflowCount(session) {
+        return Math.max(0, session.sites.length - this.collapsedVisibleLimit)
+      },
       mergeOptions(selfUuid) {
         if (Array.isArray(this.sessions)) {
           let pattern = ".*" + this.mergeKeyword.toLowerCase().split("").join(".*") + ".*"
@@ -512,16 +537,68 @@
   }
 
   .collapsed-sites {
-    margin-top: 5px;
-    margin-left: -10px;
+    margin-top: 6px;
+    margin-left: 0;
+    padding-left: 0;
     padding-right: 25px;
   }
 
+  .collapsed-sites > div {
+    display: flex;
+    align-items: center;
+    min-height: 28px;
+  }
+
   .collapsed-site {
-    display: inline-block;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    flex: 0 0 28px;
+    box-sizing: border-box;
     margin: 0;
     padding: 0;
+    border: 2px solid var(--card-bg, #ffffff);
+    border-radius: 50%;
+    background: var(--code-bg, #edf2f7);
     transition: 0.2s;
+    position: relative;
+  }
+
+  .collapsed-site + .collapsed-site {
+    margin-left: -8px;
+  }
+
+  .collapsed-site:hover {
+    background: var(--code-bg, #edf2f7);
+  }
+
+  .collapsed-site-overflow {
+    color: var(--text-secondary, #718096);
+    font-size: 10px;
+    font-weight: 700;
+    line-height: 1;
+    white-space: nowrap;
+  }
+
+  .fav.collapsed-fav {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 16px;
+    height: 16px;
+    margin-right: 0;
+  }
+
+  .fav .collapsed-fav-img {
+    display: block;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    object-fit: contain;
+    object-position: center;
+    background-color: transparent;
   }
 
   .btn {
