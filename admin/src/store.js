@@ -21,6 +21,8 @@ const store = new Vuex.Store({
     state: {
         lang: setLang(),
         bridge: null,
+        nativeDetected: false,
+        connectionTimedOut: false,
         initialRefresh: false,
         sessions: [],
         keyword: "",
@@ -84,6 +86,12 @@ const store = new Vuex.Store({
         },
         setBridge(state, bridge) {
             state.bridge = bridge
+        },
+        setNativeDetected(state, detected) {
+            state.nativeDetected = detected
+        },
+        setConnectionTimedOut(state, timedOut) {
+            state.connectionTimedOut = timedOut
         },
         setSessions(state, newSessions) {
             state.sessions = newSessions

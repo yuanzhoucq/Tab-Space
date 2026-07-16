@@ -53,7 +53,7 @@ async function openDashboard(page, options = {}) {
     ? initialSessions.length
     : options.expectedSessionCount
 
-  await page.addInitScript(({ testSessions, testBackups, malformedBookmarks }) => {
+  await page.addInitScript(({ testSessions, testBackups, malformedBookmarks, bundledDashboard }) => {
     const clone = value => JSON.parse(JSON.stringify(value))
     const settingsKey = 'tabspace-e2e-settings'
     const storedSettings = JSON.parse(localStorage.getItem(settingsKey) || '{}')
@@ -82,10 +82,9 @@ async function openDashboard(page, options = {}) {
       emit
     }
 
-    window.__tabspace_bridge = {
+    const nativeBridge = {
       onMessage: null,
       markReady() {},
-      fallbackToBundled() {},
       send(name, payload) {
         window.__tabspaceBridgeCommands.push({ name, payload: clone(payload) })
 
@@ -158,10 +157,19 @@ async function openDashboard(page, options = {}) {
         }
       }
     }
+
+    if (bundledDashboard) {
+      nativeBridge.fallbackToBundled = () => {
+        window.__tabspaceBundledDashboardOpened = true
+      }
+    }
+
+    window.__tabspace_bridge = nativeBridge
   }, {
     testSessions: initialSessions,
     testBackups: options.backups || [],
-    malformedBookmarks: Boolean(options.malformedBookmarks)
+    malformedBookmarks: Boolean(options.malformedBookmarks),
+    bundledDashboard: Boolean(options.bundledDashboard)
   })
 
   await page.route('**/favicon.ico', route => route.fulfill({ status: 204, body: '' }))
@@ -317,7 +325,7 @@ test('refreshes sessions after a native remote-change notification', async ({ pa
 test('shows a safe empty state when there are no sessions', async ({ page }) => {
   await openDashboard(page, { initialSessions: [] })
 
-  await expect(page.locator('.lose-tabs')).toBeVisible()
+  await expect(page.locator('.empty-state')).toHaveText('No saved sessions yet.')
   await expect(page.getByTestId('session-stats')).toContainText('0 sessions')
   await expect(page.getByTestId('session-stats')).toContainText('0 tabs')
 })
@@ -329,9 +337,37 @@ test('keeps the dashboard stable when native bookmarks are malformed', async ({ 
     expectedSessionCount: null
   })
 
-  await expect(page.getByText('Connecting to Tab Space App...')).toBeVisible()
+  await expect(page.getByText('Loading sessions...')).toBeVisible()
   await expect(page.locator('.session')).toHaveCount(0)
   await expect.poll(() => lastBridgeCommand(page, 'CheckBookmarks')).not.toBeNull()
+})
+
+test('directs visitors without the app to the Tab Space website', async ({ page }) => {
+  await page.route('**/storage.html?method=get', route => route.fulfill({
+    contentType: 'text/html',
+    body: '<!doctype html><title>Bridge fallback</title>'
+  }))
+  await page.route('**/favicon.ico', route => route.fulfill({ status: 204, body: '' }))
+  await page.goto('/')
+
+  await expect(page.getByText('Connecting to Tab Space...')).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Tab Space app not detected' })).toBeVisible({ timeout: 5000 })
+  await expect(page.getByRole('link', { name: 'Get Tab Space' })).toHaveAttribute('href', 'https://mytab.space')
+  await expect(page.getByTestId('export-menu')).toHaveCount(0)
+})
+
+test('offers the bundled dashboard only when an old app exposes it', async ({ page }) => {
+  await openDashboard(page, {
+    initialSessions: sessions,
+    malformedBookmarks: true,
+    expectedSessionCount: null,
+    bundledDashboard: true
+  })
+
+  const bundledDashboard = page.getByRole('button', { name: 'Open bundled dashboard' })
+  await expect(bundledDashboard).toBeVisible({ timeout: 10000 })
+  await bundledDashboard.click()
+  await expect.poll(() => page.evaluate(() => window.__tabspaceBundledDashboardOpened)).toBe(true)
 })
 
 test('persists settings across a reload', async ({ page }) => {

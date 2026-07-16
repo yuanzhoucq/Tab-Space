@@ -27,6 +27,8 @@ export default {
       minimumProtocolVersion: 1,
       protocolVersionKey: "tabspace-native-protocol-version",
       bridgeReady: false,
+      appDetectionTimer: null,
+      initialDataTimer: null,
       bookmarkRefreshTimer: null,
       bookmarkRefreshAttempt: 0,
       defaultsRequested: false
@@ -46,6 +48,7 @@ export default {
   mounted() {
     window.addEventListener("message", this.handleWindowMessage)
     window.addEventListener("tabspace:bridge-ready", this.handleBridgeReady)
+    this.startAppDetectionTimeout()
     if (window.__tabspace_bridge) {
       this.setupDirectBridge()
     } else if (this.directBridgeExpected) {
@@ -55,6 +58,8 @@ export default {
   beforeDestroy() {
     window.removeEventListener("message", this.handleWindowMessage)
     window.removeEventListener("tabspace:bridge-ready", this.handleBridgeReady)
+    this.clearAppDetectionTimer()
+    this.clearInitialDataTimer()
     this.clearBookmarkRefreshTimer()
   },
   methods: {
@@ -92,13 +97,16 @@ export default {
       }
       const directBridge = {
         send: msg => window.__tabspace_bridge.send(msg.cmd, msg),
-        mode: "direct"
+        mode: "direct",
+        fallbackToBundled: typeof window.__tabspace_bridge.fallbackToBundled === "function"
+          ? () => window.__tabspace_bridge.fallbackToBundled()
+          : null
       }
       this.$store.commit("setBridge", directBridge)
       this.bridgeReady = true
+      this.markNativeDetected()
       this.markDashboardReady()
       this.requestInitialData(directBridge)
-      this.startBridgeTimeout()
     },
     handleWindowMessage(evt) {
       // Filter out other sites' postMessage
@@ -107,6 +115,7 @@ export default {
         && !evt.origin.includes("mytab.space")
         && !evt.origin.includes("yuanzhoucq.github.io")
       ) return
+      if (!evt.data || !evt.data.cmd) return
 
       this.handleNativeMessage(evt.data.cmd, evt.data)
     },
@@ -126,6 +135,7 @@ export default {
       this.requestDefaultsOnce(iframeBridge)
     },
     handleNativeMessage(cmd, data) {
+      this.markNativeDetected()
       window.dispatchEvent(new CustomEvent("tabspace:native-message", {
         detail: data
       }))
@@ -169,14 +179,40 @@ export default {
       }
       this.requestDefaultsOnce(bridge)
     },
-    startBridgeTimeout() {
-      setTimeout(() => {
-        if (this.initialRefresh) return
-        const fallback = window.__tabspace_bridge && window.__tabspace_bridge.fallbackToBundled
-        if (fallback && window.confirm("Tab Space could not connect to the app. Open the bundled dashboard instead?")) {
-          fallback()
+    markNativeDetected() {
+      if (this.$store.state.nativeDetected) return
+      this.$store.commit("setNativeDetected", true)
+      this.$store.commit("setConnectionTimedOut", false)
+      this.clearAppDetectionTimer()
+      this.startInitialDataTimeout()
+    },
+    startAppDetectionTimeout() {
+      this.clearAppDetectionTimer()
+      this.appDetectionTimer = setTimeout(() => {
+        if (!this.$store.state.nativeDetected) {
+          this.$store.commit("setConnectionTimedOut", true)
+        }
+      }, 3000)
+    },
+    startInitialDataTimeout() {
+      this.clearInitialDataTimer()
+      this.initialDataTimer = setTimeout(() => {
+        if (!this.initialRefresh) {
+          this.$store.commit("setConnectionTimedOut", true)
         }
       }, 8000)
+    },
+    clearAppDetectionTimer() {
+      if (this.appDetectionTimer) {
+        clearTimeout(this.appDetectionTimer)
+        this.appDetectionTimer = null
+      }
+    },
+    clearInitialDataTimer() {
+      if (this.initialDataTimer) {
+        clearTimeout(this.initialDataTimer)
+        this.initialDataTimer = null
+      }
     },
     checkDefaults(bridge = this.bridge) {
       if (bridge) {
@@ -226,6 +262,8 @@ export default {
         try {
           const bookmarks = typeof data.bookmarks === "string" ? JSON.parse(data.bookmarks) : data.bookmarks
           this.sessions = bookmarks
+          this.clearInitialDataTimer()
+          this.$store.commit("setConnectionTimedOut", false)
           this.clearBookmarkRefreshTimer()
           this.requestDefaultsOnce()
         } catch (e) {
