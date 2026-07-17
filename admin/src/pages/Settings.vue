@@ -158,13 +158,15 @@
       </div>
 
       <footer class="page-footer">
-        <a class="footer-link" href="mailto:joyuercn@icloud.com">{{lang.contact}}</a>
+        <a class="footer-link" href="mailto:support@mytab.space">{{lang.contact}}</a>
         <span class="footer-sep">·</span>
         <a class="footer-link" href="https://twitter.com/joyuer/status/1164816334305157120" target="_blank">Twitter</a>
         <span class="footer-sep">·</span>
         <a class="footer-link" href="https://mytab.space" target="_blank">{{lang.about}}</a>
         <span class="footer-sep">·</span>
-        <a class="footer-link" href="https://joyuer.notion.site/Tab-Space-FAQ-6d9383b54d704f6d85d404be96c31dd5" target="_blank">FAQ</a>
+        <a class="footer-link" href="https://mytab.space/#faq" target="_blank" rel="noopener">FAQ</a>
+        <span class="footer-sep">·</span>
+        <a class="footer-link" href="https://mytab.space/privacy.html" target="_blank" rel="noopener">{{lang.privacy}}</a>
         <p class="build-info">
           <a v-if="buildInfo.commitUrl" :href="buildInfo.commitUrl" target="_blank" rel="noopener">Build {{buildInfo.shortSha}}{{buildInfo.time ? ` · ${buildInfo.time}` : ''}}</a>
           <span v-else>Build {{buildInfo.shortSha}}</span>

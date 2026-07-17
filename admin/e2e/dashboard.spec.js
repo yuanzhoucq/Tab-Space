@@ -465,6 +465,23 @@ test('offers the bundled dashboard only when an old app exposes it', async ({ pa
   await expect.poll(() => page.evaluate(() => window.__tabspaceBundledDashboardOpened)).toBe(true)
 })
 
+test('links support, FAQ and privacy to the official website', async ({ page }) => {
+  await openDashboard(page, { initialSessions: sessions })
+
+  await expect(page.getByTestId('changelog-link')).toHaveAttribute('href', 'https://mytab.space/changelog.html')
+  let footer = page.locator('footer')
+  await expect(footer.getByRole('link', { name: 'Contact' })).toHaveAttribute('href', 'mailto:support@mytab.space')
+  await expect(footer.getByRole('link', { name: 'FAQ' })).toHaveAttribute('href', 'https://mytab.space/#faq')
+  await expect(footer.getByRole('link', { name: 'Privacy' })).toHaveAttribute('href', 'https://mytab.space/privacy.html')
+
+  await page.getByTestId('settings-link').click()
+  await expect(page).toHaveURL(/#\/settings$/)
+  footer = page.locator('footer')
+  await expect(footer.getByRole('link', { name: 'Contact' })).toHaveAttribute('href', 'mailto:support@mytab.space')
+  await expect(footer.getByRole('link', { name: 'FAQ' })).toHaveAttribute('href', 'https://mytab.space/#faq')
+  await expect(footer.getByRole('link', { name: 'Privacy' })).toHaveAttribute('href', 'https://mytab.space/privacy.html')
+})
+
 test('persists settings across a reload', async ({ page }) => {
   await openDashboard(page, { initialSessions: sessions })
   await page.getByTestId('settings-link').click()

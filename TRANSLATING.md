@@ -30,4 +30,4 @@ Add `<language-code>.json`, register its code and display name in `admin/src/loc
 
 ## Email suggestions
 
-Non-developers can email `joyuercn@icloud.com`. Please include the language, current wording, suggested wording, and where the text appears. The maintainer can use AI to organize the feedback and apply it to the locale file; contributors do not need to use GitHub.
+Non-developers can email `support@mytab.space`. Please include the language, current wording, suggested wording, and where the text appears. The maintainer can use AI to organize the feedback and apply it to the locale file; contributors do not need to use GitHub.

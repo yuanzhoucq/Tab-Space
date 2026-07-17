@@ -43,13 +43,15 @@
       </div>
     </div>
     <footer>
-      <a class="link" href="mailto:joyuercn@icloud.com">{{lang.contact}}</a>
+      <a class="link" href="mailto:support@mytab.space">{{lang.contact}}</a>
       <span class="footer-sep"></span>
       <a class="link" href="https://twitter.com/joyuer/status/1164816334305157120" target="_blank">Twitter</a>
       <span class="footer-sep"></span>
       <a class="link" href="https://mytab.space" target="_blank">{{lang.about}}</a>
       <span class="footer-sep"></span>
-      <a class="link" href="https://joyuer.notion.site/Tab-Space-FAQ-6d9383b54d704f6d85d404be96c31dd5" target="_blank">FAQ</a>
+      <a class="link" href="https://mytab.space/#faq" target="_blank" rel="noopener">FAQ</a>
+      <span class="footer-sep"></span>
+      <a class="link" href="https://mytab.space/privacy.html" target="_blank" rel="noopener">{{lang.privacy}}</a>
     </footer>
   </div>
 </template>
