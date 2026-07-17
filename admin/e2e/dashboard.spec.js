@@ -53,9 +53,10 @@ async function openDashboard(page, options = {}) {
     ? initialSessions.length
     : options.expectedSessionCount
 
-  await page.addInitScript(({ testSessions, testBackups, malformedBookmarks, bundledDashboard }) => {
+  await page.addInitScript(({ testSessions, testBackups, malformedBookmarks, bundledDashboard, collapseSessions }) => {
     const clone = value => JSON.parse(JSON.stringify(value))
     const settingsKey = 'tabspace-e2e-settings'
+    if (collapseSessions) localStorage.setItem('tabspace-session-cards-collapsed', 'true')
     const storedSettings = JSON.parse(localStorage.getItem(settingsKey) || '{}')
     let currentSessions = clone(testSessions)
 
@@ -169,7 +170,8 @@ async function openDashboard(page, options = {}) {
     testSessions: initialSessions,
     testBackups: options.backups || [],
     malformedBookmarks: Boolean(options.malformedBookmarks),
-    bundledDashboard: Boolean(options.bundledDashboard)
+    bundledDashboard: Boolean(options.bundledDashboard),
+    collapseSessions: Boolean(options.collapseSessions)
   })
 
   await page.route('**/favicon.ico', route => route.fulfill({ status: 204, body: '' }))
@@ -220,9 +222,41 @@ test('loads, searches, filters and counts sessions', async ({ page }) => {
 
   await page.locator('#keyword').fill('cloudflare')
   await expect(page.locator('.session')).toHaveCount(1)
-  await expect(page.locator('.session')).toContainText('Research')
+  const searchResult = page.getByTestId('session-session-research')
+  await expect(searchResult).toContainText('Research')
+  await expect(searchResult.getByTestId('visible-site')).toHaveCount(1)
+  await expect(searchResult).toContainText('Cloudflare Pages')
+  await expect(searchResult).not.toContainText('OpenAI')
+  await expect(searchResult.getByTestId('search-match-count')).toContainText('1 / 2 tabs')
+  await expect(page.getByTestId('session-stats')).toContainText('1 tab')
+
+  const searchRowAlignment = await searchResult.getByTestId('visible-site').evaluate(element => ({
+    titleX: element.querySelector('.site-title .link').getBoundingClientRect().x,
+    urlX: element.querySelector('.site-url').getBoundingClientRect().x
+  }))
+  expect(Math.round(searchRowAlignment.urlX)).toBe(Math.round(searchRowAlignment.titleX))
+
+  const searchExpansion = searchResult.getByTestId('toggle-session-expansion')
+  await expect(searchExpansion).toHaveAttribute('aria-label', 'Expand session')
+  await searchExpansion.click()
+  await expect(searchResult.getByTestId('visible-site')).toHaveCount(2)
+  await expect(searchResult).toContainText('OpenAI')
+  await expect(searchExpansion).toHaveAttribute('aria-label', 'Collapse session')
+  await searchExpansion.click()
+  await expect(searchResult.getByTestId('visible-site')).toHaveCount(1)
+  await expect(searchResult).not.toContainText('OpenAI')
+
   await page.locator('#keyword').fill('')
   await expect(page.locator('.session')).toHaveCount(2)
+  await expect(searchResult.getByTestId('visible-site')).toHaveCount(2)
+  await expect(searchResult.getByTestId('toggle-session-expansion')).toHaveCount(0)
+  await expect(page.getByTestId('session-stats')).toContainText('3 tabs')
+
+  await searchResult.hover()
+  await searchResult.getByTestId('toggle-favorite').click()
+  await expect.poll(() => lastBridgeCommand(page, 'UpdateSession')).toMatchObject({
+    payload: { bookmarks: [{ comment: '' }] }
+  })
 
   await page.getByTestId('filter-Work').click()
   await expect(page.getByTestId('session-session-research')).toBeVisible()
@@ -232,6 +266,81 @@ test('loads, searches, filters and counts sessions', async ({ page }) => {
   await expect(page.getByTestId('session-session-research')).toBeHidden()
   await page.getByTestId('filter-all').click()
   await expect(page.locator('.session')).toHaveCount(2)
+})
+
+test('finds and safely deletes matches at the end of a session with thousands of tabs', async ({ page }) => {
+  const sites = Array.from({ length: 5000 }, (_, index) => ({
+    title: `Archived tab ${index + 1}`,
+    url: `https://example.com/archive/${index + 1}`
+  }))
+  sites[2500] = { title: 'Middle needle reference', url: 'https://example.com/middle' }
+  sites[4999] = { title: 'Needle at end', url: 'https://example.com/end' }
+
+  const largeSession = {
+    uuid: 'session-large',
+    title: 'Large archive',
+    timestamp: 1767225600000,
+    comment: 'Keep this note',
+    sites,
+    tags: [{ name: 'Archive' }]
+  }
+
+  await openDashboard(page, { initialSessions: [largeSession], collapseSessions: true })
+  const card = page.getByTestId('session-session-large')
+  await expect(card.getByTestId('collapsed-site-icon')).toHaveCount(10)
+  await expect(card.getByTestId('collapsed-site-overflow')).toHaveText('+4990')
+
+  await page.locator('#keyword').fill('needle')
+  await expect(card.getByTestId('visible-site')).toHaveCount(2)
+  await expect(card.getByTestId('collapsed-site-icon')).toHaveCount(0)
+  await expect(card.getByTestId('search-match-count')).toContainText('2 / 5000 tabs')
+  await expect(page.getByTestId('session-stats')).toContainText('2 tabs')
+  await expect(card.getByTestId('visible-site').first()).toContainText('Needle at end')
+
+  const firstMatch = card.getByTestId('visible-site').first()
+  await firstMatch.hover()
+  await firstMatch.locator('.del-item').click()
+  await expect.poll(() => page.evaluate(() => {
+    const commands = window.__tabspaceBridgeCommands.filter(command => command.name === 'UpdateSession')
+    const sitesInUpdate = commands.at(-1)?.payload?.bookmarks?.[0]?.sites || []
+    return {
+      count: sitesInUpdate.length,
+      keptMiddleMatch: sitesInUpdate.some(site => site.title === 'Middle needle reference'),
+      removedEndMatch: !sitesInUpdate.some(site => site.title === 'Needle at end'),
+      comment: commands.at(-1)?.payload?.bookmarks?.[0]?.comment
+    }
+  })).toEqual({ count: 4999, keptMiddleMatch: true, removedEndMatch: true, comment: 'Keep this note' })
+
+  await expect(card.getByTestId('visible-site')).toHaveCount(1)
+  await expect(card.getByTestId('search-match-count')).toContainText('1 / 4999 tabs')
+
+  await page.locator('#keyword').fill('')
+  await expect(card.getByTestId('collapsed-site-icon')).toHaveCount(10)
+  await expect(card.getByTestId('collapsed-site-overflow')).toHaveText('+4989')
+})
+
+test('renders highlighted titles as text instead of executable HTML', async ({ page }) => {
+  const unsafeSession = {
+    uuid: 'session-untrusted-title',
+    title: '<strong>Needle session</strong>',
+    timestamp: 1767225600000,
+    comment: '',
+    sites: [{
+      title: '<img src=x onerror="throw new Error(\'unsafe title executed\')"> Needle page',
+      url: 'https://example.com/needle'
+    }],
+    tags: [{ name: '<em>Needle tag</em>' }]
+  }
+
+  await openDashboard(page, { initialSessions: [unsafeSession] })
+  await page.locator('#keyword').fill('needle')
+
+  const card = page.getByTestId('session-session-untrusted-title')
+  await expect(card.locator('.session-title strong')).toHaveCount(0)
+  await expect(card.locator('.site-title img')).toHaveCount(0)
+  await expect(card.locator('.tag em')).toHaveCount(0)
+  await expect(card.locator('.highlight')).toHaveCount(4)
+  await expect(card).toContainText('<img src=x')
 })
 
 test('collapses session favicons into an iOS-style stack after ten tabs', async ({ page }) => {
@@ -258,6 +367,19 @@ test('collapses session favicons into an iOS-style stack after ten tabs', async 
   await expect(card.getByTestId('collapsed-site-overflow')).toHaveText('+2')
   await expect(card.locator('.site-title')).toHaveCount(0)
   await expect(page.getByTestId('session-session-ten-tabs').getByTestId('collapsed-site-overflow')).toHaveCount(0)
+  await expect.poll(() => icons.first().evaluate(element => getComputedStyle(element).borderRadius)).toBe('50%')
+
+  const sessionExpansion = card.getByTestId('toggle-session-expansion')
+  await expect(sessionExpansion).toHaveAttribute('aria-label', 'Expand session')
+  await sessionExpansion.click()
+  await expect(card.getByTestId('visible-site')).toHaveCount(12)
+  await expect(card.locator('.site-title')).toHaveCount(12)
+  await expect(card.getByTestId('collapsed-site-icon')).toHaveCount(0)
+  await expect(sessionExpansion).toHaveAttribute('aria-label', 'Collapse session')
+  await expect(page.getByTestId('session-session-ten-tabs').getByTestId('collapsed-site-icon')).toHaveCount(10)
+  await sessionExpansion.click()
+  await expect(card.getByTestId('collapsed-site-icon')).toHaveCount(10)
+  await expect(card.locator('.site-title')).toHaveCount(0)
   await expect.poll(() => icons.first().evaluate(element => getComputedStyle(element).borderRadius)).toBe('50%')
 
   const iconStyle = await icons.first().evaluate(element => {

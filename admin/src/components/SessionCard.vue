@@ -2,7 +2,7 @@
   <div class="session" :id="session.uuid" :data-testid="`session-${session.uuid}`">
     <div class="session-header">
       <div class="session-header-left">
-        <div class="tag-btn handle" v-if="showTagBtns && activeTag === ''" :title="lang.movePrompt">
+        <div class="tag-btn handle" v-if="showTagBtns && activeTag === '' && !hasSearch" :title="lang.movePrompt">
           <v-icon name="align-justify" :stroke-width="1.8" style="margin-left:1px"></v-icon>
         </div>
         <div
@@ -10,10 +10,25 @@
             :id="'id'+session.uuid"
             @click.stop="editSessionName(session.uuid)"
             @blur="updateSessionName"
-            v-html="highlight(session.title || (`${lang.saveAt} ${(new Date(Number(session.timestamp))).Format('yyyy-MM-dd hh:mm')}`))"
-        ></div>
+        >
+          <span
+              v-for="(part, index) in highlightParts(session.title || (`${lang.saveAt} ${(new Date(Number(session.timestamp))).Format('yyyy-MM-dd hh:mm')}`))"
+              :key="index"
+              :class="{'highlight': part.match}"
+          >{{ part.text }}</span>
+        </div>
+        <span v-if="hasSearch" class="search-match-count" data-testid="search-match-count">
+          {{ searchResultEntries.length }} / {{ session.sites.length }}
+          {{ session.sites.length === 1 ? (lang.tab || 'tab') : (lang.tabs || 'tabs') }}
+        </span>
       </div>
       <div class="session-header-right">
+        <button v-if="canToggleTemporaryExpansion && !isEditingSession(session)"
+                type="button" class="btn" data-testid="toggle-session-expansion"
+                @click.stop="toggleTemporaryExpansion"
+                :title="temporaryExpansionLabel" :aria-label="temporaryExpansionLabel">
+          <v-icon :name="temporarilyExpanded ? 'minimize' : 'maximize'" class="btn-icon"></v-icon>
+        </button>
         <button type="button" class="btn" data-testid="restore-session" @click.stop="restore(session.uuid, true, false)"
                 :title="lang.openSession || 'Open'" :aria-label="lang.openSession || 'Open'">
           <v-icon name="external-link" class="btn-icon"></v-icon>
@@ -30,47 +45,66 @@
         </div>
       </div>
     </div>
-    <ul :class="['session-sites', {'collapsed-sites': collapse}]">
-      <draggable :disabled="isEditingSession(session) || collapse" :forceFallback="true" fallbackTolerance="10" 
+    <ul :class="['session-sites', {'collapsed-sites': compactView}]">
+      <draggable :disabled="isEditingSession(session) || compactView || hasSearch" :forceFallback="true" fallbackTolerance="10"
       :list="session.sites" group="shared" @start="() => startDragSite(session)" @end="endDragSite">
         <li
-          v-for="(tab, tid) in visibleSites(session)"
-          v-bind:key="tid"
-          :class="{'collapsed-site': collapse}"
-          :style="collapse ? { zIndex: tid + 1 } : null"
-          :data-testid="collapse ? 'collapsed-site-icon' : null"
+          v-for="(entry, visibleIndex) in visibleSiteEntries"
+          v-bind:key="`${session.uuid}-${entry.originalIndex}`"
+          :class="{'collapsed-site': compactView}"
+          :style="compactView ? { zIndex: visibleIndex + 1 } : null"
+          :data-testid="compactView ? 'collapsed-site-icon' : 'visible-site'"
         >
           <div v-if="editingSessionUuid === session.uuid">
             <v-icon name="compass" :stroke-width="1.5" style="margin-bottom: -3px"></v-icon>
-            <input class="tab-edit" placeholder="url" type="text" v-model="tab.url"><br>
+            <input class="tab-edit" placeholder="url" type="text" v-model="entry.site.url"><br>
             <v-icon name="corner-down-right" :stroke-width="1" style="margin-left: 30px"></v-icon>
-            <input class="tab-edit" placeholder="title" type="text" v-model="tab.title">
+            <input class="tab-edit" placeholder="title" type="text" v-model="entry.site.title">
           </div>
-          <div v-if="!isEditingSession(session) && !collapse" class="del-item" @click="delItem(tid,session)" >
+          <div v-if="!isEditingSession(session) && !compactView" class="del-item" @click="delItem(entry.originalIndex,session)" >
             <v-icon name="x" :stroke-width="2" size="14"></v-icon>
           </div>
-          <div v-if="!isEditingSession(session)" :class="['fav', {'collapsed-fav': collapse}]">
+          <div v-if="!isEditingSession(session)" :class="['fav', {'collapsed-fav': compactView}]">
             <img
-                :class="['fav-img', {'collapsed-fav-img': collapse}]"
-                :src="getFavicon(tab.url)"
+                :class="['fav-img', {'collapsed-fav-img': compactView}]"
+                :src="getFavicon(entry.site.url)"
                 :onerror="`src='${WangYeIcon}'`"
                 alt
             />
           </div>
-          <span v-if="!isEditingSession(session) && !collapse" class="site-title">
-            <span v-if="tabSpaceSettings['remove-site-after-click'] === 'true'" class="link" v-html="highlight(tab.title || tab.url)"
-            @click="() => removeAndOpen(tid, session, tab.url)"></span>
-            <a v-else class="link" :href="wrapUrl(tab.url)" v-html="highlight(tab.title || tab.url)"></a>
+          <span v-if="!isEditingSession(session) && !compactView" class="site-title">
+            <span v-if="tabSpaceSettings['remove-site-after-click'] === 'true'" class="link"
+            @click="() => removeAndOpen(entry.originalIndex, session, entry.site.url)">
+              <span
+                  v-for="(part, index) in highlightParts(entry.site.title || entry.site.url)"
+                  :key="index"
+                  :class="{'highlight': part.match}"
+              >{{ part.text }}</span>
+            </span>
+            <a v-else class="link" :href="wrapUrl(entry.site.url)">
+              <span
+                  v-for="(part, index) in highlightParts(entry.site.title || entry.site.url)"
+                  :key="index"
+                  :class="{'highlight': part.match}"
+              >{{ part.text }}</span>
+            </a>
+            <span v-if="hasSearch && entry.site.title && entry.site.url" class="site-url">
+              <span
+                  v-for="(part, index) in highlightParts(entry.site.url)"
+                  :key="index"
+                  :class="{'highlight': part.match}"
+              >{{ part.text }}</span>
+            </span>
           </span>
         </li>
         <li
           slot="footer"
-          v-if="collapse && !isEditingSession(session) && collapsedOverflowCount(session) > 0"
+          v-if="compactView && !isEditingSession(session) && collapsedOverflowCount > 0"
           class="collapsed-site collapsed-site-overflow"
           :style="{ zIndex: collapsedVisibleLimit + 1 }"
           data-testid="collapsed-site-overflow"
         >
-          +{{ collapsedOverflowCount(session) }}
+          +{{ collapsedOverflowCount }}
         </li>
         <li v-if="isEditingSession(session)">
           <div class="tag-btn" @click="() => { session.sites.push({title: '', url: ''}) }">
@@ -82,15 +116,20 @@
     <div class="session-tags">
       <div
           class="tag"
+          :class="{'search-tag': hasSearch}"
           v-for="tag in visibleTags(session)"
-          @click="removeTag(tag.name, session)"
+          @click="hasSearch ? null : removeTag(tag.name, session)"
           v-bind:key="tag.name"
           :title="tag.name === '@Trash' ? (lang.restore || '') : ''"
       >
-        {{ tag.name === '@Trash' ? lang.trashBin : tag.name }}
+        <span
+            v-for="(part, index) in highlightParts(tag.name === '@Trash' ? lang.trashBin : tag.name)"
+            :key="index"
+            :class="{'highlight': part.match}"
+        >{{ part.text }}</span>
       </div>
       <button type="button" class="tag-btn" data-testid="add-tag" :title="lang.tagPrompt" :aria-label="lang.tagPrompt"
-              v-if="tagEditorId !== session.uuid" @click="e => addTag(e, session.uuid)">
+              v-if="!hasSearch && tagEditorId !== session.uuid" @click="e => addTag(e, session.uuid)">
         <v-icon name="tag" style="margin-bottom: -4px" :stroke-width="1.5"></v-icon>
       </button>
       <vue-autosuggest
@@ -107,14 +146,14 @@
           <span class="suggest-tag">{{suggestion.item}}</span>
         </template>
       </vue-autosuggest>
-      <button type="button" class="tag-btn" data-testid="toggle-favorite" v-if="showTagBtns || isFavorite(session)"
+      <button type="button" class="tag-btn" data-testid="toggle-favorite" v-if="!hasSearch && (showTagBtns || isFavorite(session))"
               :aria-label="lang.favorite || 'Favorite'" @click="() => toggleFavorite(session)">
         <v-icon name="star" :stroke-width="1.5"
         :fill="isFavorite(session) ? 'salmon' : 'none'"
         :stroke="isFavorite(session) ? 'salmon' : 'currentColor'"
         ></v-icon>
       </button>
-      <div v-if="showTagBtns" style="display: flex; transition: 3s">
+      <div v-if="showTagBtns && !hasSearch" style="display: flex; transition: 3s">
         <button type="button" data-testid="edit-session" :title="lang.editPrompt" :aria-label="lang.editPrompt"
         v-if="editingSessionUuid !== session.uuid" class="tag-btn"
         @click="() => { editingSessionUuid = session.uuid; session.sites.push({title: '', url: ''})}">
@@ -158,6 +197,7 @@
   import WangYeIcon from '../assets/img/icon-webpage.svg';
   import Draggable from 'vuedraggable';
   import ExportDropdown from './ExportDropdown';
+  import { highlightedTextParts, matchingSiteEntries } from '../search';
 
   export default {
     name: "SessionCard",
@@ -174,12 +214,43 @@
         mergeEditorId: false,
         WangYeIcon: WangYeIcon,
         tagKeyword: "",
-        mergeKeyword: ""
+        mergeKeyword: "",
+        temporarilyExpanded: false
       }
     },
     computed: {
       ...mapState(["lang", "bridge", "keyword", "collapse", "sessions", "activeTag", "editingSessionUuid", "tabSpaceSettings"]),
       ...mapGetters(["tags"]),
+      hasSearch() {
+        return Boolean(this.keyword && this.keyword.trim())
+      },
+      compactView() {
+        return this.collapse
+          && !this.hasSearch
+          && !this.temporarilyExpanded
+          && !this.isEditingSession(this.session)
+      },
+      canToggleTemporaryExpansion() {
+        return this.collapse || this.hasSearch
+      },
+      temporaryExpansionLabel() {
+        return this.temporarilyExpanded
+          ? (this.lang.collapseSession || this.lang.collapseSessions)
+          : (this.lang.expandSession || this.lang.collapseSessions)
+      },
+      searchResultEntries() {
+        return this.hasSearch ? matchingSiteEntries(this.session, this.keyword) : []
+      },
+      visibleSiteEntries() {
+        const entries = this.session.sites.map((site, originalIndex) => ({ site, originalIndex }))
+        if (this.temporarilyExpanded) return entries
+        if (this.hasSearch) return this.searchResultEntries
+        if (this.compactView) return entries.slice(0, this.collapsedVisibleLimit)
+        return entries
+      },
+      collapsedOverflowCount() {
+        return Math.max(0, this.session.sites.length - this.collapsedVisibleLimit)
+      },
       editingSessionUuid: {
         get() {
           return this.$store.state.editingSessionUuid
@@ -206,17 +277,20 @@
       showTagBtns() {
         this.tagEditorId = false
         this.mergeEditorId = false
+      },
+      keyword() {
+        this.temporarilyExpanded = false
+      },
+      collapse() {
+        this.temporarilyExpanded = false
       }
     },
     methods: {
-      visibleSites(session) {
-        if (this.collapse && !this.isEditingSession(session)) {
-          return session.sites.slice(0, this.collapsedVisibleLimit)
-        }
-        return session.sites
+      toggleTemporaryExpansion() {
+        this.temporarilyExpanded = !this.temporarilyExpanded
       },
-      collapsedOverflowCount(session) {
-        return Math.max(0, session.sites.length - this.collapsedVisibleLimit)
+      highlightParts(value) {
+        return highlightedTextParts(value, this.keyword)
       },
       mergeOptions(selfUuid) {
         if (Array.isArray(this.sessions)) {
@@ -237,12 +311,6 @@
       },
       wrapUrl(url) {
         return (url.indexOf("://") === -1) ? "http://" + url : url
-      },
-      highlight(value) {
-        let re = new RegExp(this.keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), "i")
-        let res = value.match(re)
-        if (res) return value.replace(res[0], `<span class="highlight">${res[0]}</span>`)
-        return value
       },
       getSessionById(id) {
         return this.sessions.find(session => session.uuid === id)
@@ -300,6 +368,7 @@
         }
       },
       editSessionName(id) {
+        if (this.hasSearch) return
         this.activeId = id
         const div = document.querySelector(`#id${id}`)
         div.setAttribute('contentEditable', "true")
@@ -418,6 +487,7 @@
     display: flex;
     align-items: center;
     position: relative;
+    min-width: 0;
   }
 
   .session-header-right {
@@ -487,6 +557,12 @@
     transition: 0.2s;
   }
 
+  .tag.search-tag:hover {
+    cursor: default;
+    opacity: 1;
+    text-decoration: none;
+  }
+
   .btn-icon {
     color: white;
     width: 14px;
@@ -535,6 +611,14 @@
     cursor: pointer;
   }
 
+  .search-match-count {
+    color: var(--text-secondary, #718096);
+    flex-shrink: 0;
+    font-size: 11px;
+    margin-right: 10px;
+    white-space: nowrap;
+  }
+
   .site-title {
     flex: 1;
     min-width: 0;
@@ -546,6 +630,17 @@
     overflow: hidden;
     text-overflow: ellipsis;
     max-width: calc(100% - 50px);
+  }
+
+  .site-url {
+    color: var(--text-secondary, #718096);
+    display: block;
+    font-size: 11px;
+    max-width: calc(100% - 50px);
+    overflow: hidden;
+    padding: 0 4px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   .session-sites {

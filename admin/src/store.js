@@ -1,8 +1,8 @@
 import Vue from 'vue'
 import Vuex from 'vuex'
-import _ from 'lodash'
 import LangData from './locales'
 import Constants from './constants'
+import { sessionMatchesQuery } from './search'
 
 Vue.use(Vuex);
 
@@ -69,23 +69,8 @@ const store = new Vuex.Store({
             if (state.activeTag !== '@Trash')
                 displaySessions = displaySessions.filter(session =>  
                     !session.tags.map(tag => tag.name).includes('@Trash'))
-            if (state.keyword) {
-                displaySessions = displaySessions.filter(session =>
-                    _.chain(session)
-                    .pick(["title", "sites", "tags", "comment"])
-                    .values()
-                    .flatten()
-                    .map(o => _.isObject(o) ? _.values(o) : o)
-                    .flatten()
-                    .value()
-                    .join("§")
-                    .toLowerCase()
-                    .includes(state.keyword.toLowerCase())
-                )
-                displaySessions = displaySessions.map(s => {
-                    s.comment = state.keyword
-                    return s
-                })
+            if (state.keyword && state.keyword.trim()) {
+                displaySessions = displaySessions.filter(session => sessionMatchesQuery(session, state.keyword))
             }
             return displaySessions
         }

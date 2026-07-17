@@ -4,6 +4,7 @@
     <draggable
         handle=".handle"
         :list="displaySessions"
+        :disabled="hasSearch"
         :supportPointer="false"
         @end="endDragSession"
     >
@@ -42,8 +43,11 @@
       }
     },
     computed: {
-      ...mapState(["lang", "bridge", "sessions", "activeTag"]),
+      ...mapState(["lang", "bridge", "sessions", "activeTag", "keyword"]),
       ...mapGetters(["displaySessions"]),
+      hasSearch() {
+        return Boolean(this.keyword && this.keyword.trim())
+      }
     },
     watch: {
       displaySessions(sessions) {

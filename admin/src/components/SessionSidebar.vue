@@ -56,7 +56,7 @@
       @click="setActiveTag(tag)"
     >{{tag}}</button>
 
-    <div class="stats" data-testid="session-stats">
+    <div class="stats" data-testid="session-stats" aria-live="polite">
       <transition name="fade" mode="out-in">
         <div class="stat-item" :key="sessionCount">{{ sessionCount }} {{ sessionCount === 1 ? (lang.session || 'session') : (lang.sessions || 'sessions') }}</div>
       </transition>
@@ -70,11 +70,12 @@
 
 <script>
 import { mapState, mapGetters } from 'vuex'
+import { matchingSiteEntries } from '../search'
 
 export default {
   name: "SessionSidebar",
   computed: {
-    ...mapState(["lang", "activeTag"]),
+    ...mapState(["lang", "activeTag", "keyword"]),
     ...mapGetters(["tags", "displaySessions"]),
     userTags() {
       return this.tags.filter(tag => tag !== "@Favorite" && tag !== "@Trash")
@@ -91,6 +92,9 @@ export default {
     tabCount() {
       if (!this.displaySessions) return 0
       return this.displaySessions.reduce((total, session) => {
+        if (this.keyword && this.keyword.trim()) {
+          return total + matchingSiteEntries(session, this.keyword).length
+        }
         return total + (session.sites ? session.sites.length : 0)
       }, 0)
     }

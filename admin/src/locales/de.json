@@ -88,6 +88,8 @@
   "searchPlaceholder": "Titel, URL, Tag suchen…",
   "nothingHere": "Hier ist nichts…",
   "favorite": "Favorit",
+  "expandSession": "Sitzung erweitern",
+  "collapseSession": "Sitzung einklappen",
   "collapseSessions": "Kompaktansicht umschalten",
   "emptyTrash": "Papierkorb leeren",
   "trashBin": "Papierkorb"

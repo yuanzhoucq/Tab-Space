@@ -88,6 +88,8 @@
   "searchPlaceholder": "Поиск по названию, URL, тегу…",
   "nothingHere": "Здесь пусто…",
   "favorite": "Избранное",
+  "expandSession": "Развернуть сессию",
+  "collapseSession": "Свернуть сессию",
   "collapseSessions": "Переключить компактный вид",
   "emptyTrash": "Очистить корзину",
   "trashBin": "Корзина"

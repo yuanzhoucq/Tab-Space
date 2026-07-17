@@ -88,6 +88,8 @@
   "searchPlaceholder": "ابحث بالعنوان أو الرابط أو الوسم…",
   "nothingHere": "لا يوجد شيء هنا…",
   "favorite": "المفضلة",
+  "expandSession": "توسيع الجلسة",
+  "collapseSession": "طي الجلسة",
   "collapseSessions": "تبديل العرض المضغوط",
   "emptyTrash": "إفراغ سلة المهملات",
   "trashBin": "سلة المهملات"

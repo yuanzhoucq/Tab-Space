@@ -88,6 +88,8 @@
   "searchPlaceholder": "Пошук за назвою, URL, тегом…",
   "nothingHere": "Тут порожньо…",
   "favorite": "Обране",
+  "expandSession": "Розгорнути сеанс",
+  "collapseSession": "Згорнути сеанс",
   "collapseSessions": "Перемкнути компактний вигляд",
   "emptyTrash": "Очистити кошик",
   "trashBin": "Кошик"

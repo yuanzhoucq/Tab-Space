@@ -88,6 +88,8 @@
   "searchPlaceholder": "Sök titel, URL, tagg…",
   "nothingHere": "Inget här…",
   "favorite": "Favorit",
+  "expandSession": "Expandera session",
+  "collapseSession": "Fäll ihop session",
   "collapseSessions": "Växla kompakt vy",
   "emptyTrash": "Töm papperskorgen",
   "trashBin": "Papperskorg"

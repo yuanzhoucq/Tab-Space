@@ -88,6 +88,8 @@
   "searchPlaceholder": "Başlık, URL, etiket ara…",
   "nothingHere": "Burada bir şey yok…",
   "favorite": "Favori",
+  "expandSession": "Oturumu genişlet",
+  "collapseSession": "Oturumu daralt",
   "collapseSessions": "Kompakt görünümü değiştir",
   "emptyTrash": "Çöp kutusunu boşalt",
   "trashBin": "Çöp kutusu"

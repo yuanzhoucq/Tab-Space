@@ -88,6 +88,8 @@
   "searchPlaceholder": "Cerca titolo, URL, tag…",
   "nothingHere": "Niente qui…",
   "favorite": "Preferito",
+  "expandSession": "Espandi sessione",
+  "collapseSession": "Comprimi sessione",
   "collapseSessions": "Attiva/disattiva vista compatta",
   "emptyTrash": "Svuota il cestino",
   "trashBin": "Cestino"

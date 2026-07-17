@@ -88,6 +88,8 @@
   "searchPlaceholder": "Zoek op titel, URL, tag…",
   "nothingHere": "Hier is niets…",
   "favorite": "Favoriet",
+  "expandSession": "Sessie uitvouwen",
+  "collapseSession": "Sessie samenvouwen",
   "collapseSessions": "Compacte weergave wisselen",
   "emptyTrash": "Prullenbak legen",
   "trashBin": "Prullenbak"

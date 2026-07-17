@@ -88,6 +88,8 @@
   "searchPlaceholder": "タイトル、URL、タグを検索…",
   "nothingHere": "ここには何もありません…",
   "favorite": "お気に入り",
+  "expandSession": "セッションを展開",
+  "collapseSession": "セッションを折りたたむ",
   "collapseSessions": "コンパクト表示を切り替え",
   "emptyTrash": "ゴミ箱を空にする",
   "trashBin": "ゴミ箱"

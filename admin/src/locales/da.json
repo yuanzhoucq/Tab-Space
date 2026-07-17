@@ -88,6 +88,8 @@
   "searchPlaceholder": "Søg titel, URL, tag…",
   "nothingHere": "Intet her…",
   "favorite": "Favorit",
+  "expandSession": "Udvid session",
+  "collapseSession": "Fold session sammen",
   "collapseSessions": "Skift kompakt visning",
   "emptyTrash": "Tøm papirkurven",
   "trashBin": "Papirkurv"

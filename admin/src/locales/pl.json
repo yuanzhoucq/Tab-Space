@@ -88,6 +88,8 @@
   "searchPlaceholder": "Szukaj tytułu, adresu URL, tagu…",
   "nothingHere": "Nic tu nie ma…",
   "favorite": "Ulubione",
+  "expandSession": "Rozwiń sesję",
+  "collapseSession": "Zwiń sesję",
   "collapseSessions": "Przełącz widok kompaktowy",
   "emptyTrash": "Opróżnij kosz",
   "trashBin": "Kosz"

@@ -88,6 +88,8 @@
   "searchPlaceholder": "Search title, url, tag...",
   "nothingHere": "Nothing here...",
   "favorite": "Favorite",
+  "expandSession": "Expand session",
+  "collapseSession": "Collapse session",
   "collapseSessions": "Toggle compact view",
   "emptyTrash": "Empty trash",
   "trashBin": "Trash"
