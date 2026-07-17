@@ -93,9 +93,10 @@ module.exports = {
     };
   })(window, document, navigator),
 
-  download(filename, text) {
+  download(filename, text, contentType = 'text/plain') {
+    const objectUrl = URL.createObjectURL(new Blob([text], {type: `${contentType};charset=utf-8`}));
     var element = document.createElement('a');
-    element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(text));
+    element.setAttribute('href', objectUrl);
     element.setAttribute('download', filename);
 
     element.style.display = 'none';
@@ -104,5 +105,6 @@ module.exports = {
     element.click();
 
     document.body.removeChild(element);
+    setTimeout(() => URL.revokeObjectURL(objectUrl), 0);
   }
 }

@@ -22,7 +22,7 @@
                 :title="lang.deleteSession || 'Delete'" :aria-label="lang.deleteSession || 'Delete'">
           <v-icon name="trash-2" class="btn-icon"></v-icon>
         </button>
-        <div class="export">
+        <div v-if="activeTag !== '@Trash'" class="export" data-testid="export-session-menu">
           <button type="button" class="btn" :title="lang.exportSession || 'Export'" :aria-label="lang.exportSession || 'Export'">
             <v-icon name="share-2" class="btn-icon"></v-icon>
           </button>

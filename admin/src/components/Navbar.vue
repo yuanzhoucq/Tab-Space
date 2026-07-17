@@ -4,7 +4,7 @@
       <a class="link" href="https://joyuer.notion.site/What-s-New-in-Tab-Space-66063fc8afea4f54906f32ef92915ea7" 
         target="_blank" style="text-decoration: none; font-style: italic" v-html="lang.whatsNew"></a>
     </div>
-    <div class="export" data-testid="export-menu">
+    <div v-if="activeTag !== '@Trash'" class="export" data-testid="export-menu">
       <button type="button" class="link menu-trigger">
         {{lang.export}}
         <small>▼</small>
@@ -39,7 +39,7 @@ import BackupDropdown from "./BackupDropdown"
 
 export default {
   name: "Navbar",
-  computed: mapState(["lang", "bridge"]),
+  computed: mapState(["lang", "bridge", "activeTag"]),
   components: {
     ExportDropdown,
     ImportDropdown,

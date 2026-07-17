@@ -17,35 +17,23 @@ export default {
   props: ["selectedSessions"],
   computed: mapState(["lang", "sessions"]),
   methods: {
-    exportTabs(type) {
-      let tabs = this.selectedSessions || this.sessions;
+    async exportTabs(type) {
+      let tabs = (this.selectedSessions || this.sessions).filter(session => (
+        !(session.tags || []).some(tag => (
+          (typeof tag === "string" ? tag : tag && tag.name) === "@Trash"
+        ))
+      ));
       let s = "";
       switch (type.toLowerCase()) {
-        case "html":
-          s = tabs.map(session => [
-            session.timestamp, 
-            session.sites.map(s => [s.title, s.url]),
-            session.title,
-            session.tags.map(t => t.name)
-            ])
-          fetch("export.html")
-            .then(r => r.text())
-            .then(r => {
-              let content = r.replace(
-                'JSON.parse(localStorage.getItem("bookmarks") || "[]")',
-                JSON.stringify(s)
-              );
-              content = content.replace(
-                "<h1>Tab Space</h1>",
-                `<h1>{{lang.exportTitle}}</h1>`
-              );
-              content = content.replace(
-                `lang: {}`,
-                `lang: ${JSON.stringify(this.lang)}`
-              );
-              download("Tab-Space-Exported.html", content);
-            });
+        case "html": {
+          const { buildExportHtml } = await import(/* webpackChunkName: "export-html" */ "../exportHtml")
+          download(
+            "Tab-Space-Exported.html",
+            buildExportHtml(tabs, this.lang),
+            "text/html"
+          );
           break;
+        }
         case "json":
           download("backup.tabspace", JSON.stringify(tabs));
           break;

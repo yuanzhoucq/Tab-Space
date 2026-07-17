@@ -387,6 +387,8 @@ test('restores, favorites, reorders, trashes and permanently deletes sessions', 
   )
   await page.getByTestId('filter-@Trash').click()
   await expect(research).toBeVisible()
+  await expect(page.getByTestId('export-menu')).toHaveCount(0)
+  await expect(research.getByTestId('export-session-menu')).toHaveCount(0)
   await page.getByTestId('empty-trash').click()
   await expect(research).toHaveCount(0)
   await expect.poll(() => lastBridgeCommand(page, 'DeleteSession')).toMatchObject({
@@ -524,6 +526,99 @@ test('imports OneTab text and exports the resulting backup', async ({ page }) =>
   const exportedSessions = JSON.parse(await fs.readFile(await download.path(), 'utf8'))
   expect(exportedSessions).toHaveLength(3)
   expect(exportedSessions[0].title).toBe('From OneTab')
+})
+
+test('exports a self-contained HTML page in the current dashboard style', async ({ page }) => {
+  await openDashboard(page, { initialSessions: sessions })
+
+  await page.getByTestId('export-menu').hover()
+  const downloadPromise = page.waitForEvent('download')
+  await page.getByTestId('export-menu').getByTestId('export-html').click()
+  const download = await downloadPromise
+  expect(download.suggestedFilename()).toBe('Tab-Space-Exported.html')
+
+  const exportedHtml = await fs.readFile(await download.path(), 'utf8')
+  expect(exportedHtml).toContain('<!doctype html>')
+  expect(exportedHtml).not.toContain('cdn.jsdelivr.net')
+  expect(exportedHtml).not.toContain('cdnjs.cloudflare.com')
+  expect(exportedHtml).not.toContain('new Vue')
+
+  await page.setContent(exportedHtml)
+  await expect(page.locator('.page-header h1')).toHaveText('Tab Space')
+  await expect(page.locator('.page-header .brand')).toHaveAttribute('href', 'https://mytab.space')
+  await expect(page.locator('.page-header .brand-logo')).toHaveAttribute('src', /^data:image\/png;base64,/)
+  await expect(page.locator('.page-header .brand-cta')).toHaveText('Get Tab Space →')
+  await expect(page.locator('[data-filter=""] [data-icon="layers"]')).toBeVisible()
+  await expect(page.locator('[data-filter="untagged"] [data-icon="circle"]')).toBeVisible()
+  await expect(page.locator('.session')).toHaveCount(2)
+  await expect(page.locator('.session:visible')).toHaveCount(2)
+  await expect(page.locator('[data-session-count]')).toHaveText('2')
+  await expect(page.locator('[data-tab-count]')).toHaveText('3')
+
+  await page.locator('[data-filter="Work"]').click()
+  await expect(page.locator('.session:visible')).toHaveCount(1)
+  await expect(page.locator('.session:visible')).toContainText('Research')
+
+  await page.locator('.search').fill('GitHub')
+  await expect(page.locator('.session:visible')).toHaveCount(0)
+  await page.locator('[data-filter=""]').click()
+  await expect(page.locator('.session:visible')).toHaveCount(1)
+  await expect(page.locator('.session:visible')).toContainText('Reading list')
+
+  const visualStyle = await page.evaluate(() => ({
+    backgroundAttachment: getComputedStyle(document.body).backgroundAttachment,
+    cardRadius: getComputedStyle(document.querySelector('.session')).borderRadius,
+    tabPaddingTop: getComputedStyle(document.querySelector('.session-sites li')).paddingTop
+  }))
+  expect(visualStyle).toEqual({
+    backgroundAttachment: 'fixed, fixed',
+    cardRadius: '12px',
+    tabPaddingTop: '5px'
+  })
+})
+
+test('excludes trashed sessions from every export format', async ({ page }) => {
+  const sessionsWithTrash = [
+    {
+      ...sessions[0],
+      tags: [{ name: 'Work' }, { name: '@Trash' }]
+    },
+    sessions[1]
+  ]
+  await openDashboard(page, { initialSessions: sessionsWithTrash, expectedSessionCount: 1 })
+
+  await page.getByTestId('export-menu').hover()
+  let downloadPromise = page.waitForEvent('download')
+  await page.getByTestId('export-menu').getByTestId('export-json').click()
+  let download = await downloadPromise
+  const exportedJson = JSON.parse(await fs.readFile(await download.path(), 'utf8'))
+  expect(exportedJson.map(session => session.uuid)).toEqual(['session-reading'])
+
+  await page.getByTestId('export-menu').hover()
+  downloadPromise = page.waitForEvent('download')
+  await page.getByTestId('export-menu').getByTestId('export-html').click()
+  download = await downloadPromise
+  const exportedHtml = await fs.readFile(await download.path(), 'utf8')
+  expect(exportedHtml).toContain('Reading list')
+  expect(exportedHtml).not.toContain('Research')
+
+  await page.evaluate(() => {
+    window.__copiedExports = []
+    document.execCommand = () => {
+      const textareas = document.querySelectorAll('textarea')
+      window.__copiedExports.push(textareas[textareas.length - 1].value)
+      return true
+    }
+  })
+  await page.getByTestId('export-menu').hover()
+  await page.getByTestId('export-menu').getByTestId('export-text').click()
+  await page.getByTestId('export-menu').hover()
+  await page.getByTestId('export-menu').getByTestId('export-markdown').click()
+  const copiedExports = await page.evaluate(() => window.__copiedExports)
+  expect(copiedExports).toEqual([
+    'Reading list\n- GitHub Actions: https://docs.github.com/actions\n\n',
+    'Reading list\n- [GitHub Actions](https://docs.github.com/actions)\n\n'
+  ])
 })
 
 test('lists, restores and creates backups through the native bridge', async ({ page }) => {
