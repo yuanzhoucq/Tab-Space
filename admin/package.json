@@ -9,7 +9,6 @@
     "i18n:check": "node validate_translation.js",
     "test": "playwright test",
     "test:e2e": "playwright test",
-    "build-beta": "vue-cli-service build --mode development && rm -r ../beta && mv dist ../beta",
     "lint": "vue-cli-service lint"
   },
   "dependencies": {
@@ -31,7 +30,6 @@
     "@vue/cli-plugin-babel": "^4.2.0",
     "@vue/cli-plugin-eslint": "^4.2.0",
     "@vue/cli-service": "^4.2.0",
-    "ali-oss": "^6.10.0",
     "babel-eslint": "^10.0.3",
     "eslint": "^6.7.2",
     "eslint-plugin-vue": "^6.1.2",
