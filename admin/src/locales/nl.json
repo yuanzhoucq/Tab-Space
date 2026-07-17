@@ -80,5 +80,14 @@
   "generalPreferences": "Algemene voorkeuren",
   "localization": "Lokalisatie",
   "language": "Taal",
-  "helpTranslate": "Help ons Tab Space te vertalen"
+  "helpTranslate": "Help ons Tab Space te vertalen",
+  "session": "sessie",
+  "tab": "tabblad",
+  "tabs": "tabbladen",
+  "searchPlaceholder": "Zoek op titel, URL, tag…",
+  "nothingHere": "Hier is niets…",
+  "favorite": "Favoriet",
+  "collapseSessions": "Compacte weergave wisselen",
+  "emptyTrash": "Prullenbak legen",
+  "trashBin": "Prullenbak"
 }

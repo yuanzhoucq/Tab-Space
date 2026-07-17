@@ -80,5 +80,14 @@
   "generalPreferences": "Allmänna inställningar",
   "localization": "Lokalisering",
   "language": "Språk",
-  "helpTranslate": "Hjälp oss att översätta Tab Space"
+  "helpTranslate": "Hjälp oss att översätta Tab Space",
+  "session": "session",
+  "tab": "flik",
+  "tabs": "flikar",
+  "searchPlaceholder": "Sök titel, URL, tagg…",
+  "nothingHere": "Inget här…",
+  "favorite": "Favorit",
+  "collapseSessions": "Växla kompakt vy",
+  "emptyTrash": "Töm papperskorgen",
+  "trashBin": "Papperskorg"
 }

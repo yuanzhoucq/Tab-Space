@@ -80,5 +80,14 @@
   "generalPreferences": "Общие настройки",
   "localization": "Локализация",
   "language": "Язык",
-  "helpTranslate": "Помогите перевести Tab Space"
+  "helpTranslate": "Помогите перевести Tab Space",
+  "session": "сессия",
+  "tab": "вкладка",
+  "tabs": "вкладок",
+  "searchPlaceholder": "Поиск по названию, URL, тегу…",
+  "nothingHere": "Здесь пусто…",
+  "favorite": "Избранное",
+  "collapseSessions": "Переключить компактный вид",
+  "emptyTrash": "Очистить корзину",
+  "trashBin": "Корзина"
 }

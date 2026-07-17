@@ -80,5 +80,14 @@
   "generalPreferences": "Загальні налаштування",
   "localization": "Локалізація",
   "language": "Мова",
-  "helpTranslate": "Допоможіть перекласти Tab Space"
+  "helpTranslate": "Допоможіть перекласти Tab Space",
+  "session": "сесія",
+  "tab": "вкладка",
+  "tabs": "вкладок",
+  "searchPlaceholder": "Пошук за назвою, URL, тегом…",
+  "nothingHere": "Тут порожньо…",
+  "favorite": "Обране",
+  "collapseSessions": "Перемкнути компактний вигляд",
+  "emptyTrash": "Очистити кошик",
+  "trashBin": "Кошик"
 }

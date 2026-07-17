@@ -80,5 +80,14 @@
   "generalPreferences": "Generelle indstillinger",
   "localization": "Lokalisering",
   "language": "Sprog",
-  "helpTranslate": "Hjælp os med at oversætte Tab Space"
+  "helpTranslate": "Hjælp os med at oversætte Tab Space",
+  "session": "session",
+  "tab": "fane",
+  "tabs": "faner",
+  "searchPlaceholder": "Søg titel, URL, tag…",
+  "nothingHere": "Intet her…",
+  "favorite": "Favorit",
+  "collapseSessions": "Skift kompakt visning",
+  "emptyTrash": "Tøm papirkurven",
+  "trashBin": "Papirkurv"
 }

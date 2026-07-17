@@ -1,6 +1,6 @@
 :root {
-    --primary-color: #00b51d;
-    --primary-color-hover: #009e19;
+    --primary-color: #fa8072;
+    --primary-color-hover: #e07060;
     --bg-color: #f4f1ec;
     --card-bg: #ffffff;
     --text-primary: #2d3748;
@@ -91,7 +91,12 @@ a {
 .form-select:focus {
     border-color: var(--primary-color);
     outline: 0;
-    box-shadow: 0 0 0 2px rgba(0, 181, 29, 0.25);
+    box-shadow: 0 0 0 2px rgba(250, 128, 114, 0.3);
+}
+
+:focus-visible {
+    outline: 2px solid var(--primary-color);
+    outline-offset: 2px;
 }
 
 kbd {

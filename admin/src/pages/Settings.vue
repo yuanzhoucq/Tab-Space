@@ -23,7 +23,7 @@
                 :id="setting"
                 :value="tabSpaceSettings[setting]==='true'"
                 :sync="true"
-                :color="{checked: '#00b51d', unchecked: '#ccc'}"
+                :color="{checked: '#fa8072', unchecked: '#ccc'}"
                 @change="(e) => setDefault(e, setting)"
               />
             </div>
@@ -324,7 +324,7 @@ export default {
 .custom-select:focus {
   outline: none;
   border-color: var(--primary-color);
-  box-shadow: 0 0 0 2px rgba(0, 181, 29, 0.15);
+  box-shadow: 0 0 0 2px rgba(250, 128, 114, 0.25);
 }
 
 .select-arrow-icon {

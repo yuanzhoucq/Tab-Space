@@ -1,32 +1,61 @@
 <template>
   <div class="session-sidebar">
-    <div
-      class="tag-filter"
+    <button
+      type="button"
+      class="tag-filter system-tag"
       data-testid="filter-all"
       :class="{'active-tag': activeTag===''}"
       @click="setActiveTag('')"
     >
+      <v-icon class="system-tag-icon" name="layers" :stroke-width="1.8"></v-icon>
       <b>{{ lang.all }}</b>
-    </div>
-    
-    <div
-      class="tag-filter upper-border"
+    </button>
+
+    <button
+      type="button"
+      class="tag-filter system-tag"
+      v-if="hasFavorites"
+      data-testid="filter-@Favorite"
+      :class="{'active-tag': activeTag==='@Favorite'}"
+      @click="setActiveTag('@Favorite')"
+    >
+      <v-icon class="system-tag-icon" name="star" :stroke-width="1.8"></v-icon>
+      {{ lang.favorite }}
+    </button>
+
+    <button
+      type="button"
+      class="tag-filter system-tag upper-border"
       data-testid="filter-untagged"
       :class="{'active-tag': activeTag==='untagged'}"
       @click="setActiveTag('untagged')"
     >
+      <v-icon class="system-tag-icon" name="circle" :stroke-width="1.8"></v-icon>
       {{ lang.untagged }}
-    </div>
-    
-    <div
+    </button>
+
+    <button
+      type="button"
+      class="tag-filter system-tag trash-tag"
+      v-if="hasTrash"
+      data-testid="filter-@Trash"
+      :class="{'active-tag': activeTag==='@Trash'}"
+      @click="setActiveTag('@Trash')"
+    >
+      <v-icon class="system-tag-icon" name="trash-2" :stroke-width="1.8"></v-icon>
+      {{ lang.trashBin }}
+    </button>
+
+    <button
+      type="button"
       class="tag-filter upper-border"
-      v-for="tag in tags"
+      v-for="tag in userTags"
       :key="tag"
       :data-testid="`filter-${tag}`"
       :class="{'active-tag': activeTag===tag}"
       @click="setActiveTag(tag)"
-    >{{tag}}</div>
-    
+    >{{tag}}</button>
+
     <div class="stats" data-testid="session-stats">
       <transition name="fade" mode="out-in">
         <div class="stat-item" :key="sessionCount">{{ sessionCount }} {{ sessionCount === 1 ? (lang.session || 'session') : (lang.sessions || 'sessions') }}</div>
@@ -47,6 +76,15 @@ export default {
   computed: {
     ...mapState(["lang", "activeTag"]),
     ...mapGetters(["tags", "displaySessions"]),
+    userTags() {
+      return this.tags.filter(tag => tag !== "@Favorite" && tag !== "@Trash")
+    },
+    hasFavorites() {
+      return this.tags.includes("@Favorite")
+    },
+    hasTrash() {
+      return this.tags.includes("@Trash")
+    },
     sessionCount() {
       return this.displaySessions ? this.displaySessions.length : 0
     },
@@ -76,6 +114,9 @@ export default {
 
 .tag-filter {
   background-color: transparent;
+  border: 0;
+  font: inherit;
+  text-align: left;
   padding: 8px 12px;
   border-radius: 8px;
   cursor: pointer;
@@ -126,6 +167,44 @@ export default {
 
 .upper-border {
   /* Remove border separator, use gap instead */
+}
+
+.system-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.system-tag-icon {
+  width: 13px;
+  height: 13px;
+  flex-shrink: 0;
+}
+
+@media (max-width: 700px) {
+  .session-sidebar {
+    width: 100%;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    margin-right: 0;
+    margin-bottom: 12px;
+    gap: 4px;
+  }
+
+  .tag-filter {
+    padding: 6px 12px;
+    border-radius: 999px;
+  }
+
+  .stats {
+    display: flex;
+    gap: 12px;
+    margin-top: 0;
+    margin-left: auto;
+    padding: 0 4px;
+    border-top: 0;
+  }
 }
 
 @media (prefers-color-scheme: dark) {

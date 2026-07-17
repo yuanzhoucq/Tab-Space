@@ -80,5 +80,14 @@
   "generalPreferences": "一般設定",
   "localization": "ローカライズ",
   "language": "言語",
-  "helpTranslate": "Tab Space の翻訳に協力する"
+  "helpTranslate": "Tab Space の翻訳に協力する",
+  "session": "セッション",
+  "tab": "タブ",
+  "tabs": "タブ",
+  "searchPlaceholder": "タイトル、URL、タグを検索…",
+  "nothingHere": "ここには何もありません…",
+  "favorite": "お気に入り",
+  "collapseSessions": "コンパクト表示を切り替え",
+  "emptyTrash": "ゴミ箱を空にする",
+  "trashBin": "ゴミ箱"
 }

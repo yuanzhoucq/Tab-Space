@@ -80,5 +80,14 @@
   "generalPreferences": "Allgemeine Einstellungen",
   "localization": "Lokalisierung",
   "language": "Sprache",
-  "helpTranslate": "Hilf uns, Tab Space zu übersetzen"
+  "helpTranslate": "Hilf uns, Tab Space zu übersetzen",
+  "session": "Sitzung",
+  "tab": "Tab",
+  "tabs": "Tabs",
+  "searchPlaceholder": "Titel, URL, Tag suchen…",
+  "nothingHere": "Hier ist nichts…",
+  "favorite": "Favorit",
+  "collapseSessions": "Kompaktansicht umschalten",
+  "emptyTrash": "Papierkorb leeren",
+  "trashBin": "Papierkorb"
 }

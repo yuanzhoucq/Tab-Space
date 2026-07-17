@@ -200,6 +200,24 @@ test('loads, searches, filters and counts sessions', async ({ page }) => {
   await expect(page.getByTestId('session-stats')).toContainText('2 sessions')
   await expect(page.getByTestId('session-stats')).toContainText('3 tabs')
 
+  const dashboardLayout = await page.evaluate(() => {
+    const title = document.querySelector('#title h1').getBoundingClientRect()
+    const firstCard = document.querySelector('.session').getBoundingClientRect()
+    const search = document.querySelector('#keyword').getBoundingClientRect()
+    const bodyStyle = getComputedStyle(document.body)
+    return {
+      title: { x: title.x, y: title.y },
+      firstCard: { x: firstCard.x },
+      search: { y: search.y },
+      backgroundAttachment: bodyStyle.backgroundAttachment,
+      backgroundRepeat: bodyStyle.backgroundRepeat
+    }
+  })
+  expect(Math.abs(dashboardLayout.title.x - dashboardLayout.firstCard.x)).toBeLessThanOrEqual(1)
+  expect(dashboardLayout.title.y).toBeLessThan(dashboardLayout.search.y)
+  expect(dashboardLayout.backgroundAttachment).toBe('fixed, fixed')
+  expect(dashboardLayout.backgroundRepeat).toBe('no-repeat, no-repeat')
+
   await page.locator('#keyword').fill('cloudflare')
   await expect(page.locator('.session')).toHaveCount(1)
   await expect(page.locator('.session')).toContainText('Research')
@@ -344,7 +362,12 @@ test('restores, favorites, reorders, trashes and permanently deletes sessions', 
 
   await research.hover()
   await research.getByTestId('toggle-favorite').click()
-  await expect(research.locator('.tag', { hasText: '@Favorite' })).toBeVisible()
+  // @Favorite is a system tag: no pill on the card, but the sidebar gains a Favorite filter
+  await expect(research.locator('.tag', { hasText: '@Favorite' })).toHaveCount(0)
+  await expect(page.getByTestId('filter-@Favorite')).toBeVisible()
+  await expect.poll(() => lastBridgeCommand(page, 'UpdateSession')).toMatchObject({
+    payload: { bookmarks: [{ uuid: 'session-research', tags: [{ name: 'Work' }, { name: '@Favorite' }] }] }
+  })
 
   const reading = page.getByTestId('session-session-reading')
   await reading.hover()
@@ -356,6 +379,12 @@ test('restores, favorites, reorders, trashes and permanently deletes sessions', 
 
   await research.getByTestId('delete-session').click()
   await expect(research).toBeHidden()
+  const sidebarFilterOrder = await page.locator('.session-sidebar > .tag-filter').evaluateAll(filters => (
+    filters.map(filter => filter.getAttribute('data-testid'))
+  ))
+  expect(sidebarFilterOrder.indexOf('filter-@Trash')).toBe(
+    sidebarFilterOrder.indexOf('filter-untagged') + 1
+  )
   await page.getByTestId('filter-@Trash').click()
   await expect(research).toBeVisible()
   await page.getByTestId('empty-trash').click()

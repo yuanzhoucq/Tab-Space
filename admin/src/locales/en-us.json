@@ -80,5 +80,14 @@
   "generalPreferences": "General Preferences",
   "localization": "Localization",
   "language": "Language",
-  "helpTranslate": "Help us translate Tab Space"
+  "helpTranslate": "Help us translate Tab Space",
+  "session": "session",
+  "tab": "tab",
+  "tabs": "tabs",
+  "searchPlaceholder": "Search title, url, tag...",
+  "nothingHere": "Nothing here...",
+  "favorite": "Favorite",
+  "collapseSessions": "Toggle compact view",
+  "emptyTrash": "Empty trash",
+  "trashBin": "Trash"
 }

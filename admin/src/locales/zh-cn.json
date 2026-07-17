@@ -80,5 +80,14 @@
   "generalPreferences": "通用偏好设置",
   "localization": "本地化",
   "language": "语言",
-  "helpTranslate": "帮助翻译 Tab Space"
+  "helpTranslate": "帮助翻译 Tab Space",
+  "session": "个会话",
+  "tab": "个标签页",
+  "tabs": "个标签页",
+  "searchPlaceholder": "搜索标题、网址、标签…",
+  "nothingHere": "这里空空如也…",
+  "favorite": "收藏",
+  "collapseSessions": "切换紧凑视图",
+  "emptyTrash": "清空回收站",
+  "trashBin": "回收站"
 }

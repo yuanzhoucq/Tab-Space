@@ -1,6 +1,6 @@
 <template>
-  <div>
-    <div v-if="displaySessions.length===0" class="session-placeholder">Nothing here...</div>
+  <div class="sessions-list">
+    <div v-if="displaySessions.length===0" class="session-placeholder">{{ lang.nothingHere }}</div>
     <draggable
         handle=".handle"
         :list="displaySessions"
@@ -42,7 +42,7 @@
       }
     },
     computed: {
-      ...mapState(["bridge", "sessions", "activeTag"]),
+      ...mapState(["lang", "bridge", "sessions", "activeTag"]),
       ...mapGetters(["displaySessions"]),
     },
     watch: {
@@ -99,11 +99,21 @@
 </script>
 
 <style scoped>
+  .sessions-list {
+    flex: 1;
+    min-width: 0;
+  }
+
   .session-placeholder {
-    position: absolute;
-    left: calc(50vw - 55px);
-    top: 180px;
+    text-align: center;
+    margin-top: 60px;
     color: #555555;
     transition: 0.3s;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    .session-placeholder {
+      color: #bdbdbd;
+    }
   }
 </style>

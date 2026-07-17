@@ -6,7 +6,7 @@
         <h1>Tab Space</h1>
         <input v-if="nativeDetected && initialRefresh"
                type="text" name="keyword" id="keyword" v-model="keyword"
-               placeholder="Search title, url, tag...">
+               :placeholder="lang.searchPlaceholder">
       </div>
       <div v-if="showLoadingState" class="connection-state">
         <vue-loading type="bars" color="#eb5205" :size="{ width: '50px', height: '50px' }"></vue-loading>
@@ -94,9 +94,12 @@
         return Boolean(this.bridge && typeof this.bridge.fallbackToBundled === "function")
       }
     },
+    created() {
+      this.debouncedSetKeyword = _.debounce(value => this.$store.commit('setKeyword', value), 300)
+    },
     watch: {
       keyword(value) {
-        _.debounce(() => this.$store.commit('setKeyword', value), 500)()
+        this.debouncedSetKeyword(value)
       }
     },
     methods: {
@@ -114,8 +117,10 @@
 
 <style>
   body {
-    background-image: radial-gradient(1200px 500px at 70% -10%, rgba(235, 82, 5, 0.07), transparent 70%),
+    background-image: radial-gradient(1200px 500px at 70% -10%, rgba(250, 128, 114, 0.1), transparent 70%),
       linear-gradient(-45deg, #efece6, #f8f6f2);
+    background-attachment: fixed;
+    background-repeat: no-repeat;
     font-family: -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Oxygen-Sans,Ubuntu,Cantarell,"Helvetica Neue",sans-serif;
   }
 
@@ -170,29 +175,31 @@
   }
 
   #title {
-    height: 80px;
-    width: 840px;
+    min-height: 80px;
+    width: 100%;
+    max-width: 840px;
     margin: 10px auto 0;
+    padding: 0 16px;
+    box-sizing: border-box;
     display: flex;
     justify-content: space-between;
-    align-items: start;
+    align-items: center;
+    flex-wrap: wrap;
+    column-gap: 12px;
   }
 
   #title h1 {
     display: inline-block;
-    margin-left: 125px;
+    margin: 10px 0;
+  }
+
+  #title:not(.title-centered) h1 {
+    margin-left: 130px;
+    transform: translateY(-12px);
   }
 
   #title.title-centered {
     justify-content: center;
-  }
-
-  #title.title-centered h1 {
-    margin-left: 0;
-  }
-
-  #title input {
-    margin-top: 35px;
   }
 
   .footer-sep {
@@ -204,19 +211,44 @@
     transition: 0.2s;
     flex-direction: row;
     justify-content: left;
-    width: 840px;
+    width: 100%;
+    max-width: 840px;
     margin: 0 auto;
+    padding: 0 16px;
+    box-sizing: border-box;
+  }
+
+  @media (max-width: 700px) {
+    .sessions-container {
+      flex-wrap: wrap;
+    }
+
+    .sessions-container .sessions-list {
+      order: 3;
+      flex-basis: 100%;
+    }
+
+    .sessions-container .session-hub {
+      order: 2;
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      gap: 4px;
+      margin: 0 0 10px;
+    }
   }
 
   .session-move {
     transition: transform 0.5s;
   }
 
-  .export:hover .export-dropdown {
+  .export:hover .export-dropdown,
+  .export:focus-within .export-dropdown {
     display: block;
   }
 
-  .import:hover .import-dropdown {
+  .import:hover .import-dropdown,
+  .import:focus-within .import-dropdown {
     display: block;
   }
 
@@ -291,8 +323,7 @@
   }
 
   #keyword {
-    margin: 10px;
-    margin-top: 20px;
+    margin: 10px 0;
     outline: none;
     border-radius: 4px;
     border-width: 0;
@@ -300,9 +331,22 @@
     font-size: 16px;
     color: #444444;
     width: 200px;
+    max-width: 100%;
     padding-left: 10px;
     margin-left: auto;
-    margin-right: 64px;
+    /* align right edge with the session cards (hub column = 15px gap + 30px button) */
+    margin-right: 45px;
+  }
+
+  @media (max-width: 700px) {
+    #title:not(.title-centered) h1 {
+      margin-left: 0;
+      transform: none;
+    }
+
+    #keyword {
+      margin-right: 0;
+    }
   }
 
   .highlight {
@@ -311,7 +355,7 @@
 
   @media (prefers-color-scheme: dark) {
     body {
-      background-image: radial-gradient(1200px 500px at 70% -10%, rgba(235, 82, 5, 0.05), transparent 70%),
+      background-image: radial-gradient(1200px 500px at 70% -10%, rgba(250, 128, 114, 0.06), transparent 70%),
         linear-gradient(-45deg, #1c1c1e, #232325);
       color: #eeeeee;
     }

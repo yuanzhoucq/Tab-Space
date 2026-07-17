@@ -80,5 +80,14 @@
   "generalPreferences": "Genel tercihler",
   "localization": "Yerelleştirme",
   "language": "Dil",
-  "helpTranslate": "Tab Space çevirisine yardım edin"
+  "helpTranslate": "Tab Space çevirisine yardım edin",
+  "session": "oturum",
+  "tab": "sekme",
+  "tabs": "sekme",
+  "searchPlaceholder": "Başlık, URL, etiket ara…",
+  "nothingHere": "Burada bir şey yok…",
+  "favorite": "Favori",
+  "collapseSessions": "Kompakt görünümü değiştir",
+  "emptyTrash": "Çöp kutusunu boşalt",
+  "trashBin": "Çöp kutusu"
 }

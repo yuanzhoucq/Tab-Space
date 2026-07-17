@@ -80,5 +80,14 @@
   "generalPreferences": "Preferenze generali",
   "localization": "Localizzazione",
   "language": "Lingua",
-  "helpTranslate": "Aiutaci a tradurre Tab Space"
+  "helpTranslate": "Aiutaci a tradurre Tab Space",
+  "session": "sessione",
+  "tab": "scheda",
+  "tabs": "schede",
+  "searchPlaceholder": "Cerca titolo, URL, tag…",
+  "nothingHere": "Niente qui…",
+  "favorite": "Preferito",
+  "collapseSessions": "Attiva/disattiva vista compatta",
+  "emptyTrash": "Svuota il cestino",
+  "trashBin": "Cestino"
 }

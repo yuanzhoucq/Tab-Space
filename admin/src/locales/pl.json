@@ -80,5 +80,14 @@
   "generalPreferences": "Ustawienia ogólne",
   "localization": "Lokalizacja",
   "language": "Język",
-  "helpTranslate": "Pomóż nam przetłumaczyć Tab Space"
+  "helpTranslate": "Pomóż nam przetłumaczyć Tab Space",
+  "session": "sesja",
+  "tab": "karta",
+  "tabs": "kart",
+  "searchPlaceholder": "Szukaj tytułu, adresu URL, tagu…",
+  "nothingHere": "Nic tu nie ma…",
+  "favorite": "Ulubione",
+  "collapseSessions": "Przełącz widok kompaktowy",
+  "emptyTrash": "Opróżnij kosz",
+  "trashBin": "Kosz"
 }

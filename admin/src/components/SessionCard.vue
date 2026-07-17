@@ -14,16 +14,18 @@
         ></div>
       </div>
       <div class="session-header-right">
-        <a class="btn" data-testid="restore-session" @click.stop="restore(session.uuid, true, false)" :title="lang.openSession || 'Open'">
+        <button type="button" class="btn" data-testid="restore-session" @click.stop="restore(session.uuid, true, false)"
+                :title="lang.openSession || 'Open'" :aria-label="lang.openSession || 'Open'">
           <v-icon name="external-link" class="btn-icon"></v-icon>
-        </a>
-        <a class="btn del-btn" data-testid="delete-session" @click.stop="restore(session.uuid, false, true)" :title="lang.deleteSession || 'Delete'">
+        </button>
+        <button type="button" class="btn del-btn" data-testid="delete-session" @click.stop="restore(session.uuid, false, true)"
+                :title="lang.deleteSession || 'Delete'" :aria-label="lang.deleteSession || 'Delete'">
           <v-icon name="trash-2" class="btn-icon"></v-icon>
-        </a>
+        </button>
         <div class="export">
-          <a class="btn" :title="lang.exportSession || 'Export'">
+          <button type="button" class="btn" :title="lang.exportSession || 'Export'" :aria-label="lang.exportSession || 'Export'">
             <v-icon name="share-2" class="btn-icon"></v-icon>
-          </a>
+          </button>
           <export-dropdown :selectedSessions="[session]"></export-dropdown>
         </div>
       </div>
@@ -80,15 +82,17 @@
     <div class="session-tags">
       <div
           class="tag"
-          v-for="tag in session.tags"
+          v-for="tag in visibleTags(session)"
           @click="removeTag(tag.name, session)"
           v-bind:key="tag.name"
+          :title="tag.name === '@Trash' ? (lang.restore || '') : ''"
       >
-        {{ tag.name }}
+        {{ tag.name === '@Trash' ? lang.trashBin : tag.name }}
       </div>
-      <div class="tag-btn" data-testid="add-tag" :title="lang.tagPrompt" v-if="tagEditorId !== session.uuid" @click="e => addTag(e, session.uuid)">
+      <button type="button" class="tag-btn" data-testid="add-tag" :title="lang.tagPrompt" :aria-label="lang.tagPrompt"
+              v-if="tagEditorId !== session.uuid" @click="e => addTag(e, session.uuid)">
         <v-icon name="tag" style="margin-bottom: -4px" :stroke-width="1.5"></v-icon>
-      </div>
+      </button>
       <vue-autosuggest
         class="autosuggest"
         v-if="tagEditorId === session.uuid"
@@ -103,27 +107,31 @@
           <span class="suggest-tag">{{suggestion.item}}</span>
         </template>
       </vue-autosuggest>
-      <div class="tag-btn" data-testid="toggle-favorite" v-if="showTagBtns || isFavorite(session)" @click="() => toggleFavorite(session)">
+      <button type="button" class="tag-btn" data-testid="toggle-favorite" v-if="showTagBtns || isFavorite(session)"
+              :aria-label="lang.favorite || 'Favorite'" @click="() => toggleFavorite(session)">
         <v-icon name="star" :stroke-width="1.5"
         :fill="isFavorite(session) ? 'salmon' : 'none'"
         :stroke="isFavorite(session) ? 'salmon' : 'currentColor'"
         ></v-icon>
-      </div>
+      </button>
       <div v-if="showTagBtns" style="display: flex; transition: 3s">
-        <div data-testid="edit-session" :title="lang.editPrompt" v-if="editingSessionUuid !== session.uuid" class="tag-btn"
+        <button type="button" data-testid="edit-session" :title="lang.editPrompt" :aria-label="lang.editPrompt"
+        v-if="editingSessionUuid !== session.uuid" class="tag-btn"
         @click="() => { editingSessionUuid = session.uuid; session.sites.push({title: '', url: ''})}">
           <v-icon name="edit" :stroke-width="1.5"></v-icon>
-        </div>
-        <div v-else class="tag-btn" data-testid="save-session" @click="() => { editingSessionUuid = ''; updateSession(session) }">
+        </button>
+        <button type="button" v-else class="tag-btn" data-testid="save-session" :aria-label="lang.editPrompt"
+        @click="() => { editingSessionUuid = ''; updateSession(session) }">
           <v-icon name="check" :stroke-width="4" stroke="green"></v-icon>
-        </div>
-        <div class="tag-btn" data-testid="pin-session" :title="lang.topPrompt" @click="() => upSession(session)">
+        </button>
+        <button type="button" class="tag-btn" data-testid="pin-session" :title="lang.topPrompt" :aria-label="lang.topPrompt"
+        @click="() => upSession(session)">
           <v-icon name="arrow-up-circle" :stroke-width="1.5"></v-icon>
-        </div>
-        <div class="tag-btn" :title="lang.mergePrompt" v-if="mergeEditorId !== session.uuid" 
+        </button>
+        <button type="button" class="tag-btn" :title="lang.mergePrompt" :aria-label="lang.mergePrompt" v-if="mergeEditorId !== session.uuid"
           @click="() => mergeEditorId = session.uuid">
           <v-icon name="git-merge" :stroke-width="1.8"></v-icon>
-        </div>
+        </button>
         <vue-autosuggest
           class="autosuggest"
           id="mergeSuggest"
@@ -222,6 +230,10 @@
       },
       isEditingSession(session) {
         return this.editingSessionUuid === session.uuid
+      },
+      visibleTags(session) {
+        // @Favorite is presented by the star button, not as a pill
+        return session.tags.filter(t => t.name !== "@Favorite")
       },
       wrapUrl(url) {
         return (url.indexOf("://") === -1) ? "http://" + url : url
@@ -428,7 +440,8 @@
   .session {
     border-radius: var(--radius-lg, 12px);
     text-decoration: none;
-    width: 600px;
+    width: 100%;
+    box-sizing: border-box;
     margin: 0 auto 16px;
     padding: 14px 18px 10px 28px;
     background-color: var(--card-bg, white);
@@ -480,6 +493,11 @@
   }
 
   .tag-btn {
+    background: transparent;
+    border: 0;
+    padding: 0;
+    color: inherit;
+    font: inherit;
     opacity: 1;
     margin-right: 4px;
     margin-bottom: 5px;
@@ -607,6 +625,8 @@
     justify-content: center;
     padding: 6px;
     margin-right: 4px;
+    border: 0;
+    font: inherit;
     color: var(--text-secondary, #718096);
     cursor: pointer;
     border-radius: 6px;

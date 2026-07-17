@@ -5,24 +5,24 @@
         target="_blank" style="text-decoration: none; font-style: italic" v-html="lang.whatsNew"></a>
     </div>
     <div class="export" data-testid="export-menu">
-      <span class="link">
+      <button type="button" class="link menu-trigger">
         {{lang.export}}
         <small>▼</small>
-      </span>
+      </button>
       <export-dropdown></export-dropdown>
     </div>
     <div class="import" data-testid="import-menu">
-      <span class="link">
+      <button type="button" class="link menu-trigger">
         {{lang.import}}
         <small>▼</small>
-      </span>
+      </button>
       <import-dropdown></import-dropdown>
     </div>
     <div class="backup" data-testid="backup-menu">
-      <span class="link">
+      <button type="button" class="link menu-trigger">
         {{lang.backup || 'Backup'}}
         <small>▼</small>
-      </span>
+      </button>
       <backup-dropdown></backup-dropdown>
     </div>
     <div>
@@ -52,7 +52,22 @@ export default {
   nav {
     display: flex;
     justify-content: flex-end;
+    align-items: center;
+    flex-wrap: wrap;
     margin-top: 8px;
+    padding: 0 8px;
+  }
+
+  nav > div {
+    display: flex;
+    align-items: center;
+  }
+
+  .menu-trigger {
+    background: transparent;
+    border: 0;
+    font: inherit;
+    color: inherit;
   }
 
   nav > div {
@@ -75,8 +90,11 @@ export default {
   }
 
   .export:hover ::v-deep .export-dropdown,
+  .export:focus-within ::v-deep .export-dropdown,
   .import:hover ::v-deep .import-dropdown,
-  .backup:hover ::v-deep .backup-dropdown {
+  .import:focus-within ::v-deep .import-dropdown,
+  .backup:hover ::v-deep .backup-dropdown,
+  .backup:focus-within ::v-deep .backup-dropdown {
     display: block;
   }
 

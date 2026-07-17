@@ -80,5 +80,14 @@
   "generalPreferences": "일반 환경설정",
   "localization": "현지화",
   "language": "언어",
-  "helpTranslate": "Tab Space 번역 돕기"
+  "helpTranslate": "Tab Space 번역 돕기",
+  "session": "개 세션",
+  "tab": "개 탭",
+  "tabs": "개 탭",
+  "searchPlaceholder": "제목, URL, 태그 검색…",
+  "nothingHere": "여기에는 아무것도 없습니다…",
+  "favorite": "즐겨찾기",
+  "collapseSessions": "컴팩트 보기 전환",
+  "emptyTrash": "휴지통 비우기",
+  "trashBin": "휴지통"
 }

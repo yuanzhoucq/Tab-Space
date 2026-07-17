@@ -24,6 +24,10 @@ const router = new VueRouter({
   routes
 })
 
+if (process.env.NODE_ENV === 'development' && new URLSearchParams(window.location.search).has('mock')) {
+  require('./dev-mock-bridge').installMockBridge()
+}
+
 new Vue({
   store,
   router,

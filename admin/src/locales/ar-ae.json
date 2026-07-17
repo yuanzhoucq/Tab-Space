@@ -80,5 +80,14 @@
   "generalPreferences": "التفضيلات العامة",
   "localization": "التعريب",
   "language": "اللغة",
-  "helpTranslate": "ساعدنا في ترجمة Tab Space"
+  "helpTranslate": "ساعدنا في ترجمة Tab Space",
+  "session": "جلسة",
+  "tab": "علامة تبويب",
+  "tabs": "علامات تبويب",
+  "searchPlaceholder": "ابحث بالعنوان أو الرابط أو الوسم…",
+  "nothingHere": "لا يوجد شيء هنا…",
+  "favorite": "المفضلة",
+  "collapseSessions": "تبديل العرض المضغوط",
+  "emptyTrash": "إفراغ سلة المهملات",
+  "trashBin": "سلة المهملات"
 }
