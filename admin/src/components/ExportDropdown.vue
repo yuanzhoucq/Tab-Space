@@ -1,9 +1,9 @@
 <template>
   <div class="export-dropdown">
-    <span class="link" data-testid="export-text" href="#" @click="exportTabs('Text')">{{lang.exportText}}</span>
-    <span class="link" data-testid="export-markdown" href="#" @click="exportTabs('MD')">{{lang.exportMD}}</span>
-    <span class="link" data-testid="export-html" href="#" @click="exportTabs('HTML')">{{lang.exportHTML}}</span>
-    <span class="link" data-testid="export-json" href="#" @click="exportTabs('JSON')">{{lang.exportJSON}}</span>
+    <button class="link" type="button" data-testid="export-text" @click="exportTabs('Text')">{{lang.exportText}}</button>
+    <button class="link" type="button" data-testid="export-markdown" @click="exportTabs('MD')">{{lang.exportMD}}</button>
+    <button class="link" type="button" data-testid="export-html" @click="exportTabs('HTML')">{{lang.exportHTML}}</button>
+    <button class="link" type="button" data-testid="export-json" @click="exportTabs('JSON')">{{lang.exportJSON}}</button>
   </div>
 </template>
 
@@ -23,52 +23,83 @@ export default {
           (typeof tag === "string" ? tag : tag && tag.name) === "@Trash"
         ))
       ));
-      let s = "";
-      switch (type.toLowerCase()) {
-        case "html": {
-          const { buildExportHtml } = await import(/* webpackChunkName: "export-html" */ "../exportHtml")
-          download(
-            "Tab-Space-Exported.html",
-            buildExportHtml(tabs, this.lang),
-            "text/html"
-          );
-          break;
+      try {
+        let s = "";
+        switch (type.toLowerCase()) {
+          case "html": {
+            const { buildExportHtml } = await import(/* webpackChunkName: "export-html" */ "../exportHtml")
+            download(
+              "Tab-Space-Exported.html",
+              buildExportHtml(tabs, this.lang),
+              "text/html"
+            );
+            break;
+          }
+          case "json":
+            download(
+              `Tab-Space-Backup-${this.exportTimestamp()}.tabspace`,
+              JSON.stringify(tabs),
+              "application/json"
+            );
+            break;
+          case "text":
+            tabs.forEach(session => (s += this.sessionTo("text", session) + "\n\n"));
+            await Clipboard.copy(s);
+            break;
+          case "md":
+            tabs.forEach(session => (s += this.sessionTo("md", session) + "\n\n"));
+            await Clipboard.copy(s);
+            break;
+          default:
+            return;
         }
-        case "json":
-          download("backup.tabspace", JSON.stringify(tabs));
-          break;
-        case "text":
-          tabs.forEach(i => (s += this.sessionTo("text", i) + "\n\n"));
-          Clipboard.copy(s);
-          break;
-        case "md":
-          tabs.forEach(i => (s += this.sessionTo("md", i) + "\n\n"));
-          Clipboard.copy(s);
-          break;
-        default:
-          console.log("Exporting type not supported.");
+
+        const key = "export" + type;
+        const text = this.lang[key];
+        this.$store.commit("updateLang", {key, value: "OK"})
+        setTimeout(() => this.$store.commit("updateLang", {key, value: text}), 1000);
+      } catch (error) {
+        console.warn("Export failed", error);
       }
-      let text = this.lang["export" + type];
-      this.$store.commit("updateLang", {key: "export" + type, value: "OK"})
-      this.lang["export" + type] = "OK";
-      setTimeout(() => this.$store.commit("updateLang", {key: "export" + type, value: text}), 1000);
+    },
+    exportTimestamp() {
+      const date = new Date();
+      const pad = value => String(value).padStart(2, "0");
+      return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}-${pad(date.getHours())}${pad(date.getMinutes())}${pad(date.getSeconds())}`;
+    },
+    singleLine(value) {
+      return String(value || "").replace(/\s+/g, " ").trim();
+    },
+    sessionTitle(session) {
+      const title = this.singleLine(session.title);
+      if (title) return title;
+
+      const date = new Date(Number(session.timestamp));
+      const timestamp = Number.isNaN(date.getTime())
+        ? ""
+        : date.Format("yyyy-MM-dd hh:mm");
+      return `${this.lang.saveAt || "Saved at"}${timestamp ? " " + timestamp : ""}`;
+    },
+    escapeMarkdown(value) {
+      return this.singleLine(value).replace(/([\\`*_[\]<>])/g, "\\$1");
     },
     sessionTo(type, session) {
-      let s = "";
+      let s = this.sessionTitle(session);
       switch (type.toLowerCase()) {
         case "text":
-          s += session.title;
           session.sites.forEach(i => {
             s += "\n- ";
-            if (i.title) s += i.title + ": ";
-            s += i.url;
+            const title = this.singleLine(i.title);
+            if (title) s += title + ": ";
+            s += this.singleLine(i.url);
           });
           break;
         case "md":
-          s += session.title;
+          s = `## ${this.escapeMarkdown(s)}`;
           session.sites.forEach(i => {
-            // exclude default chars except `()`
-            s += `\n- [${i.title}](${encode(i.url, ";/?:@&=+$,-_.!~*'#")})`;
+            const url = this.singleLine(i.url);
+            const title = this.escapeMarkdown(i.title || url);
+            s += `\n- [${title}](${encode(url, ";/?:@&=+$,-_.!~*'#")})`;
           });
           break;
       }
@@ -96,8 +127,14 @@ export default {
 .link {
   cursor: pointer;
   display: block;
+  width: 100%;
   padding: 4px 8px;
+  color: inherit;
+  background: transparent;
+  border: 0;
   border-radius: 4px;
+  font: inherit;
+  text-align: left;
   transition: background-color 0.15s ease;
 }
 

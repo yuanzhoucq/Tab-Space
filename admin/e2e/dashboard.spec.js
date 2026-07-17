@@ -661,7 +661,7 @@ test('imports OneTab text and exports the resulting backup', async ({ page }) =>
   const downloadPromise = page.waitForEvent('download')
   await page.getByTestId('export-menu').getByTestId('export-json').click()
   const download = await downloadPromise
-  expect(download.suggestedFilename()).toBe('backup.tabspace')
+  expect(download.suggestedFilename()).toMatch(/^Tab-Space-Backup-\d{4}-\d{2}-\d{2}-\d{6}\.tabspace$/)
   const exportedSessions = JSON.parse(await fs.readFile(await download.path(), 'utf8'))
   expect(exportedSessions).toHaveLength(3)
   expect(exportedSessions[0].title).toBe('From OneTab')
@@ -743,11 +743,12 @@ test('excludes trashed sessions from every export format', async ({ page }) => {
 
   await page.evaluate(() => {
     window.__copiedExports = []
-    document.execCommand = () => {
-      const textareas = document.querySelectorAll('textarea')
-      window.__copiedExports.push(textareas[textareas.length - 1].value)
-      return true
-    }
+    Object.defineProperty(navigator, 'clipboard', {
+      configurable: true,
+      value: {
+        writeText: async text => window.__copiedExports.push(text)
+      }
+    })
   })
   await page.getByTestId('export-menu').hover()
   await page.getByTestId('export-menu').getByTestId('export-text').click()
@@ -756,8 +757,57 @@ test('excludes trashed sessions from every export format', async ({ page }) => {
   const copiedExports = await page.evaluate(() => window.__copiedExports)
   expect(copiedExports).toEqual([
     'Reading list\n- GitHub Actions: https://docs.github.com/actions\n\n',
-    'Reading list\n- [GitHub Actions](https://docs.github.com/actions)\n\n'
+    '## Reading list\n- [GitHub Actions](https://docs.github.com/actions)\n\n'
   ])
+})
+
+test('hides exports when every session is in trash', async ({ page }) => {
+  await openDashboard(page, {
+    initialSessions: [{ ...sessions[0], tags: [{ name: '@Trash' }] }],
+    expectedSessionCount: 0
+  })
+
+  await expect(page.getByTestId('export-menu')).toHaveCount(0)
+  await page.getByTestId('filter-@Trash').click()
+  await expect(page.getByTestId('session-session-research')).toBeVisible()
+  await expect(page.getByTestId('export-menu')).toHaveCount(0)
+  await expect(page.getByTestId('export-session-menu')).toHaveCount(0)
+})
+
+test('uses fallback titles and escapes Markdown link text', async ({ page }) => {
+  await openDashboard(page, {
+    initialSessions: [{
+      uuid: 'session-markdown',
+      title: '',
+      timestamp: 1767225600000,
+      comment: '',
+      sites: [
+        { title: 'Docs [beta] (v2)', url: 'https://example.com/docs_(beta)' },
+        { title: '', url: 'https://example.com/plain' }
+      ],
+      tags: []
+    }]
+  })
+
+  await page.evaluate(() => {
+    window.__copiedMarkdown = ''
+    Object.defineProperty(navigator, 'clipboard', {
+      configurable: true,
+      value: {
+        writeText: async text => { window.__copiedMarkdown = text }
+      }
+    })
+  })
+  await page.getByTestId('export-menu').hover()
+  const markdownButton = page.getByTestId('export-menu').getByTestId('export-markdown')
+  await expect(markdownButton).toHaveJSProperty('tagName', 'BUTTON')
+  await markdownButton.click()
+
+  const markdown = await page.evaluate(() => window.__copiedMarkdown)
+  expect(markdown).toMatch(/^## Saved at \d{4}-\d{2}-\d{2} \d{2}:\d{2}/)
+  expect(markdown).toContain('[Docs \\[beta\\] (v2)]')
+  expect(markdown).toContain('[https://example.com/plain]')
+  expect(markdown).not.toContain('[](')
 })
 
 test('lists, restores and creates backups through the native bridge', async ({ page }) => {

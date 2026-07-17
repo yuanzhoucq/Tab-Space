@@ -47,51 +47,33 @@ module.exports = {
       return false
     }
   },
-  Clipboard: (function (window, document, navigator) {
-    var textArea,
-      copy;
+  Clipboard: {
+    async copy(text) {
+      if (navigator.clipboard && window.isSecureContext) {
+        try {
+          await navigator.clipboard.writeText(text);
+          return;
+        } catch (_) {
+          // Fall back for Safari versions or permissions that reject the modern API.
+        }
+      }
 
-    function isOS() {
-      return navigator.userAgent.match(/ipad|iphone/i);
-    }
-
-    function createTextArea(text) {
-      textArea = document.createElement('textArea');
+      const textArea = document.createElement('textarea');
       textArea.value = text;
+      textArea.setAttribute('readonly', '');
+      textArea.style.position = 'fixed';
+      textArea.style.opacity = '0';
       document.body.appendChild(textArea);
-    }
 
-    function selectText() {
-      var range,
-        selection;
-
-      if (isOS()) {
-        range = document.createRange();
-        range.selectNodeContents(textArea);
-        selection = window.getSelection();
-        selection.removeAllRanges();
-        selection.addRange(range);
-        textArea.setSelectionRange(0, 999999);
-      } else {
+      try {
         textArea.select();
+        textArea.setSelectionRange(0, text.length);
+        if (!document.execCommand('copy')) throw new Error('Clipboard copy failed');
+      } finally {
+        document.body.removeChild(textArea);
       }
     }
-
-    function copyToClipboard() {
-      document.execCommand('copy');
-      document.body.removeChild(textArea);
-    }
-
-    copy = function (text) {
-      createTextArea(text);
-      selectText();
-      copyToClipboard();
-    };
-
-    return {
-      copy: copy
-    };
-  })(window, document, navigator),
+  },
 
   download(filename, text, contentType = 'text/plain') {
     const objectUrl = URL.createObjectURL(new Blob([text], {type: `${contentType};charset=utf-8`}));
