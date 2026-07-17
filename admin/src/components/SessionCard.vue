@@ -719,7 +719,7 @@
     }
 
     .session {
-      background-color: #252525;
+      background-color: var(--card-bg, #2a2a2a);
       color: #d0d0d0;
       border-color: #3a3a3a;
     }

@@ -114,7 +114,8 @@
 
 <style>
   body {
-    background-image: linear-gradient(-45deg, #efefef, #fbfbfb);
+    background-image: radial-gradient(1200px 500px at 70% -10%, rgba(235, 82, 5, 0.07), transparent 70%),
+      linear-gradient(-45deg, #efece6, #f8f6f2);
     font-family: -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Oxygen-Sans,Ubuntu,Cantarell,"Helvetica Neue",sans-serif;
   }
 
@@ -310,7 +311,8 @@
 
   @media (prefers-color-scheme: dark) {
     body {
-      background-image: linear-gradient(-45deg, #343434, #343536);
+      background-image: radial-gradient(1200px 500px at 70% -10%, rgba(235, 82, 5, 0.05), transparent 70%),
+        linear-gradient(-45deg, #1c1c1e, #232325);
       color: #eeeeee;
     }
 
