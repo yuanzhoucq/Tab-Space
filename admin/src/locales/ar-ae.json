@@ -33,7 +33,7 @@
   "loadingSessions": "جارٍ تحميل الجلسات…",
   "connectionSlow": "يستغرق هذا وقتًا أطول من المتوقع.",
   "retry": "إعادة المحاولة",
-  "appNotDetected": "لم يتم اكتشاف تطبيق Tab Space",
+  "appNotDetected": "لم يتم اكتشاف Tab Space Helper",
   "appNotDetectedTip": "احفظ علامات تبويب Safari وأدرها باستخدام Tab Space.",
   "extensionPermissionHint": "انقر على زر إضافة Tab Space في Safari واختر “Always Allow on Every Website”، وإلا فلن يتمكن Tab Space من الوصول إلى علامات التبويب.",
   "getTabSpace": "الحصول على Tab Space",

@@ -26,7 +26,7 @@
   "loadingSessions": "Indlæser sessioner...",
   "connectionSlow": "Det tager længere tid end forventet.",
   "retry": "Prøv igen",
-  "appNotDetected": "Tab Space-appen blev ikke fundet",
+  "appNotDetected": "Tab Space Helper blev ikke fundet",
   "appNotDetectedTip": "Gem og administrer dine Safari-faner med Tab Space.",
   "extensionPermissionHint": "Klik på knappen til Tab Space-udvidelsen i Safari, og vælg “Always Allow on Every Website”; ellers kan Tab Space ikke få adgang til dine faner.",
   "getTabSpace": "Hent Tab Space",

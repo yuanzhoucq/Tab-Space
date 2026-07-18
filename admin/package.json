@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "serve": "vue-cli-service serve",
+    "serve:extension": "node serve-extension.mjs",
     "build": "NODE_OPTIONS=--openssl-legacy-provider vue-cli-service build",
     "postbuild": "node validate_translation.js",
     "i18n:check": "node validate_translation.js",

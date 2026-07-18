@@ -27,7 +27,7 @@
   "loadingSessions": "Cargando sesiones...",
   "connectionSlow": "Está tardando más de lo esperado.",
   "retry": "Reintentar",
-  "appNotDetected": "No se detectó la app Tab Space",
+  "appNotDetected": "No se detectó Tab Space Helper",
   "appNotDetectedTip": "Guarda y administra tus pestañas de Safari con Tab Space.",
   "extensionPermissionHint": "Haz clic en el botón de la extensión Tab Space en Safari y elige “Always Allow on Every Website”; de lo contrario, Tab Space no podrá acceder a tus pestañas.",
   "getTabSpace": "Obtener Tab Space",

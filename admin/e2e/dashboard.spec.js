@@ -1020,7 +1020,7 @@ test('directs visitors without the app to the Tab Space website', async ({ page 
 
   await expect.poll(() => page.evaluate(() => window.location.hostname)).toBe('localhost')
   await expect(page.getByText('Connecting to Tab Space...')).toBeVisible()
-  await expect(page.getByRole('heading', { name: 'Tab Space app not detected' })).toBeVisible({ timeout: 5000 })
+  await expect(page.getByRole('heading', { name: 'Tab Space Helper not detected' })).toBeVisible({ timeout: 5000 })
   await expect(page.getByTestId('extension-permission-hint')).toHaveText(
     'Click the Tab Space extension button in Safari and choose “Always Allow on Every Website”; otherwise, Tab Space cannot access your tabs.'
   )

@@ -33,7 +33,7 @@
   "loadingSessions": "Chargement des sessions...",
   "connectionSlow": "Cela prend plus de temps que prévu.",
   "retry": "Réessayer",
-  "appNotDetected": "L’app Tab Space n’a pas été détectée",
+  "appNotDetected": "Tab Space Helper n’a pas été détecté",
   "appNotDetectedTip": "Enregistrez et gérez vos onglets Safari avec Tab Space.",
   "extensionPermissionHint": "Cliquez sur le bouton de l’extension Tab Space dans Safari et choisissez « Always Allow on Every Website » ; sinon, Tab Space ne pourra pas accéder à vos onglets.",
   "getTabSpace": "Obtenir Tab Space",

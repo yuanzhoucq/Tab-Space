@@ -33,7 +33,7 @@
   "loadingSessions": "Загрузка сессий…",
   "connectionSlow": "Это занимает больше времени, чем ожидалось.",
   "retry": "Повторить",
-  "appNotDetected": "Приложение Tab Space не обнаружено",
+  "appNotDetected": "Tab Space Helper не обнаружен",
   "appNotDetectedTip": "Сохраняйте вкладки Safari и управляйте ими с помощью Tab Space.",
   "extensionPermissionHint": "Нажмите кнопку расширения Tab Space в Safari и выберите «Always Allow on Every Website», иначе Tab Space не сможет получить доступ к вашим вкладкам.",
   "getTabSpace": "Получить Tab Space",

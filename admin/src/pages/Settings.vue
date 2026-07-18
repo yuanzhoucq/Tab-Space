@@ -17,7 +17,7 @@
         <div class="card">
           <h2 class="section-title">{{lang.generalPreferences}}</h2>
           <div class="setting-list">
-            <div class="setting-item" v-for="setting in settings" :key="setting">
+            <div class="setting-item" v-for="setting in settingsForBridge" :key="setting">
               <label :for="setting" class="setting-label">{{lang[setting]}}</label>
               <toggle-button 
                 :id="setting"
@@ -48,7 +48,7 @@
         </div>
 
         <!-- Shortcuts -->
-        <div class="card">
+        <div class="card" v-if="!isWebExtension">
           <h2 class="section-title">{{lang.shortcuts}}</h2>
           <p class="text-muted text-sm mb-4">{{lang.shortcutTip}}</p>
           
@@ -193,7 +193,17 @@ export default {
       buildInfo
     };
   },
-  computed: mapState(["lang", "bridge", "tabSpaceSettings"]),
+  computed: {
+    ...mapState(["lang", "bridge", "tabSpaceSettings"]),
+    isWebExtension() {
+      return this.bridge && this.bridge.mode === "webextension"
+    },
+    settingsForBridge() {
+      if (!this.isWebExtension) return this.settings
+      const safariOnly = new Set(["shift-shortcuts", "disable-shortcuts", "disable-context-menus"])
+      return this.settings.filter(setting => !safariOnly.has(setting))
+    }
+  },
   methods: {
     setDefault(e, setting) {
       const value = e.value ? "true" : "false";

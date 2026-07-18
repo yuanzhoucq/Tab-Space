@@ -27,7 +27,7 @@
   "loadingSessions": "Läser in sessioner...",
   "connectionSlow": "Det tar längre tid än väntat.",
   "retry": "Försök igen",
-  "appNotDetected": "Tab Space-appen kunde inte hittas",
+  "appNotDetected": "Tab Space Helper kunde inte hittas",
   "appNotDetectedTip": "Spara och hantera dina Safari-flikar med Tab Space.",
   "extensionPermissionHint": "Klicka på knappen för Tab Space-tillägget i Safari och välj “Always Allow on Every Website”; annars kan Tab Space inte komma åt dina flikar.",
   "getTabSpace": "Hämta Tab Space",

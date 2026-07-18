@@ -33,7 +33,7 @@
   "loadingSessions": "セッションを読み込んでいます…",
   "connectionSlow": "予想より時間がかかっています。",
   "retry": "再試行",
-  "appNotDetected": "Tab Space アプリが検出されませんでした",
+  "appNotDetected": "Tab Space Helper が検出されませんでした",
   "appNotDetectedTip": "Tab Space で Safari のタブを保存・管理できます。",
   "extensionPermissionHint": "Safari で Tab Space の拡張機能ボタンをクリックし、「Always Allow on Every Website」を選択してください。選択しないと、Tab Space はタブにアクセスできません。",
   "getTabSpace": "Tab Space を入手",

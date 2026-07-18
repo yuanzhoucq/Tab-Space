@@ -27,7 +27,7 @@
   "loadingSessions": "세션을 불러오는 중...",
   "connectionSlow": "예상보다 오래 걸리고 있습니다.",
   "retry": "다시 시도",
-  "appNotDetected": "Tab Space 앱을 감지하지 못했습니다",
+  "appNotDetected": "Tab Space Helper를 감지하지 못했습니다",
   "appNotDetectedTip": "Tab Space로 Safari 탭을 저장하고 관리하세요.",
   "extensionPermissionHint": "Safari에서 Tab Space 확장 프로그램 버튼을 클릭하고 “Always Allow on Every Website”를 선택하세요. 그렇지 않으면 Tab Space가 탭에 접근할 수 없습니다.",
   "getTabSpace": "Tab Space 받기",

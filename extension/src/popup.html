@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="popup.css">
+  <script src="popup.js" defer></script>
+</head>
+<body>
+  <main>
+    <header class="brand">
+      <img class="logo" src="icon.png" alt="Tab Space">
+      <div>
+        <h1>Tab Space</h1>
+        <p id="subtitle" data-i18n="ready">Choose the tabs to save as one session.</p>
+      </div>
+    </header>
+
+    <section id="editor-view">
+      <div class="actions">
+        <button id="save" class="primary-action" type="button" disabled>
+          <span id="save-label" data-i18n="save">Save Tabs</span>
+        </button>
+        <button id="save-current" class="secondary-action" type="button" disabled>
+          <span data-i18n="saveCurrent">Save Current Tab</span>
+        </button>
+        <div class="utility-actions">
+          <button id="customize-tabs" class="text-action" type="button" aria-expanded="false" disabled>
+            <span id="customize-tabs-label">Choose Tabs</span>
+          </button>
+          <button id="open-dashboard" class="text-action" type="button" data-i18n="openDashboard">Open Tab Space</button>
+        </div>
+      </div>
+
+      <section class="save-destination">
+        <div class="destination-row">
+          <label for="save-destination" data-i18n="saveTo">Save to</label>
+          <select id="save-destination">
+            <option value="new" data-i18n="newSession">New session</option>
+          </select>
+        </div>
+      </section>
+
+      <fieldset class="save-options">
+        <legend data-i18n="afterSaving">After saving</legend>
+        <label class="save-option">
+          <input id="open-dashboard-after-save" type="checkbox">
+          <span data-i18n="openDashboardAfterSave">Open the Tab Space dashboard</span>
+        </label>
+        <label class="save-option">
+          <input id="close-tabs-after-save" type="checkbox">
+          <span data-i18n="closeTabsAfterSave">Close the saved tabs</span>
+        </label>
+      </fieldset>
+
+      <section id="tab-section" hidden aria-label="Tab selection">
+        <div class="list-header">
+          <p id="selection-summary"></p>
+          <button id="toggle-all" class="text-button" type="button"></button>
+        </div>
+        <div id="tab-list" class="tab-list"></div>
+      </section>
+
+      <div id="loading" class="loading" data-i18n="loading">Loading open tabs…</div>
+      <p id="status" role="status" aria-live="polite"></p>
+    </section>
+
+    <section id="pairing-view" class="pairing-view" hidden>
+      <h2 data-i18n="connectTitle">Connect this browser</h2>
+      <p data-i18n="connectHelp">Open Tab Space on your Mac, click Browser Pairing Code in the main window, then enter the six-digit code.</p>
+      <input id="pairing-code" inputmode="numeric" pattern="[0-9]*" maxlength="6" autocomplete="one-time-code" aria-label="Pairing code" placeholder="000000">
+      <div class="actions">
+        <button id="pair" class="primary-action" type="button" data-i18n="connect">Connect</button>
+        <button id="launch-app" class="secondary-action" type="button" data-i18n="openApp">Open Tab Space App</button>
+      </div>
+      <p id="pairing-status" role="status" aria-live="polite"></p>
+    </section>
+
+    <section id="success-view" class="success-view" hidden aria-live="polite">
+      <div class="success-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24"><path d="M5 12.5l4.2 4.2L19 7"/></svg>
+      </div>
+      <h2 data-i18n="successTitle">Saved to Tab Space</h2>
+      <p id="success-message"></p>
+      <div class="actions">
+        <button id="done" class="primary-action" type="button" data-i18n="done">Done</button>
+        <button id="done-close-saved" class="secondary-action" type="button" data-i18n="doneCloseSaved">Done and Close Saved Tabs</button>
+      </div>
+      <p id="success-status" role="status" aria-live="polite"></p>
+    </section>
+  </main>
+</body>
+</html>

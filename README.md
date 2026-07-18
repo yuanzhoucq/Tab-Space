@@ -1,6 +1,6 @@
-Tab Space is a Safari extension app which is born for improving web browsing productivity. It offers tab management ability and some useful shortcuts for Safari.
+Tab Space saves, organizes, and restores browser tabs. Version 4.0 supports Safari, Chrome, Microsoft Edge, and Firefox while keeping the session database in the native Mac app.
 
-> Note: this repo contains the project site and the web app cooperating with Tab Space in Safari. It **does not contain** the Xcode project which builds the entire app. 
+> Note: this repo contains the product site, Admin dashboard, and shared Chrome/Edge/Firefox WebExtension. It **does not contain** the Xcode project that builds the native apps and Safari extensions.
 
 
 ## Contributing
@@ -11,13 +11,12 @@ Tab Space is a Safari extension app which is born for improving web browsing pro
 ```
 $ git clone https://github.com/yuanzhoucq/Tab-Space.git
 $ cd Tab-Space/admin
-$ npm install
-$ npm run serve
+$ yarn install --frozen-lockfile
+$ yarn serve
 ```
-Note that you need to have Tab Space installed and activated in Safari or the web app will not work properly.
+The dashboard requires Tab Space 4.0 for Mac plus the Safari extension or a paired companion browser extension. See [extension/INSTALL.md](extension/INSTALL.md) for RC installation.
 
 ## Related links
 - [Tab Space Homepage](https://mytab.space)
 - [Product Hunt page](https://www.producthunt.com/posts/tab-sapce)
 - [中文介绍](https://sspai.com/post/56315)
-

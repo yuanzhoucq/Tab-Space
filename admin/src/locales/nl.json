@@ -33,7 +33,7 @@
   "loadingSessions": "Sessies laden...",
   "connectionSlow": "Dit duurt langer dan verwacht.",
   "retry": "Opnieuw proberen",
-  "appNotDetected": "Tab Space-app niet gedetecteerd",
+  "appNotDetected": "Tab Space Helper niet gedetecteerd",
   "appNotDetectedTip": "Bewaar en beheer je Safari-tabbladen met Tab Space.",
   "extensionPermissionHint": "Klik in Safari op de knop van de Tab Space-extensie en kies “Always Allow on Every Website”; anders heeft Tab Space geen toegang tot je tabbladen.",
   "getTabSpace": "Download Tab Space",

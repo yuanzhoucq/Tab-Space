@@ -27,7 +27,7 @@
   "loadingSessions": "Caricamento delle sessioni...",
   "connectionSlow": "Sta impiegando più tempo del previsto.",
   "retry": "Riprova",
-  "appNotDetected": "App Tab Space non rilevata",
+  "appNotDetected": "Tab Space Helper non rilevato",
   "appNotDetectedTip": "Salva e gestisci le schede di Safari con Tab Space.",
   "extensionPermissionHint": "Fai clic sul pulsante dell’estensione Tab Space in Safari e scegli “Always Allow on Every Website”; in caso contrario, Tab Space non potrà accedere alle tue schede.",
   "getTabSpace": "Ottieni Tab Space",

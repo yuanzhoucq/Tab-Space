@@ -27,7 +27,7 @@
   "loadingSessions": "Sitzungen werden geladen...",
   "connectionSlow": "Dies dauert länger als erwartet.",
   "retry": "Erneut versuchen",
-  "appNotDetected": "Tab Space-App nicht erkannt",
+  "appNotDetected": "Tab Space Helper wurde nicht erkannt",
   "appNotDetectedTip": "Speichere und verwalte deine Safari-Tabs mit Tab Space.",
   "extensionPermissionHint": "Klicke in Safari auf die Schaltfläche der Tab Space-Erweiterung und wähle „Always Allow on Every Website“; andernfalls kann Tab Space nicht auf deine Tabs zugreifen.",
   "getTabSpace": "Tab Space laden",

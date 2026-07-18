@@ -1,6 +1,6 @@
 <template>
   <iframe id="bridgeStorage"
-          v-if="bridgeModeResolved && !directMode"
+          v-if="bridgeModeResolved && !directMode && !webExtensionMode"
           ref="bridgeStorage"
           :src="`${$myConfig.staticResourceEndpoint}/storage.html?method=get`"
           @load="onIframeLoad"
@@ -22,7 +22,8 @@ export default {
     return {
       iframeLoaded: false,
       directMode: hasDirectBridge,
-      bridgeModeResolved: true,
+      webExtensionMode: false,
+      bridgeModeResolved: !directBridgeExpected || hasDirectBridge,
       directBridgeExpected,
       minimumProtocolVersion: 1,
       protocolVersionKey: "tabspace-native-protocol-version",
@@ -31,7 +32,8 @@ export default {
       initialDataTimer: null,
       bookmarkRefreshTimer: null,
       bookmarkRefreshAttempt: 0,
-      defaultsRequested: false
+      defaultsRequested: false,
+      webExtensionRequestId: 0
     }
   },
   computed: {
@@ -50,6 +52,7 @@ export default {
     window.addEventListener("message", this.handleWindowMessage)
     window.addEventListener("tabspace:bridge-ready", this.handleBridgeReady)
     this.startAppDetectionTimeout()
+    this.probeWebExtension()
     if (window.__tabspace_bridge) {
       this.setupDirectBridge()
     } else if (this.directBridgeExpected) {
@@ -92,6 +95,7 @@ export default {
       if (this.bridgeReady && this.directMode) return
       this.clearBookmarkRefreshTimer()
       this.directMode = true
+      this.webExtensionMode = false
       this.bridgeModeResolved = true
       window.__tabspace_bridge.onMessage = (name, message) => {
         this.handleNativeMessage(name, {
@@ -117,6 +121,7 @@ export default {
       this.requestInitialData(directBridge)
     },
     handleWindowMessage(evt) {
+      if (this.handleWebExtensionMessage(evt)) return
       // Filter out other sites' postMessage
       if (
         !evt.origin.includes("joyuer.cn")
@@ -126,6 +131,65 @@ export default {
       if (!evt.data || !evt.data.cmd) return
 
       this.handleNativeMessage(evt.data.cmd, evt.data)
+    },
+    probeWebExtension() {
+      if (!this.isWebExtensionDashboardOrigin(window.location.origin)) return
+      window.postMessage({
+        channel: "tabspace-webextension-v2",
+        source: "dashboard",
+        type: "probe"
+      }, window.location.origin)
+    },
+    handleWebExtensionMessage(evt) {
+      if (evt.source !== window || evt.origin !== window.location.origin
+        || !this.isWebExtensionDashboardOrigin(evt.origin)) return false
+      const data = evt.data
+      if (!data || data.channel !== "tabspace-webextension-v2" || data.source !== "extension") return false
+      switch (data.type) {
+        case "ready":
+          this.setupWebExtensionBridge()
+          break
+        case "connected":
+          this.setupWebExtensionBridge()
+          this.markNativeDetected()
+          this.requestInitialData(this.bridge)
+          break
+        case "native-message":
+          if (data.message && data.message.cmd) {
+            this.handleNativeMessage(data.message.cmd, data.message)
+          }
+          break
+        case "connection-error":
+        case "request-error":
+          if (!this.$store.state.nativeDetected) {
+            this.$store.commit("setConnectionTimedOut", true)
+          }
+          break
+      }
+      return true
+    },
+    isWebExtensionDashboardOrigin(origin) {
+      return origin === "https://app.mytab.space" || origin === "http://127.0.0.1:8080"
+    },
+    setupWebExtensionBridge() {
+      if (this.directMode || this.webExtensionMode) return
+      this.webExtensionMode = true
+      this.bridgeModeResolved = true
+      const webExtensionBridge = {
+        send: msg => {
+          this.webExtensionRequestId += 1
+          window.postMessage({
+            channel: "tabspace-webextension-v2",
+            source: "dashboard",
+            type: "request",
+            requestId: `dashboard-${this.webExtensionRequestId}`,
+            message: msg
+          }, window.location.origin)
+        },
+        mode: "webextension"
+      }
+      this.$store.commit("setBridge", webExtensionBridge)
+      this.bridgeReady = true
     },
     onIframeLoad() {
       if (this.iframeLoaded) return
@@ -184,6 +248,9 @@ export default {
       if (bridge && this.directMode) {
         this.startBookmarkRefresh(bridge)
         return
+      }
+      if (bridge && bridge.mode === "webextension") {
+        bridge.send({cmd: "CheckBookmarks"})
       }
       this.requestDefaultsOnce(bridge)
     },

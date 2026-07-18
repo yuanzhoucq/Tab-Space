@@ -4,6 +4,8 @@ on:
   push:
     paths:
       - 'admin/**'
+      - 'extension/**'
+      - 'icon.png'
       - '.github/workflows/cloudflare-pages-admin.yml'
   workflow_dispatch:
 
@@ -42,6 +44,16 @@ jobs:
 
       - name: Build and validate translations
         run: VUE_APP_BUILD_SHA=$GITHUB_SHA VUE_APP_BUILD_TIME=$(date -u +%Y-%m-%d) yarn build
+
+      - name: Build and test Chrome, Edge, and Firefox extensions
+        run: node ../extension/build.mjs all && node --test ../extension/test/*.test.cjs
+
+      - name: Store browser extension packages
+        uses: actions/upload-artifact@v4
+        with:
+          name: tab-space-4.0-webextensions-${{ github.sha }}
+          path: extension/dist
+          if-no-files-found: error
 
       - name: Run browser tests
         run: yarn test:e2e
