@@ -8,7 +8,7 @@
 
   <title>Privacy Policy - Tab Space</title>
   <meta name="description"
-    content="How Tab Space stores and processes saved sessions, Safari tab information, iCloud sync data, backups, and website analytics.">
+    content="How Tab Space stores and processes saved sessions, browser tab information, iCloud sync data, backups, and website analytics.">
   <link rel="canonical" href="https://mytab.space/privacy.html">
 
   <meta property="og:title" content="Tab Space Privacy Policy">
@@ -39,9 +39,9 @@
     <article class="policy-document" id="en" lang="en">
       <p class="policy-eyebrow">Privacy Policy</p>
       <h1>How Tab Space handles your data</h1>
-      <p class="policy-updated">Last updated: July 17, 2026</p>
+      <p class="policy-updated">Last updated: July 18, 2026</p>
       <p>
-        This policy applies to the Tab Space apps for Mac, iPhone, and iPad; their Safari extensions;
+        This policy applies to the Tab Space apps for Mac, iPhone, and iPad; their browser extensions;
         the Tab Space dashboard; and the public website at <a href="https://mytab.space">mytab.space</a>.
       </p>
 
@@ -58,7 +58,7 @@
           rel="noopener">Apple's Privacy Policy</a> and your iCloud settings.
       </p>
 
-      <h2>Safari extension access</h2>
+      <h2>Browser extension access</h2>
       <p>
         Safari may warn that the extension can read information on webpages because Tab Space provides shortcuts
         and tab-management actions on the pages you visit. To perform actions you request, the extension may
@@ -67,9 +67,18 @@
         developer.
       </p>
       <p>
+        The companion extensions for Chrome, Microsoft Edge, and Firefox request access to open tabs and local
+        extension storage. When you ask Tab Space to save or restore tabs, they process tab titles, URLs, and tab or
+        window state. They do not read the body of the webpages you visit. Browser-local storage holds a random
+        client identifier and an issued authentication token.
+      </p>
+      <p>
         The dashboard at <a href="https://app.mytab.space">app.mytab.space</a> communicates with the installed
-        Safari extension to display and edit your sessions. Session content is used in your browser for that
-        purpose and is not uploaded to servers operated by the developer.
+        browser extension to display and edit your sessions. On Mac, companion extensions connect to the Tab Space
+        background helper only through the local loopback interface after a one-time pairing step; the matching
+        credential is kept in the Mac Keychain. The helper keeps the shared CloudKit container active so it can
+        relay iCloud session changes to connected browsers. Session content is used on your device for these
+        purposes and is not uploaded to servers operated by the developer.
       </p>
 
       <h2>Backups, retention, and deletion</h2>
@@ -119,9 +128,9 @@
     <article class="policy-document" id="zh" lang="zh-Hans">
       <p class="policy-eyebrow">隐私政策</p>
       <h1>Tab Space 如何处理你的数据</h1>
-      <p class="policy-updated">最后更新：2026 年 7 月 17 日</p>
+      <p class="policy-updated">最后更新：2026 年 7 月 18 日</p>
       <p>
-        本政策适用于 Mac、iPhone 和 iPad 版 Tab Space、相应的 Safari 扩展、Tab Space Dashboard，
+        本政策适用于 Mac、iPhone 和 iPad 版 Tab Space、相应的浏览器扩展、Tab Space Dashboard，
         以及 <a href="https://mytab.space">mytab.space</a> 官网。
       </p>
 
@@ -137,15 +146,22 @@
         和你的 iCloud 设置约束。
       </p>
 
-      <h2>Safari 扩展访问权限</h2>
+      <h2>浏览器扩展访问权限</h2>
       <p>
         Safari 可能提示扩展能够读取网页信息，这是因为 Tab Space 会在你访问的页面上提供快捷键和标签页管理操作。
         为执行你主动触发的操作，扩展可能在设备上处理网页标题、URL 以及 Safari 标签页或窗口状态；只有在你调用相关功能时，
         才会处理选中的文字。这些处理在设备本地完成，不会发送给开发者。
       </p>
       <p>
-        <a href="https://app.mytab.space">app.mytab.space</a> 上的 Dashboard 会与已安装的 Safari 扩展通信，
-        用于显示和编辑会话。会话内容只在你的浏览器中用于这些功能，不会上传到开发者运营的服务器。
+        Chrome、Microsoft Edge 和 Firefox 配套扩展会申请访问已打开标签页和扩展本地存储。只有在你要求
+        Tab Space 保存或恢复标签页时，扩展才会处理标题、URL 以及标签页或窗口状态；它们不会读取网页正文。
+        扩展本地存储只保存随机客户端标识和 App 签发的认证令牌。
+      </p>
+      <p>
+        <a href="https://app.mytab.space">app.mytab.space</a> 上的 Dashboard 会与已安装的浏览器扩展通信，
+        用于显示和编辑会话。在 Mac 上，配套扩展完成一次性配对后，只通过本机回环接口连接 Tab Space 后台 Helper；
+        对应凭据保存在 Mac 钥匙串中。Helper 会保持共享 CloudKit 容器运行，并把 iCloud 会话变化通知给已连接的浏览器。
+        会话内容只在你的设备上用于这些功能，不会上传到开发者运营的服务器。
       </p>
 
       <h2>备份、保留与删除</h2>
