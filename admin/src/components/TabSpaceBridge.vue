@@ -46,6 +46,7 @@ export default {
     },
   },
   mounted() {
+    if (this.redirectLegacyBridgeLoopbackHost()) return
     window.addEventListener("message", this.handleWindowMessage)
     window.addEventListener("tabspace:bridge-ready", this.handleBridgeReady)
     this.startAppDetectionTimeout()
@@ -63,6 +64,13 @@ export default {
     this.clearBookmarkRefreshTimer()
   },
   methods: {
+    redirectLegacyBridgeLoopbackHost() {
+      if (window.__tabspace_bridge || window.location.hostname !== "127.0.0.1") return false
+      const localhostUrl = new URL(window.location.href)
+      localhostUrl.hostname = "localhost"
+      window.location.replace(localhostUrl.toString())
+      return true
+    },
     detectBridge(attempt) {
       if (this.bridgeReady) return
       if (window.__tabspace_bridge) {

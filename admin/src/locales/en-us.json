@@ -90,7 +90,7 @@
   "favorite": "Favorite",
   "expandSession": "Expand session",
   "collapseSession": "Collapse session",
-  "collapseSessions": "Toggle compact view",
+  "collapseSessions": "Switch session view",
   "emptyTrash": "Empty trash",
   "trashBin": "Trash"
 }

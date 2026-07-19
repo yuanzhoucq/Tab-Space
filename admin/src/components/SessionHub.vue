@@ -4,8 +4,8 @@
           <v-icon class="button" :stroke-width="1.2" name="plus-circle" fill="rgba(250, 128, 114, 0.2)"
       stroke="salmon"></v-icon>
       </button>
-      <button type="button" class="hub-btn" data-testid="toggle-collapse" :aria-label="lang.collapseSessions" :title="lang.collapseSessions" @click="toggleCollapse">
-          <v-icon class="button" :stroke-width="1.5" :name="collapse ? 'maximize' : 'minimize'"
+      <button type="button" class="hub-btn" data-testid="toggle-collapse" :data-view-mode="sessionViewMode" :aria-label="lang.collapseSessions" :title="lang.collapseSessions" @click="toggleCollapse">
+          <v-icon class="button" :stroke-width="1.5" :name="viewModeIcon"
       stroke="salmon" style="width:26px;margin-left:2px"></v-icon>
       </button>
       <button type="button" class="hub-btn" data-testid="empty-trash" :aria-label="lang.emptyTrash" :title="lang.emptyTrash" @click="emptyTrash" v-if="activeTag === '@Trash'">
@@ -19,11 +19,17 @@
 import { mapState, mapGetters } from 'vuex'
 export default {
     computed: {
-      ...mapState(["lang", "bridge", "sessions", "collapse", "activeTag"]),
+      ...mapState(["lang", "bridge", "sessions", "sessionViewMode", "activeTag"]),
       ...mapGetters(["displaySessions"]),
+      viewModeIcon() {
+          if (this.sessionViewMode === "titles") return "minimize"
+          if (this.sessionViewMode === "compact") return "maximize"
+          return "align-justify"
+      }
     },
     methods: {
         insertSession() {
+            if (this.sessionViewMode === "titles") this.$store.commit("setSessionViewMode", "expanded")
             let timestamp = (new Date()).getTime()
             let newSession = {
                 uuid: "new-" + timestamp,

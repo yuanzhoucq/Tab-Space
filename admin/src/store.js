@@ -9,13 +9,27 @@ Vue.use(Vuex);
 const defaultTabSpaceSettings = {
     [Constants.preferredLanguageKey]: navigator.language.toLowerCase()
 }
-const sessionCollapseStorageKey = "tabspace-session-cards-collapsed"
+const sessionViewModeStorageKey = "tabspace-session-cards-view-mode"
+const legacySessionCollapseStorageKey = "tabspace-session-cards-collapsed"
+const sessionViewModes = ["expanded", "titles", "compact"]
 
-function getInitialCollapseState() {
+function getInitialSessionViewMode() {
     try {
-        return localStorage.getItem(sessionCollapseStorageKey) === "true"
+        const storedMode = localStorage.getItem(sessionViewModeStorageKey)
+        if (sessionViewModes.includes(storedMode)) return storedMode
+        return localStorage.getItem(legacySessionCollapseStorageKey) === "true" ? "compact" : "expanded"
     } catch {
-        return false
+        return "expanded"
+    }
+}
+
+function persistSessionViewMode(mode) {
+    try {
+        localStorage.setItem(sessionViewModeStorageKey, mode)
+        // Keep older dashboard builds on a safe equivalent of the first two modes.
+        localStorage.setItem(legacySessionCollapseStorageKey, String(mode === "compact"))
+    } catch {
+        // Keep the in-memory state usable when browser storage is unavailable.
     }
 }
 
@@ -36,7 +50,7 @@ const store = new Vuex.Store({
         initialRefresh: false,
         sessions: [],
         keyword: "",
-        collapse: getInitialCollapseState(),
+        sessionViewMode: getInitialSessionViewMode(),
         activeTag: "",
         editingSessionUuid: "",
         tabSpaceSettings: {
@@ -100,12 +114,14 @@ const store = new Vuex.Store({
             state.keyword = newKeyword
         },
         toggleCollapse(state) {
-            state.collapse = !state.collapse
-            try {
-                localStorage.setItem(sessionCollapseStorageKey, String(state.collapse))
-            } catch {
-                // Keep the in-memory state usable when browser storage is unavailable.
-            }
+            const currentIndex = sessionViewModes.indexOf(state.sessionViewMode)
+            state.sessionViewMode = sessionViewModes[(currentIndex + 1) % sessionViewModes.length]
+            persistSessionViewMode(state.sessionViewMode)
+        },
+        setSessionViewMode(state, mode) {
+            if (!sessionViewModes.includes(mode)) return
+            state.sessionViewMode = mode
+            persistSessionViewMode(mode)
         },
         setActiveTag(state, newTag) {
             state.activeTag = newTag

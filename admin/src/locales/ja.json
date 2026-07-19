@@ -90,7 +90,7 @@
   "favorite": "お気に入り",
   "expandSession": "セッションを展開",
   "collapseSession": "セッションを折りたたむ",
-  "collapseSessions": "コンパクト表示を切り替え",
+  "collapseSessions": "セッション表示を切り替え",
   "emptyTrash": "ゴミ箱を空にする",
   "trashBin": "ゴミ箱"
 }

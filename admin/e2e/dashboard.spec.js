@@ -61,6 +61,7 @@ async function openDashboard(page, options = {}) {
     let currentSessions = clone(testSessions)
 
     window.__tabspaceBridgeCommands = []
+    window.__tabspaceRestoredSessions = []
 
     const emit = (messageName, message = {}) => {
       setTimeout(() => {
@@ -155,6 +156,23 @@ async function openDashboard(page, options = {}) {
           const index = currentSessions.findIndex(session => session.uuid === sessionId)
           if (index > 0) currentSessions.unshift(currentSessions.splice(index, 1)[0])
           returnBookmarks()
+          return
+        }
+
+        if (name === 'MergeSessions') {
+          const [targetSession, sourceSession] = payload.bookmarks || []
+          const targetIndex = targetSession ? currentSessions.findIndex(session => session.uuid === targetSession.uuid) : -1
+          const sourceIndex = sourceSession ? currentSessions.findIndex(session => session.uuid === sourceSession.uuid) : -1
+          if (targetIndex !== -1 && sourceIndex !== -1) {
+            currentSessions[targetIndex].sites.push(...currentSessions[sourceIndex].sites)
+            currentSessions = currentSessions.filter(session => session.uuid !== sourceSession.uuid)
+          }
+          returnBookmarks()
+          return
+        }
+
+        if (name === 'RestoreSession') {
+          window.__tabspaceRestoredSessions = (payload.bookmarks || []).map(session => session.uuid)
         }
       }
     }
@@ -360,6 +378,7 @@ test('collapses session favicons into an iOS-style stack after ten tabs', async 
 
   await openDashboard(page, { initialSessions: [manyTabsSession, tenTabsSession] })
   await page.getByTestId('toggle-collapse').click()
+  await page.getByTestId('toggle-collapse').click()
 
   const card = page.getByTestId('session-session-many-tabs')
   const icons = card.getByTestId('collapsed-site-icon')
@@ -415,9 +434,133 @@ test('collapses session favicons into an iOS-style stack after ten tabs', async 
   await expect(card.locator('.collapsed-fav-img').first()).toHaveAttribute('src', /icon-webpage/)
 
   await expect.poll(() => page.evaluate(() => localStorage.getItem('tabspace-session-cards-collapsed'))).toBe('true')
+  await expect.poll(() => page.evaluate(() => localStorage.getItem('tabspace-session-cards-view-mode'))).toBe('compact')
   await page.reload()
   await expect(page.getByTestId('session-session-many-tabs').getByTestId('collapsed-site-icon')).toHaveCount(10)
   await expect(page.getByTestId('session-session-many-tabs').getByTestId('collapsed-site-overflow')).toHaveText('+2')
+})
+
+test('cycles through expanded, titles-only and compact session views', async ({ page }) => {
+  await openDashboard(page, { initialSessions: sessions })
+
+  const toggle = page.getByTestId('toggle-collapse')
+  await expect(toggle).toHaveAttribute('data-view-mode', 'expanded')
+
+  await toggle.click()
+  await expect(toggle).toHaveAttribute('data-view-mode', 'titles')
+  const titlesCard = page.getByTestId('titles-only-session-card')
+  const researchRow = titlesCard.getByTestId('session-session-research')
+  const readingRow = titlesCard.getByTestId('session-session-reading')
+  await expect(page.locator('.session')).toHaveCount(1)
+  await expect(researchRow.locator('.titles-only-session-title')).toHaveText('Research')
+  await expect(readingRow.locator('.titles-only-session-title')).toHaveText('Reading list')
+  await expect(researchRow.getByTestId('titles-only-session-count')).toHaveText('2 tabs')
+  await expect(readingRow.getByTestId('titles-only-session-count')).toHaveText('1 tab')
+  await expect.poll(() => researchRow.locator('.titles-only-session-title').evaluate(element => getComputedStyle(element).fontWeight)).toBe('400')
+  const researchExpansionControl = researchRow.getByTestId('toggle-titles-only-session')
+  await expect(researchExpansionControl.locator('svg')).toHaveCount(0)
+  await expect.poll(() => researchExpansionControl.evaluate(element => getComputedStyle(element).position)).toBe('absolute')
+  await expect.poll(() => researchExpansionControl.evaluate(element => getComputedStyle(element).cursor)).toBe('default')
+
+  await researchRow.evaluate(row => {
+    window.__titlesOnlyExpandStartedClipped = false
+    const observer = new MutationObserver(() => {
+      const details = row.querySelector('[data-testid="titles-only-session-details"]')
+      if (details) {
+        window.__titlesOnlyExpandStartedClipped = getComputedStyle(details).overflow === 'hidden'
+          && details.getBoundingClientRect().height <= 1
+        observer.disconnect()
+      }
+    })
+    observer.observe(row, { childList: true, subtree: true })
+  })
+  await researchRow.locator('.titles-only-session-spacer').click()
+  const researchDetails = researchRow.getByTestId('titles-only-session-details')
+  await expect.poll(() => page.evaluate(() => window.__titlesOnlyExpandStartedClipped)).toBe(true)
+  await expect.poll(() => researchDetails.evaluate(element => Math.max(...getComputedStyle(element).transitionDuration
+    .split(',')
+    .map(duration => Number.parseFloat(duration))))).toBe(0.2)
+  await expect.poll(() => researchDetails.evaluate(element => getComputedStyle(element).overflow)).toBe('hidden')
+  await expect(researchRow.getByTestId('visible-site')).toHaveCount(2)
+  await expect(researchRow).toContainText('OpenAI')
+  await researchExpansionControl.focus()
+  await researchExpansionControl.press('Space')
+  await expect(researchRow.getByTestId('visible-site')).toHaveCount(0)
+  await researchExpansionControl.press('Enter')
+  await expect(researchRow.getByTestId('visible-site')).toHaveCount(2)
+  await expect(researchRow.getByTestId('edit-session')).toHaveCount(0)
+  await expect(researchRow.getByTestId('add-tag')).toHaveCount(1)
+  await expect(researchRow.getByTestId('toggle-favorite')).toHaveCount(1)
+  await expect(researchRow.getByTestId('pin-session')).toHaveCount(1)
+
+  const firstTab = researchRow.getByTestId('visible-site').first()
+  await firstTab.hover()
+  await firstTab.locator('.del-item').click()
+  await expect(researchRow.getByTestId('visible-site')).toHaveCount(1)
+  await expect(researchRow.getByTestId('titles-only-session-count')).toHaveText('1 tab')
+
+  await readingRow.locator('.titles-only-session-spacer').click()
+  await expect(researchRow.getByTestId('visible-site')).toHaveCount(0)
+  await expect(readingRow.getByTestId('visible-site')).toHaveCount(1)
+
+  const readingTitle = readingRow.locator('.titles-only-session-title')
+  await readingTitle.click()
+  await expect.poll(() => readingTitle.evaluate(element => getComputedStyle(element).boxShadow)).toContain('rgb(250, 128, 114)')
+  await readingTitle.fill('Reading later')
+  await readingTitle.press('Enter')
+  await expect.poll(() => lastBridgeCommand(page, 'UpdateSession')).toMatchObject({
+    payload: { bookmarks: [{ uuid: 'session-reading', title: 'Reading later' }] }
+  })
+  await expect(readingRow.getByTestId('toggle-titles-only-session')).toHaveAttribute('aria-expanded', 'true')
+
+  await readingRow.getByTestId('merge-session').click()
+  await expect(readingRow.locator('#autosuggest__input_merge')).toBeVisible()
+  await readingRow.locator('#autosuggest__input_merge').focus()
+  await page.locator('#title h1').click()
+  await expect(readingRow.locator('#autosuggest__input_merge')).toHaveCount(0)
+
+  await titlesCard.evaluate(card => {
+    window.__titlesOnlyMoveObserved = false
+    window.__titlesOnlyMoveDuration = 0
+    const observer = new MutationObserver(() => {
+      const movingSession = card.querySelector('.titles-only-session.session-move')
+      if (movingSession) {
+        window.__titlesOnlyMoveObserved = true
+        window.__titlesOnlyMoveDuration = Math.max(...getComputedStyle(movingSession).transitionDuration
+          .split(',')
+          .map(duration => Number.parseFloat(duration)))
+        observer.disconnect()
+      }
+    })
+    observer.observe(card, { attributes: true, attributeFilter: ['class'], subtree: true })
+  })
+  await readingRow.getByTestId('pin-session').click()
+  await expect.poll(() => lastBridgeCommand(page, 'UpSession')).toMatchObject({
+    payload: { bookmarks: [{ uuid: 'session-reading' }] }
+  })
+  await expect.poll(() => page.evaluate(() => window.__titlesOnlyMoveObserved)).toBe(true)
+  await expect.poll(() => page.evaluate(() => window.__titlesOnlyMoveDuration)).toBe(0.2)
+  await expect(titlesCard.locator('.titles-only-session').first()).toHaveAttribute('data-testid', 'session-session-reading')
+
+  await researchRow.getByTestId('restore-session').click()
+  await expect.poll(() => lastBridgeCommand(page, 'RestoreSession')).toMatchObject({
+    payload: { bookmarks: [{ uuid: 'session-research' }] }
+  })
+  await expect.poll(() => page.evaluate(() => window.__tabspaceRestoredSessions)).toEqual(['session-research'])
+  await expect.poll(() => page.evaluate(() => localStorage.getItem('tabspace-session-cards-view-mode'))).toBe('titles')
+
+  await page.reload()
+  await expect(page.getByTestId('toggle-collapse')).toHaveAttribute('data-view-mode', 'titles')
+  await expect(page.locator('.session')).toHaveCount(1)
+
+  await page.getByTestId('toggle-collapse').click()
+  await expect(page.getByTestId('toggle-collapse')).toHaveAttribute('data-view-mode', 'compact')
+  await expect(page.getByTestId('session-session-research').getByTestId('collapsed-site-icon')).toHaveCount(2)
+
+  await page.getByTestId('toggle-collapse').click()
+  await expect(page.getByTestId('toggle-collapse')).toHaveAttribute('data-view-mode', 'expanded')
+  await expect(page.locator('.session')).toHaveCount(2)
+  await expect(page.getByTestId('session-session-research').getByTestId('visible-site')).toHaveCount(2)
 })
 
 test('creates a session and appends it through the native bridge', async ({ page }) => {
@@ -567,6 +710,7 @@ test('directs visitors without the app to the Tab Space website', async ({ page 
   await page.route('**/favicon.ico', route => route.fulfill({ status: 204, body: '' }))
   await page.goto('/')
 
+  await expect.poll(() => page.evaluate(() => window.location.hostname)).toBe('localhost')
   await expect(page.getByText('Connecting to Tab Space...')).toBeVisible()
   await expect(page.getByRole('heading', { name: 'Tab Space app not detected' })).toBeVisible({ timeout: 5000 })
   await expect(page.getByRole('link', { name: 'Get Tab Space' })).toHaveAttribute('href', 'https://mytab.space')

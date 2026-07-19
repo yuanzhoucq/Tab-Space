@@ -1,6 +1,8 @@
 <template>
-  <div class="session" :id="session.uuid" :data-testid="`session-${session.uuid}`">
-    <div class="session-header">
+  <div :class="embedded ? 'embedded-session' : 'session'"
+      :id="embedded ? null : session.uuid"
+      :data-testid="embedded ? 'embedded-session-content' : `session-${session.uuid}`">
+    <div v-if="!embedded" class="session-header">
       <div class="session-header-left">
         <div class="tag-btn handle" v-if="showTagBtns && activeTag === '' && !hasSearch" :title="lang.movePrompt">
           <v-icon name="align-justify" :stroke-width="1.8" style="margin-left:1px"></v-icon>
@@ -46,7 +48,7 @@
       </div>
     </div>
     <ul :class="['session-sites', {'collapsed-sites': compactView}]">
-      <draggable :disabled="isEditingSession(session) || compactView || hasSearch" :forceFallback="true" fallbackTolerance="10"
+      <draggable :disabled="embedded || isEditingSession(session) || compactView || hasSearch" :forceFallback="true" fallbackTolerance="10"
       :list="session.sites" group="shared" @start="() => startDragSite(session)" @end="endDragSite">
         <li
           v-for="(entry, visibleIndex) in visibleSiteEntries"
@@ -155,20 +157,20 @@
       </button>
       <div v-if="showTagBtns && !hasSearch" style="display: flex; transition: 3s">
         <button type="button" data-testid="edit-session" :title="lang.editPrompt" :aria-label="lang.editPrompt"
-        v-if="editingSessionUuid !== session.uuid" class="tag-btn"
+        v-if="!embedded && editingSessionUuid !== session.uuid" class="tag-btn"
         @click="() => { editingSessionUuid = session.uuid; session.sites.push({title: '', url: ''})}">
           <v-icon name="edit" :stroke-width="1.5"></v-icon>
         </button>
-        <button type="button" v-else class="tag-btn" data-testid="save-session" :aria-label="lang.editPrompt"
+        <button type="button" v-else-if="!embedded" class="tag-btn" data-testid="save-session" :aria-label="lang.editPrompt"
         @click="() => { editingSessionUuid = ''; updateSession(session) }">
           <v-icon name="check" :stroke-width="4" stroke="green"></v-icon>
         </button>
         <button type="button" class="tag-btn" data-testid="pin-session" :title="lang.topPrompt" :aria-label="lang.topPrompt"
-        @click="() => upSession(session)">
+        @click.stop.prevent="() => upSession(session)">
           <v-icon name="arrow-up-circle" :stroke-width="1.5"></v-icon>
         </button>
-        <button type="button" class="tag-btn" :title="lang.mergePrompt" :aria-label="lang.mergePrompt" v-if="mergeEditorId !== session.uuid"
-          @click="() => mergeEditorId = session.uuid">
+        <button type="button" class="tag-btn" data-testid="merge-session" :title="lang.mergePrompt" :aria-label="lang.mergePrompt" v-if="mergeEditorId !== session.uuid"
+          @click.stop="() => mergeEditorId = session.uuid">
           <v-icon name="git-merge" :stroke-width="1.8"></v-icon>
         </button>
         <vue-autosuggest
@@ -179,6 +181,7 @@
           :suggestions="[{data: (() => mergeOptions(session.uuid))()}]"
           :should-render-suggestions="shouldRenderMergeSuggestions" 
           :input-props="{id: 'autosuggest__input_merge', placeholder: lang.mergePrompt, autofocus: 'autofocus'}"
+          @blur="closeMergeEditor"
           @selected="(s) => chooseMerge(s.item, session)"
         >  
           <template slot-scope="{suggestion}">
@@ -206,7 +209,7 @@
       ExportDropdown,
       VueAutosuggest
     },
-    props: ["session", "showTagBtns"],
+    props: ["session", "showTagBtns", "embedded"],
     data() {
       return {
         collapsedVisibleLimit: 10,
@@ -219,19 +222,19 @@
       }
     },
     computed: {
-      ...mapState(["lang", "bridge", "keyword", "collapse", "sessions", "activeTag", "editingSessionUuid", "tabSpaceSettings"]),
+      ...mapState(["lang", "bridge", "keyword", "sessionViewMode", "sessions", "activeTag", "editingSessionUuid", "tabSpaceSettings"]),
       ...mapGetters(["tags"]),
       hasSearch() {
         return Boolean(this.keyword && this.keyword.trim())
       },
       compactView() {
-        return this.collapse
+        return this.sessionViewMode === "compact"
           && !this.hasSearch
           && !this.temporarilyExpanded
           && !this.isEditingSession(this.session)
       },
       canToggleTemporaryExpansion() {
-        return this.collapse || this.hasSearch
+        return this.sessionViewMode === "compact" || this.hasSearch
       },
       temporaryExpansionLabel() {
         return this.temporarilyExpanded
@@ -281,7 +284,7 @@
       keyword() {
         this.temporarilyExpanded = false
       },
-      collapse() {
+      sessionViewMode() {
         this.temporarilyExpanded = false
       }
     },
@@ -345,7 +348,8 @@
         }
       },
       upSession(session) {
-        this.bridge.send({ cmd: 'UpSession', bookmarks: [session]})
+        const currentSession = this.getSessionById(session.uuid) || session
+        this.bridge.send({ cmd: 'UpSession', bookmarks: [currentSession]})
       },
       getFavicon(url) {
         try {
@@ -421,6 +425,12 @@
       chooseMerge(session, toSession) {
         this.bridge.send({ cmd: 'MergeSessions', bookmarks: [toSession, session]})
         this.mergeEditorId = false
+      },
+      closeMergeEditor() {
+        setTimeout(() => {
+          this.mergeEditorId = false
+          this.mergeKeyword = ""
+        }, 100)
       },
       removeTag(tag, session) {
         session.tags = session.tags.filter(t => t.name !== tag)
@@ -525,6 +535,19 @@
     transform: translateY(-2px);
     box-shadow: var(--shadow-md, 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06));
     z-index: 50;
+  }
+
+  .embedded-session {
+    padding: 2px 0 0;
+  }
+
+  .embedded-session .session-sites {
+    margin: 0;
+    padding: 2px 0 0 22px;
+  }
+
+  .embedded-session .session-tags {
+    padding-left: 22px;
   }
 
   .session-tags {

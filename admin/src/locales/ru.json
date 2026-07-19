@@ -90,7 +90,7 @@
   "favorite": "Избранное",
   "expandSession": "Развернуть сессию",
   "collapseSession": "Свернуть сессию",
-  "collapseSessions": "Переключить компактный вид",
+  "collapseSessions": "Переключить вид сеансов",
   "emptyTrash": "Очистить корзину",
   "trashBin": "Корзина"
 }
