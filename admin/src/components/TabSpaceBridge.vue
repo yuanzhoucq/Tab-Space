@@ -1,13 +1,5 @@
 <template>
-  <iframe id="bridgeStorage"
-          v-if="bridgeModeResolved && !directMode"
-          ref="bridgeStorage"
-          :src="`${$myConfig.staticResourceEndpoint}/storage.html?method=get`"
-          @load="onIframeLoad"
-          height="0"
-          style="border: none"
-  >
-  </iframe>
+  <span hidden aria-hidden="true"></span>
 </template>
 
 <script>
@@ -20,9 +12,7 @@ export default {
     const hasDirectBridge = Boolean(window.__tabspace_bridge)
     const directBridgeExpected = window.location.host === "app.mytab.space"
     return {
-      iframeLoaded: false,
       directMode: hasDirectBridge,
-      bridgeModeResolved: true,
       directBridgeExpected,
       minimumProtocolVersion: 1,
       protocolVersionKey: "tabspace-native-protocol-version",
@@ -47,7 +37,6 @@ export default {
   },
   mounted() {
     if (this.redirectLegacyBridgeLoopbackHost()) return
-    window.addEventListener("message", this.handleWindowMessage)
     window.addEventListener("tabspace:bridge-ready", this.handleBridgeReady)
     this.startAppDetectionTimeout()
     if (window.__tabspace_bridge) {
@@ -57,7 +46,6 @@ export default {
     }
   },
   beforeDestroy() {
-    window.removeEventListener("message", this.handleWindowMessage)
     window.removeEventListener("tabspace:bridge-ready", this.handleBridgeReady)
     this.clearAppDetectionTimer()
     this.clearInitialDataTimer()
@@ -81,7 +69,6 @@ export default {
         setTimeout(() => this.detectBridge(attempt + 1), 100)
         return
       }
-      this.bridgeModeResolved = true
     },
     handleBridgeReady() {
       if (window.__tabspace_bridge) {
@@ -92,7 +79,6 @@ export default {
       if (this.bridgeReady && this.directMode) return
       this.clearBookmarkRefreshTimer()
       this.directMode = true
-      this.bridgeModeResolved = true
       window.__tabspace_bridge.onMessage = (name, message) => {
         this.handleNativeMessage(name, {
           cmd: name,
@@ -115,32 +101,6 @@ export default {
       this.markNativeDetected()
       this.markDashboardReady()
       this.requestInitialData(directBridge)
-    },
-    handleWindowMessage(evt) {
-      // Filter out other sites' postMessage
-      if (
-        !evt.origin.includes("joyuer.cn")
-        && !evt.origin.includes("mytab.space")
-        && !evt.origin.includes("yuanzhoucq.github.io")
-      ) return
-      if (!evt.data || !evt.data.cmd) return
-
-      this.handleNativeMessage(evt.data.cmd, evt.data)
-    },
-    onIframeLoad() {
-      if (this.iframeLoaded) return
-      if (this.directMode) return
-      console.log("Bridge iframe loaded.")
-      this.iframeLoaded = true
-      const iframe = this.$refs.bridgeStorage
-      if (!iframe) return
-      const iframeBridge = {
-        send: msg => iframe.contentWindow.postMessage(msg, "*"),
-        mode: "iframe"
-      }
-      this.$store.commit("setBridge", iframeBridge)
-      this.bridgeReady = true
-      this.requestDefaultsOnce(iframeBridge)
     },
     handleNativeMessage(cmd, data) {
       this.markNativeDetected()

@@ -7,10 +7,8 @@ import Settings from './pages/Settings.vue'
 import feather from 'vue-icon'
 
 import store from './store'
-import config from './config'
 import buildInfo from './build-info'
 Vue.config.productionTip = false
-Vue.prototype.$myConfig = config
 
 Vue.use(VueRouter)
 Vue.use(feather, 'v-icon')

@@ -703,10 +703,6 @@ test('keeps the dashboard stable when native bookmarks are malformed', async ({ 
 })
 
 test('directs visitors without the app to the Tab Space website', async ({ page }) => {
-  await page.route('**/storage.html?method=get', route => route.fulfill({
-    contentType: 'text/html',
-    body: '<!doctype html><title>Bridge fallback</title>'
-  }))
   await page.route('**/favicon.ico', route => route.fulfill({ status: 204, body: '' }))
   await page.goto('/')
 
