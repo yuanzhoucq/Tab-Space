@@ -1,12 +1,24 @@
 <template>
-  <span hidden aria-hidden="true"></span>
+  <iframe id="bridgeStorage"
+          v-if="bridgeModeResolved && !directMode"
+          ref="bridgeStorage"
+          :src="legacyBridgeUrl"
+          @load="onIframeLoad"
+          height="0"
+          style="border: none"
+          aria-hidden="true"
+  >
+  </iframe>
 </template>
 
 <script>
 import { mapState } from 'vuex'
 import Constants from '../constants'
+import config from '../config'
 
 const appExtensionEvent = name => `tabspace:app-extension:${name}`
+const legacyBridgeUrl = `${config.staticResourceEndpoint}/storage.html?method=get`
+const legacyBridgeOrigin = new URL(config.staticResourceEndpoint).origin
 
 export default {
   name: "TabSpaceBridge",
@@ -15,8 +27,11 @@ export default {
     const directBridgeExpected = window.location.host === "app.mytab.space"
       || window.location.hostname === "localhost"
     return {
+      iframeLoaded: false,
       directMode: hasDirectBridge,
+      bridgeModeResolved: hasDirectBridge || !directBridgeExpected,
       directBridgeExpected,
+      legacyBridgeUrl,
       minimumProtocolVersion: 1,
       protocolVersionKey: "tabspace-native-protocol-version",
       bridgeReady: false,
@@ -40,6 +55,7 @@ export default {
   },
   mounted() {
     if (this.redirectLegacyBridgeLoopbackHost()) return
+    window.addEventListener("message", this.handleWindowMessage)
     window.addEventListener("tabspace:bridge-ready", this.handleBridgeReady)
     document.addEventListener(appExtensionEvent("ready"), this.handleAppExtensionBridgeReady)
     document.addEventListener(appExtensionEvent("message"), this.handleAppExtensionMessage)
@@ -52,6 +68,7 @@ export default {
     }
   },
   beforeDestroy() {
+    window.removeEventListener("message", this.handleWindowMessage)
     window.removeEventListener("tabspace:bridge-ready", this.handleBridgeReady)
     document.removeEventListener(appExtensionEvent("ready"), this.handleAppExtensionBridgeReady)
     document.removeEventListener(appExtensionEvent("message"), this.handleAppExtensionMessage)
@@ -78,6 +95,7 @@ export default {
         setTimeout(() => this.detectBridge(attempt + 1), 100)
         return
       }
+      this.bridgeModeResolved = true
     },
     handleBridgeReady() {
       if (window.__tabspace_bridge) {
@@ -119,6 +137,7 @@ export default {
       if (this.bridgeReady && this.directMode) return
       this.clearBookmarkRefreshTimer()
       this.directMode = true
+      this.bridgeModeResolved = true
       const directBridge = {
         send: msg => document.dispatchEvent(new CustomEvent(appExtensionEvent("command"), {
           detail: JSON.stringify({ name: msg.cmd, data: msg })
@@ -136,6 +155,7 @@ export default {
       if (this.bridgeReady && this.directMode) return
       this.clearBookmarkRefreshTimer()
       this.directMode = true
+      this.bridgeModeResolved = true
       window.__tabspace_bridge.onMessage = (name, message) => {
         this.handleNativeMessage(name, {
           cmd: name,
@@ -158,6 +178,28 @@ export default {
       this.markNativeDetected()
       this.markDashboardReady()
       this.requestInitialData(directBridge)
+    },
+    handleWindowMessage(evt) {
+      const iframe = this.$refs.bridgeStorage
+      if (!iframe || evt.source !== iframe.contentWindow) return
+      if (evt.origin !== legacyBridgeOrigin) return
+      if (!evt.data || typeof evt.data.cmd !== "string") return
+
+      this.handleNativeMessage(evt.data.cmd, evt.data)
+    },
+    onIframeLoad() {
+      if (this.iframeLoaded || this.directMode) return
+      console.log("Legacy bridge iframe loaded.")
+      this.iframeLoaded = true
+      const iframe = this.$refs.bridgeStorage
+      if (!iframe) return
+      const iframeBridge = {
+        send: msg => iframe.contentWindow.postMessage(msg, legacyBridgeOrigin),
+        mode: "iframe"
+      }
+      this.$store.commit("setBridge", iframeBridge)
+      this.bridgeReady = true
+      this.requestDefaultsOnce(iframeBridge)
     },
     handleNativeMessage(cmd, data) {
       this.markNativeDetected()

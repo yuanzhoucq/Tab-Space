@@ -328,6 +328,39 @@ test('connects localhost through the Safari App Extension DOM bridge', async ({ 
   await expect(page.locator('.session')).toHaveCount(2)
   await expect.poll(() => page.evaluate(() => window.__tabspace_bridge)).toBeUndefined()
   await expect.poll(() => bridgeCommandCount(page, 'CheckBookmarks')).toBeGreaterThan(0)
+  await page.waitForTimeout(1200)
+  await expect(page.locator('#bridgeStorage')).toHaveCount(0)
+})
+
+test('falls back to the legacy iframe bridge used by build 89', async ({ page }) => {
+  const serializedSessions = JSON.stringify(sessions).replace(/</g, '\\u003c')
+  await page.route('**/storage.html?method=get', route => route.fulfill({
+    contentType: 'text/html',
+    body: `<!doctype html><script>
+      const sessions = ${serializedSessions}
+      window.addEventListener('message', event => {
+        if (!event.data || event.data.cmd !== 'CheckDefault') return
+        parent.postMessage({
+          cmd: 'ReturnDefault',
+          id: event.data.name,
+          value: event.data.name === 'tabspace-native-protocol-version' ? '1' : ''
+        }, '*')
+      })
+      setTimeout(() => parent.postMessage({
+        cmd: 'ReturnBookmarks',
+        bookmarks: JSON.stringify(sessions)
+      }, '*'), 50)
+    <\/script>`
+  }))
+  await page.route('**/favicon.ico', route => route.fulfill({ status: 204, body: '' }))
+  await page.goto('http://localhost:4173/')
+
+  await expect(page.locator('#bridgeStorage')).toHaveAttribute(
+    'src',
+    'https://static.mytab.space/storage.html?method=get'
+  )
+  await expect(page.locator('.session')).toHaveCount(2)
+  await expect(page.getByTestId('session-session-research')).toBeVisible()
 })
 
 test('finds and safely deletes matches at the end of a session with thousands of tabs', async ({ page }) => {
@@ -747,6 +780,10 @@ test('keeps the dashboard stable when native bookmarks are malformed', async ({ 
 })
 
 test('directs visitors without the app to the Tab Space website', async ({ page }) => {
+  await page.route('**/storage.html?method=get', route => route.fulfill({
+    contentType: 'text/html',
+    body: '<!doctype html><title>Bridge fallback</title>'
+  }))
   await page.route('**/favicon.ico', route => route.fulfill({ status: 204, body: '' }))
   await page.goto('/')
 
