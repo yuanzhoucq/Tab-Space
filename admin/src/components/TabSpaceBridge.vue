@@ -6,11 +6,14 @@
 import { mapState } from 'vuex'
 import Constants from '../constants'
 
+const appExtensionEvent = name => `tabspace:app-extension:${name}`
+
 export default {
   name: "TabSpaceBridge",
   data() {
     const hasDirectBridge = Boolean(window.__tabspace_bridge)
     const directBridgeExpected = window.location.host === "app.mytab.space"
+      || window.location.hostname === "localhost"
     return {
       directMode: hasDirectBridge,
       directBridgeExpected,
@@ -38,15 +41,20 @@ export default {
   mounted() {
     if (this.redirectLegacyBridgeLoopbackHost()) return
     window.addEventListener("tabspace:bridge-ready", this.handleBridgeReady)
+    document.addEventListener(appExtensionEvent("ready"), this.handleAppExtensionBridgeReady)
+    document.addEventListener(appExtensionEvent("message"), this.handleAppExtensionMessage)
     this.startAppDetectionTimeout()
     if (window.__tabspace_bridge) {
       this.setupDirectBridge()
     } else if (this.directBridgeExpected) {
+      this.probeAppExtensionBridge()
       this.detectBridge(0)
     }
   },
   beforeDestroy() {
     window.removeEventListener("tabspace:bridge-ready", this.handleBridgeReady)
+    document.removeEventListener(appExtensionEvent("ready"), this.handleAppExtensionBridgeReady)
+    document.removeEventListener(appExtensionEvent("message"), this.handleAppExtensionMessage)
     this.clearAppDetectionTimer()
     this.clearInitialDataTimer()
     this.clearBookmarkRefreshTimer()
@@ -66,6 +74,7 @@ export default {
         return
       }
       if (attempt < 10) {
+        this.probeAppExtensionBridge()
         setTimeout(() => this.detectBridge(attempt + 1), 100)
         return
       }
@@ -74,6 +83,54 @@ export default {
       if (window.__tabspace_bridge) {
         this.setupDirectBridge()
       }
+    },
+    probeAppExtensionBridge() {
+      document.dispatchEvent(new CustomEvent(appExtensionEvent("probe")))
+    },
+    handleAppExtensionBridgeReady(event) {
+      try {
+        const detail = JSON.parse(event.detail || "{}")
+        if (Number(detail.protocolVersion || 0) < 1) return
+      } catch (_) {
+        return
+      }
+      this.setupAppExtensionBridge()
+    },
+    handleAppExtensionMessage(event) {
+      let payload
+      try {
+        payload = JSON.parse(event.detail || "{}")
+      } catch (_) {
+        return
+      }
+      if (!payload || typeof payload.name !== "string") return
+      const message = payload.message || {}
+      this.handleNativeMessage(payload.name, {
+        ...message,
+        cmd: payload.name,
+        bookmarks: message.value,
+        source: message.source,
+        id: message.id,
+        value: message.value,
+        backups: message.backups
+      })
+    },
+    setupAppExtensionBridge() {
+      if (this.bridgeReady && this.directMode) return
+      this.clearBookmarkRefreshTimer()
+      this.directMode = true
+      const directBridge = {
+        send: msg => document.dispatchEvent(new CustomEvent(appExtensionEvent("command"), {
+          detail: JSON.stringify({ name: msg.cmd, data: msg })
+        })),
+        mode: "direct",
+        fallbackToBundled: null
+      }
+      this.$store.commit("setBridge", directBridge)
+      this.bridgeReady = true
+      this.markNativeDetected()
+      this.markDashboardReady()
+      this.requestInitialData(directBridge)
     },
     setupDirectBridge() {
       if (this.bridgeReady && this.directMode) return

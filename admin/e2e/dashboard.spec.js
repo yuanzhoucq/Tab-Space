@@ -200,6 +200,42 @@ async function openDashboard(page, options = {}) {
   }
 }
 
+async function openAppExtensionDashboard(page, initialSessions) {
+  await page.addInitScript(testSessions => {
+    const clone = value => JSON.parse(JSON.stringify(value))
+    const bridgeEvent = name => `tabspace:app-extension:${name}`
+    window.__tabspaceBridgeCommands = []
+
+    const emit = (name, message = {}) => {
+      document.dispatchEvent(new CustomEvent(bridgeEvent('message'), {
+        detail: JSON.stringify({ name, message: clone(message) })
+      }))
+    }
+    const announce = () => {
+      document.dispatchEvent(new CustomEvent(bridgeEvent('ready'), {
+        detail: JSON.stringify({ protocolVersion: 1 })
+      }))
+    }
+
+    document.addEventListener(bridgeEvent('probe'), announce)
+    document.addEventListener(bridgeEvent('command'), event => {
+      const command = JSON.parse(event.detail)
+      window.__tabspaceBridgeCommands.push(clone(command))
+      if (command.name === 'CheckBookmarks') {
+        emit('ReturnBookmarks', { value: clone(testSessions) })
+      } else if (command.name === 'CheckDefault') {
+        emit('ReturnDefault', {
+          id: command.data.name,
+          value: command.data.name === 'tabspace-native-protocol-version' ? '1' : ''
+        })
+      }
+    })
+  }, initialSessions)
+
+  await page.route('**/favicon.ico', route => route.fulfill({ status: 204, body: '' }))
+  await page.goto('http://localhost:4173/')
+}
+
 async function lastBridgeCommand(page, name) {
   return page.evaluate(commandName => {
     const commands = window.__tabspaceBridgeCommands.filter(command => command.name === commandName)
@@ -284,6 +320,14 @@ test('loads, searches, filters and counts sessions', async ({ page }) => {
   await expect(page.getByTestId('session-session-research')).toBeHidden()
   await page.getByTestId('filter-all').click()
   await expect(page.locator('.session')).toHaveCount(2)
+})
+
+test('connects localhost through the Safari App Extension DOM bridge', async ({ page }) => {
+  await openAppExtensionDashboard(page, sessions)
+
+  await expect(page.locator('.session')).toHaveCount(2)
+  await expect.poll(() => page.evaluate(() => window.__tabspace_bridge)).toBeUndefined()
+  await expect.poll(() => bridgeCommandCount(page, 'CheckBookmarks')).toBeGreaterThan(0)
 })
 
 test('finds and safely deletes matches at the end of a session with thousands of tabs', async ({ page }) => {
