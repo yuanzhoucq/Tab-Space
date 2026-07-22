@@ -92,5 +92,9 @@
   "collapseSession": "Fold session sammen",
   "collapseSessions": "Skift sessionsvisning",
   "emptyTrash": "Tøm papirkurven",
-  "trashBin": "Papirkurv"
+  "trashBin": "Papirkurv",
+  "iosBannerText": "Nu på iPhone og iPad med iCloud-synkronisering",
+  "iosBannerCta": "Hent mobilappen",
+  "iosAppNav": "iOS-app",
+  "iosBannerDismiss": "Luk"
 }

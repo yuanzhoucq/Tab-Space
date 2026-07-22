@@ -53,11 +53,12 @@ async function openDashboard(page, options = {}) {
     ? initialSessions.length
     : options.expectedSessionCount
 
-  await page.addInitScript(({ testSessions, testBackups, malformedBookmarks, bundledDashboard, collapseSessions }) => {
+  await page.addInitScript(({ testSessions, testBackups, malformedBookmarks, bundledDashboard, collapseSessions, preferredLanguage, bannerStorageUnavailable }) => {
     const clone = value => JSON.parse(JSON.stringify(value))
     const settingsKey = 'tabspace-e2e-settings'
     if (collapseSessions) localStorage.setItem('tabspace-session-cards-collapsed', 'true')
     const storedSettings = JSON.parse(localStorage.getItem(settingsKey) || '{}')
+    if (preferredLanguage) storedSettings['preferred-language'] = preferredLanguage
     let currentSessions = clone(testSessions)
 
     window.__tabspaceBridgeCommands = []
@@ -184,12 +185,27 @@ async function openDashboard(page, options = {}) {
     }
 
     window.__tabspace_bridge = nativeBridge
+
+    if (bannerStorageUnavailable) {
+      const storageGetItem = Storage.prototype.getItem
+      const storageSetItem = Storage.prototype.setItem
+      Storage.prototype.getItem = function(key) {
+        if (key === 'tabspace-ios-banner-dismissed') throw new Error('Storage unavailable')
+        return storageGetItem.call(this, key)
+      }
+      Storage.prototype.setItem = function(key, value) {
+        if (key === 'tabspace-ios-banner-dismissed') throw new Error('Storage unavailable')
+        return storageSetItem.call(this, key, value)
+      }
+    }
   }, {
     testSessions: initialSessions,
     testBackups: options.backups || [],
     malformedBookmarks: Boolean(options.malformedBookmarks),
     bundledDashboard: Boolean(options.bundledDashboard),
-    collapseSessions: Boolean(options.collapseSessions)
+    collapseSessions: Boolean(options.collapseSessions),
+    preferredLanguage: options.preferredLanguage || '',
+    bannerStorageUnavailable: Boolean(options.bannerStorageUnavailable)
   })
 
   await page.route('**/favicon.ico', route => route.fulfill({ status: 204, body: '' }))
@@ -199,6 +215,62 @@ async function openDashboard(page, options = {}) {
     await expect(page.locator('.session')).toHaveCount(expectedSessionCount)
   }
 }
+
+test('shows the iOS launch banner at card width and persists dismissal', async ({ page }) => {
+  await openDashboard(page, { initialSessions: sessions })
+
+  const banner = page.getByTestId('ios-banner')
+  await expect(banner).toBeVisible()
+  await expect(banner.getByRole('link', { name: 'Get the mobile app' })).toHaveAttribute(
+    'href',
+    /apps\.apple\.com\/us\/app\/tab-space-tab-saver\/id6790127383/
+  )
+  await expect(page.getByTestId('ios-app-link')).toHaveAttribute(
+    'href',
+    /apps\.apple\.com\/us\/app\/tab-space-tab-saver\/id6790127383/
+  )
+
+  await expect.poll(() => page.evaluate(() => {
+    const bannerRect = document.querySelector('[data-testid="ios-banner"]').getBoundingClientRect()
+    const cardRect = document.querySelector('.session').getBoundingClientRect()
+    const sidebarRect = document.querySelector('.session-sidebar').getBoundingClientRect()
+    return Math.max(
+      Math.abs(bannerRect.left - cardRect.left),
+      Math.abs(bannerRect.right - cardRect.right),
+      Math.abs(bannerRect.top - sidebarRect.top)
+    )
+  })).toBeLessThanOrEqual(1)
+
+  await banner.getByRole('button', { name: 'Dismiss' }).click()
+  await expect(banner).toHaveCount(0)
+  await page.reload()
+  await expect(page.getByTestId('ios-banner')).toHaveCount(0)
+  await expect(page.getByTestId('ios-app-link')).toBeVisible()
+})
+
+test('uses the China App Store link and dismisses without browser storage', async ({ page }) => {
+  await openDashboard(page, {
+    initialSessions: sessions,
+    preferredLanguage: 'zh-cn',
+    bannerStorageUnavailable: true
+  })
+
+  const banner = page.getByTestId('ios-banner')
+  await expect(banner.getByRole('link', { name: '获取移动版' })).toHaveAttribute(
+    'href',
+    /apps\.apple\.com\/cn\/app\//
+  )
+  await expect(page.getByTestId('ios-app-link')).toHaveAttribute(
+    'href',
+    /apps\.apple\.com\/cn\/app\//
+  )
+  await banner.getByRole('button', { name: '关闭' }).click()
+  await expect(banner).toHaveCount(0)
+
+  await page.getByRole('link', { name: '设置' }).click()
+  await page.getByRole('link', { name: '返回' }).click()
+  await expect(page.getByTestId('ios-banner')).toHaveCount(0)
+})
 
 async function lastBridgeCommand(page, name) {
   return page.evaluate(commandName => {
@@ -220,6 +292,7 @@ test('loads, searches, filters and counts sessions', async ({ page }) => {
   await expect(page.getByTestId('session-stats')).toContainText('2 sessions')
   await expect(page.getByTestId('session-stats')).toContainText('3 tabs')
 
+  await page.evaluate(() => document.fonts.ready)
   const dashboardLayout = await page.evaluate(() => {
     const title = document.querySelector('#title h1').getBoundingClientRect()
     const firstCard = document.querySelector('.session').getBoundingClientRect()

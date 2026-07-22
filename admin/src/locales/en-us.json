@@ -92,5 +92,9 @@
   "collapseSession": "Collapse session",
   "collapseSessions": "Switch session view",
   "emptyTrash": "Empty trash",
-  "trashBin": "Trash"
+  "trashBin": "Trash",
+  "iosBannerText": "Now on iPhone & iPad with iCloud sync",
+  "iosBannerCta": "Get the mobile app",
+  "iosAppNav": "iOS app",
+  "iosBannerDismiss": "Dismiss"
 }

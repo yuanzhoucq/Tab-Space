@@ -92,5 +92,9 @@
   "collapseSession": "Oturumu daralt",
   "collapseSessions": "Oturum görünümünü değiştir",
   "emptyTrash": "Çöp kutusunu boşalt",
-  "trashBin": "Çöp kutusu"
+  "trashBin": "Çöp kutusu",
+  "iosBannerText": "Artık iCloud eşzamanlama ile iPhone ve iPad'de",
+  "iosBannerCta": "Mobil uygulamayı edinin",
+  "iosAppNav": "iOS uygulaması",
+  "iosBannerDismiss": "Kapat"
 }

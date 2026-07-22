@@ -92,5 +92,9 @@
   "collapseSession": "Sessie samenvouwen",
   "collapseSessions": "Sessieweergave wisselen",
   "emptyTrash": "Prullenbak legen",
-  "trashBin": "Prullenbak"
+  "trashBin": "Prullenbak",
+  "iosBannerText": "Nu op iPhone en iPad met iCloud-synchronisatie",
+  "iosBannerCta": "Download de mobiele app",
+  "iosAppNav": "iOS-app",
+  "iosBannerDismiss": "Sluiten"
 }

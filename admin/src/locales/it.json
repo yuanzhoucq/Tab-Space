@@ -92,5 +92,9 @@
   "collapseSession": "Comprimi sessione",
   "collapseSessions": "Cambia vista sessioni",
   "emptyTrash": "Svuota il cestino",
-  "trashBin": "Cestino"
+  "trashBin": "Cestino",
+  "iosBannerText": "Ora su iPhone e iPad con la sincronizzazione iCloud",
+  "iosBannerCta": "Ottieni l'app mobile",
+  "iosAppNav": "App iOS",
+  "iosBannerDismiss": "Chiudi"
 }

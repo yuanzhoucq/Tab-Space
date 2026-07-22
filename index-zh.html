@@ -9,14 +9,14 @@
   <!-- SEO -->
   <title>Tab Space - Safari 的标签页和书签管理扩展</title>
   <meta name="description"
-    content="Tab Space 是一个为 Safari 浏览器提供标签页保存、会话管理和快捷键的应用程序。支持 iCloud 同步、标签、搜索和自动备份。">
-  <meta name="keywords" content="Tab Space, Safari 扩展, 标签管理, 书签管理, macOS, onetab 替代">
+    content="Tab Space 在 Mac、iPhone 和 iPad 上把 Safari 标签页整理为会话，支持 iCloud 同步、标签、搜索和自动备份。">
+  <meta name="keywords" content="Tab Space, Safari 扩展, 标签管理, 书签管理, macOS, iPhone, iPad, iOS, onetab 替代">
 
   <!-- Social -->
   <meta name="twitter:site" content="@joyuer">
   <meta name="twitter:card" content="summary_large_image">
   <meta property="og:title" content="Tab Space - Safari 的标签页和书签管理扩展">
-  <meta property="og:description" content="把浏览器标签页保存为工作空间。一个强大的 Safari 标签页和会话管理扩展。">
+  <meta property="og:description" content="在 Mac、iPhone 和 iPad 上把 Safari 标签页整理为会话，并通过你自己的 iCloud 同步。">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://mytab.space/index-zh.html">
   <meta property="og:image" content="https://mytab.space/icon.png">
@@ -34,11 +34,14 @@
     "@context": "https://schema.org",
     "@type": "SoftwareApplication",
     "name": "Tab Space",
-    "operatingSystem": "macOS 11.0 or later",
+    "operatingSystem": "macOS 11 or later, iOS 16 or later, iPadOS 16 or later",
     "applicationCategory": "UtilitiesApplication",
     "url": "https://mytab.space/index-zh.html",
-    "downloadUrl": "https://apps.apple.com/cn/app/tab-space/id1473726602?mt=12",
-    "description": "Tab Space 是一个为 Safari 浏览器提供标签页保存、会话管理和快捷键的应用程序。",
+    "downloadUrl": [
+      "https://apps.apple.com/cn/app/tab-space/id1473726602?mt=12",
+      "https://apps.apple.com/cn/app/tab-space-%E6%A0%87%E7%AD%BE%E9%A1%B5%E4%BF%9D%E5%AD%98/id6790127383?itscg=30200&itsct=apps_box_link&mttnsubad=6790127383"
+    ],
+    "description": "Tab Space 在 Mac、iPhone 和 iPad 上把 Safari 标签页整理为会话，支持 iCloud 同步、标签、搜索和自动备份。",
     "author": { "@type": "Person", "name": "Joyuer", "url": "https://joyuer.cn/" }
   }
   </script>
@@ -55,8 +58,7 @@
       <a class="nav-hide-mobile" href="#features">功能</a>
       <a class="nav-hide-mobile" href="#faq">常见问题</a>
       <a href="index.html">English</a>
-      <a class="nav-cta" href="https://apps.apple.com/cn/app/tab-space/id1473726602?mt=12" target="_blank"
-        rel="noopener">下载</a>
+      <a class="nav-cta" href="#downloads">下载</a>
     </nav>
   </header>
 
@@ -72,17 +74,24 @@
           </p>
 
           <!-- Download -->
-          <div class="app-buttons">
+          <div class="app-buttons" id="downloads">
+            <a href="https://apps.apple.com/cn/app/tab-space-%E6%A0%87%E7%AD%BE%E9%A1%B5%E4%BF%9D%E5%AD%98/id6790127383?itscg=30200&amp;itsct=apps_box_link&amp;mttnsubad=6790127383" target="_blank" rel="noopener">
+              <img src="assets/img/Download_on_the_App_Store_Badge_ZH-CN.svg"
+                alt="在 App Store 下载">
+            </a>
             <a href="https://apps.apple.com/cn/app/tab-space/id1473726602?mt=12" target="_blank" rel="noopener">
               <img src="assets/img/Download_on_the_Mac_App_Store_Badge_US-UK_RGB_blk_092917.svg"
                 alt="在 Mac App Store 下载">
             </a>
+          </div>
+
+          <div class="app-buttons-sub">
             <a href="changelog.html" class="changelog-link">
               更新日志（英文）
             </a>
           </div>
 
-          <p class="subtitle">要求 macOS 11 或更新版本 · iPhone 和 iPad 版即将推出</p>
+          <p class="subtitle">Mac 要求 macOS 11 或更新版本 · iPhone 和 iPad 要求 iOS 16 或更新版本</p>
         </div>
       </article>
 
@@ -137,7 +146,7 @@
             </svg>
           </div>
           <h3>iCloud 同步</h3>
-          <p>会话通过你自己的 iCloud 在多台 Mac 之间同步，无需注册账号。iPhone 和 iPad 版即将推出。</p>
+          <p>会话通过你自己的 iCloud 在 Mac、iPhone 和 iPad 之间同步，无需注册账号。</p>
         </div>
         <div class="feature-card">
           <div class="feature-icon">
@@ -235,13 +244,19 @@
     </div>
   </section>
 
-  <!-- Coming Soon Section -->
+  <!-- iOS Launch Section -->
   <section class="coming" id="ios">
     <div class="container">
       <div class="coming-inner">
-        <span class="badge">即将推出</span>
-        <h2>Tab Space 即将登陆 iPhone 和 iPad</h2>
-        <p>在 Mac 前保存会话，到沙发上继续。iOS 和 iPadOS 版 Tab Space 正在路上——同样通过你自己的 iCloud 同步，无需账号。</p>
+        <span class="badge">iPhone 和 iPad 已上架</span>
+        <h2>Tab Space 已登陆 iPhone 和 iPad</h2>
+        <p>在 Mac 前保存会话，到沙发上继续。iOS 和 iPadOS 版 Tab Space 现已上架——同样通过你自己的 iCloud 同步，无需账号。</p>
+        <div class="app-buttons coming-buttons">
+          <a href="https://apps.apple.com/cn/app/tab-space-%E6%A0%87%E7%AD%BE%E9%A1%B5%E4%BF%9D%E5%AD%98/id6790127383?itscg=30200&amp;itsct=apps_box_link&amp;mttnsubad=6790127383" target="_blank" rel="noopener">
+            <img src="assets/img/Download_on_the_App_Store_Badge_ZH-CN.svg"
+              alt="在 App Store 下载">
+          </a>
+        </div>
       </div>
     </div>
   </section>
@@ -283,15 +298,15 @@
       <div class="faq-list">
         <details>
           <summary>Tab Space 能在 Mac、iPhone 和 iPad 之间同步吗？</summary>
-          <p>目前会话通过 iCloud 在多台 Mac 之间同步，无需账号。iPhone/iPad 版 Tab Space 即将推出，届时将以同样的方式同步。</p>
+          <p>可以。会话通过你自己的 iCloud 在 Mac、iPhone 和 iPad 之间同步，无需账号。iPhone/iPad 版 Tab Space 现已在 App Store 上架。</p>
         </details>
         <details>
           <summary>我的数据保存在哪里？</summary>
           <p>会话保存在设备上浏览器之外的原生应用数据库中，并通过你自己的 iCloud 同步。没有账号、没有广告、不收集数据。</p>
         </details>
         <details>
-          <summary>支持哪些 macOS 版本？</summary>
-          <p>Tab Space 要求 macOS 11 或更新版本。iPhone 和 iPad 版即将推出。</p>
+          <summary>支持哪些 macOS 和 iOS 版本？</summary>
+          <p>Mac 端要求 macOS 11 或更新版本；iPhone 和 iPad 端要求 iOS 或 iPadOS 16 或更新版本。</p>
         </details>
         <details>
           <summary>能导入 OneTab 的数据吗？</summary>

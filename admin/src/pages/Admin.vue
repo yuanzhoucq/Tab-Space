@@ -38,7 +38,10 @@
       </div>
       <div v-if="nativeDetected && initialRefresh" class="sessions-container">
         <session-sidebar></session-sidebar>
-        <sessions></sessions>
+        <div class="session-column">
+          <ios-banner></ios-banner>
+          <sessions></sessions>
+        </div>
         <session-hub></session-hub>
       </div>
     </div>
@@ -61,6 +64,7 @@
   import { VueLoading } from 'vue-loading-template'
   import { mapState } from 'vuex'
 
+  import IosBanner from '../components/IosBanner'
   import Navbar from '../components/Navbar'
   import SessionSidebar from '../components/SessionSidebar'
   import SessionHub from '../components/SessionHub'
@@ -69,6 +73,7 @@
   export default {
     components: {
       VueLoading,
+      IosBanner,
       Navbar,
       SessionSidebar,
       SessionHub,
@@ -152,6 +157,9 @@
   }
 
   #main {
+    --dashboard-side-padding: 16px;
+    --dashboard-sidebar-column: 130px;
+    --dashboard-hub-column: 45px;
     min-height: calc(100vh - 35px);
   }
 
@@ -181,7 +189,7 @@
     width: 100%;
     max-width: 840px;
     margin: 10px auto 0;
-    padding: 0 16px;
+    padding: 0 var(--dashboard-side-padding);
     box-sizing: border-box;
     display: flex;
     justify-content: space-between;
@@ -196,7 +204,7 @@
   }
 
   #title:not(.title-centered) h1 {
-    margin-left: 130px;
+    margin-left: var(--dashboard-sidebar-column);
     transform: translateY(-12px);
   }
 
@@ -216,8 +224,17 @@
     width: 100%;
     max-width: 840px;
     margin: 0 auto;
-    padding: 0 16px;
+    padding: 0 var(--dashboard-side-padding);
     box-sizing: border-box;
+  }
+
+  .session-column {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .session-column .ios-banner {
+    margin-bottom: 12px;
   }
 
   @media (max-width: 700px) {
@@ -225,7 +242,7 @@
       flex-wrap: wrap;
     }
 
-    .sessions-container .sessions-list {
+    .sessions-container .session-column {
       order: 3;
       flex-basis: 100%;
     }
@@ -337,7 +354,7 @@
     padding-left: 10px;
     margin-left: auto;
     /* align right edge with the session cards (hub column = 15px gap + 30px button) */
-    margin-right: 45px;
+    margin-right: var(--dashboard-hub-column);
   }
 
   @media (max-width: 700px) {

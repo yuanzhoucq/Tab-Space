@@ -334,6 +334,18 @@ header {
     transform: translateX(4px);
 }
 
+.app-buttons-sub {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 24px;
+}
+
+.coming-buttons {
+    margin-top: 28px;
+    margin-bottom: 0;
+}
+
 .subtitle {
     font-size: 0.8125rem;
     color: var(--color-text-tertiary);
@@ -528,7 +540,7 @@ kbd {
     display: inline-block;
 }
 
-/* Coming Soon Section */
+/* iPhone and iPad Launch Section */
 .coming {
     background: var(--color-bg);
     padding: 96px 24px 0;

@@ -92,5 +92,9 @@
   "collapseSession": "Contraer sesión",
   "collapseSessions": "Cambiar vista de sesiones",
   "emptyTrash": "Vaciar la papelera",
-  "trashBin": "Papelera"
+  "trashBin": "Papelera",
+  "iosBannerText": "Ya disponible en iPhone y iPad con sincronización de iCloud",
+  "iosBannerCta": "Obtener la app móvil",
+  "iosAppNav": "App para iOS",
+  "iosBannerDismiss": "Cerrar"
 }

@@ -92,5 +92,9 @@
   "collapseSession": "Réduire la session",
   "collapseSessions": "Changer la vue des sessions",
   "emptyTrash": "Vider la corbeille",
-  "trashBin": "Corbeille"
+  "trashBin": "Corbeille",
+  "iosBannerText": "Maintenant sur iPhone et iPad avec la synchronisation iCloud",
+  "iosBannerCta": "Obtenir l'app mobile",
+  "iosAppNav": "App iOS",
+  "iosBannerDismiss": "Fermer"
 }

@@ -92,5 +92,9 @@
   "collapseSession": "طي الجلسة",
   "collapseSessions": "تبديل عرض الجلسات",
   "emptyTrash": "إفراغ سلة المهملات",
-  "trashBin": "سلة المهملات"
+  "trashBin": "سلة المهملات",
+  "iosBannerText": "متوفر الآن على iPhone وiPad مع مزامنة iCloud",
+  "iosBannerCta": "احصل على تطبيق الهاتف",
+  "iosAppNav": "تطبيق iOS",
+  "iosBannerDismiss": "إغلاق"
 }

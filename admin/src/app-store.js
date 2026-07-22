@@ -1,0 +1,6 @@
+const APP_STORE_LINK_US = 'https://apps.apple.com/us/app/tab-space-tab-saver/id6790127383?itscg=30200&itsct=apps_box_link&mttnsubad=6790127383'
+const APP_STORE_LINK_CN = 'https://apps.apple.com/cn/app/tab-space-%E6%A0%87%E7%AD%BE%E9%A1%B5%E4%BF%9D%E5%AD%98/id6790127383?itscg=30200&itsct=apps_box_link&mttnsubad=6790127383'
+
+export function mobileAppStoreUrl(language = '') {
+  return language.toLowerCase() === 'zh-cn' ? APP_STORE_LINK_CN : APP_STORE_LINK_US
+}

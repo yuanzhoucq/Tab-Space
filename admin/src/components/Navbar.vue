@@ -26,6 +26,16 @@
       <backup-dropdown></backup-dropdown>
     </div>
     <div>
+      <a class="link ios-app-link"
+         data-testid="ios-app-link"
+         :href="appStoreUrl"
+         target="_blank"
+         rel="noopener noreferrer">
+        <v-icon name="smartphone" aria-hidden="true"></v-icon>
+        <span>{{lang.iosAppNav}}</span>
+      </a>
+    </div>
+    <div>
       <router-link class="link" data-testid="settings-link" to="/settings">{{lang.settings}}</router-link>
     </div>
   </nav>
@@ -33,6 +43,8 @@
 
 <script>
 import { mapState } from "vuex"
+import { mobileAppStoreUrl } from "../app-store"
+import Constants from "../constants"
 import ExportDropdown from "./ExportDropdown"
 import ImportDropdown from "./ImportDropdown"
 import BackupDropdown from "./BackupDropdown"
@@ -40,7 +52,11 @@ import BackupDropdown from "./BackupDropdown"
 export default {
   name: "Navbar",
   computed: {
-    ...mapState(["lang", "bridge", "activeTag", "sessions"]),
+    ...mapState(["lang", "bridge", "activeTag", "sessions", "tabSpaceSettings"]),
+    appStoreUrl() {
+      const preferredLanguage = this.tabSpaceSettings[Constants.preferredLanguageKey] || navigator.language
+      return mobileAppStoreUrl(preferredLanguage)
+    },
     hasExportableSessions() {
       return this.sessions.some(session => (
         !(session.tags || []).some(tag => tag && tag.name === "@Trash")
@@ -90,6 +106,17 @@ export default {
 
   .link:hover {
     background-color: rgba(0, 0, 0, 0.06);
+  }
+
+  .ios-app-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    white-space: nowrap;
+  }
+
+  .ios-app-link .icon {
+    width: 15px;
   }
 
   .export, .import, .backup {

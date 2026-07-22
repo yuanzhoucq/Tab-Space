@@ -92,5 +92,9 @@
   "collapseSession": "セッションを折りたたむ",
   "collapseSessions": "セッション表示を切り替え",
   "emptyTrash": "ゴミ箱を空にする",
-  "trashBin": "ゴミ箱"
+  "trashBin": "ゴミ箱",
+  "iosBannerText": "iCloud 同期対応の iPhone・iPad 版が登場",
+  "iosBannerCta": "モバイル版を入手",
+  "iosAppNav": "iOS 版",
+  "iosBannerDismiss": "閉じる"
 }

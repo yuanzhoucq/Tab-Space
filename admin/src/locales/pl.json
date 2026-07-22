@@ -92,5 +92,9 @@
   "collapseSession": "Zwiń sesję",
   "collapseSessions": "Przełącz widok sesji",
   "emptyTrash": "Opróżnij kosz",
-  "trashBin": "Kosz"
+  "trashBin": "Kosz",
+  "iosBannerText": "Teraz na iPhonie i iPadzie z synchronizacją iCloud",
+  "iosBannerCta": "Pobierz aplikację mobilną",
+  "iosAppNav": "Aplikacja iOS",
+  "iosBannerDismiss": "Zamknij"
 }

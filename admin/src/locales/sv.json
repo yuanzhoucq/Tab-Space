@@ -92,5 +92,9 @@
   "collapseSession": "Fäll ihop session",
   "collapseSessions": "Växla sessionsvy",
   "emptyTrash": "Töm papperskorgen",
-  "trashBin": "Papperskorg"
+  "trashBin": "Papperskorg",
+  "iosBannerText": "Nu på iPhone och iPad med iCloud-synkronisering",
+  "iosBannerCta": "Hämta mobilappen",
+  "iosAppNav": "iOS-app",
+  "iosBannerDismiss": "Stäng"
 }

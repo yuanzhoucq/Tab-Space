@@ -92,5 +92,9 @@
   "collapseSession": "Згорнути сеанс",
   "collapseSessions": "Перемкнути вигляд сеансів",
   "emptyTrash": "Очистити кошик",
-  "trashBin": "Кошик"
+  "trashBin": "Кошик",
+  "iosBannerText": "Тепер на iPhone та iPad із синхронізацією через iCloud",
+  "iosBannerCta": "Завантажити мобільний застосунок",
+  "iosAppNav": "Версія для iOS",
+  "iosBannerDismiss": "Закрити"
 }

@@ -109,7 +109,7 @@ export default {
 
 <style scoped>
 .session-sidebar {
-  width: 110px;
+  flex: 0 0 110px;
   margin-right: 20px;
   display: flex;
   flex-direction: column;
@@ -187,7 +187,7 @@ export default {
 
 @media (max-width: 700px) {
   .session-sidebar {
-    width: 100%;
+    flex: 0 0 100%;
     flex-direction: row;
     flex-wrap: wrap;
     align-items: center;

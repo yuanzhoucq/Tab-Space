@@ -92,5 +92,9 @@
   "collapseSession": "Sitzung einklappen",
   "collapseSessions": "Sitzungsansicht wechseln",
   "emptyTrash": "Papierkorb leeren",
-  "trashBin": "Papierkorb"
+  "trashBin": "Papierkorb",
+  "iosBannerText": "Jetzt auf iPhone und iPad mit iCloud-Synchronisierung",
+  "iosBannerCta": "Mobile App laden",
+  "iosAppNav": "iOS-App",
+  "iosBannerDismiss": "Schließen"
 }

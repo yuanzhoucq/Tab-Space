@@ -92,5 +92,9 @@
   "collapseSession": "Свернуть сессию",
   "collapseSessions": "Переключить вид сеансов",
   "emptyTrash": "Очистить корзину",
-  "trashBin": "Корзина"
+  "trashBin": "Корзина",
+  "iosBannerText": "Теперь на iPhone и iPad с синхронизацией через iCloud",
+  "iosBannerCta": "Скачать мобильное приложение",
+  "iosAppNav": "Версия для iOS",
+  "iosBannerDismiss": "Закрыть"
 }
