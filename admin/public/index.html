@@ -4,6 +4,113 @@
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width,initial-scale=1.0">
+    <script>
+      // Keep this recovery bootstrap inline: it must run even when a hashed
+      // application script is rejected because a stale HTML response was
+      // cached under the script URL.
+      (function () {
+        var recoveryKey = 'tabspace-asset-recovery'
+        var cachePrefix = 'tab-space-admin-'
+        var recoveryWindow = 120000
+        var recovering = false
+
+        function assetUrl(target) {
+          if (!target || (target.tagName !== 'SCRIPT' && target.tagName !== 'LINK')) return null
+
+          var value = target.src || target.href
+          if (!value) return null
+
+          try {
+            var url = new URL(value, window.location.href)
+            if (url.origin !== window.location.origin) return null
+            if (!/^\/(?:js|css)\/.+\.(?:js|css)$/i.test(url.pathname)) return null
+            return url.href
+          } catch (error) {
+            return null
+          }
+        }
+
+        function shouldRecover(url) {
+          try {
+            var previous = JSON.parse(window.sessionStorage.getItem(recoveryKey) || 'null')
+            if (previous && previous.url === url && Date.now() - previous.time < recoveryWindow) {
+              return false
+            }
+            window.sessionStorage.setItem(recoveryKey, JSON.stringify({ url: url, time: Date.now() }))
+          } catch (error) {
+            // Storage can be unavailable in privacy-restricted contexts.
+          }
+          return true
+        }
+
+        function clearDashboardCaches() {
+          if (!('caches' in window)) return Promise.resolve()
+
+          return window.caches.keys().then(function (keys) {
+            return Promise.all(keys.filter(function (key) {
+              return key.indexOf(cachePrefix) === 0
+            }).map(function (key) {
+              return window.caches.delete(key)
+            }))
+          })
+        }
+
+        function prepareServiceWorker() {
+          if (!('serviceWorker' in navigator) || !window.isSecureContext) return Promise.resolve()
+
+          return navigator.serviceWorker.register('<%= BASE_URL %>service-worker.js')
+            .then(function (registration) {
+              return registration.update()
+                .catch(function () {
+                  return registration
+                })
+                .then(function (updatedRegistration) {
+                  var currentRegistration = updatedRegistration || registration
+                  var newestWorker = currentRegistration.installing || currentRegistration.waiting
+                  if (!newestWorker || newestWorker.state === 'activated') return
+
+                  return new Promise(function (resolve) {
+                    var timeout = window.setTimeout(resolve, 5000)
+                    newestWorker.addEventListener('statechange', function () {
+                      if (newestWorker.state !== 'activated' && newestWorker.state !== 'redundant') return
+                      window.clearTimeout(timeout)
+                      resolve()
+                    })
+                  })
+                })
+                .then(function () {
+                  return navigator.serviceWorker.ready
+                })
+            })
+        }
+
+        function recover(url) {
+          if (recovering || !shouldRecover(url)) return
+          recovering = true
+
+          clearDashboardCaches()
+            .catch(function () {})
+            .then(prepareServiceWorker)
+            .catch(function () {})
+            .then(function () {
+              window.location.reload()
+            })
+        }
+
+        window.addEventListener('error', function (event) {
+          var url = assetUrl(event.target)
+          if (url) recover(url)
+        }, true)
+
+        window.addEventListener('tabspace:dashboard-ready', function () {
+          try {
+            window.sessionStorage.removeItem(recoveryKey)
+          } catch (error) {
+            // Storage can be unavailable in privacy-restricted contexts.
+          }
+        })
+      })()
+    </script>
     <link rel="icon" href="<%= BASE_URL %>favicon.ico">
     <title>Tab Space</title>
   </head>

@@ -1295,3 +1295,32 @@ test('shows and dismisses the service-worker update prompt', async ({ page }) =>
   await toast.getByRole('button', { name: 'Cancel' }).click()
   await expect(toast).toBeHidden()
 })
+
+test('recovers automatically when a hashed application script is served as HTML', async ({ page }) => {
+  let poisonedResponseSent = false
+
+  await page.route(/\/js\/app\.[^/]+\.js$/, route => {
+    if (!poisonedResponseSent) {
+      poisonedResponseSent = true
+      return route.fulfill({
+        status: 200,
+        contentType: 'text/html',
+        headers: {
+          'Cache-Control': 'public, max-age=31536000, immutable',
+          'X-Content-Type-Options': 'nosniff'
+        },
+        body: '<!doctype html><title>Transient asset fallback</title>'
+      })
+    }
+    return route.continue()
+  })
+
+  await openDashboard(page, { initialSessions: sessions })
+
+  await expect(page.getByTestId('session-session-research')).toBeVisible()
+  expect(poisonedResponseSent).toBe(true)
+
+  const errors = runtimeErrors.get(page)
+  expect(errors.some(message => /MIME type|Refused to execute/i.test(message))).toBe(true)
+  errors.length = 0
+})
