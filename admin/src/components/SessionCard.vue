@@ -4,7 +4,7 @@
       :data-testid="embedded ? 'embedded-session-content' : `session-${session.uuid}`">
     <div v-if="!embedded" class="session-header">
       <div class="session-header-left">
-        <div class="tag-btn handle" v-if="showTagBtns && activeTag === '' && !hasSearch" :title="lang.movePrompt">
+        <div class="tag-btn handle" v-if="showTagBtns && activeTag === '' && !hasSearch && !bulkSelectionMode" :title="lang.movePrompt">
           <v-icon name="align-justify" :stroke-width="1.8" style="margin-left:1px"></v-icon>
         </div>
         <div
@@ -25,21 +25,27 @@
         </span>
       </div>
       <div class="session-header-right">
-        <button v-if="canToggleTemporaryExpansion && !isEditingSession(session)"
+        <button v-if="bulkSelectionMode"
+                type="button" class="btn" data-testid="cancel-bulk-select"
+                @click.stop="cancelBulkSelection"
+                :title="lang.cancel" :aria-label="lang.cancel">
+          <v-icon name="x" class="btn-icon"></v-icon>
+        </button>
+        <button v-if="canToggleTemporaryExpansion && !isEditingSession(session) && !bulkSelectionMode"
                 type="button" class="btn" data-testid="toggle-session-expansion"
                 @click.stop="toggleTemporaryExpansion"
                 :title="temporaryExpansionLabel" :aria-label="temporaryExpansionLabel">
           <v-icon :name="temporarilyExpanded ? 'minimize' : 'maximize'" class="btn-icon"></v-icon>
         </button>
-        <button type="button" class="btn" data-testid="restore-session" @click.stop="restore(session.uuid, true, false)"
+        <button v-if="!bulkSelectionMode" type="button" class="btn" data-testid="restore-session" @click.stop="restore(session.uuid, true, false)"
                 :title="lang.openSession || 'Open'" :aria-label="lang.openSession || 'Open'">
           <v-icon name="external-link" class="btn-icon"></v-icon>
         </button>
-        <button type="button" class="btn del-btn" data-testid="delete-session" @click.stop="restore(session.uuid, false, true)"
+        <button v-if="!bulkSelectionMode" type="button" class="btn del-btn" data-testid="delete-session" @click.stop="restore(session.uuid, false, true)"
                 :title="lang.deleteSession || 'Delete'" :aria-label="lang.deleteSession || 'Delete'">
           <v-icon name="trash-2" class="btn-icon"></v-icon>
         </button>
-        <div v-if="activeTag !== '@Trash'" class="export" data-testid="export-session-menu">
+        <div v-if="activeTag !== '@Trash' && !bulkSelectionMode" class="export" data-testid="export-session-menu">
           <button type="button" class="btn" :title="lang.exportSession || 'Export'" :aria-label="lang.exportSession || 'Export'">
             <v-icon name="share-2" class="btn-icon"></v-icon>
           </button>
@@ -48,22 +54,37 @@
       </div>
     </div>
     <ul :class="['session-sites', {'collapsed-sites': compactView}]">
-      <draggable :disabled="embedded || isEditingSession(session) || compactView || hasSearch" :forceFallback="true" fallbackTolerance="10"
+      <draggable :disabled="embedded || isEditingSession(session) || compactView || hasSearch || bulkSelectionMode" :forceFallback="true" fallbackTolerance="10"
       :list="session.sites" group="shared" @start="() => startDragSite(session)" @end="endDragSite">
         <li
           v-for="(entry, visibleIndex) in visibleSiteEntries"
           v-bind:key="`${session.uuid}-${entry.originalIndex}`"
-          :class="{'collapsed-site': compactView}"
+          :class="{
+            'collapsed-site': compactView,
+            'bulk-selectable-site': bulkSelectionMode,
+            'bulk-selected-site': isSiteSelected(entry.originalIndex)
+          }"
           :style="compactView ? { zIndex: visibleIndex + 1 } : null"
           :data-testid="compactView ? 'collapsed-site-icon' : 'visible-site'"
+          @click="bulkSelectionMode && toggleSiteSelection(entry.originalIndex)"
         >
+          <button
+              v-if="bulkSelectionMode"
+              type="button"
+              class="bulk-site-checkbox"
+              data-testid="select-site"
+              :aria-label="`${lang.selectTabs}: ${entry.site.title || entry.site.url}`"
+              :aria-pressed="isSiteSelected(entry.originalIndex) ? 'true' : 'false'"
+              @click.stop="toggleSiteSelection(entry.originalIndex)">
+            <v-icon :name="isSiteSelected(entry.originalIndex) ? 'check-square' : 'square'"></v-icon>
+          </button>
           <div v-if="editingSessionUuid === session.uuid">
             <v-icon name="compass" :stroke-width="1.5" style="margin-bottom: -3px"></v-icon>
             <input class="tab-edit" placeholder="url" type="text" v-model="entry.site.url"><br>
             <v-icon name="corner-down-right" :stroke-width="1" style="margin-left: 30px"></v-icon>
             <input class="tab-edit" placeholder="title" type="text" v-model="entry.site.title">
           </div>
-          <div v-if="!isEditingSession(session) && !compactView" class="del-item" @click="delItem(entry.originalIndex,session)" >
+          <div v-if="!isEditingSession(session) && !compactView && !bulkSelectionMode" class="del-item" @click="delItem(entry.originalIndex,session)" >
             <v-icon name="x" :stroke-width="2" size="14"></v-icon>
           </div>
           <div v-if="!isEditingSession(session)" :class="['fav', {'collapsed-fav': compactView}]">
@@ -74,7 +95,10 @@
                 alt
             />
           </div>
-          <span v-if="!isEditingSession(session) && !compactView" class="site-title">
+          <span v-if="!isEditingSession(session) && !compactView && bulkSelectionMode" class="site-title bulk-site-title">
+            {{ entry.site.title || entry.site.url }}
+          </span>
+          <span v-if="!isEditingSession(session) && !compactView && !bulkSelectionMode" class="site-title">
             <span v-if="tabSpaceSettings['remove-site-after-click'] === 'true'" class="link"
             @click="() => removeAndOpen(entry.originalIndex, session, entry.site.url)">
               <span
@@ -115,7 +139,35 @@
         </li>
       </draggable>
     </ul>
-    <div class="session-tags">
+    <div v-if="bulkSelectionMode" class="bulk-move-bar" data-testid="bulk-move-bar">
+      <div class="bulk-selection-summary">
+        <button type="button" class="bulk-text-button" data-testid="toggle-select-all" @click="toggleSelectAllSites">
+          {{ allSitesSelected ? lang.deselectAllTabs : lang.selectAllTabs }}
+        </button>
+        <span data-testid="selected-tabs-count">{{ selectedTabsLabel }}</span>
+      </div>
+      <div class="bulk-move-controls">
+        <select
+            class="bulk-move-target"
+            data-testid="bulk-move-target"
+            v-model="bulkMoveTargetUuid"
+            :aria-label="lang.moveTabsTo">
+          <option disabled value="">{{ lang.moveTabsTo }}</option>
+          <option v-for="target in bulkMoveTargets" :key="target.uuid" :value="target.uuid">
+            {{ sessionDisplayTitle(target) }} · {{ target.sites.length }} {{ target.sites.length === 1 ? lang.tab : lang.tabs }}
+          </option>
+        </select>
+        <button
+            type="button"
+            class="bulk-move-submit"
+            data-testid="bulk-move-submit"
+            :disabled="selectedSiteIndexes.length === 0 || !bulkMoveTargetUuid"
+            @click="moveSelectedSites">
+          {{ lang.moveSelectedTabs }}
+        </button>
+      </div>
+    </div>
+    <div v-if="!bulkSelectionMode" class="session-tags">
       <div
           class="tag"
           :class="{'search-tag': hasSearch}"
@@ -156,6 +208,11 @@
         ></v-icon>
       </button>
       <div v-if="showTagBtns && !hasSearch" style="display: flex; transition: 3s">
+        <button type="button" class="tag-btn" data-testid="bulk-select-tabs"
+          v-if="canBulkMove" :title="lang.selectTabs" :aria-label="lang.selectTabs"
+          @click.stop="beginBulkSelection">
+          <v-icon name="check-square" :stroke-width="1.5"></v-icon>
+        </button>
         <button type="button" data-testid="edit-session" :title="lang.editPrompt" :aria-label="lang.editPrompt"
         v-if="!embedded && editingSessionUuid !== session.uuid" class="tag-btn"
         @click="() => { editingSessionUuid = session.uuid; session.sites.push({title: '', url: ''})}">
@@ -218,7 +275,11 @@
         WangYeIcon: WangYeIcon,
         tagKeyword: "",
         mergeKeyword: "",
-        temporarilyExpanded: false
+        temporarilyExpanded: false,
+        bulkSelectionMode: false,
+        bulkSelectionPreviousExpansion: false,
+        selectedSiteIndexes: [],
+        bulkMoveTargetUuid: ""
       }
     },
     computed: {
@@ -235,6 +296,29 @@
       },
       canToggleTemporaryExpansion() {
         return this.sessionViewMode === "compact" || this.hasSearch
+      },
+      canBulkMove() {
+        return !this.embedded
+          && !this.hasSearch
+          && !this.isEditingSession(this.session)
+          && this.activeTag !== "@Trash"
+          && this.session.sites.length > 0
+          && this.bulkMoveTargets.length > 0
+      },
+      bulkMoveTargets() {
+        return this.sessions.filter(session => (
+          session.uuid !== this.session.uuid
+          && !session.uuid.startsWith("new-")
+          && !session.tags.some(tag => tag.name === "@Trash")
+        ))
+      },
+      allSitesSelected() {
+        return this.session.sites.length > 0
+          && this.selectedSiteIndexes.length === this.session.sites.length
+      },
+      selectedTabsLabel() {
+        return (this.lang.selectedTabs || "{count} selected")
+          .replace("{count}", this.selectedSiteIndexes.length)
       },
       temporaryExpansionLabel() {
         return this.temporarilyExpanded
@@ -282,13 +366,81 @@
         this.mergeEditorId = false
       },
       keyword() {
+        if (this.bulkSelectionMode) this.cancelBulkSelection()
         this.temporarilyExpanded = false
       },
       sessionViewMode() {
+        if (this.bulkSelectionMode) this.cancelBulkSelection()
         this.temporarilyExpanded = false
       }
     },
     methods: {
+      beginBulkSelection() {
+        if (!this.canBulkMove) return
+        this.bulkSelectionPreviousExpansion = this.temporarilyExpanded
+        this.temporarilyExpanded = true
+        this.selectedSiteIndexes = []
+        this.bulkMoveTargetUuid = ""
+        this.tagEditorId = false
+        this.mergeEditorId = false
+        this.bulkSelectionMode = true
+      },
+      cancelBulkSelection() {
+        this.bulkSelectionMode = false
+        this.selectedSiteIndexes = []
+        this.bulkMoveTargetUuid = ""
+        this.temporarilyExpanded = this.bulkSelectionPreviousExpansion
+      },
+      isSiteSelected(index) {
+        return this.selectedSiteIndexes.includes(index)
+      },
+      toggleSiteSelection(index) {
+        if (!this.bulkSelectionMode || index < 0 || index >= this.session.sites.length) return
+        if (this.isSiteSelected(index)) {
+          this.selectedSiteIndexes = this.selectedSiteIndexes.filter(selectedIndex => selectedIndex !== index)
+        } else {
+          this.selectedSiteIndexes = [...this.selectedSiteIndexes, index].sort((a, b) => a - b)
+        }
+      },
+      toggleSelectAllSites() {
+        this.selectedSiteIndexes = this.allSitesSelected
+          ? []
+          : this.session.sites.map((site, index) => index)
+      },
+      sessionDisplayTitle(session) {
+        return session.title || `${this.lang.saveAt} ${(new Date(Number(session.timestamp))).Format('yyyy-MM-dd hh:mm')}`
+      },
+      moveSelectedSites() {
+        if (this.selectedSiteIndexes.length === 0) return
+        const source = this.getSessionById(this.session.uuid)
+        const target = this.getSessionById(this.bulkMoveTargetUuid)
+        if (!source || !target || source.uuid === target.uuid) return
+
+        const selectedIndexes = new Set(this.selectedSiteIndexes)
+        const movingSites = source.sites.filter((site, index) => selectedIndexes.has(index))
+        if (movingSites.length === 0) return
+
+        const sourceAfterMove = {
+          ...source,
+          sites: source.sites.filter((site, index) => !selectedIndexes.has(index))
+        }
+        const targetAfterMove = {
+          ...target,
+          sites: [...target.sites, ...movingSites]
+        }
+
+        this.moveSitesLegacy(sourceAfterMove, targetAfterMove)
+        this.cancelBulkSelection()
+      },
+      moveSitesLegacy(source, target) {
+        // TODO(native-protocol-v2): Prefer an atomic MoveSites command once
+        // it is supported broadly. Keep this two-command fallback for older apps.
+        this.bridge.send({ cmd: "UpdateSession", bookmarks: [target] })
+        this.bridge.send({
+          cmd: source.sites.length === 0 ? "DeleteSession" : "UpdateSession",
+          bookmarks: [source]
+        })
+      },
       toggleTemporaryExpansion() {
         this.temporarilyExpanded = !this.temporarilyExpanded
       },
@@ -372,7 +524,7 @@
         }
       },
       editSessionName(id) {
-        if (this.hasSearch) return
+        if (this.hasSearch || this.bulkSelectionMode) return
         this.activeId = id
         const div = document.querySelector(`#id${id}`)
         div.setAttribute('contentEditable', "true")
@@ -647,6 +799,56 @@
     min-width: 0;
   }
 
+  .bulk-selectable-site {
+    cursor: pointer;
+  }
+
+  .bulk-selected-site {
+    background-color: rgba(250, 128, 114, 0.12);
+  }
+
+  .bulk-selected-site:hover {
+    background-color: rgba(250, 128, 114, 0.18);
+  }
+
+  .bulk-site-checkbox {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    flex: 0 0 26px;
+    margin: 0 4px 0 -4px;
+    padding: 3px;
+    border: 0;
+    border-radius: 5px;
+    color: var(--text-secondary, #718096);
+    cursor: pointer;
+    background: transparent;
+  }
+
+  .bulk-site-checkbox:hover {
+    color: var(--text-primary, #2d3748);
+    background-color: rgba(0, 0, 0, 0.06);
+  }
+
+  .bulk-site-checkbox svg {
+    width: 17px;
+    height: 17px;
+    stroke: currentColor !important;
+  }
+
+  .bulk-selected-site .bulk-site-checkbox {
+    color: #b8452b;
+  }
+
+  .bulk-site-title {
+    padding: 2px 4px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
   .site-title .link {
     display: block;
     white-space: nowrap;
@@ -670,6 +872,96 @@
     user-select: none; 
     transition: 0.2s;
     margin: 0 0 0 -45px;
+  }
+
+  .bulk-move-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin: 8px 0 8px -8px;
+    padding: 10px 12px;
+    border: 1px solid rgba(184, 69, 43, 0.24);
+    border-radius: 8px;
+    background-color: rgba(250, 128, 114, 0.08);
+  }
+
+  .bulk-selection-summary,
+  .bulk-move-controls {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .bulk-selection-summary {
+    flex-shrink: 0;
+    color: var(--text-secondary, #718096);
+    font-size: 12px;
+  }
+
+  .bulk-text-button {
+    padding: 0;
+    border: 0;
+    color: #b8452b;
+    font: inherit;
+    font-weight: 600;
+    cursor: pointer;
+    background: transparent;
+  }
+
+  .bulk-text-button:hover {
+    text-decoration: underline;
+  }
+
+  .bulk-move-controls {
+    min-width: 0;
+    flex: 1;
+    justify-content: flex-end;
+  }
+
+  .bulk-move-target {
+    min-width: 0;
+    max-width: 300px;
+    height: 32px;
+    padding: 0 28px 0 9px;
+    border: 1px solid var(--border-color, #e2e8f0);
+    border-radius: 6px;
+    color: var(--text-primary, #2d3748);
+    background-color: var(--card-bg, #ffffff);
+  }
+
+  .bulk-move-submit {
+    min-height: 32px;
+    padding: 5px 12px;
+    border: 0;
+    border-radius: 6px;
+    color: white;
+    font: inherit;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    background-color: #b8452b;
+  }
+
+  .bulk-move-submit:disabled {
+    opacity: 0.45;
+    cursor: default;
+  }
+
+  @media (max-width: 700px) {
+    .bulk-move-bar {
+      align-items: stretch;
+      flex-direction: column;
+    }
+
+    .bulk-move-controls {
+      justify-content: stretch;
+    }
+
+    .bulk-move-target {
+      max-width: none;
+      flex: 1;
+    }
   }
 
   .collapsed-sites {

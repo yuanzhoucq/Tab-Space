@@ -285,6 +285,94 @@ async function bridgeCommandCount(page, name) {
   ), name)
 }
 
+test('selects and moves multiple tabs to an existing session', async ({ page }) => {
+  const bulkMoveSessions = [
+    {
+      ...sessions[0],
+      sites: [
+        ...sessions[0].sites,
+        { title: 'Keep in Research', url: 'https://example.com/keep' }
+      ]
+    },
+    sessions[1]
+  ]
+  await openDashboard(page, { initialSessions: bulkMoveSessions })
+
+  const research = page.getByTestId('session-session-research')
+  await research.hover()
+  await research.getByTestId('bulk-select-tabs').click()
+  await expect(research.getByTestId('bulk-move-bar')).toBeVisible()
+  await expect(research.getByTestId('selected-tabs-count')).toHaveText('0 selected')
+  await expect(research.locator('.del-item')).toHaveCount(0)
+  await expect(research.getByTestId('restore-session')).toHaveCount(0)
+
+  await research.getByTestId('select-site').nth(0).click()
+  await research.getByTestId('select-site').nth(1).click()
+  await expect(research.getByTestId('selected-tabs-count')).toHaveText('2 selected')
+  await expect(research.getByTestId('bulk-move-submit')).toBeDisabled()
+
+  await research.getByTestId('bulk-move-target').selectOption('session-reading')
+  await expect(research.getByTestId('bulk-move-submit')).toBeEnabled()
+  await research.getByTestId('bulk-move-submit').click()
+
+  await expect.poll(() => page.evaluate(() => {
+    return window.__tabspaceBridgeCommands
+      .filter(command => command.name === 'UpdateSession')
+      .map(command => ({
+        uuid: command.payload.bookmarks[0].uuid,
+        titles: command.payload.bookmarks[0].sites.map(site => site.title)
+      }))
+  })).toEqual([
+    {
+      uuid: 'session-reading',
+      titles: ['GitHub Actions', 'OpenAI', 'Cloudflare Pages']
+    },
+    {
+      uuid: 'session-research',
+      titles: ['Keep in Research']
+    }
+  ])
+
+  await expect(research.getByTestId('visible-site')).toHaveCount(1)
+  await expect(research).toContainText('Keep in Research')
+  const reading = page.getByTestId('session-session-reading')
+  await expect(reading.getByTestId('visible-site')).toHaveCount(3)
+  await expect(reading).toContainText('OpenAI')
+  await expect(reading).toContainText('Cloudflare Pages')
+})
+
+test('selects all tabs and removes the empty source session', async ({ page }) => {
+  await openDashboard(page, { initialSessions: sessions })
+
+  const research = page.getByTestId('session-session-research')
+  await research.hover()
+  await research.getByTestId('bulk-select-tabs').click()
+  await research.getByTestId('toggle-select-all').click()
+  await expect(research.getByTestId('selected-tabs-count')).toHaveText('2 selected')
+  await expect(research.getByTestId('toggle-select-all')).toHaveText('Deselect all')
+
+  await research.getByTestId('bulk-move-target').selectOption('session-reading')
+  await research.getByTestId('bulk-move-submit').click()
+
+  await expect.poll(() => lastBridgeCommand(page, 'UpdateSession')).toMatchObject({
+    payload: {
+      bookmarks: [{
+        uuid: 'session-reading',
+        sites: [
+          { title: 'GitHub Actions' },
+          { title: 'OpenAI' },
+          { title: 'Cloudflare Pages' }
+        ]
+      }]
+    }
+  })
+  await expect.poll(() => lastBridgeCommand(page, 'DeleteSession')).toMatchObject({
+    payload: { bookmarks: [{ uuid: 'session-research', sites: [] }] }
+  })
+  await expect(research).toHaveCount(0)
+  await expect(page.getByTestId('session-session-reading').getByTestId('visible-site')).toHaveCount(3)
+})
+
 test('loads, searches, filters and counts sessions', async ({ page }) => {
   await openDashboard(page, { initialSessions: sessions })
 
