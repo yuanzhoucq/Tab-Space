@@ -31,6 +31,7 @@
   "retry": "Retry",
   "appNotDetected": "Tab Space app not detected",
   "appNotDetectedTip": "Save and manage your Safari tabs with Tab Space.",
+  "extensionPermissionHint": "Click the Tab Space extension button in Safari and choose “Always Allow on Every Website”; otherwise, Tab Space cannot access your tabs.",
   "getTabSpace": "Get Tab Space",
   "noSessions": "No saved sessions yet.",
   "openBundledDashboard": "Open bundled dashboard",

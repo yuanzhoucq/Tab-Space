@@ -25,6 +25,7 @@
   "retry": "Повторити",
   "appNotDetected": "Застосунок Tab Space не виявлено",
   "appNotDetectedTip": "Зберігайте вкладки Safari та керуйте ними за допомогою Tab Space.",
+  "extensionPermissionHint": "Натисніть кнопку розширення Tab Space у Safari та виберіть «Always Allow on Every Website», інакше Tab Space не матиме доступу до ваших вкладок.",
   "getTabSpace": "Отримати Tab Space",
   "noSessions": "Збережених сесій поки немає.",
   "openBundledDashboard": "Відкрити вбудовану панель",

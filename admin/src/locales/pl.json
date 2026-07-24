@@ -25,6 +25,7 @@
   "retry": "Spróbuj ponownie",
   "appNotDetected": "Nie wykryto aplikacji Tab Space",
   "appNotDetectedTip": "Zapisuj karty Safari i zarządzaj nimi za pomocą Tab Space.",
+  "extensionPermissionHint": "Kliknij przycisk rozszerzenia Tab Space w Safari i wybierz „Always Allow on Every Website”; w przeciwnym razie Tab Space nie będzie mieć dostępu do kart.",
   "getTabSpace": "Pobierz Tab Space",
   "noSessions": "Nie ma jeszcze zapisanych sesji.",
   "openBundledDashboard": "Otwórz wbudowany panel",

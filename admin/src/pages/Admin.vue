@@ -25,6 +25,9 @@
       <div v-else-if="!nativeDetected" class="connection-state prospect-state">
         <h2>{{lang.appNotDetected}}</h2>
         <p class="connection-detail">{{lang.appNotDetectedTip}}</p>
+        <p class="connection-permission-hint" data-testid="extension-permission-hint">
+          {{lang.extensionPermissionHint}}
+        </p>
         <div class="connection-actions">
           <a class="primary-button"
              href="https://mytab.space"
@@ -302,6 +305,13 @@
     line-height: 1.5;
   }
 
+  .connection-permission-hint {
+    color: #555555;
+    line-height: 1.5;
+    margin: 14px auto 0;
+    max-width: 520px;
+  }
+
   .prospect-state h2 {
     color: #333333;
     font-size: 22px;
@@ -411,6 +421,7 @@
 
     .connection-state,
     .connection-detail,
+    .connection-permission-hint,
     .empty-state {
       color: #bdbdbd;
     }

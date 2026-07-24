@@ -31,6 +31,7 @@
   "retry": "Réessayer",
   "appNotDetected": "L’app Tab Space n’a pas été détectée",
   "appNotDetectedTip": "Enregistrez et gérez vos onglets Safari avec Tab Space.",
+  "extensionPermissionHint": "Cliquez sur le bouton de l’extension Tab Space dans Safari et choisissez « Always Allow on Every Website » ; sinon, Tab Space ne pourra pas accéder à vos onglets.",
   "getTabSpace": "Obtenir Tab Space",
   "noSessions": "Aucune session enregistrée pour le moment.",
   "openBundledDashboard": "Ouvrir le tableau de bord intégré",

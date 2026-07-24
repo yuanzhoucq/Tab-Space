@@ -25,6 +25,7 @@
   "retry": "Erneut versuchen",
   "appNotDetected": "Tab Space-App nicht erkannt",
   "appNotDetectedTip": "Speichere und verwalte deine Safari-Tabs mit Tab Space.",
+  "extensionPermissionHint": "Klicke in Safari auf die Schaltfläche der Tab Space-Erweiterung und wähle „Always Allow on Every Website“; andernfalls kann Tab Space nicht auf deine Tabs zugreifen.",
   "getTabSpace": "Tab Space laden",
   "noSessions": "Noch keine gespeicherten Sitzungen.",
   "openBundledDashboard": "Integriertes Dashboard öffnen",

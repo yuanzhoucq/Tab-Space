@@ -25,6 +25,7 @@
   "retry": "Yeniden dene",
   "appNotDetected": "Tab Space uygulaması algılanmadı",
   "appNotDetectedTip": "Safari sekmelerinizi Tab Space ile kaydedin ve yönetin.",
+  "extensionPermissionHint": "Safari’de Tab Space uzantısı düğmesine tıklayın ve “Always Allow on Every Website” seçeneğini seçin; aksi takdirde Tab Space sekmelerinize erişemez.",
   "getTabSpace": "Tab Space’i edinin",
   "noSessions": "Henüz kaydedilmiş oturum yok.",
   "openBundledDashboard": "Yerleşik panoyu aç",

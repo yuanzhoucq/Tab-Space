@@ -25,6 +25,7 @@
   "retry": "Reintentar",
   "appNotDetected": "No se detectó la app Tab Space",
   "appNotDetectedTip": "Guarda y administra tus pestañas de Safari con Tab Space.",
+  "extensionPermissionHint": "Haz clic en el botón de la extensión Tab Space en Safari y elige “Always Allow on Every Website”; de lo contrario, Tab Space no podrá acceder a tus pestañas.",
   "getTabSpace": "Obtener Tab Space",
   "noSessions": "Aún no hay sesiones guardadas.",
   "openBundledDashboard": "Abrir panel integrado",

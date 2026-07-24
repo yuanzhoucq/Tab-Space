@@ -25,6 +25,7 @@
   "retry": "Riprova",
   "appNotDetected": "App Tab Space non rilevata",
   "appNotDetectedTip": "Salva e gestisci le schede di Safari con Tab Space.",
+  "extensionPermissionHint": "Fai clic sul pulsante dell’estensione Tab Space in Safari e scegli “Always Allow on Every Website”; in caso contrario, Tab Space non potrà accedere alle tue schede.",
   "getTabSpace": "Ottieni Tab Space",
   "noSessions": "Non ci sono ancora sessioni salvate.",
   "openBundledDashboard": "Apri la dashboard integrata",

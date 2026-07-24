@@ -31,6 +31,7 @@
   "retry": "إعادة المحاولة",
   "appNotDetected": "لم يتم اكتشاف تطبيق Tab Space",
   "appNotDetectedTip": "احفظ علامات تبويب Safari وأدرها باستخدام Tab Space.",
+  "extensionPermissionHint": "انقر على زر إضافة Tab Space في Safari واختر “Always Allow on Every Website”، وإلا فلن يتمكن Tab Space من الوصول إلى علامات التبويب.",
   "getTabSpace": "الحصول على Tab Space",
   "noSessions": "لا توجد جلسات محفوظة بعد.",
   "openBundledDashboard": "فتح لوحة التحكم المضمّنة",
