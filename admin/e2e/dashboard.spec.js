@@ -791,6 +791,66 @@ test('creates a session and appends it through the native bridge', async ({ page
   await expect(page.locator('.session').first()).toContainText('New tab')
 })
 
+test('edits a complete session with modern controls and can cancel or save', async ({ page }) => {
+  await openDashboard(page, { initialSessions: sessions })
+  const card = page.getByTestId('session-session-research')
+  const updateCount = await bridgeCommandCount(page, 'UpdateSession')
+
+  await card.hover()
+  await card.getByTestId('edit-session').click()
+  await expect(card).toHaveClass(/session-editing/)
+  await expect(card.getByTestId('session-title-input')).toBeFocused()
+  await expect(card.getByTestId('cancel-session-edit')).toBeVisible()
+  await expect(card.getByTestId('save-session')).toHaveText('Save changes')
+  await expect(card.getByTestId('restore-session')).toHaveCount(0)
+  await expect(card.getByTestId('delete-session')).toHaveCount(0)
+  await expect(card.getByTestId('export-session-menu')).toHaveCount(0)
+  await expect(card.getByTestId('add-tag')).toHaveCount(0)
+  await expect(card.getByTestId('toggle-favorite')).toHaveCount(0)
+  await expect(card.getByTestId('edit-site-url')).toHaveCount(2)
+  await expect(card.getByTestId('edit-site-title')).toHaveCount(2)
+  await expect.poll(() => card.getByTestId('save-session').evaluate(element => getComputedStyle(element).minHeight))
+    .toBe('34px')
+
+  await card.getByTestId('session-title-input').fill('Discarded title')
+  await card.getByTestId('edit-site-title').first().fill('Discarded tab')
+  await card.getByTestId('remove-edit-site').nth(1).click()
+  await card.getByTestId('add-edit-site').click()
+  await expect(card.getByTestId('edit-site-url')).toHaveCount(2)
+  await card.getByTestId('cancel-session-edit').click()
+
+  await expect(card).not.toHaveClass(/session-editing/)
+  await expect(card.locator('.session-title')).toHaveText('Research')
+  await expect(card.getByTestId('visible-site')).toHaveCount(2)
+  await expect(card).toContainText('OpenAI')
+  await expect(card).toContainText('Cloudflare Pages')
+  await expect.poll(() => bridgeCommandCount(page, 'UpdateSession')).toBe(updateCount)
+
+  await card.hover()
+  await card.getByTestId('edit-session').click()
+  await card.getByTestId('session-title-input').fill('Modern research')
+  await card.getByTestId('edit-site-title').first().fill('OpenAI home')
+  await card.getByTestId('add-edit-site').click()
+  await card.getByTestId('edit-site-url').last().fill('https://example.com/reference')
+  await card.getByTestId('session-title-input').press('Control+Enter')
+
+  await expect.poll(() => lastBridgeCommand(page, 'UpdateSession')).toMatchObject({
+    payload: {
+      bookmarks: [{
+        uuid: 'session-research',
+        title: 'Modern research',
+        sites: [
+          { title: 'OpenAI home', url: 'https://openai.com' },
+          { title: 'Cloudflare Pages', url: 'https://developers.cloudflare.com/pages/' },
+          { title: 'https://example.com/reference', url: 'https://example.com/reference' }
+        ]
+      }]
+    }
+  })
+  await expect(card).not.toHaveClass(/session-editing/)
+  await expect(card.locator('.session-title')).toHaveText('Modern research')
+})
+
 test('edits a session and sends changes through the native bridge', async ({ page }) => {
   await openDashboard(page, { initialSessions: sessions })
   const card = page.getByTestId('session-session-research')

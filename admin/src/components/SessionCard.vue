@@ -1,13 +1,24 @@
 <template>
-  <div :class="embedded ? 'embedded-session' : 'session'"
+  <div :class="[embedded ? 'embedded-session' : 'session', {'session-editing': isEditingSession(session)}]"
       :id="embedded ? null : session.uuid"
-      :data-testid="embedded ? 'embedded-session-content' : `session-${session.uuid}`">
+      :data-testid="embedded ? 'embedded-session-content' : `session-${session.uuid}`"
+      @keydown="handleSessionEditKeydown($event, session)">
     <div v-if="!embedded" class="session-header">
       <div class="session-header-left">
-        <div class="tag-btn handle" v-if="showTagBtns && activeTag === '' && !hasSearch && !bulkSelectionMode" :title="lang.movePrompt">
+        <div class="tag-btn handle" v-if="showTagBtns && activeTag === '' && !hasSearch && !bulkSelectionMode && !isEditingSession(session)" :title="lang.movePrompt">
           <v-icon name="align-justify" :stroke-width="1.8" style="margin-left:1px"></v-icon>
         </div>
+        <input
+            v-if="isEditingSession(session)"
+            ref="sessionTitleInput"
+            class="session-title-edit"
+            data-testid="session-title-input"
+            v-model="session.title"
+            type="text"
+            :placeholder="lang.sessionTitle"
+            :aria-label="lang.sessionTitle">
         <div
+            v-else
             class="session-title"
             :id="'id'+session.uuid"
             @click.stop="editSessionName(session.uuid)"
@@ -25,6 +36,27 @@
         </span>
       </div>
       <div class="session-header-right">
+        <template v-if="isEditingSession(session)">
+          <button
+              type="button"
+              class="btn edit-cancel-btn"
+              data-testid="cancel-session-edit"
+              @click.stop="cancelSessionEdit(session)"
+              :title="lang.cancel"
+              :aria-label="lang.cancel">
+            <v-icon name="x" class="btn-icon"></v-icon>
+          </button>
+          <button
+              type="button"
+              class="btn edit-save-btn"
+              data-testid="save-session"
+              @click.stop="saveSessionEdit(session)"
+              :title="lang.saveChanges"
+              :aria-label="lang.saveChanges">
+            <v-icon name="check" class="btn-icon"></v-icon>
+            <span>{{ lang.saveChanges }}</span>
+          </button>
+        </template>
         <button v-if="bulkSelectionMode"
                 type="button" class="btn" data-testid="cancel-bulk-select"
                 @click.stop="cancelBulkSelection"
@@ -37,15 +69,15 @@
                 :title="temporaryExpansionLabel" :aria-label="temporaryExpansionLabel">
           <v-icon :name="temporarilyExpanded ? 'minimize' : 'maximize'" class="btn-icon"></v-icon>
         </button>
-        <button v-if="!bulkSelectionMode" type="button" class="btn" data-testid="restore-session" @click.stop="restore(session.uuid, true, false)"
+        <button v-if="!bulkSelectionMode && !isEditingSession(session)" type="button" class="btn" data-testid="restore-session" @click.stop="restore(session.uuid, true, false)"
                 :title="lang.openSession || 'Open'" :aria-label="lang.openSession || 'Open'">
           <v-icon name="external-link" class="btn-icon"></v-icon>
         </button>
-        <button v-if="!bulkSelectionMode" type="button" class="btn del-btn" data-testid="delete-session" @click.stop="restore(session.uuid, false, true)"
+        <button v-if="!bulkSelectionMode && !isEditingSession(session)" type="button" class="btn del-btn" data-testid="delete-session" @click.stop="restore(session.uuid, false, true)"
                 :title="lang.deleteSession || 'Delete'" :aria-label="lang.deleteSession || 'Delete'">
           <v-icon name="trash-2" class="btn-icon"></v-icon>
         </button>
-        <div v-if="activeTag !== '@Trash' && !bulkSelectionMode" class="export" data-testid="export-session-menu">
+        <div v-if="activeTag !== '@Trash' && !bulkSelectionMode && !isEditingSession(session)" class="export" data-testid="export-session-menu">
           <button type="button" class="btn" :title="lang.exportSession || 'Export'" :aria-label="lang.exportSession || 'Export'">
             <v-icon name="share-2" class="btn-icon"></v-icon>
           </button>
@@ -54,7 +86,7 @@
       </div>
     </div>
     <ul
-        :class="['session-sites', {'collapsed-sites': compactView}]"
+        :class="['session-sites', {'collapsed-sites': compactView, 'editing-sites': isEditingSession(session)}]"
         data-testid="site-list"
         :data-site-drag-enabled="canDragSites ? 'true' : 'false'">
       <draggable
@@ -68,12 +100,23 @@
           @start="() => startDragSite(session)"
           @end="endDragSite">
         <li
+            slot="header"
+            v-if="isEditingSession(session)"
+            class="site-editor-columns"
+            aria-hidden="true">
+          <span></span>
+          <span>URL</span>
+          <span>{{ lang.tabTitle }}</span>
+          <span></span>
+        </li>
+        <li
           v-for="(entry, visibleIndex) in visibleSiteEntries"
           v-bind:key="`${session.uuid}-${entry.originalIndex}`"
           :class="{
             'collapsed-site': compactView,
             'bulk-selectable-site': bulkSelectionMode,
-            'bulk-selected-site': isSiteSelected(entry.originalIndex)
+            'bulk-selected-site': isSiteSelected(entry.originalIndex),
+            'editing-site-row': isEditingSession(session)
           }"
           :style="compactView ? { zIndex: visibleIndex + 1 } : null"
           :data-testid="compactView ? 'collapsed-site-icon' : 'visible-site'"
@@ -89,11 +132,35 @@
               @click.stop="toggleSiteSelection(entry.originalIndex)">
             <v-icon :name="isSiteSelected(entry.originalIndex) ? 'check-square' : 'square'"></v-icon>
           </button>
-          <div v-if="editingSessionUuid === session.uuid">
-            <v-icon name="compass" :stroke-width="1.5" style="margin-bottom: -3px"></v-icon>
-            <input class="tab-edit" placeholder="url" type="text" v-model="entry.site.url"><br>
-            <v-icon name="corner-down-right" :stroke-width="1" style="margin-left: 30px"></v-icon>
-            <input class="tab-edit" placeholder="title" type="text" v-model="entry.site.title">
+          <div v-if="isEditingSession(session)" class="site-editor">
+            <span class="site-editor-index" aria-hidden="true">{{ entry.originalIndex + 1 }}</span>
+            <div class="site-edit-field">
+              <input
+                  class="tab-edit"
+                  data-testid="edit-site-url"
+                  placeholder="https://"
+                  aria-label="URL"
+                  type="text"
+                  v-model="entry.site.url">
+            </div>
+            <div class="site-edit-field">
+              <input
+                  class="tab-edit"
+                  data-testid="edit-site-title"
+                  :placeholder="lang.tabTitle"
+                  :aria-label="lang.tabTitle"
+                  type="text"
+                  v-model="entry.site.title">
+            </div>
+            <button
+                type="button"
+                class="remove-edit-site"
+                data-testid="remove-edit-site"
+                @click.stop="removeEditedSite(entry.originalIndex)"
+                :title="lang.delete"
+                :aria-label="lang.delete">
+              <v-icon name="trash-2"></v-icon>
+            </button>
           </div>
           <div v-if="!isEditingSession(session) && !compactView && !bulkSelectionMode" class="del-item" @click="delItem(entry.originalIndex,session)" >
             <v-icon name="x" :stroke-width="2" size="14"></v-icon>
@@ -143,10 +210,11 @@
         >
           +{{ collapsedOverflowCount }}
         </li>
-        <li v-if="isEditingSession(session)">
-          <div class="tag-btn" @click="() => { session.sites.push({title: '', url: ''}) }">
-            <v-icon name="file-plus" :stroke-width="2" stroke="green"></v-icon>
-          </div>
+        <li slot="footer" v-if="isEditingSession(session)" class="add-edit-site-row">
+          <button type="button" class="add-edit-site" data-testid="add-edit-site" @click="addEditedSite">
+            <v-icon name="plus"></v-icon>
+            <span>{{ lang.addTab }}</span>
+          </button>
         </li>
       </draggable>
     </ul>
@@ -189,9 +257,9 @@
     <div v-if="!bulkSelectionMode" class="session-tags">
       <div
           class="tag"
-          :class="{'search-tag': hasSearch}"
+          :class="{'search-tag': hasSearch || isEditingSession(session)}"
           v-for="tag in visibleTags(session)"
-          @click="hasSearch ? null : removeTag(tag.name, session)"
+          @click="hasSearch || isEditingSession(session) ? null : removeTag(tag.name, session)"
           v-bind:key="tag.name"
           :title="tag.name === '@Trash' ? (lang.restore || '') : ''"
       >
@@ -202,7 +270,7 @@
         >{{ part.text }}</span>
       </div>
       <button type="button" class="tag-btn" data-testid="add-tag" :title="lang.tagPrompt" :aria-label="lang.tagPrompt"
-              v-if="!hasSearch && tagEditorId !== session.uuid" @click="e => addTag(e, session.uuid)">
+              v-if="!hasSearch && !isEditingSession(session) && tagEditorId !== session.uuid" @click="e => addTag(e, session.uuid)">
         <v-icon name="tag" style="margin-bottom: -4px" :stroke-width="1.5"></v-icon>
       </button>
       <div v-if="tagEditorId === session.uuid" class="tag-autocomplete">
@@ -240,27 +308,23 @@
           </ul>
         </div>
       </div>
-      <button type="button" class="tag-btn" data-testid="toggle-favorite" v-if="!hasSearch && (showTagBtns || isFavorite(session))"
+      <button type="button" class="tag-btn" data-testid="toggle-favorite" v-if="!hasSearch && !isEditingSession(session) && (showTagBtns || isFavorite(session))"
               :aria-label="lang.favorite || 'Favorite'" @click="() => toggleFavorite(session)">
         <v-icon name="star" :stroke-width="1.5"
         :fill="isFavorite(session) ? 'salmon' : 'none'"
         :stroke="isFavorite(session) ? 'salmon' : 'currentColor'"
         ></v-icon>
       </button>
-      <div v-if="showTagBtns && !hasSearch" style="display: flex; transition: 3s">
+      <div v-if="showTagBtns && !hasSearch && !isEditingSession(session)" style="display: flex; transition: 3s">
         <button type="button" class="tag-btn" data-testid="bulk-select-tabs"
           v-if="canBulkMove" :title="lang.selectTabs" :aria-label="lang.selectTabs"
           @click.stop="beginBulkSelection(false)">
           <v-icon name="check-square" :stroke-width="1.5"></v-icon>
         </button>
         <button type="button" data-testid="edit-session" :title="lang.editPrompt" :aria-label="lang.editPrompt"
-        v-if="!embedded && editingSessionUuid !== session.uuid" class="tag-btn"
-        @click="() => { editingSessionUuid = session.uuid; session.sites.push({title: '', url: ''})}">
+        v-if="!embedded && !editingSessionUuid" class="tag-btn"
+        @click="startSessionEdit(session)">
           <v-icon name="edit" :stroke-width="1.5"></v-icon>
-        </button>
-        <button type="button" v-else-if="!embedded" class="tag-btn" data-testid="save-session" :aria-label="lang.editPrompt"
-        @click="() => { editingSessionUuid = ''; updateSession(session) }">
-          <v-icon name="check" :stroke-width="4" stroke="green"></v-icon>
         </button>
         <button type="button" class="tag-btn" data-testid="pin-session" :title="lang.topPrompt" :aria-label="lang.topPrompt"
         @click.stop.prevent="() => upSession(session)">
@@ -299,6 +363,8 @@
         tagKeyword: "",
         tagSuggestionIndex: -1,
         temporarilyExpanded: false,
+        editSnapshot: null,
+        editPreviousExpansion: false,
         bulkSelectionMode: false,
         bulkSelectionPreviousExpansion: false,
         selectedSiteIndexes: [],
@@ -407,10 +473,12 @@
       },
       keyword() {
         if (this.bulkSelectionMode) this.cancelBulkSelection()
+        if (this.isEditingSession(this.session)) this.cancelSessionEdit(this.session)
         this.temporarilyExpanded = false
       },
       sessionViewMode() {
         if (this.bulkSelectionMode) this.cancelBulkSelection()
+        if (this.isEditingSession(this.session)) this.cancelSessionEdit(this.session)
         this.temporarilyExpanded = false
       },
       tagKeyword() {
@@ -418,6 +486,65 @@
       }
     },
     methods: {
+      startSessionEdit(session) {
+        if (this.embedded || this.editingSessionUuid) return
+        this.editSnapshot = {
+          title: session.title,
+          sites: session.sites.map(site => ({...site}))
+        }
+        this.editPreviousExpansion = this.temporarilyExpanded
+        this.temporarilyExpanded = true
+        this.tagEditorId = false
+        this.editingSessionUuid = session.uuid
+        if (session.sites.length === 0) session.sites.push({title: "", url: ""})
+        this.$nextTick(() => {
+          if (this.$refs.sessionTitleInput) this.$refs.sessionTitleInput.focus()
+        })
+      },
+      saveSessionEdit(session) {
+        if (!this.isEditingSession(session)) return
+        this.editingSessionUuid = false
+        this.editSnapshot = null
+        this.temporarilyExpanded = this.editPreviousExpansion
+        this.updateSession(session)
+      },
+      cancelSessionEdit(session) {
+        if (!this.isEditingSession(session)) return
+        const isNewSession = session.uuid.startsWith("new-")
+        if (!isNewSession && this.editSnapshot) {
+          session.title = this.editSnapshot.title
+          session.sites = this.editSnapshot.sites.map(site => ({...site}))
+        }
+        this.editingSessionUuid = false
+        this.editSnapshot = null
+        this.temporarilyExpanded = this.editPreviousExpansion
+        if (isNewSession) {
+          const index = this.sessions.findIndex(item => item.uuid === session.uuid)
+          if (index !== -1) {
+            this.$store.commit("spliceSessions", {start: index, deleteCount: 1, items: []})
+          }
+        }
+      },
+      addEditedSite() {
+        if (!this.isEditingSession(this.session)) return
+        this.session.sites.push({title: "", url: ""})
+      },
+      removeEditedSite(index) {
+        if (!this.isEditingSession(this.session)) return
+        this.session.sites.splice(index, 1)
+      },
+      handleSessionEditKeydown(event, session) {
+        if (!this.isEditingSession(session)) return
+        if (event.key === "Escape") {
+          event.preventDefault()
+          event.stopPropagation()
+          this.cancelSessionEdit(session)
+        } else if (event.key === "Enter" && (event.metaKey || event.ctrlKey)) {
+          event.preventDefault()
+          event.stopPropagation()
+          this.saveSessionEdit(session)
+        }
+      },
       beginBulkSelection(selectAll = false) {
         if (!this.canBulkMove) return
         this.bulkSelectionPreviousExpansion = this.temporarilyExpanded
@@ -513,7 +640,7 @@
       removeSessions(sessions) {
         sessions.forEach(session => {
           if (session.uuid.slice(0,3) === "new") {
-            this.$store.commit("spliceSessions", {start: this.sessions.findIndex(s => s.uuid = session.uuid), deleteCount: 1, items: []})
+            this.$store.commit("spliceSessions", {start: this.sessions.findIndex(s => s.uuid === session.uuid), deleteCount: 1, items: []})
           }
         })
         sessions = sessions.filter(s => s.uuid.slice(0,3) !== "new")
@@ -752,6 +879,25 @@
     z-index: 50;
   }
 
+  .session.session-editing {
+    padding: 16px 18px 14px;
+    border-color: rgba(184, 69, 43, 0.32);
+    box-shadow: 0 12px 32px rgba(45, 55, 72, 0.1);
+  }
+
+  .session.session-editing:hover {
+    transform: none;
+    box-shadow: 0 12px 32px rgba(45, 55, 72, 0.1);
+  }
+
+  .session-editing .session-header {
+    gap: 12px;
+  }
+
+  .session-editing .session-header-left {
+    flex: 1;
+  }
+
   .embedded-session {
     padding: 2px 0 0;
   }
@@ -901,6 +1047,57 @@
     cursor: pointer;
   }
 
+  .session-title-edit {
+    width: 100%;
+    max-width: 420px;
+    min-width: 160px;
+    height: 36px;
+    box-sizing: border-box;
+    padding: 6px 10px;
+    border: 1px solid var(--border-color, #d6dce5);
+    border-radius: 8px;
+    outline: none;
+    color: var(--text-primary, #2d3748);
+    font: inherit;
+    font-size: 17px;
+    font-weight: 650;
+    background-color: var(--card-bg, #ffffff);
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  }
+
+  .session-title-edit:focus {
+    border-color: rgba(184, 69, 43, 0.6);
+    box-shadow: 0 0 0 3px rgba(250, 128, 114, 0.15);
+  }
+
+  .edit-cancel-btn {
+    width: 34px;
+    height: 34px;
+  }
+
+  .btn.edit-save-btn {
+    min-height: 34px;
+    gap: 5px;
+    padding: 6px 12px;
+    margin-right: 0;
+    color: #ffffff;
+    font-size: 12px;
+    font-weight: 650;
+    background-color: #b8452b;
+  }
+
+  .btn.edit-save-btn:hover {
+    color: #ffffff;
+    background-color: #a63d25;
+  }
+
+  .edit-save-btn svg,
+  .edit-save-btn .btn-icon,
+  .edit-save-btn:hover svg,
+  .edit-save-btn:hover .btn-icon {
+    stroke: #ffffff !important;
+  }
+
   .search-match-count {
     color: var(--text-secondary, #718096);
     flex-shrink: 0;
@@ -987,6 +1184,151 @@
     user-select: none; 
     transition: 0.2s;
     margin: 0 0 0 -45px;
+  }
+
+  .editing-sites {
+    margin: 4px 0 0;
+    padding: 0;
+  }
+
+  .editing-sites > div {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+  }
+
+  .site-editor-columns {
+    display: grid;
+    grid-template-columns: 22px minmax(180px, 1.15fr) minmax(160px, 0.85fr) 28px;
+    gap: 8px;
+    box-sizing: border-box;
+    width: 100%;
+    padding: 0 8px 1px;
+    color: var(--text-secondary, #718096);
+    font-size: 10px;
+    font-weight: 650;
+    letter-spacing: 0.04em;
+    list-style: none;
+    text-transform: uppercase;
+  }
+
+  .editing-site-row {
+    width: 100%;
+    min-height: 0;
+    box-sizing: border-box;
+    margin: 0;
+    padding: 6px 8px;
+    border: 1px solid var(--border-color, #e2e8f0);
+    border-radius: 8px;
+    list-style: none;
+    background-color: rgba(113, 128, 150, 0.045);
+  }
+
+  .editing-site-row:hover {
+    background-color: rgba(113, 128, 150, 0.065);
+  }
+
+  .site-editor {
+    display: grid;
+    grid-template-columns: 22px minmax(180px, 1.15fr) minmax(160px, 0.85fr) 28px;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+  }
+
+  .site-editor-index {
+    align-self: center;
+    color: var(--text-secondary, #718096);
+    font-size: 11px;
+    font-variant-numeric: tabular-nums;
+    text-align: center;
+  }
+
+  .site-edit-field {
+    min-width: 0;
+  }
+
+  .tab-edit {
+    width: 100%;
+    height: 31px;
+    box-sizing: border-box;
+    margin: 0;
+    padding: 5px 8px;
+    border: 1px solid var(--border-color, #d6dce5);
+    border-radius: 7px;
+    outline: none;
+    color: var(--text-primary, #2d3748);
+    font: inherit;
+    font-size: 13px;
+    font-weight: 400;
+    letter-spacing: normal;
+    text-transform: none;
+    background-color: var(--card-bg, #ffffff);
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  }
+
+  .tab-edit:focus {
+    border-color: rgba(184, 69, 43, 0.6);
+    box-shadow: 0 0 0 3px rgba(250, 128, 114, 0.13);
+  }
+
+  .remove-edit-site {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 31px;
+    padding: 0;
+    border: 0;
+    border-radius: 7px;
+    color: var(--text-secondary, #718096);
+    cursor: pointer;
+    background: transparent;
+  }
+
+  .remove-edit-site:hover {
+    color: #eb5205;
+    background-color: rgba(235, 82, 5, 0.1);
+  }
+
+  .remove-edit-site svg {
+    width: 15px;
+    height: 15px;
+    stroke: currentColor !important;
+  }
+
+  .add-edit-site-row {
+    margin-top: 2px;
+    padding: 0;
+    list-style: none;
+  }
+
+  .add-edit-site {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    min-height: 31px;
+    padding: 5px 10px;
+    border: 1px dashed rgba(184, 69, 43, 0.4);
+    border-radius: 8px;
+    color: #b8452b;
+    font: inherit;
+    font-size: 12px;
+    font-weight: 650;
+    cursor: pointer;
+    background-color: rgba(250, 128, 114, 0.06);
+  }
+
+  .add-edit-site:hover {
+    border-color: rgba(184, 69, 43, 0.65);
+    background-color: rgba(250, 128, 114, 0.12);
+  }
+
+  .add-edit-site svg {
+    width: 15px;
+    height: 15px;
+    stroke: currentColor !important;
   }
 
   .site-drag-fallback {
@@ -1262,28 +1604,67 @@
     stroke: currentColor;
   }
 
-  .tab-edit {
-    background-color: #dedede;
-    outline: none;
-    border-radius: 3px;
-    border-width: 0;
-    padding-left: 5px;
-    width: 400px;
-    font-size: 14px;
-    height: 18px;
-    line-height: 18px;
-    margin: 4px;
+  @media (max-width: 700px) {
+    .session.session-editing {
+      padding: 14px 12px 12px;
+    }
+
+    .session-title-edit {
+      width: 100%;
+    }
+
+    .session-header-left {
+      flex: 1;
+    }
+
+    .site-editor,
+    .site-editor-columns {
+      grid-template-columns: 18px minmax(0, 1.15fr) minmax(0, 0.85fr) 28px;
+      gap: 6px;
+    }
+
+    .edit-save-btn span {
+      display: none;
+    }
+
+    .edit-save-btn {
+      width: 34px;
+      padding: 6px;
+    }
   }
 
   @media (prefers-color-scheme: dark) {
-    .tab-edit {
-      background-color: #555;
-    }
-
     .session {
       background-color: var(--card-bg, #2a2a2a);
       color: #d0d0d0;
       border-color: #3a3a3a;
+    }
+
+    .session.session-editing {
+      border-color: rgba(250, 128, 114, 0.42);
+      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.28);
+    }
+
+    .session-title-edit,
+    .tab-edit {
+      border-color: #4a5568;
+      color: #f5f5f5;
+      background-color: #30343a;
+    }
+
+    .editing-site-row {
+      border-color: #3f4650;
+      background-color: rgba(255, 255, 255, 0.035);
+    }
+
+    .editing-site-row:hover {
+      background-color: rgba(255, 255, 255, 0.055);
+    }
+
+    .add-edit-site {
+      color: #ff9b8f;
+      border-color: rgba(255, 155, 143, 0.45);
+      background-color: rgba(250, 128, 114, 0.08);
     }
 
     .link {
