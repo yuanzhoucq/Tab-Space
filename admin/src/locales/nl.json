@@ -91,6 +91,8 @@
   "selectedTabs": "{count} geselecteerd",
   "moveTabsTo": "Verplaatsen naar…",
   "moveSelectedTabs": "Verplaatsen",
+  "mergeSelectedSession": "Samenvoegen",
+  "mergeIncludesTags": "Sessietags worden ook samengevoegd.",
   "searchPlaceholder": "Zoek op titel, URL, tag…",
   "nothingHere": "Hier is niets…",
   "favorite": "Favoriet",

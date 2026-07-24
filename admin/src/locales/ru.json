@@ -91,6 +91,8 @@
   "selectedTabs": "Выбрано: {count}",
   "moveTabsTo": "Переместить в…",
   "moveSelectedTabs": "Переместить",
+  "mergeSelectedSession": "Объединить",
+  "mergeIncludesTags": "Теги сессии также будут объединены.",
   "searchPlaceholder": "Поиск по названию, URL, тегу…",
   "nothingHere": "Здесь пусто…",
   "favorite": "Избранное",

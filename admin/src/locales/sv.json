@@ -91,6 +91,8 @@
   "selectedTabs": "{count} valda",
   "moveTabsTo": "Flytta till…",
   "moveSelectedTabs": "Flytta",
+  "mergeSelectedSession": "Slå ihop",
+  "mergeIncludesTags": "Sessionens taggar slås också ihop.",
   "searchPlaceholder": "Sök titel, URL, tagg…",
   "nothingHere": "Inget här…",
   "favorite": "Favorit",

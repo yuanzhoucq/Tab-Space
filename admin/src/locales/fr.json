@@ -91,6 +91,8 @@
   "selectedTabs": "{count} sélectionné(s)",
   "moveTabsTo": "Déplacer vers…",
   "moveSelectedTabs": "Déplacer",
+  "mergeSelectedSession": "Fusionner",
+  "mergeIncludesTags": "Les tags de la session seront également fusionnés.",
   "searchPlaceholder": "Rechercher titre, URL, tag…",
   "nothingHere": "Rien ici…",
   "favorite": "Favori",

@@ -91,6 +91,8 @@
   "selectedTabs": "Вибрано: {count}",
   "moveTabsTo": "Перемістити до…",
   "moveSelectedTabs": "Перемістити",
+  "mergeSelectedSession": "Об’єднати",
+  "mergeIncludesTags": "Теги сесії також буде об’єднано.",
   "searchPlaceholder": "Пошук за назвою, URL, тегом…",
   "nothingHere": "Тут порожньо…",
   "favorite": "Обране",

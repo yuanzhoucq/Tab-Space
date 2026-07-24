@@ -91,6 +91,8 @@
   "selectedTabs": "{count} seçildi",
   "moveTabsTo": "Şuraya taşı…",
   "moveSelectedTabs": "Taşı",
+  "mergeSelectedSession": "Birleştir",
+  "mergeIncludesTags": "Oturum etiketleri de birleştirilecek.",
   "searchPlaceholder": "Başlık, URL, etiket ara…",
   "nothingHere": "Burada bir şey yok…",
   "favorite": "Favori",

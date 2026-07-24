@@ -115,6 +115,12 @@ export function installMockBridge() {
       const source = sessions[indexOf(from.uuid)]
       if (target && source) {
         target.sites.push(...source.sites)
+        const targetTagNames = new Set(target.tags.map(tag => tag.name))
+        target.tags.push(...source.tags.filter(tag => {
+          if (targetTagNames.has(tag.name)) return false
+          targetTagNames.add(tag.name)
+          return true
+        }))
         sessions = sessions.filter(s => s.uuid !== source.uuid)
       }
       emitSessions()

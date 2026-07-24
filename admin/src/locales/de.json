@@ -91,6 +91,8 @@
   "selectedTabs": "{count} ausgewählt",
   "moveTabsTo": "Verschieben nach…",
   "moveSelectedTabs": "Verschieben",
+  "mergeSelectedSession": "Zusammenführen",
+  "mergeIncludesTags": "Die Tags der Sitzung werden ebenfalls zusammengeführt.",
   "searchPlaceholder": "Titel, URL, Tag suchen…",
   "nothingHere": "Hier ist nichts…",
   "favorite": "Favorit",

@@ -140,19 +140,27 @@
       </draggable>
     </ul>
     <div v-if="bulkSelectionMode" class="bulk-move-bar" data-testid="bulk-move-bar">
-      <div class="bulk-selection-summary">
-        <button type="button" class="bulk-text-button" data-testid="toggle-select-all" @click="toggleSelectAllSites">
-          {{ allSitesSelected ? lang.deselectAllTabs : lang.selectAllTabs }}
-        </button>
-        <span data-testid="selected-tabs-count">{{ selectedTabsLabel }}</span>
+      <div class="bulk-selection-copy">
+        <div class="bulk-selection-summary">
+          <button type="button" class="bulk-text-button" data-testid="toggle-select-all" @click="toggleSelectAllSites">
+            {{ allSitesSelected ? lang.deselectAllTabs : lang.selectAllTabs }}
+          </button>
+          <span data-testid="selected-tabs-count">{{ selectedTabsLabel }}</span>
+          <button v-if="embedded" type="button" class="bulk-text-button" data-testid="cancel-bulk-select" @click="cancelBulkSelection">
+            {{ lang.cancel }}
+          </button>
+        </div>
+        <span v-if="allSitesSelected" class="bulk-merge-hint" data-testid="bulk-merge-hint">
+          {{ lang.mergeIncludesTags }}
+        </span>
       </div>
       <div class="bulk-move-controls">
         <select
             class="bulk-move-target"
             data-testid="bulk-move-target"
             v-model="bulkMoveTargetUuid"
-            :aria-label="lang.moveTabsTo">
-          <option disabled value="">{{ lang.moveTabsTo }}</option>
+            :aria-label="bulkActionTargetLabel">
+          <option disabled value="">{{ bulkActionTargetLabel }}</option>
           <option v-for="target in bulkMoveTargets" :key="target.uuid" :value="target.uuid">
             {{ sessionDisplayTitle(target) }} · {{ target.sites.length }} {{ target.sites.length === 1 ? lang.tab : lang.tabs }}
           </option>
@@ -163,7 +171,7 @@
             data-testid="bulk-move-submit"
             :disabled="selectedSiteIndexes.length === 0 || !bulkMoveTargetUuid"
             @click="moveSelectedSites">
-          {{ lang.moveSelectedTabs }}
+          {{ allSitesSelected ? lang.mergeSelectedSession : lang.moveSelectedTabs }}
         </button>
       </div>
     </div>
@@ -210,7 +218,7 @@
       <div v-if="showTagBtns && !hasSearch" style="display: flex; transition: 3s">
         <button type="button" class="tag-btn" data-testid="bulk-select-tabs"
           v-if="canBulkMove" :title="lang.selectTabs" :aria-label="lang.selectTabs"
-          @click.stop="beginBulkSelection">
+          @click.stop="beginBulkSelection(false)">
           <v-icon name="check-square" :stroke-width="1.5"></v-icon>
         </button>
         <button type="button" data-testid="edit-session" :title="lang.editPrompt" :aria-label="lang.editPrompt"
@@ -226,25 +234,11 @@
         @click.stop.prevent="() => upSession(session)">
           <v-icon name="arrow-up-circle" :stroke-width="1.5"></v-icon>
         </button>
-        <button type="button" class="tag-btn" data-testid="merge-session" :title="lang.mergePrompt" :aria-label="lang.mergePrompt" v-if="mergeEditorId !== session.uuid"
-          @click.stop="() => mergeEditorId = session.uuid">
+        <button type="button" class="tag-btn" data-testid="merge-session"
+          v-if="canBulkMove" :title="lang.mergePrompt" :aria-label="lang.mergePrompt"
+          @click.stop="beginBulkSelection(true)">
           <v-icon name="git-merge" :stroke-width="1.8"></v-icon>
         </button>
-        <vue-autosuggest
-          class="autosuggest"
-          id="mergeSuggest"
-          v-if="mergeEditorId === session.uuid"
-          v-model="mergeKeyword"
-          :suggestions="[{data: (() => mergeOptions(session.uuid))()}]"
-          :should-render-suggestions="shouldRenderMergeSuggestions" 
-          :input-props="{id: 'autosuggest__input_merge', placeholder: lang.mergePrompt, autofocus: 'autofocus'}"
-          @blur="closeMergeEditor"
-          @selected="(s) => chooseMerge(s.item, session)"
-        >  
-          <template slot-scope="{suggestion}">
-            <span>{{suggestion.item.title}}</span>
-          </template>
-        </vue-autosuggest>
       </div>
     </div>
   </div>
@@ -271,10 +265,8 @@
       return {
         collapsedVisibleLimit: 10,
         tagEditorId: false,
-        mergeEditorId: false,
         WangYeIcon: WangYeIcon,
         tagKeyword: "",
-        mergeKeyword: "",
         temporarilyExpanded: false,
         bulkSelectionMode: false,
         bulkSelectionPreviousExpansion: false,
@@ -298,8 +290,7 @@
         return this.sessionViewMode === "compact" || this.hasSearch
       },
       canBulkMove() {
-        return !this.embedded
-          && !this.hasSearch
+        return !this.hasSearch
           && !this.isEditingSession(this.session)
           && this.activeTag !== "@Trash"
           && this.session.sites.length > 0
@@ -319,6 +310,9 @@
       selectedTabsLabel() {
         return (this.lang.selectedTabs || "{count} selected")
           .replace("{count}", this.selectedSiteIndexes.length)
+      },
+      bulkActionTargetLabel() {
+        return this.allSitesSelected ? this.lang.mergePrompt : this.lang.moveTabsTo
       },
       temporaryExpansionLabel() {
         return this.temporarilyExpanded
@@ -363,7 +357,6 @@
     watch: {
       showTagBtns() {
         this.tagEditorId = false
-        this.mergeEditorId = false
       },
       keyword() {
         if (this.bulkSelectionMode) this.cancelBulkSelection()
@@ -375,14 +368,15 @@
       }
     },
     methods: {
-      beginBulkSelection() {
+      beginBulkSelection(selectAll = false) {
         if (!this.canBulkMove) return
         this.bulkSelectionPreviousExpansion = this.temporarilyExpanded
         this.temporarilyExpanded = true
-        this.selectedSiteIndexes = []
+        this.selectedSiteIndexes = selectAll
+          ? this.session.sites.map((site, index) => index)
+          : []
         this.bulkMoveTargetUuid = ""
         this.tagEditorId = false
-        this.mergeEditorId = false
         this.bulkSelectionMode = true
       },
       cancelBulkSelection() {
@@ -416,6 +410,12 @@
         const target = this.getSessionById(this.bulkMoveTargetUuid)
         if (!source || !target || source.uuid === target.uuid) return
 
+        if (this.allSitesSelected) {
+          this.bridge.send({ cmd: "MergeSessions", bookmarks: [target, source] })
+          this.cancelBulkSelection()
+          return
+        }
+
         const selectedIndexes = new Set(this.selectedSiteIndexes)
         const movingSites = source.sites.filter((site, index) => selectedIndexes.has(index))
         if (movingSites.length === 0) return
@@ -446,16 +446,6 @@
       },
       highlightParts(value) {
         return highlightedTextParts(value, this.keyword)
-      },
-      mergeOptions(selfUuid) {
-        if (Array.isArray(this.sessions)) {
-          let pattern = ".*" + this.mergeKeyword.toLowerCase().split("").join(".*") + ".*"
-          return this.sessions.filter(session => {
-            let res = session.title.toLowerCase().match(new RegExp(pattern, "gi"))
-            return session.uuid !== selfUuid && (res && res[0]) === session.title.toLowerCase()
-          })
-        }
-        return []
       },
       isEditingSession(session) {
         return this.editingSessionUuid === session.uuid
@@ -574,25 +564,12 @@
         this.setTag(tag.item, session)
         this.tagEditorId = false
       },
-      chooseMerge(session, toSession) {
-        this.bridge.send({ cmd: 'MergeSessions', bookmarks: [toSession, session]})
-        this.mergeEditorId = false
-      },
-      closeMergeEditor() {
-        setTimeout(() => {
-          this.mergeEditorId = false
-          this.mergeKeyword = ""
-        }, 100)
-      },
       removeTag(tag, session) {
         session.tags = session.tags.filter(t => t.name !== tag)
         this.updateSession(session)
       },
       shouldRenderTagSuggestions(size, loading) {
         return size > 0 && (this.tagKeyword === "" || !loading)
-      },
-      shouldRenderMergeSuggestions(size, loading) {
-        return size > 0 && (this.mergeKeyword === "" || !loading)
       },
       isFavorite(session) {
         return Boolean(session.tags.find(t => t.name === "@Favorite"))
@@ -893,10 +870,21 @@
     gap: 10px;
   }
 
+  .bulk-selection-copy {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
+
   .bulk-selection-summary {
     flex-shrink: 0;
     color: var(--text-secondary, #718096);
     font-size: 12px;
+  }
+
+  .bulk-merge-hint {
+    color: var(--text-secondary, #718096);
+    font-size: 11px;
   }
 
   .bulk-text-button {

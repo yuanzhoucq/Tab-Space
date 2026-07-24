@@ -91,6 +91,8 @@
   "selectedTabs": "{count}개 선택됨",
   "moveTabsTo": "다음으로 이동…",
   "moveSelectedTabs": "이동",
+  "mergeSelectedSession": "병합",
+  "mergeIncludesTags": "세션 태그도 함께 병합됩니다.",
   "searchPlaceholder": "제목, URL, 태그 검색…",
   "nothingHere": "여기에는 아무것도 없습니다…",
   "favorite": "즐겨찾기",

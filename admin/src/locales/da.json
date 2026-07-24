@@ -91,6 +91,8 @@
   "selectedTabs": "{count} valgt",
   "moveTabsTo": "Flyt til…",
   "moveSelectedTabs": "Flyt",
+  "mergeSelectedSession": "Flet",
+  "mergeIncludesTags": "Sessionens tags flettes også.",
   "searchPlaceholder": "Søg titel, URL, tag…",
   "nothingHere": "Intet her…",
   "favorite": "Favorit",

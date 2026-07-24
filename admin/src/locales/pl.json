@@ -91,6 +91,8 @@
   "selectedTabs": "Wybrano: {count}",
   "moveTabsTo": "Przenieś do…",
   "moveSelectedTabs": "Przenieś",
+  "mergeSelectedSession": "Scal",
+  "mergeIncludesTags": "Tagi sesji również zostaną scalone.",
   "searchPlaceholder": "Szukaj tytułu, adresu URL, tagu…",
   "nothingHere": "Nic tu nie ma…",
   "favorite": "Ulubione",

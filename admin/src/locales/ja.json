@@ -91,6 +91,8 @@
   "selectedTabs": "{count}件を選択中",
   "moveTabsTo": "移動先…",
   "moveSelectedTabs": "移動",
+  "mergeSelectedSession": "統合",
+  "mergeIncludesTags": "セッションのタグも統合されます。",
   "searchPlaceholder": "タイトル、URL、タグを検索…",
   "nothingHere": "ここには何もありません…",
   "favorite": "お気に入り",

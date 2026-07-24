@@ -91,6 +91,8 @@
   "selectedTabs": "已选择 {count} 项",
   "moveTabsTo": "移动到…",
   "moveSelectedTabs": "移动",
+  "mergeSelectedSession": "合并",
+  "mergeIncludesTags": "会话标签也会合并到目标会话。",
   "searchPlaceholder": "搜索标题、网址、标签…",
   "nothingHere": "这里空空如也…",
   "favorite": "收藏",

@@ -165,7 +165,15 @@ async function openDashboard(page, options = {}) {
           const targetIndex = targetSession ? currentSessions.findIndex(session => session.uuid === targetSession.uuid) : -1
           const sourceIndex = sourceSession ? currentSessions.findIndex(session => session.uuid === sourceSession.uuid) : -1
           if (targetIndex !== -1 && sourceIndex !== -1) {
-            currentSessions[targetIndex].sites.push(...currentSessions[sourceIndex].sites)
+            const target = currentSessions[targetIndex]
+            const source = currentSessions[sourceIndex]
+            target.sites.push(...source.sites)
+            const targetTagNames = new Set(target.tags.map(tag => tag.name))
+            target.tags.push(...source.tags.filter(tag => {
+              if (targetTagNames.has(tag.name)) return false
+              targetTagNames.add(tag.name)
+              return true
+            }))
             currentSessions = currentSessions.filter(session => session.uuid !== sourceSession.uuid)
           }
           returnBookmarks()
@@ -341,36 +349,33 @@ test('selects and moves multiple tabs to an existing session', async ({ page }) 
   await expect(reading).toContainText('Cloudflare Pages')
 })
 
-test('selects all tabs and removes the empty source session', async ({ page }) => {
+test('uses the merge shortcut to select all tabs and merge session tags', async ({ page }) => {
   await openDashboard(page, { initialSessions: sessions })
 
   const research = page.getByTestId('session-session-research')
   await research.hover()
-  await research.getByTestId('bulk-select-tabs').click()
-  await research.getByTestId('toggle-select-all').click()
+  await research.getByTestId('merge-session').click()
   await expect(research.getByTestId('selected-tabs-count')).toHaveText('2 selected')
   await expect(research.getByTestId('toggle-select-all')).toHaveText('Deselect all')
+  await expect(research.getByTestId('bulk-merge-hint')).toHaveText('Session tags will also be merged.')
+  await expect(research.getByTestId('bulk-move-submit')).toHaveText('Merge')
 
   await research.getByTestId('bulk-move-target').selectOption('session-reading')
   await research.getByTestId('bulk-move-submit').click()
 
-  await expect.poll(() => lastBridgeCommand(page, 'UpdateSession')).toMatchObject({
+  await expect.poll(() => lastBridgeCommand(page, 'MergeSessions')).toMatchObject({
     payload: {
-      bookmarks: [{
-        uuid: 'session-reading',
-        sites: [
-          { title: 'GitHub Actions' },
-          { title: 'OpenAI' },
-          { title: 'Cloudflare Pages' }
-        ]
-      }]
+      bookmarks: [
+        { uuid: 'session-reading' },
+        { uuid: 'session-research' }
+      ]
     }
   })
-  await expect.poll(() => lastBridgeCommand(page, 'DeleteSession')).toMatchObject({
-    payload: { bookmarks: [{ uuid: 'session-research', sites: [] }] }
-  })
+  expect(await bridgeCommandCount(page, 'DeleteSession')).toBe(0)
   await expect(research).toHaveCount(0)
-  await expect(page.getByTestId('session-session-reading').getByTestId('visible-site')).toHaveCount(3)
+  const reading = page.getByTestId('session-session-reading')
+  await expect(reading.getByTestId('visible-site')).toHaveCount(3)
+  await expect(reading.locator('.tag', { hasText: 'Work' })).toBeVisible()
 })
 
 test('loads, searches, filters and counts sessions', async ({ page }) => {
@@ -675,10 +680,11 @@ test('cycles through expanded, titles-only and compact session views', async ({ 
   await expect(readingRow.getByTestId('toggle-titles-only-session')).toHaveAttribute('aria-expanded', 'true')
 
   await readingRow.getByTestId('merge-session').click()
-  await expect(readingRow.locator('#autosuggest__input_merge')).toBeVisible()
-  await readingRow.locator('#autosuggest__input_merge').focus()
-  await page.locator('#title h1').click()
-  await expect(readingRow.locator('#autosuggest__input_merge')).toHaveCount(0)
+  await expect(readingRow.getByTestId('bulk-move-bar')).toBeVisible()
+  await expect(readingRow.getByTestId('selected-tabs-count')).toHaveText('1 selected')
+  await expect(readingRow.getByTestId('bulk-merge-hint')).toBeVisible()
+  await readingRow.getByTestId('cancel-bulk-select').click()
+  await expect(readingRow.getByTestId('bulk-move-bar')).toHaveCount(0)
 
   await titlesCard.evaluate(card => {
     window.__titlesOnlyMoveObserved = false
@@ -874,6 +880,9 @@ test('directs visitors without the app to the Tab Space website', async ({ page 
   await expect.poll(() => page.evaluate(() => window.location.hostname)).toBe('localhost')
   await expect(page.getByText('Connecting to Tab Space...')).toBeVisible()
   await expect(page.getByRole('heading', { name: 'Tab Space app not detected' })).toBeVisible({ timeout: 5000 })
+  await expect(page.getByTestId('extension-permission-hint')).toHaveText(
+    'Click the Tab Space extension button in Safari and choose “Always Allow on Every Website”; otherwise, Tab Space cannot access your tabs.'
+  )
   await expect(page.getByRole('link', { name: 'Get Tab Space' })).toHaveAttribute('href', 'https://mytab.space')
   await expect(page.getByTestId('export-menu')).toHaveCount(0)
 })

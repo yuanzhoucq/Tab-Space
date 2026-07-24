@@ -91,6 +91,8 @@
   "selectedTabs": "تم تحديد {count}",
   "moveTabsTo": "نقل إلى…",
   "moveSelectedTabs": "نقل",
+  "mergeSelectedSession": "دمج",
+  "mergeIncludesTags": "سيتم أيضًا دمج وسوم الجلسة.",
   "searchPlaceholder": "ابحث بالعنوان أو الرابط أو الوسم…",
   "nothingHere": "لا يوجد شيء هنا…",
   "favorite": "المفضلة",
