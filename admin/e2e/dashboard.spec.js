@@ -349,6 +349,40 @@ test('selects and moves multiple tabs to an existing session', async ({ page }) 
   await expect(reading).toContainText('Cloudflare Pages')
 })
 
+test('keeps the dragged tab preview under the pointer', async ({ page }) => {
+  await openDashboard(page, { initialSessions: sessions })
+  const research = page.getByTestId('session-session-research')
+  const reading = page.getByTestId('session-session-reading')
+  const sourceTabs = research.getByTestId('visible-site')
+  await expect(sourceTabs).toHaveCount(2)
+
+  const sourceBox = await sourceTabs.nth(0).boundingBox()
+  const targetBox = await reading.getByTestId('visible-site').boundingBox()
+  const start = {
+    x: sourceBox.x + sourceBox.width - 12,
+    y: sourceBox.y + sourceBox.height / 2
+  }
+  const target = {
+    x: targetBox.x + targetBox.width - 12,
+    y: targetBox.y + targetBox.height / 2
+  }
+
+  await page.mouse.move(start.x, start.y)
+  await page.mouse.down()
+  await page.mouse.move(start.x, start.y + 20, { steps: 4 })
+  const preview = page.locator('.site-drag-fallback')
+  await expect(preview).toBeVisible()
+  await expect.poll(() => preview.evaluate(element => element.parentElement.tagName)).toBe('BODY')
+  await page.mouse.move(target.x, target.y, { steps: 8 })
+
+  const previewBox = await preview.boundingBox()
+  expect(target.x).toBeGreaterThanOrEqual(previewBox.x)
+  expect(target.x).toBeLessThanOrEqual(previewBox.x + previewBox.width)
+  expect(target.y).toBeGreaterThanOrEqual(previewBox.y)
+  expect(target.y).toBeLessThanOrEqual(previewBox.y + previewBox.height)
+  await page.mouse.up()
+})
+
 test('uses the merge shortcut to select all tabs and merge session tags', async ({ page }) => {
   await openDashboard(page, { initialSessions: sessions })
 
@@ -611,6 +645,8 @@ test('cycles through expanded, titles-only and compact session views', async ({ 
 
   const toggle = page.getByTestId('toggle-collapse')
   await expect(toggle).toHaveAttribute('data-view-mode', 'expanded')
+  await expect(page.getByTestId('session-session-research').getByTestId('site-list'))
+    .toHaveAttribute('data-site-drag-enabled', 'true')
 
   await toggle.click()
   await expect(toggle).toHaveAttribute('data-view-mode', 'titles')
@@ -648,6 +684,7 @@ test('cycles through expanded, titles-only and compact session views', async ({ 
     .map(duration => Number.parseFloat(duration))))).toBe(0.2)
   await expect.poll(() => researchDetails.evaluate(element => getComputedStyle(element).overflow)).toBe('hidden')
   await expect(researchRow.getByTestId('visible-site')).toHaveCount(2)
+  await expect(researchRow.getByTestId('site-list')).toHaveAttribute('data-site-drag-enabled', 'false')
   await expect(researchRow).toContainText('OpenAI')
   await researchExpansionControl.focus()
   await researchExpansionControl.press('Space')
@@ -723,11 +760,15 @@ test('cycles through expanded, titles-only and compact session views', async ({ 
   await page.getByTestId('toggle-collapse').click()
   await expect(page.getByTestId('toggle-collapse')).toHaveAttribute('data-view-mode', 'compact')
   await expect(page.getByTestId('session-session-research').getByTestId('collapsed-site-icon')).toHaveCount(2)
+  await expect(page.getByTestId('session-session-research').getByTestId('site-list'))
+    .toHaveAttribute('data-site-drag-enabled', 'false')
 
   await page.getByTestId('toggle-collapse').click()
   await expect(page.getByTestId('toggle-collapse')).toHaveAttribute('data-view-mode', 'expanded')
   await expect(page.locator('.session')).toHaveCount(2)
   await expect(page.getByTestId('session-session-research').getByTestId('visible-site')).toHaveCount(2)
+  await expect(page.getByTestId('session-session-research').getByTestId('site-list'))
+    .toHaveAttribute('data-site-drag-enabled', 'true')
 })
 
 test('creates a session and appends it through the native bridge', async ({ page }) => {

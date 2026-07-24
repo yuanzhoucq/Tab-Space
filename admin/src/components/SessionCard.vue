@@ -53,9 +53,20 @@
         </div>
       </div>
     </div>
-    <ul :class="['session-sites', {'collapsed-sites': compactView}]">
-      <draggable :disabled="embedded || isEditingSession(session) || compactView || hasSearch || bulkSelectionMode" :forceFallback="true" fallbackTolerance="10"
-      :list="session.sites" group="shared" @start="() => startDragSite(session)" @end="endDragSite">
+    <ul
+        :class="['session-sites', {'collapsed-sites': compactView}]"
+        data-testid="site-list"
+        :data-site-drag-enabled="canDragSites ? 'true' : 'false'">
+      <draggable
+          :disabled="!canDragSites"
+          :force-fallback="true"
+          :fallback-on-body="true"
+          :fallback-tolerance="10"
+          fallback-class="site-drag-fallback"
+          :list="session.sites"
+          group="shared"
+          @start="() => startDragSite(session)"
+          @end="endDragSite">
         <li
           v-for="(entry, visibleIndex) in visibleSiteEntries"
           v-bind:key="`${session.uuid}-${entry.originalIndex}`"
@@ -305,6 +316,15 @@
           && !this.hasSearch
           && !this.temporarilyExpanded
           && !this.isEditingSession(this.session)
+      },
+      canDragSites() {
+        // Cross-session dragging requires every session list to be visible as
+        // a stable drop target. Collapsed views use bulk move instead.
+        return !this.embedded
+          && this.sessionViewMode === "expanded"
+          && !this.hasSearch
+          && !this.isEditingSession(this.session)
+          && !this.bulkSelectionMode
       },
       canToggleTemporaryExpansion() {
         return this.sessionViewMode === "compact" || this.hasSearch
@@ -967,6 +987,12 @@
     user-select: none; 
     transition: 0.2s;
     margin: 0 0 0 -45px;
+  }
+
+  .site-drag-fallback {
+    border: 1px solid var(--border-color, #e2e8f0);
+    background-color: var(--card-bg, #ffffff);
+    box-shadow: var(--shadow-md, 0 4px 6px -1px rgba(0, 0, 0, 0.1));
   }
 
   .bulk-move-bar {
