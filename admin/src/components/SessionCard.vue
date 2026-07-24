@@ -194,20 +194,41 @@
               v-if="!hasSearch && tagEditorId !== session.uuid" @click="e => addTag(e, session.uuid)">
         <v-icon name="tag" style="margin-bottom: -4px" :stroke-width="1.5"></v-icon>
       </button>
-      <vue-autosuggest
-        class="autosuggest"
-        v-if="tagEditorId === session.uuid"
-        v-model="tagKeyword"
-        :suggestions="[{data: tagOptions(session.tags)}]"
-        :should-render-suggestions="shouldRenderTagSuggestions" 
-        :input-props="{id: 'autosuggest__input', placeholder: lang.tagPrompt, autofocus: 'autofocus'}"
-        @blur="saveTag"
-        @selected="chooseTag"
-      >  
-        <template slot-scope="{suggestion}">
-          <span class="suggest-tag">{{suggestion.item}}</span>
-        </template>
-      </vue-autosuggest>
+      <div v-if="tagEditorId === session.uuid" class="tag-autocomplete">
+        <input
+            ref="tagInput"
+            :id="tagInputId"
+            data-testid="tag-input"
+            v-model="tagKeyword"
+            type="text"
+            autocomplete="off"
+            :placeholder="lang.tagPrompt"
+            role="combobox"
+            aria-autocomplete="list"
+            :aria-expanded="tagSuggestions.length > 0 ? 'true' : 'false'"
+            :aria-controls="tagSuggestionListId"
+            :aria-activedescendant="activeTagSuggestionId"
+            @blur="saveTag"
+            @keydown.down.prevent="moveTagSuggestion(1)"
+            @keydown.up.prevent="moveTagSuggestion(-1)"
+            @keydown.enter.prevent="confirmTag"
+            @keydown.esc.prevent="cancelTag">
+        <div v-if="tagSuggestions.length > 0" class="tag-suggestions">
+          <ul :id="tagSuggestionListId" role="listbox">
+            <li
+                v-for="(tag, index) in tagSuggestions"
+                :id="tagSuggestionId(index)"
+                :key="tag"
+                role="option"
+                :aria-selected="tagSuggestionIndex === index ? 'true' : 'false'"
+                :class="{'tag-suggestion-active': tagSuggestionIndex === index}"
+                @mouseenter="tagSuggestionIndex = index"
+                @mousedown.prevent="chooseTag(tag)">
+              <span>{{ tag }}</span>
+            </li>
+          </ul>
+        </div>
+      </div>
       <button type="button" class="tag-btn" data-testid="toggle-favorite" v-if="!hasSearch && (showTagBtns || isFavorite(session))"
               :aria-label="lang.favorite || 'Favorite'" @click="() => toggleFavorite(session)">
         <v-icon name="star" :stroke-width="1.5"
@@ -246,7 +267,6 @@
 
 <script>
   import { mapState, mapGetters } from 'vuex';
-  import { VueAutosuggest } from 'vue-autosuggest';
 
   import WangYeIcon from '../assets/img/icon-webpage.svg';
   import Draggable from 'vuedraggable';
@@ -257,8 +277,7 @@
     name: "SessionCard",
     components: {
       Draggable,
-      ExportDropdown,
-      VueAutosuggest
+      ExportDropdown
     },
     props: ["session", "showTagBtns", "embedded"],
     data() {
@@ -267,6 +286,7 @@
         tagEditorId: false,
         WangYeIcon: WangYeIcon,
         tagKeyword: "",
+        tagSuggestionIndex: -1,
         temporarilyExpanded: false,
         bulkSelectionMode: false,
         bulkSelectionPreviousExpansion: false,
@@ -340,18 +360,25 @@
           this.$store.commit("setEditingSessionUuid", id)
         }
       },
-      tagOptions() {
-        return function(exsitingTags) {
-          exsitingTags = exsitingTags.map(t => t.name)
-          if (Array.isArray(this.tags)) {
-            let pattern = ".*" + this.tagKeyword.toLowerCase().split("").join(".*") + ".*"
-            return this.tags.filter(tag => {
-              let res = tag.toLowerCase().match(new RegExp(pattern, "gi"))
-              return exsitingTags.indexOf(tag) === -1 && (res && res[0]) === tag.toLowerCase()
-            })
-          }
-          return []
-        }
+      tagSuggestions() {
+        if (!Array.isArray(this.tags)) return []
+        const existingTags = new Set(this.session.tags.map(tag => tag.name))
+        const keyword = this.tagKeyword.toLowerCase()
+        return this.tags.filter(tag => (
+          !existingTags.has(tag)
+          && this.isSubsequence(keyword, tag.toLowerCase())
+        ))
+      },
+      tagInputId() {
+        return `tag-input-${this.session.uuid}`
+      },
+      tagSuggestionListId() {
+        return `tag-suggestions-${this.session.uuid}`
+      },
+      activeTagSuggestionId() {
+        return this.tagSuggestionIndex >= 0 && this.tagSuggestions[this.tagSuggestionIndex]
+          ? this.tagSuggestionId(this.tagSuggestionIndex)
+          : null
       }
     },
     watch: {
@@ -365,6 +392,9 @@
       sessionViewMode() {
         if (this.bulkSelectionMode) this.cancelBulkSelection()
         this.temporarilyExpanded = false
+      },
+      tagKeyword() {
+        this.tagSuggestionIndex = -1
       }
     },
     methods: {
@@ -542,10 +572,49 @@
         this.updateSession(session)
       },
       addTag(e, id) {
+        this.tagKeyword = ""
+        this.tagSuggestionIndex = -1
         this.tagEditorId = id
+        this.$nextTick(() => {
+          if (this.$refs.tagInput) this.$refs.tagInput.focus()
+        })
+      },
+      isSubsequence(keyword, candidate) {
+        let keywordIndex = 0
+        for (let candidateIndex = 0; candidateIndex < candidate.length && keywordIndex < keyword.length; candidateIndex += 1) {
+          if (candidate[candidateIndex] === keyword[keywordIndex]) keywordIndex += 1
+        }
+        return keywordIndex === keyword.length
+      },
+      tagSuggestionId(index) {
+        return `${this.tagSuggestionListId}-${index}`
+      },
+      moveTagSuggestion(direction) {
+        const suggestionCount = this.tagSuggestions.length
+        if (suggestionCount === 0) return
+        if (this.tagSuggestionIndex === -1) {
+          this.tagSuggestionIndex = direction > 0 ? 0 : suggestionCount - 1
+          return
+        }
+        this.tagSuggestionIndex = (
+          this.tagSuggestionIndex + direction + suggestionCount
+        ) % suggestionCount
+      },
+      confirmTag() {
+        const suggestion = this.tagSuggestions[this.tagSuggestionIndex]
+        if (suggestion) {
+          this.chooseTag(suggestion)
+        } else {
+          this.saveTag()
+        }
+      },
+      cancelTag() {
+        this.tagKeyword = ""
+        this.tagSuggestionIndex = -1
+        this.tagEditorId = false
       },
       setTag(tagName, session) {
-        if (!tagName) return
+        if (!tagName || !session) return
         if (!session.tags.map(t => t.name).includes(tagName)) {
           session.tags.push({name: tagName})
         }
@@ -553,23 +622,20 @@
         this.updateSession(session)
       },
       saveTag() {
-        setTimeout(() => {
-          let session = this.getSessionById(this.tagEditorId) 
-          this.setTag(this.tagKeyword, session)
-          this.tagEditorId = false
-        }, 100)
+        const session = this.getSessionById(this.tagEditorId)
+        this.setTag(this.tagKeyword, session)
+        this.tagSuggestionIndex = -1
+        this.tagEditorId = false
       },
       chooseTag(tag) {
-        let session = this.getSessionById(this.tagEditorId) 
-        this.setTag(tag.item, session)
+        const session = this.getSessionById(this.tagEditorId)
+        this.setTag(tag, session)
+        this.tagSuggestionIndex = -1
         this.tagEditorId = false
       },
       removeTag(tag, session) {
         session.tags = session.tags.filter(t => t.name !== tag)
         this.updateSession(session)
-      },
-      shouldRenderTagSuggestions(size, loading) {
-        return size > 0 && (this.tagKeyword === "" || !loading)
       },
       isFavorite(session) {
         return Boolean(session.tags.find(t => t.name === "@Favorite"))
@@ -687,6 +753,47 @@
     margin-top: 6px;
   }
 
+  .tag-autocomplete {
+    position: relative;
+    display: inline-block;
+    margin-bottom: 5px;
+  }
+
+  .tag-autocomplete input {
+    width: 92px;
+    margin: 0 2px;
+  }
+
+  .tag-suggestions {
+    position: absolute;
+    width: 100px;
+    margin-top: 3px;
+    border-radius: 4px;
+    background-color: #f5f5f5;
+    z-index: 999;
+  }
+
+  .tag-suggestions ul {
+    margin: 5px;
+    padding-left: 0;
+  }
+
+  .tag-suggestions li {
+    width: calc(100% - 10px);
+    margin-left: -1.8px;
+    padding: 3px 3px 3px 10px;
+    border-radius: 3px;
+    opacity: 0.9;
+    cursor: pointer;
+    font-size: 12px;
+    list-style: none;
+  }
+
+  .tag-suggestions li:hover,
+  .tag-suggestions .tag-suggestion-active {
+    background-color: #ddd;
+  }
+
   .tag {
     background-color: #f0f0f0;
     border: 1px solid #e0e0e0;
@@ -743,6 +850,17 @@
   .tag-btn:hover {
     opacity: 0.7;
     transition: 0.1s;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    .tag-suggestions {
+      background-color: #555555;
+    }
+
+    .tag-suggestions li:hover,
+    .tag-suggestions .tag-suggestion-active {
+      background-color: #777777;
+    }
   }
 
   .session-title {

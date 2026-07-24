@@ -773,13 +773,53 @@ test('edits a session and sends changes through the native bridge', async ({ pag
 
   await card.hover()
   await card.getByTestId('add-tag').click()
-  const tagInput = card.locator('#autosuggest__input')
+  const tagInput = card.getByTestId('tag-input')
   await tagInput.fill('Project')
   await expect(tagInput).toHaveValue('Project')
   await tagInput.press('Tab')
   await expect(card.locator('.tag', { hasText: 'Project' })).toBeVisible()
   await expect.poll(() => lastBridgeCommand(page, 'UpdateSession')).toMatchObject({
     payload: { bookmarks: [{ tags: [{ name: 'Work' }, { name: 'Project' }] }] }
+  })
+})
+
+test('suggests existing tags and supports pointer and keyboard selection', async ({ page }) => {
+  await openDashboard(page, {
+    initialSessions: [
+      { ...sessions[0], tags: [{ name: 'Work' }, { name: 'Personal' }] },
+      sessions[1]
+    ]
+  })
+  const reading = page.getByTestId('session-session-reading')
+
+  await reading.hover()
+  await reading.getByTestId('add-tag').click()
+  let tagInput = reading.getByTestId('tag-input')
+  await tagInput.fill('Prs')
+  await reading.getByRole('option', { name: 'Personal' }).click()
+  await expect(reading.locator('.tag', { hasText: 'Personal' })).toBeVisible()
+
+  await reading.hover()
+  await reading.getByTestId('add-tag').click()
+  tagInput = reading.getByTestId('tag-input')
+  const workOption = reading.getByRole('option', { name: 'Work' })
+
+  await expect(tagInput).toBeFocused()
+  await expect(workOption).toBeVisible()
+  await tagInput.fill('Wr')
+  await expect(workOption).toBeVisible()
+  await tagInput.press('ArrowDown')
+  await expect(workOption).toHaveAttribute('aria-selected', 'true')
+  await tagInput.press('Enter')
+
+  await expect(reading.locator('.tag', { hasText: 'Work' })).toBeVisible()
+  await expect.poll(() => lastBridgeCommand(page, 'UpdateSession')).toMatchObject({
+    payload: {
+      bookmarks: [{
+        uuid: 'session-reading',
+        tags: [{ name: 'Personal' }, { name: 'Work' }]
+      }]
+    }
   })
 })
 
