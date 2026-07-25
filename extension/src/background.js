@@ -12,7 +12,12 @@
   const INITIAL_PORT = 53791
   const PORT_STEP = 17
   const PORT_ATTEMPTS = 10
-  const DASHBOARD_ORIGIN = "https://app.mytab.space"
+  // build.mjs rewrites these two lines for development builds. The first entry
+  // is the origin the extension opens; the suffixes cover Cloudflare Pages
+  // preview deployments, which get a new hostname per branch.
+  const DASHBOARD_ORIGINS = ["https://app.mytab.space"]
+  const DASHBOARD_ORIGIN_SUFFIXES = []
+  const DASHBOARD_ORIGIN = DASHBOARD_ORIGINS[0]
   const STORAGE_KEYS = {
     clientId: "tabspace-client-id",
     authToken: "tabspace-auth-token"
@@ -24,6 +29,23 @@
       this.name = "BridgeError"
       this.code = code
       this.details = details
+    }
+  }
+
+  function isDashboardOrigin(origin) {
+    if (typeof origin !== "string" || origin.length === 0) return false
+    if (DASHBOARD_ORIGINS.includes(origin)) return true
+    if (!origin.startsWith("https://")) return false
+    return DASHBOARD_ORIGIN_SUFFIXES.some(suffix =>
+      origin === `https://${suffix}` || origin.endsWith(`.${suffix}`))
+  }
+
+  function isDashboardUrl(rawUrl) {
+    if (typeof rawUrl !== "string" || rawUrl.length === 0) return false
+    try {
+      return isDashboardOrigin(new URL(rawUrl).origin)
+    } catch (_) {
+      return false
     }
   }
 
@@ -58,7 +80,7 @@
     } catch (_) {
       return false
     }
-    if (url.origin === DASHBOARD_ORIGIN) return false
+    if (isDashboardOrigin(url.origin)) return false
     return ["http:", "https:", "file:", "ftp:"].includes(url.protocol)
   }
 
@@ -511,13 +533,7 @@
       // Filtering by URL here avoids browser-specific match-pattern handling
       // for the localhost development origin, especially Firefox's rejection
       // of explicit ports in match patterns.
-      const matches = (await browserApi.queryTabs({})).filter(tab => {
-        try {
-          return new URL(tab.url).origin === DASHBOARD_ORIGIN
-        } catch (_) {
-          return false
-        }
-      })
+      const matches = (await browserApi.queryTabs({})).filter(tab => isDashboardUrl(tab.url))
       if (matches && matches.length > 0) {
         await browserApi.updateTab(matches[0].id, { active: true })
         return { reused: true }
@@ -627,7 +643,7 @@
           .catch(error => ({ ok: false, error: serializeError(error) }))
       }
       const dashboardRequest = type && type.startsWith("dashboard.")
-      if (dashboardRequest && !(sender && typeof sender.url === "string" && sender.url.startsWith(`${DASHBOARD_ORIGIN}/`))) {
+      if (dashboardRequest && !(sender && isDashboardUrl(sender.url))) {
         return Promise.resolve({ ok: false, error: { code: "invalid_sender", message: "Dashboard origin rejected." } })
       }
 
@@ -684,6 +700,8 @@
     browserFamily,
     toolbarIconPaths,
     createController,
+    isDashboardOrigin,
+    isDashboardUrl,
     isSavableTab,
     isSavableUrl,
     normalizeTabs,

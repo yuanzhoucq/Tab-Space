@@ -327,24 +327,69 @@ test('builds valid browser-specific Manifest V3 packages', () => {
   }
 })
 
-test('builds localhost-only development packages without widening production manifests', () => {
+test('builds development packages for loopback and Pages previews only', () => {
   execFileSync(process.execPath, [join(extensionRoot, 'build.mjs'), 'all'], { stdio: 'pipe' })
   execFileSync(process.execPath, [join(extensionRoot, 'build.mjs'), 'dev'], { stdio: 'pipe' })
   const developmentManifest = JSON.parse(readFileSync(join(extensionRoot, 'dist/chrome-dev/manifest.json'), 'utf8'))
   const developmentBackground = readFileSync(join(extensionRoot, 'dist/chrome-dev/background.js'), 'utf8')
   const developmentContentScript = readFileSync(join(extensionRoot, 'dist/firefox-dev/content-script.js'), 'utf8')
   const firefoxDevelopmentManifest = JSON.parse(readFileSync(join(extensionRoot, 'dist/firefox-dev/manifest.json'), 'utf8'))
-  assert.deepEqual(developmentManifest.content_scripts[0].matches, ['http://127.0.0.1:8080/*'])
-  assert.deepEqual(firefoxDevelopmentManifest.content_scripts[0].matches, ['http://127.0.0.1/*'])
-  assert.deepEqual(firefoxDevelopmentManifest.host_permissions, ['http://127.0.0.1/*'])
-  assert.equal(developmentBackground.includes('http://127.0.0.1:8080'), true)
+  const previewPattern = 'https://*.tab-space-admin.pages.dev/*'
+  const branchPattern = 'https://dev-4-0.tab-space-admin.pages.dev/*'
+  assert.deepEqual(developmentManifest.content_scripts[0].matches, [branchPattern, 'http://127.0.0.1:8080/*', previewPattern])
+  assert.deepEqual(firefoxDevelopmentManifest.content_scripts[0].matches, [branchPattern, 'http://127.0.0.1/*', previewPattern])
+  assert.deepEqual(firefoxDevelopmentManifest.host_permissions, [branchPattern, 'http://127.0.0.1/*', previewPattern])
+  assert.equal(
+    developmentBackground.includes('const DASHBOARD_ORIGINS = ["https://dev-4-0.tab-space-admin.pages.dev","http://127.0.0.1:8080"]'),
+    true
+  )
   assert.equal(developmentBackground.includes('https://app.mytab.space'), false)
-  assert.equal(developmentContentScript.includes('window.location.origin !== DASHBOARD_ORIGIN'), true)
+  assert.equal(developmentContentScript.includes('if (!isDashboardOrigin(window.location.origin)) return'), true)
   assert.equal(developmentContentScript.includes('http://127.0.0.1:8080'), true)
+  assert.equal(developmentContentScript.includes('"tab-space-admin.pages.dev"'), true)
+
+  const developmentModule = require(join(extensionRoot, 'dist/chrome-dev/background.js'))
+  assert.equal(developmentModule.isDashboardOrigin('http://127.0.0.1:8080'), true)
+  assert.equal(developmentModule.isDashboardOrigin('https://dev-4-0.tab-space-admin.pages.dev'), true)
+  assert.equal(developmentModule.isDashboardOrigin('https://tab-space-admin.pages.dev'), true)
+  assert.equal(developmentModule.isDashboardOrigin('https://eviltab-space-admin.pages.dev'), false)
+  assert.equal(developmentModule.isDashboardOrigin('http://dev-4-0.tab-space-admin.pages.dev'), false)
+  assert.equal(developmentModule.isDashboardOrigin('http://127.0.0.1:8081'), false)
 
   const productionManifest = JSON.parse(readFileSync(join(extensionRoot, 'dist/chrome/manifest.json'), 'utf8'))
   assert.deepEqual(productionManifest.content_scripts[0].matches, ['https://app.mytab.space/*'])
+  assert.equal(productionManifest.content_scripts[0].matches.some(match => match.includes('pages.dev')), false)
 
   execFileSync(process.execPath, [join(extensionRoot, 'build.mjs'), 'all'], { stdio: 'pipe' })
   assert.equal(existsSync(join(extensionRoot, 'dist/chrome-dev/manifest.json')), true)
+})
+
+test('opens the requested development dashboard first without dropping the others', () => {
+  execFileSync(
+    process.execPath,
+    [join(extensionRoot, 'build.mjs'), 'dev', 'chrome', '--dashboard=http://127.0.0.1:8080/#/'],
+    { stdio: 'pipe' }
+  )
+  const manifest = JSON.parse(readFileSync(join(extensionRoot, 'dist/chrome-dev/manifest.json'), 'utf8'))
+  const script = readFileSync(join(extensionRoot, 'dist/chrome-dev/background.js'), 'utf8')
+  assert.deepEqual(manifest.content_scripts[0].matches, [
+    'http://127.0.0.1:8080/*',
+    'https://*.tab-space-admin.pages.dev/*'
+  ])
+  assert.equal(script.includes('const DASHBOARD_ORIGINS = ["http://127.0.0.1:8080"]'), true)
+  assert.throws(() => execFileSync(
+    process.execPath,
+    [join(extensionRoot, 'build.mjs'), 'chrome', '--dashboard=https://dev-4-0.tab-space-admin.pages.dev'],
+    { stdio: 'pipe' }
+  ))
+  execFileSync(process.execPath, [join(extensionRoot, 'build.mjs'), 'dev', 'chrome'], { stdio: 'pipe' })
+})
+
+test('trusts only dashboard origins the extension is built for', () => {
+  assert.equal(background.isDashboardOrigin('https://app.mytab.space'), true)
+  assert.equal(background.isDashboardOrigin('https://app.mytab.space.evil.example'), false)
+  assert.equal(background.isDashboardOrigin('http://127.0.0.1:8080'), false)
+  assert.equal(background.isDashboardUrl('https://app.mytab.space/#/sessions'), true)
+  assert.equal(background.isDashboardUrl('not a url'), false)
+  assert.equal(background.isDashboardUrl(undefined), false)
 })

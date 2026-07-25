@@ -7,7 +7,10 @@ const extensionRoot = dirname(fileURLToPath(import.meta.url))
 const repositoryRoot = resolve(extensionRoot, "..")
 const argumentsList = process.argv.slice(2)
 const development = argumentsList.includes("dev")
-const targets = argumentsList.filter(argument => argument !== "dev")
+const dashboardFlag = "--dashboard="
+const dashboardArgument = argumentsList.find(argument => argument.startsWith(dashboardFlag))
+const targets = argumentsList.filter(argument =>
+  argument !== "dev" && !argument.startsWith(dashboardFlag))
 const requestedTargets = targets.length === 0 || targets.includes("all")
   ? ["chrome", "edge", "firefox"]
   : targets
@@ -20,9 +23,40 @@ for (const target of requestedTargets) {
 }
 
 const productionDashboardOrigin = "https://app.mytab.space"
-const dashboardOrigin = development ? "http://127.0.0.1:8080" : productionDashboardOrigin
+const localDashboardOrigin = "http://127.0.0.1:8080"
+// Cloudflare Pages gives every Admin preview branch its own hostname, so
+// development builds trust the whole preview domain instead of one branch.
+const developmentDashboardSuffixes = ["tab-space-admin.pages.dev"]
+const previewDashboardOrigin = "https://dev-4-0.tab-space-admin.pages.dev"
+
+if (dashboardArgument && !development) {
+  throw new Error(`${dashboardFlag}<origin> only applies to development builds.`)
+}
+
+const requestedDashboardOrigin = dashboardArgument
+  ? new URL(dashboardArgument.slice(dashboardFlag.length)).origin
+  : ""
+// The first origin is the one the toolbar and keyboard shortcut open. Development
+// builds default to the branch preview; pass --dashboard=http://127.0.0.1:8080 to
+// open the local server instead. Both stay trusted either way.
+const dashboardOrigins = development
+  ? [...new Set([requestedDashboardOrigin || previewDashboardOrigin, localDashboardOrigin])]
+  : [productionDashboardOrigin]
+const dashboardOriginSuffixes = development ? developmentDashboardSuffixes : []
 const outputName = target => development ? `${target}-dev` : target
 const packageName = target => `tab-space-4.0.0-${target}${development ? "-dev" : ""}.zip`
+
+// Firefox rejects explicit ports in match patterns, so its loopback pattern is
+// widened to the host. content-script.js still enforces the exact development
+// origin at runtime. A leading `*.` matches the domain itself on both engines.
+function dashboardMatchPatterns(target) {
+  const exact = dashboardOrigins.map(origin =>
+    target === "firefox" && /^http:\/\/127\.0\.0\.1(:\d+)?$/.test(origin)
+      ? "http://127.0.0.1/*"
+      : `${origin}/*`)
+  const wildcard = dashboardOriginSuffixes.map(suffix => `https://*.${suffix}/*`)
+  return [...new Set([...exact, ...wildcard])]
+}
 
 const baseManifest = {
   manifest_version: 3,
@@ -30,10 +64,7 @@ const baseManifest = {
   version: "4.0.0",
   description: "Save, organize, and restore tabs with the Tab Space app.",
   permissions: ["tabs", "storage"],
-  host_permissions: [
-    `${dashboardOrigin}/*`,
-    "http://127.0.0.1/*"
-  ],
+  host_permissions: [],
   action: {
     default_title: "Tab Space",
     default_popup: "popup.html",
@@ -51,7 +82,7 @@ const baseManifest = {
     "128": "icon.png"
   },
   content_scripts: [{
-    matches: [`${dashboardOrigin}/*`],
+    matches: [],
     js: ["content-script.js"],
     run_at: "document_start"
   }],
@@ -72,6 +103,9 @@ const baseManifest = {
 
 function manifestFor(target) {
   const manifest = structuredClone(baseManifest)
+  const matches = dashboardMatchPatterns(target)
+  manifest.content_scripts[0].matches = matches
+  manifest.host_permissions = [...new Set([...matches, "http://127.0.0.1/*"])]
   if (target === "firefox") {
     // Firefox names these properties after the toolbar text color: a dark
     // icon is used with dark text (light toolbar), and vice versa.
@@ -79,13 +113,6 @@ function manifestFor(target) {
       { size: 16, dark: "toolbar-16.png", light: "toolbar-light-16.png" },
       { size: 32, dark: "toolbar-32.png", light: "toolbar-light-32.png" }
     ]
-    if (development) {
-      // Firefox match patterns do not support port numbers. Match the
-      // loopback host here; content-script.js still rejects every origin
-      // except the exact http://127.0.0.1:8080 development origin at runtime.
-      manifest.host_permissions = ["http://127.0.0.1/*"]
-      manifest.content_scripts[0].matches = ["http://127.0.0.1/*"]
-    }
     manifest.background = { scripts: ["background.js"] }
     manifest.browser_specific_settings = {
       gecko: {
@@ -99,6 +126,22 @@ function manifestFor(target) {
     manifest.version_name = development ? "4.0 RC Dev" : "4.0 RC"
   }
   return manifest
+}
+
+function developmentScript(script, filename) {
+  const rewritten = script
+    .replace(
+      /const DASHBOARD_ORIGINS = \[[^\]]*\]/,
+      `const DASHBOARD_ORIGINS = ${JSON.stringify(dashboardOrigins)}`
+    )
+    .replace(
+      /const DASHBOARD_ORIGIN_SUFFIXES = \[[^\]]*\]/,
+      `const DASHBOARD_ORIGIN_SUFFIXES = ${JSON.stringify(dashboardOriginSuffixes)}`
+    )
+  if (rewritten.includes(productionDashboardOrigin)) {
+    throw new Error(`Development ${filename} still trusts the production dashboard origin.`)
+  }
+  return rewritten
 }
 
 const distributionRoot = join(extensionRoot, "dist")
@@ -121,7 +164,7 @@ for (const target of requestedTargets) {
     for (const filename of ["background.js", "content-script.js"]) {
       const scriptPath = join(output, filename)
       const script = await readFile(scriptPath, "utf8")
-      await writeFile(scriptPath, script.replaceAll(productionDashboardOrigin, dashboardOrigin))
+      await writeFile(scriptPath, developmentScript(script, filename))
     }
   }
   await writeFile(

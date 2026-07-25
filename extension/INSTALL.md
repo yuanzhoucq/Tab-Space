@@ -24,10 +24,12 @@ Temporary Add-on**, and select the Firefox package or its `manifest.json`.
 Temporary add-ons are removed when Firefox closes. A signed AMO package is
 required for permanent installation after the RC is approved.
 
-For localhost development, load `extension/dist/firefox-dev/manifest.json`.
-Firefox does not reload a temporary add-on when files on disk change: after
-running `yarn serve:extension`, click **Reload** beside Tab Space (Dev) in
-`about:debugging`, then reload `http://127.0.0.1:8080`.
+For development, load `extension/dist/firefox-dev/manifest.json`. That build
+trusts `http://127.0.0.1:8080` and Admin previews on
+`https://*.tab-space-admin.pages.dev`. Firefox does not reload a temporary
+add-on when files on disk change: after running `yarn serve:extension`, click
+**Reload** beside Tab Space (Dev) in `about:debugging`, then reload the
+Dashboard tab.
 
 ## Pair a browser
 

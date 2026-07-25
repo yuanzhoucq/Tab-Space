@@ -14,6 +14,13 @@
 import { mapState } from 'vuex'
 import Constants from '../constants'
 
+// Origins where the browser extension injects its content script: production,
+// the local development server, and Cloudflare Pages preview deployments,
+// which get a new hostname per branch. Keep this in sync with
+// DASHBOARD_ORIGINS / DASHBOARD_ORIGIN_SUFFIXES in extension/src.
+const WEB_EXTENSION_ORIGINS = ["https://app.mytab.space", "http://127.0.0.1:8080"]
+const WEB_EXTENSION_ORIGIN_SUFFIXES = ["tab-space-admin.pages.dev"]
+
 export default {
   name: "TabSpaceBridge",
   data() {
@@ -68,7 +75,10 @@ export default {
   },
   methods: {
     redirectLegacyBridgeLoopbackHost() {
+      // The extension injects into the exact loopback development origin, so
+      // redirecting it to localhost would drop the extension bridge.
       if (window.__tabspace_bridge || window.location.hostname !== "127.0.0.1") return false
+      if (this.isWebExtensionDashboardOrigin(window.location.origin)) return false
       const localhostUrl = new URL(window.location.href)
       localhostUrl.hostname = "localhost"
       window.location.replace(localhostUrl.toString())
@@ -169,7 +179,11 @@ export default {
       return true
     },
     isWebExtensionDashboardOrigin(origin) {
-      return origin === "https://app.mytab.space" || origin === "http://127.0.0.1:8080"
+      if (typeof origin !== "string" || origin.length === 0) return false
+      if (WEB_EXTENSION_ORIGINS.indexOf(origin) !== -1) return true
+      if (origin.indexOf("https://") !== 0) return false
+      return WEB_EXTENSION_ORIGIN_SUFFIXES.some(suffix =>
+        origin === `https://${suffix}` || origin.endsWith(`.${suffix}`))
     },
     setupWebExtensionBridge() {
       if (this.directMode || this.webExtensionMode) return

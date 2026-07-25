@@ -1,9 +1,24 @@
 (function () {
   "use strict"
 
-  const DASHBOARD_ORIGIN = "https://app.mytab.space"
+  // build.mjs rewrites these two lines for development builds. The suffixes
+  // cover Cloudflare Pages preview deployments, which get a new hostname per
+  // branch; manifest match patterns cannot express the exact port on Firefox,
+  // so this check is the authoritative one.
+  const DASHBOARD_ORIGINS = ["https://app.mytab.space"]
+  const DASHBOARD_ORIGIN_SUFFIXES = []
   const CHANNEL = "tabspace-webextension-v2"
-  if (window.location.origin !== DASHBOARD_ORIGIN) return
+
+  function isDashboardOrigin(origin) {
+    if (typeof origin !== "string" || origin.length === 0) return false
+    if (DASHBOARD_ORIGINS.includes(origin)) return true
+    if (!origin.startsWith("https://")) return false
+    return DASHBOARD_ORIGIN_SUFFIXES.some(suffix =>
+      origin === `https://${suffix}` || origin.endsWith(`.${suffix}`))
+  }
+
+  if (!isDashboardOrigin(window.location.origin)) return
+  const DASHBOARD_ORIGIN = window.location.origin
 
   const extensionApi = typeof browser !== "undefined" ? browser : chrome
   const preferPromises = typeof browser !== "undefined"

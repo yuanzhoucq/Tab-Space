@@ -10,18 +10,38 @@ node --test extension/test/*.test.cjs
 ```
 
 For local dashboard development, start the Vue development server and build a
-separate extension that only trusts the exact development origin
-`http://127.0.0.1:8080` in one command:
+separate extension in one command:
 
 ```bash
 cd admin
 yarn serve:extension
 ```
 
+Development builds trust two kinds of dashboard origin, and nothing else:
+
+- the exact local development origin `http://127.0.0.1:8080`, and
+- Cloudflare Pages Admin deployments on `https://*.tab-space-admin.pages.dev`,
+  such as `https://dev-4-0.tab-space-admin.pages.dev/#/`. Every preview branch
+  gets its own hostname, so the whole preview domain is matched instead of one
+  branch.
+
+The toolbar button and the **Open Tab Space** shortcut open the first trusted
+origin, which defaults to `https://dev-4-0.tab-space-admin.pages.dev`. Name a
+different origin to put it first; every origin above stays trusted either way:
+
+```bash
+node extension/build.mjs dev --dashboard=http://127.0.0.1:8080
+```
+
+A deployed preview only answers the extension once the Admin change that trusts
+its origin is deployed to that branch. Until then the page reports that the
+Tab Space Helper was not detected, even though the extension injected fine.
+
 Load `extension/dist/chrome-dev`, `edge-dev`, or `firefox-dev` as the temporary
 development extension, then reload it once after rebuilding. Production and
-development outputs coexist, and production packages never inject into the
-localhost origin. If port 8080 already has your Dashboard server, this command
+development outputs coexist; production packages trust only
+`https://app.mytab.space` and never inject into the localhost or preview
+origins. If port 8080 already has your Dashboard server, `yarn serve:extension`
 only rebuilds the dev extensions and leaves that server running; it never
 silently switches to a different port.
 
