@@ -2,6 +2,7 @@ import { cp, mkdir, readFile, rm, writeFile } from "node:fs/promises"
 import { execFileSync } from "node:child_process"
 import { dirname, join, resolve } from "node:path"
 import { fileURLToPath } from "node:url"
+import { extensionVersion } from "./version.mjs"
 
 const extensionRoot = dirname(fileURLToPath(import.meta.url))
 const repositoryRoot = resolve(extensionRoot, "..")
@@ -44,7 +45,7 @@ const dashboardOrigins = development
   : [productionDashboardOrigin]
 const dashboardOriginSuffixes = development ? developmentDashboardSuffixes : []
 const outputName = target => development ? `${target}-dev` : target
-const packageName = target => `tab-space-4.0.0-${target}${development ? "-dev" : ""}.zip`
+const packageName = target => `tab-space-${extensionVersion}-${target}${development ? "-dev" : ""}.zip`
 
 // Firefox rejects explicit ports in match patterns, so its loopback pattern is
 // widened to the host. content-script.js still enforces the exact development
@@ -61,7 +62,7 @@ function dashboardMatchPatterns(target) {
 const baseManifest = {
   manifest_version: 3,
   name: development ? "Tab Space (Dev)" : "Tab Space",
-  version: "4.0.0",
+  version: extensionVersion,
   description: "Save, organize, and restore tabs with the Tab Space app.",
   permissions: ["tabs", "storage"],
   host_permissions: [],
@@ -117,7 +118,12 @@ function manifestFor(target) {
     manifest.browser_specific_settings = {
       gecko: {
         id: "extension@mytab.space",
-        strict_min_version: "121.0"
+        strict_min_version: "121.0",
+        // Required by addons.mozilla.org. Tab data is only relayed to the
+        // Tab Space helper on the user's own device, so nothing is collected.
+        data_collection_permissions: {
+          required: ["none"]
+        }
       }
     }
   } else {
@@ -178,7 +184,9 @@ await mkdir(packagesDirectory, { recursive: true })
 for (const target of requestedTargets) {
   const filename = packageName(target)
   await rm(join(packagesDirectory, filename), { force: true })
-  execFileSync("zip", ["-qr", join(packagesDirectory, filename), "."], {
+  // Excluding dotfiles keeps a stray .DS_Store copied out of src/ from being
+  // published as part of the extension.
+  execFileSync("zip", ["-qr", join(packagesDirectory, filename), ".", "-x", ".*", "*/.*"], {
     cwd: join(extensionRoot, "dist", outputName(target))
   })
 }

@@ -301,6 +301,10 @@ test('builds valid browser-specific Manifest V3 packages', () => {
   assert.deepEqual(edge.background, chrome.background)
   assert.deepEqual(firefox.background, { scripts: ['background.js'] })
   assert.equal(firefox.browser_specific_settings.gecko.id, 'extension@mytab.space')
+  assert.deepEqual(
+    firefox.browser_specific_settings.gecko.data_collection_permissions,
+    { required: ['none'] }
+  )
   assert.equal(firefox.permissions.includes('offscreen'), false)
   assert.deepEqual(firefox.action.theme_icons, [
     { size: 16, dark: 'toolbar-16.png', light: 'toolbar-light-16.png' },
@@ -313,7 +317,7 @@ test('builds valid browser-specific Manifest V3 packages', () => {
     assert.equal(manifest.permissions.includes('storage'), true)
   }
   for (const target of ['chrome', 'edge', 'firefox']) {
-    assert.equal(existsSync(join(extensionRoot, `dist/packages/tab-space-4.0.0-${target}.zip`)), true)
+    assert.equal(existsSync(join(extensionRoot, `dist/packages/tab-space-1.0.0-${target}.zip`)), true)
     for (const size of [16, 32, 48, 128]) {
       assert.deepEqual(
         readFileSync(join(extensionRoot, `dist/${target}/toolbar-${size}.png`)),

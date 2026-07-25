@@ -7,13 +7,13 @@ restore sessions.
 
 ## Chrome
 
-1. Unzip `tab-space-4.0.0-chrome.zip`.
+1. Unzip `tab-space-1.0.0-chrome.zip`.
 2. Open `chrome://extensions`, enable Developer mode, and choose **Load unpacked**.
 3. Select the unzipped folder.
 
 ## Microsoft Edge
 
-1. Unzip `tab-space-4.0.0-edge.zip`.
+1. Unzip `tab-space-1.0.0-edge.zip`.
 2. Open `edge://extensions`, enable Developer mode, and choose **Load unpacked**.
 3. Select the unzipped folder.
 
