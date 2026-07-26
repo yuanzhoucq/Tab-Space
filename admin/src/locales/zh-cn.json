@@ -109,5 +109,10 @@
   "iosBannerText": "iPhone / iPad 版现已上线，支持 iCloud 同步",
   "iosBannerCta": "获取移动版",
   "iosAppNav": "iOS 版",
-  "iosBannerDismiss": "关闭"
+  "iosBannerDismiss": "关闭",
+  "ratingBannerText": "用 Tab Space 还顺手吗？",
+  "ratingBannerPositive": "满意，去评分",
+  "ratingBannerNegative": "不满意，反馈",
+  "ratingBannerDismiss": "以后再说",
+  "ratingBannerFeedbackSubject": "Tab Space 反馈"
 }

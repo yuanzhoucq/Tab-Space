@@ -109,5 +109,10 @@
   "iosBannerText": "Теперь на iPhone и iPad с синхронизацией через iCloud",
   "iosBannerCta": "Скачать мобильное приложение",
   "iosAppNav": "Версия для iOS",
-  "iosBannerDismiss": "Закрыть"
+  "iosBannerDismiss": "Закрыть",
+  "ratingBannerText": "Нравится Tab Space?",
+  "ratingBannerPositive": "Да, оценить",
+  "ratingBannerNegative": "Не совсем, отправить отзыв",
+  "ratingBannerDismiss": "Позже",
+  "ratingBannerFeedbackSubject": "Отзыв о Tab Space"
 }

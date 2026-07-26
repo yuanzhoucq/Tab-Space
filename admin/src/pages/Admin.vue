@@ -43,6 +43,7 @@
         <session-sidebar></session-sidebar>
         <div class="session-column">
           <ios-banner></ios-banner>
+          <rating-banner></rating-banner>
           <sessions></sessions>
         </div>
         <session-hub></session-hub>
@@ -69,6 +70,7 @@
 
   import IosBanner from '../components/IosBanner'
   import Navbar from '../components/Navbar'
+  import RatingBanner from '../components/RatingBanner'
   import SessionSidebar from '../components/SessionSidebar'
   import SessionHub from '../components/SessionHub'
   import Sessions from '../components/Sessions'
@@ -78,6 +80,7 @@
       VueLoading,
       IosBanner,
       Navbar,
+      RatingBanner,
       SessionSidebar,
       SessionHub,
       Sessions,
@@ -236,7 +239,8 @@
     min-width: 0;
   }
 
-  .session-column .ios-banner {
+  .session-column .ios-banner,
+  .session-column .rating-banner {
     margin-bottom: 12px;
   }
 

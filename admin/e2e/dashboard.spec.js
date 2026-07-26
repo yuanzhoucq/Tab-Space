@@ -23,6 +23,19 @@ const sessions = [
   }
 ]
 
+// The rating banner only shows up once a few sessions have piled up.
+const ratingSessions = [
+  ...sessions,
+  {
+    uuid: 'session-third',
+    title: 'Third session',
+    timestamp: 1767398400000,
+    comment: '',
+    sites: [{ title: 'Example', url: 'https://example.com' }],
+    tags: []
+  }
+]
+
 const backups = [
   {
     filename: 'backup-2026-07-15.tabspace',
@@ -53,10 +66,14 @@ async function openDashboard(page, options = {}) {
     ? initialSessions.length
     : options.expectedSessionCount
 
-  await page.addInitScript(({ testSessions, testBackups, malformedBookmarks, bundledDashboard, collapseSessions, preferredLanguage, bannerStorageUnavailable }) => {
+  await page.addInitScript(({ testSessions, testBackups, malformedBookmarks, bundledDashboard, collapseSessions, preferredLanguage, bannerStorageUnavailable, ratingBannerReady }) => {
     const clone = value => JSON.parse(JSON.stringify(value))
     const settingsKey = 'tabspace-e2e-settings'
     if (collapseSessions) localStorage.setItem('tabspace-session-cards-collapsed', 'true')
+    if (ratingBannerReady) {
+      localStorage.setItem('tabspace-ios-banner-dismissed', 'true')
+      localStorage.setItem('tabspace-rating-banner-first-seen', String(Date.now() - 30 * 24 * 60 * 60 * 1000))
+    }
     const storedSettings = JSON.parse(localStorage.getItem(settingsKey) || '{}')
     if (preferredLanguage) storedSettings['preferred-language'] = preferredLanguage
     let currentSessions = clone(testSessions)
@@ -213,7 +230,8 @@ async function openDashboard(page, options = {}) {
     bundledDashboard: Boolean(options.bundledDashboard),
     collapseSessions: Boolean(options.collapseSessions),
     preferredLanguage: options.preferredLanguage || '',
-    bannerStorageUnavailable: Boolean(options.bannerStorageUnavailable)
+    bannerStorageUnavailable: Boolean(options.bannerStorageUnavailable),
+    ratingBannerReady: Boolean(options.ratingBannerReady)
   })
 
   await page.route('**/favicon.ico', route => route.fulfill({ status: 204, body: '' }))
@@ -278,6 +296,82 @@ test('uses the China App Store link and dismisses without browser storage', asyn
   await page.getByRole('link', { name: '设置' }).click()
   await page.getByRole('link', { name: '返回' }).click()
   await expect(page.getByTestId('ios-banner')).toHaveCount(0)
+})
+
+test('keeps the rating banner out of the way of the iOS banner', async ({ page }) => {
+  await openDashboard(page, { initialSessions: sessions })
+
+  await expect(page.getByTestId('ios-banner')).toBeVisible()
+  await expect(page.getByTestId('rating-banner')).toHaveCount(0)
+})
+
+test('asks for a rating once enough sessions pile up and remembers the answer', async ({ page }) => {
+  await openDashboard(page, { initialSessions: sessions, ratingBannerReady: true })
+
+  const banner = page.getByTestId('rating-banner')
+  await expect(page.getByTestId('ios-banner')).toHaveCount(0)
+  await expect(banner).toHaveCount(0)
+
+  await page.evaluate(sessionFixtures => {
+    window.__tabspaceTest.setSessions(sessionFixtures)
+    window.__tabspaceTest.emit('SessionsChangedRemotely')
+  }, ratingSessions)
+  await expect(page.locator('.session')).toHaveCount(3)
+
+  await expect(banner).toBeVisible()
+  await expect(page.getByTestId('rating-banner-rate')).toHaveAttribute(
+    'href',
+    /apps\.apple\.com\/app\/tab-space\/id1473726602\?mt=12&action=write-review/
+  )
+  await expect(page.getByTestId('rating-banner-feedback')).toHaveAttribute(
+    'href',
+    /^mailto:support@mytab\.space\?subject=Tab%20Space%20feedback/
+  )
+
+  // Keep the click local: the App Store link would otherwise open a real tab.
+  await page.evaluate(() => {
+    document.querySelector('[data-testid=rating-banner-rate]')
+      .addEventListener('click', event => event.preventDefault())
+  })
+  await banner.getByRole('link', { name: 'Yes, rate it' }).click()
+  await expect(banner).toHaveCount(0)
+  expect(await page.evaluate(() => localStorage.getItem('tabspace-rating-banner-answered'))).toBe('true')
+
+  await page.getByTestId('settings-link').click()
+  await page.getByRole('link', { name: 'Back' }).click()
+  await expect(page.getByTestId('rating-banner')).toHaveCount(0)
+})
+
+test('goes quiet for a while when the rating banner is closed, then gives up', async ({ page }) => {
+  await openDashboard(page, { initialSessions: ratingSessions, ratingBannerReady: true })
+
+  const banner = page.getByTestId('rating-banner')
+  await banner.getByRole('button', { name: 'Maybe later' }).click()
+  await expect(banner).toHaveCount(0)
+  expect(await page.evaluate(() => localStorage.getItem('tabspace-rating-banner-answered'))).toBeNull()
+
+  // A fresh dashboard within the quiet period stays silent.
+  await page.reload()
+  await expect(page.locator('.session')).toHaveCount(3)
+  await expect(banner).toHaveCount(0)
+
+  // Once the quiet period is over the banner comes back one last time.
+  await page.evaluate(() => {
+    localStorage.setItem('tabspace-rating-banner-snoozed-at', String(Date.now() - 91 * 24 * 60 * 60 * 1000))
+  })
+  await page.reload()
+  await expect(banner).toBeVisible()
+
+  await banner.getByRole('button', { name: 'Maybe later' }).click()
+  await expect(banner).toHaveCount(0)
+  expect(await page.evaluate(() => localStorage.getItem('tabspace-rating-banner-answered'))).toBe('true')
+
+  await page.evaluate(() => {
+    localStorage.setItem('tabspace-rating-banner-snoozed-at', String(Date.now() - 400 * 24 * 60 * 60 * 1000))
+  })
+  await page.reload()
+  await expect(page.locator('.session')).toHaveCount(3)
+  await expect(banner).toHaveCount(0)
 })
 
 async function lastBridgeCommand(page, name) {

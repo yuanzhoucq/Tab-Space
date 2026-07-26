@@ -20,8 +20,7 @@
 import { mapState } from 'vuex'
 import Constants from '../constants'
 import { mobileAppStoreUrl } from '../app-store'
-
-const STORAGE_KEY = 'tabspace-ios-banner-dismissed'
+import { iosBannerDismissedKey, readBannerFlag, writeBannerFlag } from '../banners'
 
 let dismissedInMemory = false
 
@@ -41,21 +40,13 @@ export default {
   },
   mounted() {
     if (dismissedInMemory) return
-    try {
-      this.visible = localStorage.getItem(STORAGE_KEY) !== "true"
-    } catch (e) {
-      this.visible = true
-    }
+    this.visible = readBannerFlag(iosBannerDismissedKey) !== "true"
   },
   methods: {
     dismiss() {
       dismissedInMemory = true
       this.visible = false
-      try {
-        localStorage.setItem(STORAGE_KEY, "true")
-      } catch (e) {
-        // ignore storage failures; banner stays dismissed for this session
-      }
+      writeBannerFlag(iosBannerDismissedKey, "true")
     }
   }
 }

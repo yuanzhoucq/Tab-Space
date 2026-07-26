@@ -109,5 +109,10 @@
   "iosBannerText": "Now on iPhone & iPad with iCloud sync",
   "iosBannerCta": "Get the mobile app",
   "iosAppNav": "iOS app",
-  "iosBannerDismiss": "Dismiss"
+  "iosBannerDismiss": "Dismiss",
+  "ratingBannerText": "Enjoying Tab Space?",
+  "ratingBannerPositive": "Yes, rate it",
+  "ratingBannerNegative": "Not really, send feedback",
+  "ratingBannerDismiss": "Maybe later",
+  "ratingBannerFeedbackSubject": "Tab Space feedback"
 }

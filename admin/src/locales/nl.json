@@ -109,5 +109,10 @@
   "iosBannerText": "Nu op iPhone en iPad met iCloud-synchronisatie",
   "iosBannerCta": "Download de mobiele app",
   "iosAppNav": "iOS-app",
-  "iosBannerDismiss": "Sluiten"
+  "iosBannerDismiss": "Sluiten",
+  "ratingBannerText": "Bevalt Tab Space?",
+  "ratingBannerPositive": "Ja, geef een beoordeling",
+  "ratingBannerNegative": "Niet echt, stuur feedback",
+  "ratingBannerDismiss": "Later",
+  "ratingBannerFeedbackSubject": "Feedback over Tab Space"
 }

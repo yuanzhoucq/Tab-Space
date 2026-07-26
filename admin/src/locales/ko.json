@@ -109,5 +109,10 @@
   "iosBannerText": "이제 iCloud 동기화로 iPhone과 iPad에서도 사용하세요",
   "iosBannerCta": "모바일 앱 받기",
   "iosAppNav": "iOS 앱",
-  "iosBannerDismiss": "닫기"
+  "iosBannerDismiss": "닫기",
+  "ratingBannerText": "Tab Space가 마음에 드시나요?",
+  "ratingBannerPositive": "만족해요, 평가하기",
+  "ratingBannerNegative": "아쉬워요, 의견 보내기",
+  "ratingBannerDismiss": "나중에",
+  "ratingBannerFeedbackSubject": "Tab Space 피드백"
 }

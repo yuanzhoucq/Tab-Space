@@ -109,5 +109,10 @@
   "iosBannerText": "Artık iCloud eşzamanlama ile iPhone ve iPad'de",
   "iosBannerCta": "Mobil uygulamayı edinin",
   "iosAppNav": "iOS uygulaması",
-  "iosBannerDismiss": "Kapat"
+  "iosBannerDismiss": "Kapat",
+  "ratingBannerText": "Tab Space'i beğendiniz mi?",
+  "ratingBannerPositive": "Evet, puan ver",
+  "ratingBannerNegative": "Pek değil, geri bildirim gönder",
+  "ratingBannerDismiss": "Daha sonra",
+  "ratingBannerFeedbackSubject": "Tab Space geri bildirimi"
 }

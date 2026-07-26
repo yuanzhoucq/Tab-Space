@@ -109,5 +109,10 @@
   "iosBannerText": "Nu på iPhone og iPad med iCloud-synkronisering",
   "iosBannerCta": "Hent mobilappen",
   "iosAppNav": "iOS-app",
-  "iosBannerDismiss": "Luk"
+  "iosBannerDismiss": "Luk",
+  "ratingBannerText": "Kan du lide Tab Space?",
+  "ratingBannerPositive": "Ja, giv en vurdering",
+  "ratingBannerNegative": "Ikke rigtig, send feedback",
+  "ratingBannerDismiss": "Senere",
+  "ratingBannerFeedbackSubject": "Feedback om Tab Space"
 }

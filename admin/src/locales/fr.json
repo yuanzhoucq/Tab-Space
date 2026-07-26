@@ -109,5 +109,10 @@
   "iosBannerText": "Maintenant sur iPhone et iPad avec la synchronisation iCloud",
   "iosBannerCta": "Obtenir l'app mobile",
   "iosAppNav": "App iOS",
-  "iosBannerDismiss": "Fermer"
+  "iosBannerDismiss": "Fermer",
+  "ratingBannerText": "Tab Space vous plaît ?",
+  "ratingBannerPositive": "Oui, laisser un avis",
+  "ratingBannerNegative": "Pas vraiment, envoyer un retour",
+  "ratingBannerDismiss": "Plus tard",
+  "ratingBannerFeedbackSubject": "Commentaires sur Tab Space"
 }

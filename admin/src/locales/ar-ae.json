@@ -109,5 +109,10 @@
   "iosBannerText": "متوفر الآن على iPhone وiPad مع مزامنة iCloud",
   "iosBannerCta": "احصل على تطبيق الهاتف",
   "iosAppNav": "تطبيق iOS",
-  "iosBannerDismiss": "إغلاق"
+  "iosBannerDismiss": "إغلاق",
+  "ratingBannerText": "هل يعجبك Tab Space؟",
+  "ratingBannerPositive": "نعم، قيّم التطبيق",
+  "ratingBannerNegative": "ليس تمامًا، أرسل ملاحظاتك",
+  "ratingBannerDismiss": "لاحقًا",
+  "ratingBannerFeedbackSubject": "ملاحظات حول Tab Space"
 }

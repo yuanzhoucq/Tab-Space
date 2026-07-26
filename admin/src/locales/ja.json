@@ -109,5 +109,10 @@
   "iosBannerText": "iCloud 同期対応の iPhone・iPad 版が登場",
   "iosBannerCta": "モバイル版を入手",
   "iosAppNav": "iOS 版",
-  "iosBannerDismiss": "閉じる"
+  "iosBannerDismiss": "閉じる",
+  "ratingBannerText": "Tab Space の使い心地はいかがですか？",
+  "ratingBannerPositive": "満足、評価する",
+  "ratingBannerNegative": "不満、フィードバック",
+  "ratingBannerDismiss": "後で",
+  "ratingBannerFeedbackSubject": "Tab Space へのフィードバック"
 }
