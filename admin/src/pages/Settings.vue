@@ -47,6 +47,74 @@
           </div>
         </div>
 
+        <!-- Subscription (only when the native extension speaks protocol v2).
+             Purchases and management happen in the host app; this block is the
+             persistent status + restore surface App Review expects. -->
+        <div class="card" v-if="aiEnabled" data-testid="subscription-card">
+          <h2 class="section-title">{{lang.subscription || 'Subscription'}}</h2>
+
+          <div class="plan-row">
+            <span class="plan-label">{{lang.currentPlan || 'Current plan'}}</span>
+            <span class="plan-value" :class="{ premium: isPremium }" data-testid="plan-status">
+              <v-icon v-if="isPremium" name="check-circle" class="plan-icon"></v-icon>
+              {{ isPremium ? (lang.planPremium || 'Premium') : (lang.planFree || 'Free') }}
+            </span>
+          </div>
+
+          <!-- Free tier: what is left and when it comes back. -->
+          <div v-if="!isPremium && quotaKnown" class="quota-block">
+            <p class="quota-line">
+              <template v-if="unlimitedQuota">{{lang.aiQuotaUnlimited || 'Unlimited AI requests'}}</template>
+              <template v-else>{{ quotaLabel }}</template>
+            </p>
+            <p v-if="!unlimitedQuota && quotaResetLabel" class="help-text">{{ quotaResetLabel }}</p>
+          </div>
+
+          <div class="subscription-actions">
+            <button v-if="!isPremium" type="button" class="primary-action"
+                    data-testid="settings-upgrade" @click="openSubscription">
+              {{lang.upgrade || 'Upgrade'}}
+            </button>
+            <button v-else type="button" class="secondary-action"
+                    data-testid="manage-subscription" @click="manageSubscription">
+              {{lang.manageSubscription || 'Manage subscription'}}
+            </button>
+            <button type="button" class="secondary-action" :disabled="restoring"
+                    data-testid="restore-purchases" @click="restore">
+              {{ restoring ? (lang.restoring || 'Restoring…') : (lang.restorePurchases || 'Restore Purchases') }}
+            </button>
+          </div>
+
+          <p v-if="purchaseRedirecting" class="help-text redirect-note" data-testid="redirect-note">
+            {{lang.continueInApp || 'Continuing in the Tab Space app…'}}
+          </p>
+          <p class="help-text">{{lang.subscriptionManagedInApp || 'Plans and payment are handled securely in the Tab Space app.'}}</p>
+          <p class="help-text legal-links">
+            <!-- Apple's standard EULA: it governs these purchases unless we
+                 publish our own terms, and mytab.space has no terms page. -->
+            <a href="https://www.apple.com/legal/internet-services/itunes/dev/stdeula/" target="_blank" rel="noopener">{{lang.terms || 'Terms of Use'}}</a>
+            <span class="footer-sep">·</span>
+            <a href="https://mytab.space/privacy.html" target="_blank" rel="noopener">{{lang.privacy}}</a>
+          </p>
+        </div>
+
+        <!-- AI (only when the native extension speaks protocol v2) -->
+        <div class="card" v-if="aiEnabled">
+          <h2 class="section-title">{{lang.aiSection || 'AI'}}</h2>
+          <div class="form-group" style="margin-bottom: 0;">
+            <label for="suggested-tags" class="form-label">{{lang.suggestedTags || 'Suggested Tags'}}</label>
+            <textarea
+              id="suggested-tags"
+              class="form-input form-textarea"
+              rows="3"
+              v-model="tagsDraft"
+              :placeholder="currentDefaultTags"
+              @blur="saveSuggestedTags"
+            ></textarea>
+            <p class="help-text">{{lang.suggestedTagsHint || 'Comma-separated tags the AI will prefer to use'}}</p>
+          </div>
+        </div>
+
         <!-- Shortcuts -->
         <div class="card">
           <h2 class="section-title">{{lang.shortcuts}}</h2>
@@ -178,7 +246,7 @@
 
 <script>
 import { ToggleButton } from 'vue-js-toggle-button'
-import { mapState } from 'vuex'
+import { mapState, mapGetters } from 'vuex'
 import Constants from '../constants'
 import buildInfo from '../build-info'
 
@@ -190,11 +258,75 @@ export default {
   data() {
     return {
       ...Constants,
-      buildInfo
+      buildInfo,
+      tagsDraft: "",
+      restoring: false
     };
   },
-  computed: mapState(["lang", "bridge", "tabSpaceSettings"]),
+  mounted() {
+    // Status can be stale if the user subscribed in the host app since the last
+    // bridge handshake; re-ask every time Settings opens.
+    this.refreshSubscriptionStatus()
+  },
+  watch: {
+    // Keep the editable draft in step with the native default once it arrives.
+    suggestedTagsValue: {
+      immediate: true,
+      handler(value) { this.tagsDraft = value }
+    }
+  },
+  computed: {
+    ...mapState(["lang", "bridge", "tabSpaceSettings", "aiQuotaRemaining", "aiQuotaResetAt", "purchaseRedirecting"]),
+    ...mapGetters(["aiEnabled", "isPremium"]),
+    quotaKnown() {
+      return this.aiQuotaRemaining !== null && this.aiQuotaRemaining !== undefined
+    },
+    unlimitedQuota() {
+      return this.aiQuotaRemaining === -1
+    },
+    quotaLabel() {
+      const template = this.lang.aiQuotaRemaining || '{count} AI requests left this week'
+      return template.replace('{count}', Math.max(0, this.aiQuotaRemaining))
+    },
+    quotaResetLabel() {
+      if (!this.aiQuotaResetAt) return ''
+      const resetDate = new Date(this.aiQuotaResetAt * 1000)
+      if (isNaN(resetDate.getTime())) return ''
+      const locale = this.tabSpaceSettings[Constants.preferredLanguageKey] || undefined
+      const formatted = resetDate.toLocaleString(locale, {
+        month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit'
+      })
+      const template = this.lang.quotaResetsAt || 'Resets {date}'
+      return template.replace('{date}', formatted)
+    },
+    suggestedTagsValue() {
+      return this.tabSpaceSettings[Constants.suggestedTagsKey] || ''
+    },
+    currentDefaultTags() {
+      const lang = this.tabSpaceSettings[Constants.preferredLanguageKey] || 'en-us'
+      return Constants.defaultSuggestedTags[lang] || Constants.defaultSuggestedTags['en-us']
+    }
+  },
   methods: {
+    refreshSubscriptionStatus() {
+      if (!this.aiEnabled || !this.bridge) return
+      this.bridge.send({cmd: "CheckSubscriptionStatus"})
+    },
+    openSubscription() {
+      this.$store.commit("setShowSubscriptionModal", true)
+    },
+    // Management, like purchasing, is owned by the host app: the native side
+    // brings it forward and replies PurchaseResult { redirected: true }.
+    manageSubscription() {
+      if (!this.bridge) return
+      this.bridge.send({cmd: "PurchaseSubscription"})
+    },
+    restore() {
+      if (!this.bridge) return
+      this.restoring = true
+      this.bridge.send({cmd: "RestorePurchases"})
+      setTimeout(() => { this.restoring = false }, 3000)
+    },
     setDefault(e, setting) {
       const value = e.value ? "true" : "false";
       this.bridge.send({cmd: "SetDefault", name: setting, value})
@@ -205,6 +337,26 @@ export default {
     setExternalBrowser(number, e) {
       let key = number == 1 ? Constants.externalBrowser1Key : Constants.externalBrowser2Key
       this.bridge.send({cmd: "SetDefault", name: key, value: e.target.value})
+    },
+    saveSuggestedTags() {
+      const raw = (this.tagsDraft || '').trim()
+      if (!raw) {
+        // Empty is fine — the native side falls back to the language default.
+        this.tagsDraft = ''
+        this.bridge.send({cmd: "SetDefault", name: Constants.suggestedTagsKey, value: ''})
+        return
+      }
+      const tags = raw
+        .split(/[,;\n]+/)
+        .map(t => t.trim())
+        .filter(t => t && t.length <= 50)
+      if (tags.length === 0) {
+        this.tagsDraft = this.suggestedTagsValue
+        return
+      }
+      const normalized = tags.join(', ')
+      this.tagsDraft = normalized
+      this.bridge.send({cmd: "SetDefault", name: Constants.suggestedTagsKey, value: normalized})
     }
   }
 };
@@ -291,6 +443,117 @@ export default {
   font-weight: 500;
   font-size: 0.9rem;
   color: var(--text-primary);
+}
+
+/* --- Subscription block --- */
+.plan-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.plan-label {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.plan-value {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.plan-value.premium {
+  color: #10b981;
+}
+
+.plan-icon {
+  width: 15px;
+  height: 15px;
+}
+
+.quota-block {
+  margin-top: 10px;
+}
+
+.quota-line {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.subscription-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.primary-action {
+  padding: 8px 16px;
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #ffffff;
+  background: var(--primary-color);
+  border: 0;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+}
+
+.secondary-action {
+  padding: 8px 16px;
+  font: inherit;
+  font-size: 0.85rem;
+  color: var(--text-primary);
+  background: transparent;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+}
+
+.secondary-action:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.redirect-note {
+  color: var(--primary-color);
+}
+
+.legal-links a {
+  color: inherit;
+}
+
+.form-input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 8px 12px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  line-height: 1.4;
+  color: var(--text-primary);
+  background-color: var(--bg-color);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.form-input:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 2px rgba(250, 128, 114, 0.2);
+}
+
+.form-textarea {
+  resize: vertical;
+  min-height: 80px;
+  font-family: inherit;
 }
 
 /* Custom Select Styles */

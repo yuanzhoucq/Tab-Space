@@ -71,10 +71,96 @@ export function installMockBridge() {
   const emitSessions = () => emit('ReturnBookmarks', { value: sessions })
   const indexOf = uuid => sessions.findIndex(s => s.uuid === uuid)
 
+  // --- AI (protocol v2) mock state ---
+  let quotaRemaining = 3
+  const quotaResetAt = Math.floor(Date.now() / 1000) + 7 * 24 * 60 * 60
+  let subscriptionStatus = 'free'
+  const quotaFields = () => ({ quotaRemaining, quotaResetAt })
+  const spendQuota = () => {
+    if (subscriptionStatus === 'active' || quotaRemaining === -1) return true
+    if (quotaRemaining <= 0) return false
+    quotaRemaining -= 1
+    return true
+  }
+  const sampleSuggestions = () => JSON.stringify([
+    { id: 'sug-dup', type: 'exactDuplicate', sessionUuids: ['mock-research', 'mock-reading'], tagNames: [], confidence: 1, impact: 5 },
+    { id: 'sug-big', type: 'oversizedSession', sessionUuids: ['mock-research'], tagNames: [], confidence: 0.7, impact: 3 },
+    { id: 'sug-orphan', type: 'orphanTags', sessionUuids: ['mock-untitled'], tagNames: ['Personal'], confidence: 1, impact: 1 }
+  ])
+
   const handlers = {
     CheckBookmarks: emitSessions,
     CheckDefault(msg) {
+      if (msg.name === 'tabspace-native-protocol-version') {
+        emit('ReturnDefault', { id: msg.name, value: '2' })
+        return
+      }
       emit('ReturnDefault', { id: msg.name, value: defaults[msg.name] || '' })
+    },
+    EnhanceSession(msg) {
+      const uuid = msg.bookmarks[0].uuid
+      if (!spendQuota()) {
+        emit('ReturnEnhancedSession', { uuid, error: 'quota_exceeded', ...quotaFields() })
+        return
+      }
+      emit('ReturnEnhancedSession', {
+        uuid,
+        title: 'AI: ' + (msg.bookmarks[0].title || 'Organized session'),
+        tags: JSON.stringify([{ name: 'AI' }, { name: 'Research' }]),
+        ...quotaFields()
+      })
+    },
+    ClusterTabs(msg) {
+      const session = msg.bookmarks[0]
+      if (!spendQuota()) {
+        emit('ReturnSplitPreview', { originalUuid: session.uuid, error: 'quota_exceeded', ...quotaFields() })
+        return
+      }
+      const half = Math.ceil(session.sites.length / 2)
+      const clusters = [
+        { name: 'Topic A', tags: ['Work'], sites: session.sites.slice(0, half) },
+        { name: 'Topic B', tags: ['Reading'], sites: session.sites.slice(half) }
+      ].filter(c => c.sites.length > 0)
+      emit('ReturnSplitPreview', {
+        clusters: JSON.stringify(clusters),
+        totalTabs: session.sites.length,
+        originalUuid: session.uuid,
+        ...quotaFields()
+      })
+    },
+    SaveSplitSessions(msg) {
+      const clusters = JSON.parse(msg.clusters || '[]')
+      const now = Date.now()
+      const newSessions = clusters.map((c, i) => ({
+        uuid: 'split-' + now + '-' + i, title: c.name, timestamp: now, comment: '',
+        sites: c.sites, tags: c.tags || []
+      }))
+      sessions.unshift(...clone(newSessions))
+      const original = sessions[indexOf(msg.originalUuid)]
+      if (original && !original.tags.some(t => t.name === '@Trash')) original.tags.push({ name: '@Trash' })
+      emitSessions()
+    },
+    GetSuggestions() {
+      emit('ReturnSuggestions', { suggestions: sampleSuggestions() })
+    },
+    DismissSuggestion(msg) {
+      console.log('[mock bridge] DismissSuggestion', msg.id, msg.muteType ? '(mute type)' : '')
+    },
+    CheckSubscriptionStatus() {
+      emit('ReturnSubscriptionStatus', { status: subscriptionStatus, ...quotaFields() })
+    },
+    PurchaseSubscription() {
+      emit('PurchaseResult', { redirected: true })
+      // Simulate the user completing the purchase in the host app, so a later
+      // CheckSubscriptionStatus (Settings mount / tab refocus) sees "active".
+      setTimeout(() => {
+        subscriptionStatus = 'active'
+        quotaRemaining = -1
+        console.log('[mock bridge] host-app purchase completed; status is now active')
+      }, 1500)
+    },
+    RestorePurchases() {
+      emit('ReturnSubscriptionStatus', { status: subscriptionStatus, redirected: true, ...quotaFields() })
     },
     SetDefault(msg) {
       defaults[msg.name] = msg.value
