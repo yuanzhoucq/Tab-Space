@@ -53,11 +53,38 @@ const store = new Vuex.Store({
         sessionViewMode: getInitialSessionViewMode(),
         activeTag: "",
         editingSessionUuid: "",
+        // --- AI (protocol v2) ---
+        // Native bridge protocol version (0 until reported). AI UI is gated on
+        // this being >= Constants.aiMinProtocolVersion so the dashboard stays
+        // clean against older extensions.
+        nativeProtocolVersion: 0,
+        enhancingSessionId: "",
+        splittingSessionId: "",
+        splitPreview: null,          // { clusters, totalTabs, originalUuid }
+        // Golden "just enhanced" flash + typewriter, keyed by session uuid.
+        enhancedFlash: null,         // { uuid, title }
+        // Local, ranked suggestion queue from GetSuggestions (top item first).
+        suggestions: [],
+        showSuggestionReport: false,
+        // Server-authoritative subscription + quota (never client-decided).
+        subscriptionStatus: "free",  // "free" | "active"
+        aiQuotaRemaining: null,      // Int, -1 = unlimited, null = unknown
+        aiQuotaResetAt: null,        // epoch seconds
+        showSubscriptionModal: false,
+        purchaseRedirecting: false,  // set once the native side confirms a redirect
+        // Transient, non-blocking AI error toast: { message, retry } | null.
+        aiToast: null,
         tabSpaceSettings: {
             ...defaultTabSpaceSettings
         }
     },
     getters: {
+        // Single source of truth for whether the AI UI may appear at all.
+        // AI needs BOTH protocol v2 and an active direct bridge.
+        aiEnabled: state => state.nativeProtocolVersion >= Constants.aiMinProtocolVersion
+            && !!state.bridge && state.bridge.mode === "direct",
+        isPremium: state => state.subscriptionStatus === "active",
+        topSuggestion: state => state.suggestions[0] || null,
         tags: state => {
             let tags = new Set()
             state.sessions.forEach(session => {
@@ -128,6 +155,45 @@ const store = new Vuex.Store({
         },
         setEditingSessionUuid(state, newId) {
             state.editingSessionUuid = newId
+        },
+        // --- AI mutations ---
+        setNativeProtocolVersion(state, version) {
+            state.nativeProtocolVersion = Number(version) || 0
+        },
+        setEnhancingSessionId(state, newId) {
+            state.enhancingSessionId = newId
+        },
+        setSplittingSessionId(state, newId) {
+            state.splittingSessionId = newId
+        },
+        setSplitPreview(state, preview) {
+            state.splitPreview = preview
+        },
+        setEnhancedFlash(state, flash) {
+            state.enhancedFlash = flash
+        },
+        setSuggestions(state, suggestions) {
+            state.suggestions = Array.isArray(suggestions) ? suggestions : []
+        },
+        setShowSuggestionReport(state, show) {
+            state.showSuggestionReport = show
+        },
+        setSubscriptionStatus(state, status) {
+            state.subscriptionStatus = status === "active" ? "active" : "free"
+        },
+        setAIQuota(state, { remaining, resetAt }) {
+            if (remaining !== undefined && remaining !== null) state.aiQuotaRemaining = Number(remaining)
+            if (resetAt !== undefined && resetAt !== null) state.aiQuotaResetAt = Number(resetAt)
+        },
+        setShowSubscriptionModal(state, show) {
+            state.showSubscriptionModal = show
+            if (!show) state.purchaseRedirecting = false
+        },
+        setPurchaseRedirecting(state, redirecting) {
+            state.purchaseRedirecting = redirecting
+        },
+        setAIToast(state, toast) {
+            state.aiToast = toast
         },
         setTabSpaceSetting(state, {key, value}) {
             let settings = { ...state.tabSpaceSettings }

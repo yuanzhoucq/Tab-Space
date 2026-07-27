@@ -2,10 +2,11 @@
   <iframe id="bridgeStorage"
           v-if="bridgeModeResolved && !directMode && !webExtensionMode"
           ref="bridgeStorage"
-          :src="`${$myConfig.staticResourceEndpoint}/storage.html?method=get`"
+          :src="legacyBridgeUrl"
           @load="onIframeLoad"
           height="0"
           style="border: none"
+          aria-hidden="true"
   >
   </iframe>
 </template>
@@ -13,6 +14,11 @@
 <script>
 import { mapState } from 'vuex'
 import Constants from '../constants'
+import config from '../config'
+
+const appExtensionEvent = name => `tabspace:app-extension:${name}`
+const legacyBridgeUrl = `${config.staticResourceEndpoint}/storage.html?method=get`
+const legacyBridgeOrigin = new URL(config.staticResourceEndpoint).origin
 
 // Origins where the browser extension injects its content script: production,
 // the local development server, and Cloudflare Pages preview deployments,
@@ -26,12 +32,14 @@ export default {
   data() {
     const hasDirectBridge = Boolean(window.__tabspace_bridge)
     const directBridgeExpected = window.location.host === "app.mytab.space"
+      || window.location.hostname === "localhost"
     return {
       iframeLoaded: false,
       directMode: hasDirectBridge,
       webExtensionMode: false,
       bridgeModeResolved: !directBridgeExpected || hasDirectBridge,
       directBridgeExpected,
+      legacyBridgeUrl,
       minimumProtocolVersion: 1,
       protocolVersionKey: "tabspace-native-protocol-version",
       bridgeReady: false,
@@ -40,7 +48,8 @@ export default {
       bookmarkRefreshTimer: null,
       bookmarkRefreshAttempt: 0,
       defaultsRequested: false,
-      webExtensionRequestId: 0
+      webExtensionRequestId: 0,
+      aiInitialized: false
     }
   },
   computed: {
@@ -58,17 +67,24 @@ export default {
     if (this.redirectLegacyBridgeLoopbackHost()) return
     window.addEventListener("message", this.handleWindowMessage)
     window.addEventListener("tabspace:bridge-ready", this.handleBridgeReady)
+    document.addEventListener(appExtensionEvent("ready"), this.handleAppExtensionBridgeReady)
+    document.addEventListener(appExtensionEvent("message"), this.handleAppExtensionMessage)
+    document.addEventListener("visibilitychange", this.handleVisibilityChange)
     this.startAppDetectionTimeout()
     this.probeWebExtension()
     if (window.__tabspace_bridge) {
       this.setupDirectBridge()
     } else if (this.directBridgeExpected) {
+      this.probeAppExtensionBridge()
       this.detectBridge(0)
     }
   },
   beforeDestroy() {
     window.removeEventListener("message", this.handleWindowMessage)
     window.removeEventListener("tabspace:bridge-ready", this.handleBridgeReady)
+    document.removeEventListener(appExtensionEvent("ready"), this.handleAppExtensionBridgeReady)
+    document.removeEventListener(appExtensionEvent("message"), this.handleAppExtensionMessage)
+    document.removeEventListener("visibilitychange", this.handleVisibilityChange)
     this.clearAppDetectionTimer()
     this.clearInitialDataTimer()
     this.clearBookmarkRefreshTimer()
@@ -91,6 +107,7 @@ export default {
         return
       }
       if (attempt < 10) {
+        this.probeAppExtensionBridge()
         setTimeout(() => this.detectBridge(attempt + 1), 100)
         return
       }
@@ -101,6 +118,55 @@ export default {
         this.setupDirectBridge()
       }
     },
+    probeAppExtensionBridge() {
+      document.dispatchEvent(new CustomEvent(appExtensionEvent("probe")))
+    },
+    handleAppExtensionBridgeReady(event) {
+      try {
+        const detail = JSON.parse(event.detail || "{}")
+        if (Number(detail.protocolVersion || 0) < 1) return
+      } catch (_) {
+        return
+      }
+      this.setupAppExtensionBridge()
+    },
+    handleAppExtensionMessage(event) {
+      let payload
+      try {
+        payload = JSON.parse(event.detail || "{}")
+      } catch (_) {
+        return
+      }
+      if (!payload || typeof payload.name !== "string") return
+      const message = payload.message || {}
+      this.handleNativeMessage(payload.name, {
+        ...message,
+        cmd: payload.name,
+        bookmarks: message.value,
+        source: message.source,
+        id: message.id,
+        value: message.value,
+        backups: message.backups
+      })
+    },
+    setupAppExtensionBridge() {
+      if (this.bridgeReady && this.directMode) return
+      this.clearBookmarkRefreshTimer()
+      this.directMode = true
+      this.bridgeModeResolved = true
+      const directBridge = {
+        send: msg => document.dispatchEvent(new CustomEvent(appExtensionEvent("command"), {
+          detail: JSON.stringify({ name: msg.cmd, data: msg })
+        })),
+        mode: "direct",
+        fallbackToBundled: null
+      }
+      this.$store.commit("setBridge", directBridge)
+      this.bridgeReady = true
+      this.markNativeDetected()
+      this.markDashboardReady()
+      this.requestInitialData(directBridge)
+    },
     setupDirectBridge() {
       if (this.bridgeReady && this.directMode) return
       this.clearBookmarkRefreshTimer()
@@ -108,7 +174,12 @@ export default {
       this.webExtensionMode = false
       this.bridgeModeResolved = true
       window.__tabspace_bridge.onMessage = (name, message) => {
+        // Spread the raw payload first so reply-specific fields (status,
+        // quotaRemaining, quotaResetAt, redirected, error, title, tags,
+        // clusters, suggestions, …) survive; the explicit keys below keep the
+        // long-standing bookmark mapping unchanged.
         this.handleNativeMessage(name, {
+          ...(message || {}),
           cmd: name,
           bookmarks: message && message.value,
           source: message && message.source,
@@ -132,13 +203,10 @@ export default {
     },
     handleWindowMessage(evt) {
       if (this.handleWebExtensionMessage(evt)) return
-      // Filter out other sites' postMessage
-      if (
-        !evt.origin.includes("joyuer.cn")
-        && !evt.origin.includes("mytab.space")
-        && !evt.origin.includes("yuanzhoucq.github.io")
-      ) return
-      if (!evt.data || !evt.data.cmd) return
+      const iframe = this.$refs.bridgeStorage
+      if (!iframe || evt.source !== iframe.contentWindow) return
+      if (evt.origin !== legacyBridgeOrigin) return
+      if (!evt.data || typeof evt.data.cmd !== "string") return
 
       this.handleNativeMessage(evt.data.cmd, evt.data)
     },
@@ -206,14 +274,13 @@ export default {
       this.bridgeReady = true
     },
     onIframeLoad() {
-      if (this.iframeLoaded) return
-      if (this.directMode) return
-      console.log("Bridge iframe loaded.")
+      if (this.iframeLoaded || this.directMode) return
+      console.log("Legacy bridge iframe loaded.")
       this.iframeLoaded = true
       const iframe = this.$refs.bridgeStorage
       if (!iframe) return
       const iframeBridge = {
-        send: msg => iframe.contentWindow.postMessage(msg, "*"),
+        send: msg => iframe.contentWindow.postMessage(msg, legacyBridgeOrigin),
         mode: "iframe"
       }
       this.$store.commit("setBridge", iframeBridge)
@@ -240,6 +307,24 @@ export default {
           console.log("Sessions changed remotely; refreshing bookmarks.")
           if (this.bridge) this.bridge.send({cmd: "CheckBookmarks"})
           break
+        // --- AI (protocol v2) replies ---
+        case "ReturnEnhancedSession":
+          this.handleEnhancedSession(data)
+          break
+        case "ReturnSplitPreview":
+          this.handleSplitPreview(data)
+          break
+        case "ReturnSuggestions":
+          this.handleSuggestions(data)
+          break
+        case "ReturnSubscriptionStatus":
+          this.handleSubscriptionStatus(data)
+          break
+        case "PurchaseResult":
+          // The native side redirected the user to the host app to complete the
+          // purchase; there is no in-extension StoreKit sheet anymore.
+          if (data.redirected) this.$store.commit("setPurchaseRedirecting", true)
+          break
       }
     },
     handleDefault(data) {
@@ -248,9 +333,146 @@ export default {
         if (version > 0 && version < this.minimumProtocolVersion) {
           window.alert("This Tab Space app version is too old for the online dashboard. Please update Tab Space.")
         }
+        // Record the negotiated protocol version; all AI UI is gated on it
+        // (>= Constants.aiMinProtocolVersion) so older extensions simply hide it.
+        this.$store.commit("setNativeProtocolVersion", version)
+        this.initAI()
         return
       }
       this.$store.commit("setTabSpaceSetting", {key: data.id, value: data.value})
+    },
+    // Kick off AI-only requests once we know the extension speaks protocol v2.
+    // Idempotent: guarded so it runs a single time per bridge session.
+    initAI() {
+      if (this.aiInitialized) return
+      if (this.$store.state.nativeProtocolVersion < Constants.aiMinProtocolVersion) return
+      if (!this.bridge) return
+      this.aiInitialized = true
+      this.bridge.send({cmd: "CheckDefault", name: Constants.suggestedTagsKey})
+      this.bridge.send({cmd: "CheckSubscriptionStatus"})
+      this.refreshSuggestions()
+    },
+    refreshSuggestions() {
+      if (!this.bridge) return
+      if (this.$store.state.nativeProtocolVersion < Constants.aiMinProtocolVersion) return
+      this.bridge.send({cmd: "GetSuggestions"})
+    },
+    // --- AI reply handlers ---
+    applyQuota(data) {
+      if (data.quotaRemaining === undefined && data.quotaResetAt === undefined) return
+      this.$store.commit("setAIQuota", {
+        remaining: data.quotaRemaining,
+        resetAt: data.quotaResetAt
+      })
+    },
+    // Typed errors replace the demo's "empty result = failure" convention.
+    handleAIError(data) {
+      this.applyQuota(data)
+      if (data.error === "quota_exceeded") {
+        // Quota exhausted: pin remaining to 0 and surface the upgrade path.
+        if (data.quotaRemaining === undefined) this.$store.commit("setAIQuota", {remaining: 0})
+        this.$store.commit("setShowSubscriptionModal", true)
+        return
+      }
+      if (data.error === "unauthorized") {
+        this.$store.commit("setAIToast", {messageKey: "aiErrorUnauthorized", retry: null})
+        return
+      }
+      // network / server / invalid_response / anything else: non-blocking,
+      // retryable toast.
+      const messageKey = data.error === "network" ? "aiErrorNetwork" : "aiErrorGeneric"
+      const retry = this.retryPayloadFor(data)
+      this.$store.commit("setAIToast", {messageKey, retry})
+    },
+    // Rebuild the request that failed so the toast's Retry button can re-send it.
+    retryPayloadFor(data) {
+      const session = data.uuid ? this.sessions.find(s => s.uuid === data.uuid) : null
+      const originalSession = data.originalUuid ? this.sessions.find(s => s.uuid === data.originalUuid) : null
+      if (session) return {cmd: "EnhanceSession", uuid: session.uuid, bookmarks: [session]}
+      if (originalSession) return {cmd: "ClusterTabs", uuid: originalSession.uuid, bookmarks: [originalSession]}
+      return null
+    },
+    handleEnhancedSession(data) {
+      this.$store.commit("setEnhancingSessionId", "")
+      if (data.error) {
+        this.handleAIError(data)
+        return
+      }
+      this.applyQuota(data)
+      const session = this.sessions.find(s => s.uuid === data.uuid)
+      if (!session) return
+      if (data.title) session.title = data.title
+      if (data.tags) {
+        try {
+          const newTags = JSON.parse(data.tags)
+          const existingNames = session.tags.map(t => t.name)
+          newTags.forEach(tag => {
+            if (tag && tag.name && !existingNames.includes(tag.name)) session.tags.push(tag)
+          })
+        } catch (e) {
+          console.error("Failed to parse AI tags:", e)
+        }
+      }
+      // Persist and trigger the golden flash / typewriter on the card.
+      this.bridge.send({cmd: "UpdateSession", bookmarks: [session]})
+      this.$store.commit("setEnhancedFlash", {uuid: session.uuid, title: data.title || session.title})
+      this.refreshSuggestions()
+    },
+    handleSplitPreview(data) {
+      if (data.originalUuid) this.$store.commit("setSplittingSessionId", "")
+      if (data.error) {
+        this.handleAIError(data)
+        return
+      }
+      this.applyQuota(data)
+      try {
+        const clusters = JSON.parse(data.clusters || "[]")
+        if (clusters.length > 1) {
+          this.$store.commit("setSplitPreview", {
+            clusters,
+            totalTabs: data.totalTabs || 0,
+            originalUuid: data.originalUuid || null
+          })
+        } else {
+          // Nothing to split into — tell the user rather than opening an empty modal.
+          this.$store.commit("setAIToast", {messageKey: "splitNoTopics", retry: null})
+          this.$store.commit("setSplitPreview", null)
+        }
+      } catch (e) {
+        console.error("Failed to parse split preview:", e)
+        this.$store.commit("setAIToast", {messageKey: "aiErrorGeneric", retry: null})
+      }
+    },
+    handleSuggestions(data) {
+      try {
+        this.$store.commit("setSuggestions", JSON.parse(data.suggestions || "[]"))
+      } catch (e) {
+        console.error("Failed to parse suggestions:", e)
+        this.$store.commit("setSuggestions", [])
+      }
+    },
+    handleSubscriptionStatus(data) {
+      this.$store.commit("setSubscriptionStatus", data.status)
+      this.applyQuota(data)
+      // RestorePurchases / PurchaseSubscription both hand off to the host app.
+      // Reflect that in the UI, and stop showing "continuing…" once the status
+      // actually came back as subscribed.
+      if (data.redirected) this.$store.commit("setPurchaseRedirecting", true)
+      if (data.status === "active") this.$store.commit("setPurchaseRedirecting", false)
+    },
+    // Re-ask the native side for subscription + quota. Used by Settings on
+    // mount and whenever the tab regains focus after a host-app redirect, so
+    // status cannot go stale after the user subscribes outside the dashboard.
+    refreshSubscriptionStatus() {
+      if (!this.bridge) return
+      if (this.$store.state.nativeProtocolVersion < Constants.aiMinProtocolVersion) return
+      this.bridge.send({cmd: "CheckSubscriptionStatus"})
+    },
+    handleVisibilityChange() {
+      if (document.visibilityState !== "visible") return
+      // Only worth a round trip when a purchase/restore redirect is pending.
+      if (!this.$store.state.purchaseRedirecting) return
+      this.refreshSubscriptionStatus()
     },
     markDashboardReady() {
       if (window.__tabspace_bridge && typeof window.__tabspace_bridge.markReady === "function") {
@@ -355,6 +577,8 @@ export default {
           this.$store.commit("setConnectionTimedOut", false)
           this.clearBookmarkRefreshTimer()
           this.requestDefaultsOnce()
+          // Keep the local suggestion queue in step with the library once AI is on.
+          this.refreshSuggestions()
         } catch (e) {
           console.log("Synced bookmarks are not valid.")
         }

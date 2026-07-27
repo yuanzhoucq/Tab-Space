@@ -25,6 +25,16 @@
       </button>
       <backup-dropdown></backup-dropdown>
     </div>
+    <!-- Quiet, always-visible plan status. Links to Settings rather than
+         opening the paywall, so this is a status readout and not a second
+         upsell surface. -->
+    <div v-if="aiEnabled && showPlanStatus">
+      <router-link class="link plan-status" data-testid="plan-status-link"
+                   to="/settings" :title="planStatusTitle" :aria-label="planStatusTitle">
+        <v-icon name="zap" class="plan-status-icon"></v-icon>
+        <span>{{ planStatusLabel }}</span>
+      </router-link>
+    </div>
     <div>
       <a class="link ios-app-link"
          data-testid="ios-app-link"
@@ -42,7 +52,7 @@
 </template>
 
 <script>
-import { mapState } from "vuex"
+import { mapState, mapGetters } from "vuex"
 import { mobileAppStoreUrl } from "../app-store"
 import Constants from "../constants"
 import ExportDropdown from "./ExportDropdown"
@@ -52,10 +62,32 @@ import BackupDropdown from "./BackupDropdown"
 export default {
   name: "Navbar",
   computed: {
-    ...mapState(["lang", "bridge", "activeTag", "sessions", "tabSpaceSettings"]),
+    ...mapState(["lang", "bridge", "activeTag", "sessions", "tabSpaceSettings", "aiQuotaRemaining"]),
+    ...mapGetters(["aiEnabled", "isPremium"]),
     appStoreUrl() {
       const preferredLanguage = this.tabSpaceSettings[Constants.preferredLanguageKey] || navigator.language
       return mobileAppStoreUrl(preferredLanguage)
+    },
+    quotaKnown() {
+      return this.aiQuotaRemaining !== null && this.aiQuotaRemaining !== undefined
+    },
+    // Premium users always get the subtle marker; free users only once the
+    // native side has actually reported a quota.
+    showPlanStatus() {
+      return this.isPremium || this.quotaKnown
+    },
+    planStatusLabel() {
+      if (this.isPremium) return this.lang.planPremium || "Premium"
+      if (this.aiQuotaRemaining === -1) return this.lang.planPremium || "Premium"
+      const template = this.lang.aiQuotaShort || "{count} AI left"
+      return template.replace("{count}", Math.max(0, this.aiQuotaRemaining))
+    },
+    planStatusTitle() {
+      if (this.isPremium || this.aiQuotaRemaining === -1) {
+        return this.lang.aiQuotaUnlimited || "Unlimited AI requests"
+      }
+      const template = this.lang.aiQuotaRemaining || "{count} AI requests left this week"
+      return template.replace("{count}", Math.max(0, this.aiQuotaRemaining))
     },
     hasExportableSessions() {
       return this.sessions.some(session => (
@@ -117,6 +149,25 @@ export default {
 
   .ios-app-link .icon {
     width: 15px;
+  }
+
+  .plan-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.85em;
+    opacity: 0.7;
+    text-decoration: none;
+    color: inherit;
+  }
+
+  .plan-status:hover {
+    opacity: 1;
+  }
+
+  .plan-status-icon {
+    width: 12px;
+    height: 12px;
   }
 
   .export, .import, .backup {

@@ -20,15 +20,19 @@
         <div
             v-else
             class="session-title"
+            :class="{'ai-updated': aiFlash}"
             :id="'id'+session.uuid"
             @click.stop="editSessionName(session.uuid)"
             @blur="updateSessionName"
         >
-          <span
-              v-for="(part, index) in highlightParts(session.title || (`${lang.saveAt} ${(new Date(Number(session.timestamp))).Format('yyyy-MM-dd hh:mm')}`))"
-              :key="index"
-              :class="{'highlight': part.match}"
-          >{{ part.text }}</span>
+          <span v-if="typewriterActive" class="typewriter">{{ typewriterText }}<span class="cursor">|</span></span>
+          <template v-else>
+            <span
+                v-for="(part, index) in highlightParts(session.title || (`${lang.saveAt} ${(new Date(Number(session.timestamp))).Format('yyyy-MM-dd hh:mm')}`))"
+                :key="index"
+                :class="{'highlight': part.match}"
+            >{{ part.text }}</span>
+          </template>
         </div>
         <span v-if="hasSearch" class="search-match-count" data-testid="search-match-count">
           {{ searchResultEntries.length }} / {{ session.sites.length }}
@@ -73,7 +77,25 @@
                 :title="lang.openSession || 'Open'" :aria-label="lang.openSession || 'Open'">
           <v-icon name="external-link" class="btn-icon"></v-icon>
         </button>
-        <button v-if="!bulkSelectionMode && !isEditingSession(session)" type="button" class="btn del-btn" data-testid="delete-session" @click.stop="restore(session.uuid, false, true)"
+        <button v-if="aiEnabled && !bulkSelectionMode && !isEditingSession(session)"
+                type="button" class="btn ai-btn" data-testid="ai-enhance-session"
+                :class="{ 'loading': enhancingSessionId === session.uuid }"
+                :title="lang.aiEnhance || 'AI Enhance'" :aria-label="lang.aiEnhance || 'AI Enhance'"
+                @click.stop="enhanceWithAI(session)">
+          <v-icon v-if="enhancingSessionId === session.uuid" name="loader" class="btn-icon spinner"></v-icon>
+          <v-icon v-else name="zap" class="btn-icon"></v-icon>
+        </button>
+        <button v-if="aiEnabled && session.sites.length >= 3 && !bulkSelectionMode && !isEditingSession(session)"
+                type="button" class="btn split-btn" data-testid="ai-split-session"
+                :class="{ 'loading': splittingSessionId === session.uuid }"
+                :title="lang.splitSession || 'Split Topics'" :aria-label="lang.splitSession || 'Split Topics'"
+                @click.stop="splitSession(session)">
+          <v-icon v-if="splittingSessionId === session.uuid" name="loader" class="btn-icon spinner"></v-icon>
+          <v-icon v-else name="server" class="btn-icon"></v-icon>
+        </button>
+        <button v-if="!bulkSelectionMode && !isEditingSession(session)"
+                type="button" class="btn del-btn" data-testid="delete-session"
+                @click.stop="restore(session.uuid, false, true)"
                 :title="lang.deleteSession || 'Delete'" :aria-label="lang.deleteSession || 'Delete'">
           <v-icon name="trash-2" class="btn-icon"></v-icon>
         </button>
@@ -368,12 +390,18 @@
         bulkSelectionMode: false,
         bulkSelectionPreviousExpansion: false,
         selectedSiteIndexes: [],
-        bulkMoveTargetUuid: ""
+        bulkMoveTargetUuid: "",
+        // AI enhance animation (typewriter title + golden flash)
+        typewriterActive: false,
+        typewriterText: "",
+        typewriterTimer: null,
+        aiFlash: false,
+        flashTimer: null
       }
     },
     computed: {
-      ...mapState(["lang", "bridge", "keyword", "sessionViewMode", "sessions", "activeTag", "editingSessionUuid", "tabSpaceSettings"]),
-      ...mapGetters(["tags"]),
+      ...mapState(["lang", "bridge", "keyword", "sessionViewMode", "sessions", "activeTag", "editingSessionUuid", "tabSpaceSettings", "enhancingSessionId", "splittingSessionId", "enhancedFlash"]),
+      ...mapGetters(["tags", "aiEnabled"]),
       hasSearch() {
         return Boolean(this.keyword && this.keyword.trim())
       },
@@ -483,7 +511,18 @@
       },
       tagKeyword() {
         this.tagSuggestionIndex = -1
+      },
+      enhancedFlash(flash) {
+        // The bridge sets this after a successful EnhanceSession; only the
+        // matching card plays the reveal animation.
+        if (flash && flash.uuid === this.session.uuid) {
+          this.runEnhanceAnimation(flash.title)
+        }
       }
+    },
+    beforeDestroy() {
+      if (this.typewriterTimer) clearInterval(this.typewriterTimer)
+      if (this.flashTimer) clearTimeout(this.flashTimer)
     },
     methods: {
       startSessionEdit(session) {
@@ -617,6 +656,45 @@
           cmd: source.sites.length === 0 ? "DeleteSession" : "UpdateSession",
           bookmarks: [source]
         })
+      },
+      enhanceWithAI(session) {
+        // Per-session enhance is a free-tier action; the server enforces quota
+        // and replies with a typed error if it is exhausted (handled centrally
+        // in TabSpaceBridge).
+        if (!this.aiEnabled || this.enhancingSessionId) return
+        this.$store.commit("setEnhancingSessionId", session.uuid)
+        this.bridge.send({ cmd: "EnhanceSession", uuid: session.uuid, bookmarks: [session] })
+      },
+      splitSession(session) {
+        // Clustering/preview is free; only *saving* the split is premium-gated
+        // (enforced in SplitPreviewModal), matching design §6.
+        if (!this.aiEnabled || this.splittingSessionId) return
+        this.$store.commit("setSplittingSessionId", session.uuid)
+        this.bridge.send({ cmd: "ClusterTabs", uuid: session.uuid, bookmarks: [session] })
+      },
+      runEnhanceAnimation(title) {
+        this.aiFlash = true
+        clearTimeout(this.flashTimer)
+        this.flashTimer = setTimeout(() => { this.aiFlash = false }, 2000)
+        if (title) this.typeTitle(title)
+        // Consume the flash so it does not replay on re-render.
+        this.$store.commit("setEnhancedFlash", null)
+      },
+      typeTitle(fullTitle) {
+        if (this.typewriterTimer) clearInterval(this.typewriterTimer)
+        this.typewriterActive = true
+        this.typewriterText = ""
+        let index = 0
+        this.typewriterTimer = setInterval(() => {
+          if (index < fullTitle.length) {
+            this.typewriterText = fullTitle.substring(0, index + 1)
+            index++
+          } else {
+            clearInterval(this.typewriterTimer)
+            this.typewriterTimer = null
+            setTimeout(() => { this.typewriterActive = false; this.typewriterText = "" }, 400)
+          }
+        }, 28)
       },
       toggleTemporaryExpansion() {
         this.temporarilyExpanded = !this.temporarilyExpanded
@@ -1539,6 +1617,73 @@
     stroke: var(--text-primary, #2d3748) !important;
   }
 
+  /* AI Enhance button — gold */
+  .ai-btn svg,
+  .ai-btn .btn-icon {
+    stroke: #eab308 !important;
+  }
+
+  .ai-btn:hover {
+    background-color: rgba(234, 179, 8, 0.1);
+  }
+
+  .ai-btn:hover svg,
+  .ai-btn:hover .btn-icon {
+    stroke: #ca8a04 !important;
+  }
+
+  /* Split button — purple */
+  .split-btn svg,
+  .split-btn .btn-icon {
+    stroke: #8b5cf6 !important;
+  }
+
+  .split-btn:hover {
+    background-color: rgba(139, 92, 246, 0.1);
+  }
+
+  .split-btn:hover svg,
+  .split-btn:hover .btn-icon {
+    stroke: #7c3aed !important;
+  }
+
+  .btn.loading {
+    pointer-events: none;
+  }
+
+  .spinner {
+    animation: spin 1s linear infinite;
+  }
+
+  @keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+
+  /* Golden reveal after an AI enhance */
+  .session-title.ai-updated {
+    animation: ai-glow 0.5s ease-out 3;
+  }
+
+  @keyframes ai-glow {
+    0% { box-shadow: inset 0 -10px #fadc23, 0 0 5px rgba(250, 220, 35, 0.3); transform: scale(1); }
+    50% { box-shadow: inset 0 -10px #ffd700, 0 0 22px rgba(255, 215, 0, 0.7); transform: scale(1.02); }
+    100% { box-shadow: inset 0 -10px #fadc23, 0 0 5px rgba(250, 220, 35, 0.3); transform: scale(1); }
+  }
+
+  .session-title .cursor {
+    display: inline-block;
+    margin-left: 1px;
+    color: #eab308;
+    font-weight: normal;
+    animation: blink 0.7s step-end infinite;
+  }
+
+  @keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0; }
+  }
+
   .del-btn:hover svg,
   .del-btn:hover .btn-icon {
     stroke: #eb5205 !important;
@@ -1693,6 +1838,34 @@
     .btn:hover svg,
     .btn:hover .btn-icon {
       stroke: var(--text-primary, #f7fafc) !important;
+    }
+
+    .ai-btn svg,
+    .ai-btn .btn-icon {
+      stroke: #facc15 !important;
+    }
+
+    .ai-btn:hover {
+      background-color: rgba(250, 204, 21, 0.15);
+    }
+
+    .ai-btn:hover svg,
+    .ai-btn:hover .btn-icon {
+      stroke: #fde047 !important;
+    }
+
+    .split-btn svg,
+    .split-btn .btn-icon {
+      stroke: #a78bfa !important;
+    }
+
+    .split-btn:hover {
+      background-color: rgba(167, 139, 250, 0.15);
+    }
+
+    .split-btn:hover svg,
+    .split-btn:hover .btn-icon {
+      stroke: #c4b5fd !important;
     }
 
     .del-btn:hover {

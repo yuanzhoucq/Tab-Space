@@ -39,6 +39,7 @@
       <div class="empty-state" v-if="nativeDetected && initialRefresh && sessions.length < 1">
         <p>{{lang.noSessions}}</p>
       </div>
+      <suggestion-card v-if="nativeDetected && initialRefresh"></suggestion-card>
       <div v-if="nativeDetected && initialRefresh" class="sessions-container">
         <session-sidebar></session-sidebar>
         <div class="session-column">
@@ -72,6 +73,7 @@
   import SessionSidebar from '../components/SessionSidebar'
   import SessionHub from '../components/SessionHub'
   import Sessions from '../components/Sessions'
+  import SuggestionCard from '../components/SuggestionCard'
 
   export default {
     components: {
@@ -81,6 +83,7 @@
       SessionSidebar,
       SessionHub,
       Sessions,
+      SuggestionCard,
     },
     data() {
       return {

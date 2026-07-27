@@ -1,3 +1,3 @@
 export default {
-    staticResourceEndpoint: "https://static.mytab.space"
+  staticResourceEndpoint: "https://static.mytab.space"
 }
