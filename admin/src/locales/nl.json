@@ -153,7 +153,7 @@
   "suggestionOversizedTitle": "Grote sessie",
   "suggestionOrphanTagsTitle": "Ongebruikte tag",
   "suggestionsTitle": "Suggestie",
-  "suggestionExactDuplicateDesc": "{count} identieke sessies kunnen worden samengevoegd.",
+  "suggestionExactDuplicateDesc": "Deze {count} sessies bevatten dezelfde tabbladen en kunnen worden samengevoegd.",
   "suggestionNearDuplicateDesc": "Deze sessies delen de meeste tabbladen — samenvoegen?",
   "suggestionOversizedDesc": "Deze sessie heeft {count} tabbladen. Opsplitsen in onderwerpen?",
   "suggestionOrphanTagsDesc": "De tag \"{tag}\" wordt maar één keer gebruikt.",

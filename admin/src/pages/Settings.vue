@@ -13,40 +13,6 @@
       </header>
 
       <div class="settings-content">
-        <!-- General Preferences -->
-        <div class="card">
-          <h2 class="section-title">{{lang.generalPreferences}}</h2>
-          <div class="setting-list">
-            <div class="setting-item" v-for="setting in settingsForBridge" :key="setting">
-              <label :for="setting" class="setting-label">{{lang[setting]}}</label>
-              <toggle-button 
-                :id="setting"
-                :value="tabSpaceSettings[setting]==='true'"
-                :sync="true"
-                :color="{checked: '#fa8072', unchecked: '#ccc'}"
-                @change="(e) => setDefault(e, setting)"
-              />
-            </div>
-          </div>
-        </div>
-
-        <!-- Localization -->
-        <div class="card">
-          <h2 class="section-title">{{lang.localization}}</h2>
-          <div class="form-group">
-            <label for="language-select" class="form-label">{{lang.language}}</label>
-            <div class="custom-select-wrapper">
-              <select name="languages" id="language-select" class="custom-select" v-model="tabSpaceSettings[preferredLanguageKey]" @change="setLanguage">
-                <option v-for="language in languages" :key="`lang-${language.code}`" :value="language.code">{{language.name}}</option>
-              </select>
-              <v-icon name="chevron-down" class="select-arrow-icon"></v-icon>
-            </div>
-            <p class="help-text">
-              <a href="https://mytab.space/translate.html" target="_blank">{{lang.helpTranslate}}</a>
-            </p>
-          </div>
-        </div>
-
         <!-- Subscription (only when the native extension speaks protocol v2).
              Purchases and management happen in the host app; this block is the
              persistent status + restore surface App Review expects. -->
@@ -96,6 +62,40 @@
             <span class="footer-sep">·</span>
             <a href="https://mytab.space/privacy.html" target="_blank" rel="noopener">{{lang.privacy}}</a>
           </p>
+        </div>
+
+        <!-- General Preferences -->
+        <div class="card">
+          <h2 class="section-title">{{lang.generalPreferences}}</h2>
+          <div class="setting-list">
+            <div class="setting-item" v-for="setting in settingsForBridge" :key="setting">
+              <label :for="setting" class="setting-label">{{lang[setting]}}</label>
+              <toggle-button
+                :id="setting"
+                :value="tabSpaceSettings[setting]==='true'"
+                :sync="true"
+                :color="{checked: '#fa8072', unchecked: '#ccc'}"
+                @change="(e) => setDefault(e, setting)"
+              />
+            </div>
+          </div>
+        </div>
+
+        <!-- Localization -->
+        <div class="card">
+          <h2 class="section-title">{{lang.localization}}</h2>
+          <div class="form-group">
+            <label for="language-select" class="form-label">{{lang.language}}</label>
+            <div class="custom-select-wrapper">
+              <select name="languages" id="language-select" class="custom-select" v-model="tabSpaceSettings[preferredLanguageKey]" @change="setLanguage">
+                <option v-for="language in languages" :key="`lang-${language.code}`" :value="language.code">{{language.name}}</option>
+              </select>
+              <v-icon name="chevron-down" class="select-arrow-icon"></v-icon>
+            </div>
+            <p class="help-text">
+              <a href="https://mytab.space/translate.html" target="_blank">{{lang.helpTranslate}}</a>
+            </p>
+          </div>
         </div>
 
         <!-- AI (only when the native extension speaks protocol v2) -->

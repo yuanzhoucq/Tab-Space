@@ -496,6 +496,9 @@
       }
     },
     watch: {
+      editingSessionUuid(id) {
+        if (id === this.session.uuid) this.prepareSessionEdit(this.session)
+      },
       showTagBtns() {
         this.tagEditorId = false
       },
@@ -525,8 +528,8 @@
       if (this.flashTimer) clearTimeout(this.flashTimer)
     },
     methods: {
-      startSessionEdit(session) {
-        if (this.embedded || this.editingSessionUuid) return
+      prepareSessionEdit(session) {
+        if (this.embedded || this.editSnapshot) return
         this.editSnapshot = {
           title: session.title,
           sites: session.sites.map(site => ({...site}))
@@ -534,11 +537,15 @@
         this.editPreviousExpansion = this.temporarilyExpanded
         this.temporarilyExpanded = true
         this.tagEditorId = false
-        this.editingSessionUuid = session.uuid
         if (session.sites.length === 0) session.sites.push({title: "", url: ""})
         this.$nextTick(() => {
           if (this.$refs.sessionTitleInput) this.$refs.sessionTitleInput.focus()
         })
+      },
+      startSessionEdit(session) {
+        if (this.embedded || this.editingSessionUuid) return
+        this.prepareSessionEdit(session)
+        this.editingSessionUuid = session.uuid
       },
       saveSessionEdit(session) {
         if (!this.isEditingSession(session)) return

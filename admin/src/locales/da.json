@@ -153,7 +153,7 @@
   "suggestionOversizedTitle": "Stor session",
   "suggestionOrphanTagsTitle": "Ubrugt tag",
   "suggestionsTitle": "Forslag",
-  "suggestionExactDuplicateDesc": "{count} identiske sessioner kan slås sammen til én.",
+  "suggestionExactDuplicateDesc": "Disse {count} sessioner indeholder de samme faner og kan slås sammen.",
   "suggestionNearDuplicateDesc": "Disse sessioner deler de fleste faner — slå dem sammen?",
   "suggestionOversizedDesc": "Denne session har {count} faner. Del den op i emner?",
   "suggestionOrphanTagsDesc": "Tagget \"{tag}\" bruges kun én gang.",

@@ -34,7 +34,6 @@
             {{ lang.keepAsSingle || 'Keep as 1 Session' }}
           </button>
           <button type="button" class="split-btn-primary" :disabled="validSessionCount === 0" @click="saveAsMultiple">
-            <span v-if="!isPremium" class="premium-star" aria-hidden="true">⭐</span>
             {{ saveButtonText }}
           </button>
         </div>
@@ -311,10 +310,6 @@ export default {
 .split-btn-primary:disabled {
   opacity: 0.6;
   cursor: not-allowed;
-}
-
-.premium-star {
-  margin-right: 4px;
 }
 
 .split-btn-secondary {

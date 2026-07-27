@@ -153,7 +153,7 @@
   "suggestionOversizedTitle": "큰 세션",
   "suggestionOrphanTagsTitle": "미사용 태그",
   "suggestionsTitle": "제안",
-  "suggestionExactDuplicateDesc": "동일한 세션 {count}개를 하나로 병합할 수 있습니다.",
+  "suggestionExactDuplicateDesc": "이 {count}개 세션에는 동일한 탭이 있어 하나로 병합할 수 있습니다.",
   "suggestionNearDuplicateDesc": "이 세션들은 대부분의 탭을 공유합니다 — 병합할까요?",
   "suggestionOversizedDesc": "이 세션에는 탭이 {count}개 있습니다. 주제별로 나눌까요?",
   "suggestionOrphanTagsDesc": "태그 \"{tag}\"는 한 번만 사용되었습니다.",

@@ -369,7 +369,19 @@ export default {
     handleAIError(data) {
       this.applyQuota(data)
       if (data.error === "quota_exceeded") {
-        // Quota exhausted: pin remaining to 0 and surface the upgrade path.
+        // A local StoreKit test purchase can make the native client premium
+        // while the remote AI service still sees a free entitlement because
+        // Xcode's locally signed transaction is not an Apple sandbox receipt.
+        // Never show an upgrade prompt to someone the native side already
+        // reports as premium; surface a retryable request error instead.
+        if (this.$store.getters.isPremium) {
+          this.$store.commit("setAIToast", {
+            messageKey: "aiErrorGeneric",
+            retry: this.retryPayloadFor(data)
+          })
+          return
+        }
+        // Genuine free-tier exhaustion: pin remaining to 0 and show upgrade.
         if (data.quotaRemaining === undefined) this.$store.commit("setAIQuota", {remaining: 0})
         this.$store.commit("setShowSubscriptionModal", true)
         return

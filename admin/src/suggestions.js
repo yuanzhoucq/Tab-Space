@@ -1,6 +1,6 @@
 // Shared presentation + action logic for the AI suggestion engine
-// (docs/ai-4.0-design.md §3). Used by both the dashboard card slot
-// (SuggestionCard) and the "view all" report (SuggestionReportModal).
+// (docs/ai-4.0-design.md §3). Used by the cleanup report opened from
+// the dashboard's right-side organize toolbar button.
 //
 // Suggestion shape (from the native SuggestionEngine, protocol v2):
 //   { id, type, sessionUuids: [String], tagNames: [String],
@@ -83,10 +83,21 @@ export const suggestionMixin = {
       switch (s.type) {
         case 'exactDuplicate':
         case 'nearDuplicate': {
-          const group = this.sessionsByUuid(s.sessionUuids)
+          // Keep the most complete session as the destination; when content
+          // size ties, preserve the oldest session's title and timestamp.
+          const group = this.sessionsByUuid(s.sessionUuids).slice().sort((a, b) => {
+            const siteCountDifference = (b.sites || []).length - (a.sites || []).length
+            if (siteCountDifference !== 0) return siteCountDifference
+            const aTimestamp = Number(a.timestamp) || Number.MAX_SAFE_INTEGER
+            const bTimestamp = Number(b.timestamp) || Number.MAX_SAFE_INTEGER
+            if (aTimestamp !== bTimestamp) return aTimestamp - bTimestamp
+            return (a.uuid || '').localeCompare(b.uuid || '')
+          })
           if (group.length >= 2) {
-            // Native mergeSessions folds later sessions into the first.
-            bridge.send({ cmd: 'MergeSessions', bookmarks: group })
+            // Suggestion identity is based on normalized URL content, so the
+            // native merge keeps one copy of each matching tab. The first
+            // session survives, preserving the destination title/comment.
+            bridge.send({ cmd: 'MergeSessions', bookmarks: group, deduplicateSites: true })
           }
           break
         }

@@ -153,7 +153,7 @@
   "suggestionOversizedTitle": "Duża sesja",
   "suggestionOrphanTagsTitle": "Nieużywany tag",
   "suggestionsTitle": "Sugestia",
-  "suggestionExactDuplicateDesc": "{count} identycznych sesji można scalić w jedną.",
+  "suggestionExactDuplicateDesc": "Te {count} sesje zawierają te same karty i można je scalić.",
   "suggestionNearDuplicateDesc": "Te sesje mają wspólną większość kart — scalić je?",
   "suggestionOversizedDesc": "Ta sesja ma {count} kart. Podzielić na tematy?",
   "suggestionOrphanTagsDesc": "Tag „{tag}” jest użyty tylko raz.",

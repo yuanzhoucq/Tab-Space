@@ -25,10 +25,11 @@ function sampleSessions() {
       timestamp: now - 2 * day,
       comment: '',
       sites: [
-        { title: 'GitHub Actions documentation', url: 'https://docs.github.com/actions' },
-        { title: 'MDN Web Docs', url: 'https://developer.mozilla.org' }
+        { title: 'Claude agents documentation', url: 'https://docs.anthropic.com/agents' },
+        { title: 'Cloudflare Pages documentation', url: 'https://developers.cloudflare.com/pages/' },
+        { title: 'Hacker News', url: 'https://news.ycombinator.com' }
       ],
-      tags: []
+      tags: [{ name: 'Reading' }]
     },
     {
       uuid: 'mock-untitled',

@@ -153,7 +153,7 @@
   "suggestionOversizedTitle": "Велика сесія",
   "suggestionOrphanTagsTitle": "Невикористаний тег",
   "suggestionsTitle": "Пропозиція",
-  "suggestionExactDuplicateDesc": "{count} однакових сесій можна об'єднати в одну.",
+  "suggestionExactDuplicateDesc": "Ці {count} сесії містять однакові вкладки, тому їх можна об’єднати.",
   "suggestionNearDuplicateDesc": "Ці сесії мають більшість спільних вкладок — об'єднати їх?",
   "suggestionOversizedDesc": "У цій сесії {count} вкладок. Розділити за темами?",
   "suggestionOrphanTagsDesc": "Тег «{tag}» використано лише один раз.",

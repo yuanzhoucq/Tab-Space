@@ -153,7 +153,7 @@
   "suggestionOversizedTitle": "Stor session",
   "suggestionOrphanTagsTitle": "Oanvänd tagg",
   "suggestionsTitle": "Förslag",
-  "suggestionExactDuplicateDesc": "{count} identiska sessioner kan slås samman till en.",
+  "suggestionExactDuplicateDesc": "Dessa {count} sessioner innehåller samma flikar och kan slås samman.",
   "suggestionNearDuplicateDesc": "Dessa sessioner delar de flesta flikar — slå samman dem?",
   "suggestionOversizedDesc": "Denna session har {count} flikar. Dela upp i ämnen?",
   "suggestionOrphanTagsDesc": "Taggen \"{tag}\" används bara en gång.",

@@ -153,7 +153,7 @@
   "suggestionOversizedTitle": "Большая сессия",
   "suggestionOrphanTagsTitle": "Неиспользуемый тег",
   "suggestionsTitle": "Предложение",
-  "suggestionExactDuplicateDesc": "{count} одинаковых сессий можно объединить в одну.",
+  "suggestionExactDuplicateDesc": "Эти {count} сессии содержат одинаковые вкладки и могут быть объединены.",
   "suggestionNearDuplicateDesc": "У этих сессий совпадает большинство вкладок — объединить?",
   "suggestionOversizedDesc": "В этой сессии {count} вкладок. Разделить по темам?",
   "suggestionOrphanTagsDesc": "Тег «{tag}» используется только один раз.",

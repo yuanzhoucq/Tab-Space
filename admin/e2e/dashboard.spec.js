@@ -53,7 +53,17 @@ async function openDashboard(page, options = {}) {
     ? initialSessions.length
     : options.expectedSessionCount
 
-  await page.addInitScript(({ testSessions, testBackups, malformedBookmarks, bundledDashboard, collapseSessions, preferredLanguage, bannerStorageUnavailable }) => {
+  await page.addInitScript(({
+    testSessions,
+    testBackups,
+    testSuggestions,
+    nativeProtocolVersion,
+    malformedBookmarks,
+    bundledDashboard,
+    collapseSessions,
+    preferredLanguage,
+    bannerStorageUnavailable
+  }) => {
     const clone = value => JSON.parse(JSON.stringify(value))
     const settingsKey = 'tabspace-e2e-settings'
     if (collapseSessions) localStorage.setItem('tabspace-session-cards-collapsed', 'true')
@@ -99,8 +109,20 @@ async function openDashboard(page, options = {}) {
         if (name === 'CheckDefault') {
           emit('ReturnDefault', {
             id: payload.name,
-            value: storedSettings[payload.name] || ''
+            value: payload.name === 'tabspace-native-protocol-version'
+              ? nativeProtocolVersion
+              : (storedSettings[payload.name] || '')
           })
+          return
+        }
+
+        if (name === 'GetSuggestions') {
+          emit('ReturnSuggestions', { suggestions: JSON.stringify(testSuggestions) })
+          return
+        }
+
+        if (name === 'CheckSubscriptionStatus') {
+          emit('ReturnSubscriptionStatus', { status: 'free', quotaRemaining: 3 })
           return
         }
 
@@ -209,6 +231,8 @@ async function openDashboard(page, options = {}) {
   }, {
     testSessions: initialSessions,
     testBackups: options.backups || [],
+    testSuggestions: options.suggestions || [],
+    nativeProtocolVersion: options.nativeProtocolVersion || '1',
     malformedBookmarks: Boolean(options.malformedBookmarks),
     bundledDashboard: Boolean(options.bundledDashboard),
     collapseSessions: Boolean(options.collapseSessions),
@@ -223,6 +247,73 @@ async function openDashboard(page, options = {}) {
     await expect(page.locator('.session')).toHaveCount(expectedSessionCount)
   }
 }
+
+test('opens AI organization suggestions from the right toolbar without showing a banner', async ({ page }) => {
+  const sessionsWithMatchingTabs = [
+    sessions[0],
+    {
+      ...sessions[0],
+      uuid: 'session-reading',
+      title: 'Reading list',
+      timestamp: 1767312000000,
+      sites: sessions[0].sites.map(site => ({ ...site })),
+      tags: [{ name: 'Personal' }]
+    }
+  ]
+  await openDashboard(page, {
+    initialSessions: sessionsWithMatchingTabs,
+    nativeProtocolVersion: '2',
+    suggestions: [{
+      id: 'duplicate-sessions',
+      type: 'exactDuplicate',
+      sessionUuids: ['session-research', 'session-reading'],
+      tagNames: [],
+      confidence: 1,
+      impact: 3
+    }]
+  })
+
+  await expect(page.getByTestId('ai-suggestion-card')).toHaveCount(0)
+  const organize = page.getByTestId('organize-library')
+  await expect(organize).toBeVisible()
+  await expect(organize).toHaveAttribute('aria-label', 'View all 1 suggestions')
+  await expect(organize.getByTestId('organize-suggestion-count')).toHaveText('1')
+
+  await organize.click()
+  const report = page.getByRole('dialog')
+  await expect(report).toBeVisible()
+  await expect(report.getByRole('heading', { name: 'Cleanup report' })).toBeVisible()
+  await expect(report).toContainText('Duplicate sessions')
+  await expect(report).not.toContainText('⭐')
+
+  const review = report.getByTestId('review-suggestion-duplicate-sessions')
+  await expect(review).toHaveAttribute('aria-expanded', 'false')
+  await review.click()
+  const details = report.getByTestId('review-details-duplicate-sessions')
+  await expect(details.getByTestId('review-session-session-research')).toContainText('Research')
+  await expect(details.getByTestId('review-session-session-research')).toContainText('OpenAI')
+  await expect(details.getByTestId('review-session-session-reading')).toContainText('Reading list')
+  await expect(details.getByTestId('review-session-session-reading')).toContainText('OpenAI')
+  await expect(details.getByTestId('review-session-session-reading')).toContainText('Personal')
+  const item = report.getByTestId('report-item-duplicate-sessions')
+  const layout = await item.evaluate(element => {
+    const row = element.querySelector('.report-item-main').getBoundingClientRect()
+    const preview = element.querySelector('.report-item-detail').getBoundingClientRect()
+    return {
+      rowBottom: row.bottom,
+      previewTop: preview.top,
+      rowLeft: row.left,
+      previewLeft: preview.left,
+      rowRight: row.right,
+      previewRight: preview.right
+    }
+  })
+  expect(layout.previewTop).toBeGreaterThanOrEqual(layout.rowBottom - 1)
+  expect(Math.abs(layout.previewLeft - layout.rowLeft)).toBeLessThanOrEqual(1)
+  expect(Math.abs(layout.previewRight - layout.rowRight)).toBeLessThanOrEqual(1)
+  await expect(review).toHaveAttribute('aria-expanded', 'true')
+  await expect(report).toBeVisible()
+})
 
 test('shows the iOS launch banner at card width and persists dismissal', async ({ page }) => {
   await openDashboard(page, { initialSessions: sessions })
@@ -853,8 +944,8 @@ test('creates a session and appends it through the native bridge', async ({ page
 
   await page.getByTestId('add-session').click()
   const newCard = page.locator('.session').first()
-  await newCard.hover()
-  await newCard.getByTestId('edit-session').click()
+  await expect(newCard).toHaveClass(/session-editing/)
+  await expect(newCard.getByTestId('session-title-input')).toBeFocused()
   await newCard.locator('.tab-edit').nth(0).fill('https://example.com/new')
   await newCard.locator('.tab-edit').nth(1).fill('New tab')
   await newCard.getByTestId('save-session').click()

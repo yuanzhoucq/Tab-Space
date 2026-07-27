@@ -153,7 +153,7 @@
   "suggestionOversizedTitle": "Session volumineuse",
   "suggestionOrphanTagsTitle": "Tag inutilisé",
   "suggestionsTitle": "Suggestion",
-  "suggestionExactDuplicateDesc": "{count} sessions identiques peuvent être fusionnées en une.",
+  "suggestionExactDuplicateDesc": "Ces {count} sessions contiennent les mêmes onglets et peuvent être fusionnées.",
   "suggestionNearDuplicateDesc": "Ces sessions partagent la plupart de leurs onglets — les fusionner ?",
   "suggestionOversizedDesc": "Cette session a {count} onglets. La diviser par sujets ?",
   "suggestionOrphanTagsDesc": "Le tag « {tag} » n'est utilisé qu'une fois.",

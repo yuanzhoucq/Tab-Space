@@ -153,7 +153,7 @@
   "suggestionOversizedTitle": "Large session",
   "suggestionOrphanTagsTitle": "Unused tag",
   "suggestionsTitle": "Suggestion",
-  "suggestionExactDuplicateDesc": "{count} identical sessions can be merged into one.",
+  "suggestionExactDuplicateDesc": "These {count} sessions contain the same tabs and can be merged.",
   "suggestionNearDuplicateDesc": "These sessions share most of their tabs — merge them?",
   "suggestionOversizedDesc": "This session has {count} tabs. Split it into topics?",
   "suggestionOrphanTagsDesc": "The tag \"{tag}\" is used only once.",

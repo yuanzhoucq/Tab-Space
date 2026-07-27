@@ -153,7 +153,7 @@
   "suggestionOversizedTitle": "Büyük oturum",
   "suggestionOrphanTagsTitle": "Kullanılmayan etiket",
   "suggestionsTitle": "Öneri",
-  "suggestionExactDuplicateDesc": "{count} aynı oturum tek oturumda birleştirilebilir.",
+  "suggestionExactDuplicateDesc": "Bu {count} oturum aynı sekmeleri içeriyor ve birleştirilebilir.",
   "suggestionNearDuplicateDesc": "Bu oturumlar sekmelerinin çoğunu paylaşıyor — birleştirilsin mi?",
   "suggestionOversizedDesc": "Bu oturumda {count} sekme var. Konulara ayrılsın mı?",
   "suggestionOrphanTagsDesc": "\"{tag}\" etiketi yalnızca bir kez kullanılmış.",

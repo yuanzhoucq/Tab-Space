@@ -153,7 +153,7 @@
   "suggestionOversizedTitle": "جلسة كبيرة",
   "suggestionOrphanTagsTitle": "وسم غير مستخدم",
   "suggestionsTitle": "اقتراح",
-  "suggestionExactDuplicateDesc": "يمكن دمج {count} جلسات متطابقة في جلسة واحدة.",
+  "suggestionExactDuplicateDesc": "تحتوي هذه الجلسات البالغ عددها {count} على علامات التبويب نفسها ويمكن دمجها.",
   "suggestionNearDuplicateDesc": "تشترك هذه الجلسات في معظم التبويبات — هل تدمجها؟",
   "suggestionOversizedDesc": "تحتوي هذه الجلسة على {count} تبويبًا. هل تقسمها حسب الموضوع؟",
   "suggestionOrphanTagsDesc": "الوسم \"{tag}\" مستخدم مرة واحدة فقط.",

@@ -153,7 +153,7 @@
   "suggestionOversizedTitle": "超大会话",
   "suggestionOrphanTagsTitle": "孤立标签",
   "suggestionsTitle": "建议",
-  "suggestionExactDuplicateDesc": "{count} 个完全相同的会话可以合并为一个。",
+  "suggestionExactDuplicateDesc": "这 {count} 个会话包含相同的标签页，可以合并。",
   "suggestionNearDuplicateDesc": "这些会话的标签页大多重合——合并吗？",
   "suggestionOversizedDesc": "该会话有 {count} 个标签页，按主题拆分吗？",
   "suggestionOrphanTagsDesc": "标签“{tag}”只被使用了一次。",

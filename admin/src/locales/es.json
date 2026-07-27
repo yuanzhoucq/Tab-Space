@@ -153,7 +153,7 @@
   "suggestionOversizedTitle": "Sesión grande",
   "suggestionOrphanTagsTitle": "Etiqueta sin uso",
   "suggestionsTitle": "Sugerencia",
-  "suggestionExactDuplicateDesc": "Se pueden combinar {count} sesiones idénticas en una.",
+  "suggestionExactDuplicateDesc": "Estas {count} sesiones contienen las mismas pestañas y se pueden combinar.",
   "suggestionNearDuplicateDesc": "Estas sesiones comparten casi todas sus pestañas — ¿combinarlas?",
   "suggestionOversizedDesc": "Esta sesión tiene {count} pestañas. ¿Dividirla por temas?",
   "suggestionOrphanTagsDesc": "La etiqueta «{tag}» se usa solo una vez.",

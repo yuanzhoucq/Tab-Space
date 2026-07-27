@@ -153,7 +153,7 @@
   "suggestionOversizedTitle": "大きなセッション",
   "suggestionOrphanTagsTitle": "未使用のタグ",
   "suggestionsTitle": "提案",
-  "suggestionExactDuplicateDesc": "{count} 個の同一セッションを1つに統合できます。",
+  "suggestionExactDuplicateDesc": "これら {count} 個のセッションには同じタブが含まれているため、統合できます。",
   "suggestionNearDuplicateDesc": "これらのセッションはほとんどのタブが共通です。統合しますか？",
   "suggestionOversizedDesc": "このセッションには {count} 個のタブがあります。トピックごとに分割しますか？",
   "suggestionOrphanTagsDesc": "タグ「{tag}」は一度しか使われていません。",

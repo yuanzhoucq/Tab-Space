@@ -60,9 +60,6 @@
               <div class="best-value">{{ lang.planRecommended || 'Best value' }}</div>
               <h4>{{ lang.planYearly || 'Yearly' }}</h4>
             </div>
-            <div class="plan-card">
-              <h4>{{ lang.planLifetime || 'Lifetime' }}</h4>
-            </div>
           </div>
 
           <button type="button" class="purchase-btn" :disabled="purchaseRedirecting" @click="subscribe">
