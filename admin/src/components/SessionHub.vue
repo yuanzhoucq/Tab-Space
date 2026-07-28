@@ -39,10 +39,6 @@
               {{ suggestionCount }}
           </span>
       </button>
-      <button type="button" class="hub-btn" data-testid="add-session" :aria-label="lang.newSession" :title="lang.newSession" @click="insertSession">
-          <v-icon class="button" :stroke-width="1.2" name="plus-circle" fill="rgba(250, 128, 114, 0.2)"
-      stroke="salmon"></v-icon>
-      </button>
       <!-- The trigger shows which view is active and cycles on click; hovering
            names the three views so the control is not icon-only guesswork. -->
       <div class="hub-btn view-mode" data-testid="view-mode-menu">
@@ -66,7 +62,7 @@
                       :class="{'view-mode-option-active': sessionViewMode === mode.id}"
                       :data-testid="`view-mode-${mode.id}`"
                       :aria-pressed="sessionViewMode === mode.id ? 'true' : 'false'"
-                      @click="setViewMode(mode.id)">
+                      @click="setViewMode(mode.id, $event)">
                       <svg v-if="mode.glyph" class="view-mode-option-icon view-mode-glyph" viewBox="0 0 24 24" aria-hidden="true">
                           <use :href="`#${mode.glyph}`"></use>
                       </svg>
@@ -79,6 +75,12 @@
       <button type="button" class="hub-btn" data-testid="empty-trash" :aria-label="lang.emptyTrash" :title="lang.emptyTrash" @click="emptyTrash" v-if="activeTag === '@Trash'">
           <v-icon class="button" :stroke-width="1.2" name="trash" fill="rgba(235, 82, 5, 0.2)"
       stroke="rgb(235, 82, 5)"></v-icon>
+      </button>
+      <!-- Last in the rail: the new session lands at the top of the list, so the
+           button sits away from the controls that act on what is already there. -->
+      <button type="button" class="hub-btn" data-testid="add-session" :aria-label="lang.newSession" :title="lang.newSession" @click="insertSession">
+          <v-icon class="button" :stroke-width="1.2" name="plus-circle" fill="rgba(250, 128, 114, 0.2)"
+      stroke="salmon"></v-icon>
       </button>
   </div>
 </template>
@@ -140,8 +142,12 @@ export default {
         toggleCollapse() {
             this.$store.commit("toggleCollapse")
         },
-        setViewMode(mode) {
+        setViewMode(mode, event) {
             this.$store.commit("setSessionViewMode", mode)
+            // A pointer click leaves focus on the option, and `:focus-within`
+            // then pins the menu open on top of the list. Keyboard activation
+            // (detail === 0) keeps its focus, since that is the only way back.
+            if (event && event.detail > 0 && event.currentTarget) event.currentTarget.blur()
         },
         openSuggestionReport() {
             this.$store.commit("setShowSuggestionReport", true)

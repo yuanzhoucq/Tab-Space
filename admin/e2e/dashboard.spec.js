@@ -412,7 +412,7 @@ async function openAppExtensionDashboard(page, initialSessions) {
   }, initialSessions)
 
   await page.route('**/favicon.ico', route => route.fulfill({ status: 204, body: '' }))
-  await page.goto('http://localhost:4173/')
+  await page.goto('http://localhost:47317/')
 }
 
 async function lastBridgeCommand(page, name) {
@@ -542,6 +542,51 @@ async function dragTabOnto(page, sourceTab, targetTab) {
   await page.waitForTimeout(150)
   await page.mouse.up()
 }
+
+test('offers the AI actions on titles-only rows', async ({ page }) => {
+  const splittableSessions = [
+    {
+      ...sessions[0],
+      sites: [...sessions[0].sites, { title: 'Hacker News', url: 'https://news.ycombinator.com' }]
+    },
+    sessions[1]
+  ]
+  await openDashboard(page, { initialSessions: splittableSessions, nativeProtocolVersion: '2' })
+  // The menu overlays the list while the pointer rests on it, so step away
+  // before touching a row.
+  const chooseView = async mode => {
+    await page.getByTestId('view-mode-menu').hover()
+    await page.getByTestId(`view-mode-${mode}`).click()
+    await page.mouse.move(0, 300)
+    await expect(page.getByTestId('view-mode-titles')).toBeHidden()
+  }
+  await chooseView('titles')
+
+  const research = page.getByTestId('titles-only-session-card').getByTestId('session-session-research')
+  const reading = page.getByTestId('titles-only-session-card').getByTestId('session-session-reading')
+
+  // Open stays the rightmost control on the row.
+  const order = await research.locator('.titles-only-session-summary').evaluate(row => (
+    [...row.querySelectorAll('button')].map(button => button.dataset.testid)
+  ))
+  expect(order.slice(-3)).toEqual(['ai-enhance-session', 'ai-split-session', 'restore-session'])
+
+  // Splitting needs at least three tabs; the single-tab session only enhances.
+  await expect(reading.getByTestId('ai-enhance-session')).toHaveCount(1)
+  await expect(reading.getByTestId('ai-split-session')).toHaveCount(0)
+
+  await research.getByTestId('ai-enhance-session').click()
+  await expect.poll(() => lastBridgeCommand(page, 'EnhanceSession')).toMatchObject({
+    payload: { uuid: 'session-research' }
+  })
+
+  await chooseView('expanded')
+  await chooseView('titles')
+  await research.getByTestId('ai-split-session').click()
+  await expect.poll(() => lastBridgeCommand(page, 'ClusterTabs')).toMatchObject({
+    payload: { uuid: 'session-research' }
+  })
+})
 
 test('keeps the tag filters and the toolbar pinned while the list scrolls', async ({ page }) => {
   const manySessions = Array.from({ length: 14 }, (unused, index) => ({
@@ -777,7 +822,7 @@ test('falls back to the legacy iframe bridge used by build 89', async ({ page })
     <\/script>`
   }))
   await page.route('**/favicon.ico', route => route.fulfill({ status: 204, body: '' }))
-  await page.goto('http://localhost:4173/')
+  await page.goto('http://localhost:47317/')
 
   await expect(page.locator('#bridgeStorage')).toHaveAttribute(
     'src',

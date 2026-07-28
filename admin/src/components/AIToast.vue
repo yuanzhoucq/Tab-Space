@@ -1,6 +1,10 @@
 <template>
   <transition name="ai-toast-fade">
     <div v-if="aiToast" class="ai-toast" role="status">
+      <!-- Tells at a glance whether the toast reports a failure or just an
+           outcome, before the sentence is read. -->
+      <v-icon class="ai-toast-icon" :class="{'ai-toast-icon-alert': aiToast.retry}"
+              :name="aiToast.retry ? 'alert-circle' : 'info'" aria-hidden="true"></v-icon>
       <span class="ai-toast-msg">{{ message }}</span>
       <button v-if="aiToast.retry" type="button" class="ai-toast-retry" @click="retry">
         {{ lang.retry || 'Retry' }}
@@ -59,19 +63,32 @@ export default {
 .ai-toast {
   position: fixed;
   left: 50%;
-  bottom: 24px;
+  /* Clears the navbar, so a transient message never covers its menus. */
+  top: 56px;
   transform: translateX(-50%);
   z-index: 1200;
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
   max-width: 92vw;
-  padding: 12px 14px 12px 18px;
+  padding: 12px 14px 12px 16px;
   border-radius: 10px;
   background: #2d2d2d;
   color: #f5f5f5;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
   font-size: 14px;
+}
+
+.ai-toast-icon {
+  width: 17px;
+  height: 17px;
+  flex-shrink: 0;
+  color: rgba(255, 255, 255, 0.75);
+  stroke: currentColor !important;
+}
+
+.ai-toast-icon-alert {
+  color: #ffb4a2;
 }
 
 .ai-toast-msg {
@@ -117,6 +134,6 @@ export default {
 .ai-toast-fade-enter,
 .ai-toast-fade-leave-to {
   opacity: 0;
-  transform: translateX(-50%) translateY(10px);
+  transform: translateX(-50%) translateY(-10px);
 }
 </style>
