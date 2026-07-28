@@ -130,6 +130,9 @@ export default {
   border: 0;
   font: inherit;
   text-align: left;
+  /* Without this a short window squeezes every filter thinner instead of
+     scrolling the rail, since column flex items shrink before they overflow. */
+  flex-shrink: 0;
   padding: 8px 12px;
   border-radius: 8px;
   cursor: pointer;
@@ -157,6 +160,7 @@ export default {
 }
 
 .stats {
+  flex-shrink: 0;
   margin-top: 16px;
   padding: 12px 12px 0 12px;
   border-top: 1px solid var(--border-color, #e0e0e0);

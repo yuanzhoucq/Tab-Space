@@ -278,6 +278,7 @@ test('opens AI organization suggestions from the right toolbar without showing a
     }]
   })
 
+  await expect.poll(() => lastBridgeCommand(page, 'PrepareAI')).not.toBeNull()
   await expect(page.getByTestId('ai-suggestion-card')).toHaveCount(0)
   const organize = page.getByTestId('organize-library')
   await expect(organize).toBeVisible()
@@ -586,6 +587,39 @@ test('offers the AI actions on titles-only rows', async ({ page }) => {
   await expect.poll(() => lastBridgeCommand(page, 'ClusterTabs')).toMatchObject({
     payload: { uuid: 'session-research' }
   })
+})
+
+test('scrolls rather than squashing the tag filters in a short window', async ({ page }) => {
+  const taggedSessions = Array.from({ length: 12 }, (unused, index) => ({
+    uuid: `session-${index}`,
+    title: `Session ${index + 1}`,
+    timestamp: 1767225600000 + index,
+    comment: '',
+    sites: [{ title: `Example ${index}`, url: `https://example.com/${index}` }],
+    tags: [{ name: `Tag ${String(index).padStart(2, '0')}` }]
+  }))
+  await page.setViewportSize({ width: 1280, height: 380 })
+  await openDashboard(page, { initialSessions: taggedSessions })
+
+  const sidebar = page.locator('.session-sidebar')
+  const filters = sidebar.locator('.tag-filter')
+  await expect(filters.first()).toBeVisible()
+
+  // The rail is capped to the window, so its content has to overflow…
+  const metrics = await sidebar.evaluate(element => ({
+    scrollHeight: element.scrollHeight,
+    clientHeight: element.clientHeight
+  }))
+  expect(metrics.scrollHeight).toBeGreaterThan(metrics.clientHeight)
+
+  // …and each filter has to keep its full height instead of being squeezed to
+  // fit, which is what a column flex container does to its children by default.
+  const heights = await filters.evaluateAll(elements => elements.map(element => (
+    Math.round(element.getBoundingClientRect().height)
+  )))
+  const tallest = Math.max(...heights)
+  for (const height of heights) expect(height).toBe(tallest)
+  expect(tallest).toBeGreaterThanOrEqual(30)
 })
 
 test('keeps the tag filters and the toolbar pinned while the list scrolls', async ({ page }) => {
