@@ -67,6 +67,7 @@ export default {
     if (this.redirectLegacyBridgeLoopbackHost()) return
     window.addEventListener("message", this.handleWindowMessage)
     window.addEventListener("tabspace:bridge-ready", this.handleBridgeReady)
+    window.addEventListener("tabspace:prepare-ai", this.prepareAI)
     document.addEventListener(appExtensionEvent("ready"), this.handleAppExtensionBridgeReady)
     document.addEventListener(appExtensionEvent("message"), this.handleAppExtensionMessage)
     document.addEventListener("visibilitychange", this.handleVisibilityChange)
@@ -82,6 +83,7 @@ export default {
   beforeDestroy() {
     window.removeEventListener("message", this.handleWindowMessage)
     window.removeEventListener("tabspace:bridge-ready", this.handleBridgeReady)
+    window.removeEventListener("tabspace:prepare-ai", this.prepareAI)
     document.removeEventListener(appExtensionEvent("ready"), this.handleAppExtensionBridgeReady)
     document.removeEventListener(appExtensionEvent("message"), this.handleAppExtensionMessage)
     document.removeEventListener("visibilitychange", this.handleVisibilityChange)
@@ -348,9 +350,14 @@ export default {
       if (this.$store.state.nativeProtocolVersion < Constants.aiMinProtocolVersion) return
       if (!this.bridge) return
       this.aiInitialized = true
+      this.prepareAI()
       this.bridge.send({cmd: "CheckDefault", name: Constants.suggestedTagsKey})
       this.bridge.send({cmd: "CheckSubscriptionStatus"})
       this.refreshSuggestions()
+    },
+    prepareAI() {
+      if (!this.$store.getters.aiEnabled) return
+      this.bridge.send({cmd: "PrepareAI"})
     },
     refreshSuggestions() {
       if (!this.bridge) return
