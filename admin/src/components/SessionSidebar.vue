@@ -114,6 +114,15 @@ export default {
   display: flex;
   flex-direction: column;
   gap: 2px;
+  /* Rides along as the session list scrolls. `align-self` is what makes this
+     work at all: a stretched flex item has no slack to stick within. */
+  position: sticky;
+  top: 16px;
+  align-self: flex-start;
+  max-height: calc(100vh - 32px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
 }
 
 .tag-filter {
@@ -194,6 +203,11 @@ export default {
     margin-right: 0;
     margin-bottom: 12px;
     gap: 4px;
+    /* Stacked layout: the filters sit above the list, so pinning them would
+       just eat the screen. */
+    position: static;
+    max-height: none;
+    overflow: visible;
   }
 
   .tag-filter {

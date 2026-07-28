@@ -2,6 +2,7 @@
   <div :class="[embedded ? 'embedded-session' : 'session', {'session-editing': isEditingSession(session)}]"
       :id="embedded ? null : session.uuid"
       :data-testid="embedded ? 'embedded-session-content' : `session-${session.uuid}`"
+      @click="handleCardClick"
       @keydown="handleSessionEditKeydown($event, session)">
     <div v-if="!embedded" class="session-header">
       <div class="session-header-left">
@@ -34,10 +35,20 @@
             >{{ part.text }}</span>
           </template>
         </div>
-        <span v-if="hasSearch" class="search-match-count" data-testid="search-match-count">
+        <!-- In search results the match count doubles as the expander, so the
+             card needs no separate expand button. -->
+        <button v-if="hasSearch"
+                type="button"
+                class="search-match-count"
+                data-testid="search-match-count"
+                :data-expander="canToggleTemporaryExpansion ? 'true' : 'false'"
+                :aria-expanded="temporarilyExpanded ? 'true' : 'false'"
+                :aria-label="temporaryExpansionLabel"
+                :title="temporaryExpansionLabel"
+                @click.stop="toggleTemporaryExpansion">
           {{ searchResultEntries.length }} / {{ session.sites.length }}
           {{ session.sites.length === 1 ? (lang.tab || 'tab') : (lang.tabs || 'tabs') }}
-        </span>
+        </button>
       </div>
       <div class="session-header-right">
         <template v-if="isEditingSession(session)">
@@ -66,12 +77,6 @@
                 @click.stop="cancelBulkSelection"
                 :title="lang.cancel" :aria-label="lang.cancel">
           <v-icon name="x" class="btn-icon"></v-icon>
-        </button>
-        <button v-if="canToggleTemporaryExpansion && !isEditingSession(session) && !bulkSelectionMode"
-                type="button" class="btn" data-testid="toggle-session-expansion"
-                @click.stop="toggleTemporaryExpansion"
-                :title="temporaryExpansionLabel" :aria-label="temporaryExpansionLabel">
-          <v-icon :name="temporarilyExpanded ? 'minimize' : 'maximize'" class="btn-icon"></v-icon>
         </button>
         <button v-if="!bulkSelectionMode && !isEditingSession(session)" type="button" class="btn" data-testid="restore-session" @click.stop="restore(session.uuid, true, false)"
                 :title="lang.openSession || 'Open'" :aria-label="lang.openSession || 'Open'">
@@ -110,7 +115,23 @@
     <ul
         :class="['session-sites', {'collapsed-sites': compactView, 'editing-sites': isEditingSession(session)}]"
         data-testid="site-list"
-        :data-site-drag-enabled="canDragSites ? 'true' : 'false'">
+        :data-site-drag-enabled="canDragSites ? 'true' : 'false'"
+        v-bind="collapsedExpanderAttrs"
+        @keydown="handleCollapsedRowKeydown">
+      <!-- Kept outside <draggable>: a `v-if` element in the draggable's header
+           slot leaves an empty placeholder vnode at the front of the default
+           slot, which shifts every index vuedraggable maps back onto
+           `session.sites` — dragged tabs then resolve to the wrong site (or to
+           `undefined`, silently dropping the move). -->
+      <li
+          v-if="isEditingSession(session)"
+          class="site-editor-columns"
+          aria-hidden="true">
+        <span></span>
+        <span>URL</span>
+        <span>{{ lang.tabTitle }}</span>
+        <span></span>
+      </li>
       <draggable
           :disabled="!canDragSites"
           :force-fallback="true"
@@ -121,16 +142,6 @@
           group="shared"
           @start="() => startDragSite(session)"
           @end="endDragSite">
-        <li
-            slot="header"
-            v-if="isEditingSession(session)"
-            class="site-editor-columns"
-            aria-hidden="true">
-          <span></span>
-          <span>URL</span>
-          <span>{{ lang.tabTitle }}</span>
-          <span></span>
-        </li>
         <li
           v-for="(entry, visibleIndex) in visibleSiteEntries"
           v-bind:key="`${session.uuid}-${entry.originalIndex}`"
@@ -421,7 +432,23 @@
           && !this.bulkSelectionMode
       },
       canToggleTemporaryExpansion() {
+        if (this.isEditingSession(this.session) || this.bulkSelectionMode) return false
         return this.sessionViewMode === "compact" || this.hasSearch
+      },
+      // A collapsed card expands by clicking anywhere in its empty space; the
+      // favicon row carries the matching keyboard affordance so the card needs
+      // no dedicated expand button. Search results use the match count instead,
+      // which stays a real button because the list still holds links.
+      collapsedExpanderAttrs() {
+        if (!this.canToggleTemporaryExpansion || this.hasSearch) return {}
+        return {
+          role: "button",
+          tabindex: "0",
+          "data-expander": "true",
+          "aria-expanded": this.temporarilyExpanded ? "true" : "false",
+          "aria-label": this.temporaryExpansionLabel,
+          title: this.temporaryExpansionLabel
+        }
       },
       canBulkMove() {
         return !this.hasSearch
@@ -705,6 +732,22 @@
       },
       toggleTemporaryExpansion() {
         this.temporarilyExpanded = !this.temporarilyExpanded
+      },
+      handleCollapsedRowKeydown(event) {
+        if (!this.collapsedExpanderAttrs.role) return
+        if (event.key !== "Enter" && event.key !== " " && event.key !== "Spacebar") return
+        event.preventDefault()
+        event.stopPropagation()
+        this.toggleTemporaryExpansion()
+      },
+      // Anything the card already reacts to keeps its own behaviour; the empty
+      // space around it toggles the collapsed card open.
+      handleCardClick(event) {
+        if (!this.canToggleTemporaryExpansion) return
+        if (event.target.closest(
+          "a, button, input, select, textarea, label, [contenteditable='true'], .tag, .session-title, .del-item, .handle"
+        )) return
+        this.toggleTemporaryExpansion()
       },
       highlightParts(value) {
         return highlightedTextParts(value, this.keyword)
@@ -1186,9 +1229,42 @@
   .search-match-count {
     color: var(--text-secondary, #718096);
     flex-shrink: 0;
+    font: inherit;
     font-size: 11px;
     margin-right: 10px;
+    padding: 2px 6px;
+    border: 0;
+    border-radius: 6px;
+    background: transparent;
     white-space: nowrap;
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+  }
+
+  .search-match-count[data-expander="false"] {
+    cursor: default;
+  }
+
+  .search-match-count[data-expander="true"]:hover {
+    background-color: rgba(0, 0, 0, 0.06);
+    color: var(--text-primary, #2d3748);
+  }
+
+  .search-match-count:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 2px var(--primary-color, #fa8072);
+  }
+
+  /* Collapsed cards expand from the favicon row, which is also the keyboard
+     target for the same action. */
+  .session-sites[role="button"] {
+    outline: none;
+    cursor: pointer;
+  }
+
+  .session-sites[role="button"]:focus-visible {
+    border-radius: 6px;
+    box-shadow: 0 0 0 2px var(--primary-color, #fa8072);
   }
 
   .site-title {
@@ -1288,6 +1364,9 @@
     gap: 8px;
     box-sizing: border-box;
     width: 100%;
+    /* Drops the global list-item margins so the labels line up with the rows
+       below, and matches that list's row gap. */
+    margin: 0 0 5px;
     padding: 0 8px 1px;
     color: var(--text-secondary, #718096);
     font-size: 10px;
@@ -1817,6 +1896,11 @@
       color: #ff9b8f;
       border-color: rgba(255, 155, 143, 0.45);
       background-color: rgba(250, 128, 114, 0.08);
+    }
+
+    .search-match-count[data-expander="true"]:hover {
+      background-color: rgba(255, 255, 255, 0.08);
+      color: var(--text-primary, #f7fafc);
     }
 
     .link {

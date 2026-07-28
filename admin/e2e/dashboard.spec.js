@@ -62,7 +62,8 @@ async function openDashboard(page, options = {}) {
     bundledDashboard,
     collapseSessions,
     preferredLanguage,
-    bannerStorageUnavailable
+    bannerStorageUnavailable,
+    subscriptionStatus
   }) => {
     const clone = value => JSON.parse(JSON.stringify(value))
     const settingsKey = 'tabspace-e2e-settings'
@@ -122,7 +123,10 @@ async function openDashboard(page, options = {}) {
         }
 
         if (name === 'CheckSubscriptionStatus') {
-          emit('ReturnSubscriptionStatus', { status: 'free', quotaRemaining: 3 })
+          emit('ReturnSubscriptionStatus', {
+            status: subscriptionStatus,
+            quotaRemaining: subscriptionStatus === 'active' ? -1 : 3
+          })
           return
         }
 
@@ -237,7 +241,8 @@ async function openDashboard(page, options = {}) {
     bundledDashboard: Boolean(options.bundledDashboard),
     collapseSessions: Boolean(options.collapseSessions),
     preferredLanguage: options.preferredLanguage || '',
-    bannerStorageUnavailable: Boolean(options.bannerStorageUnavailable)
+    bannerStorageUnavailable: Boolean(options.bannerStorageUnavailable),
+    subscriptionStatus: options.subscriptionStatus || 'free'
   })
 
   await page.route('**/favicon.ico', route => route.fulfill({ status: 204, body: '' }))
@@ -296,6 +301,9 @@ test('opens AI organization suggestions from the right toolbar without showing a
   await expect(details.getByTestId('review-session-session-reading')).toContainText('OpenAI')
   await expect(details.getByTestId('review-session-session-reading')).toContainText('Personal')
   const item = report.getByTestId('report-item-duplicate-sessions')
+  // The panel slides down from translateY(-4px); measuring mid-transition puts
+  // it above the row it belongs under.
+  await expect.poll(() => details.evaluate(element => getComputedStyle(element).transform)).toBe('none')
   const layout = await item.evaluate(element => {
     const row = element.querySelector('.report-item-main').getBoundingClientRect()
     const preview = element.querySelector('.report-item-detail').getBoundingClientRect()
@@ -510,6 +518,129 @@ test('keeps the dragged tab preview under the pointer', async ({ page }) => {
   await page.mouse.up()
 })
 
+// Homes in on the target while the drag is live: dropping a tab removes it from
+// the source list and inserts a placeholder session, so the target keeps moving
+// under the pointer.
+async function dragTabOnto(page, sourceTab, targetTab) {
+  const sourceBox = await sourceTab.boundingBox()
+  let x = sourceBox.x + sourceBox.width - 12
+  let y = sourceBox.y + sourceBox.height / 2
+  await page.mouse.move(x, y)
+  await page.mouse.down()
+  y += 15
+  await page.mouse.move(x, y, { steps: 4 })
+  for (let attempt = 0; attempt < 60; attempt += 1) {
+    await page.waitForTimeout(50)
+    const targetBox = await targetTab.boundingBox()
+    const deltaX = targetBox.x + targetBox.width - 12 - x
+    const deltaY = targetBox.y + targetBox.height / 2 - y
+    if (Math.abs(deltaX) < 3 && Math.abs(deltaY) < 3) break
+    x += Math.max(-15, Math.min(15, deltaX))
+    y += Math.max(-15, Math.min(15, deltaY))
+    await page.mouse.move(x, y)
+  }
+  await page.waitForTimeout(150)
+  await page.mouse.up()
+}
+
+test('keeps the tag filters and the toolbar pinned while the list scrolls', async ({ page }) => {
+  const manySessions = Array.from({ length: 14 }, (unused, index) => ({
+    uuid: `session-${index}`,
+    title: `Session ${index + 1}`,
+    timestamp: 1767225600000 + index,
+    comment: '',
+    sites: [
+      { title: `Example ${index}`, url: `https://example.com/${index}` },
+      { title: `Another ${index}`, url: `https://example.org/${index}` }
+    ],
+    tags: [{ name: index % 2 ? 'Work' : 'Reading' }]
+  }))
+  await openDashboard(page, { initialSessions: manySessions })
+
+  const sidebar = page.locator('.session-sidebar')
+  const hub = page.locator('.session-hub')
+  const tops = async () => page.evaluate(() => ({
+    sidebar: Math.round(document.querySelector('.session-sidebar').getBoundingClientRect().top),
+    hub: Math.round(document.querySelector('.session-hub').getBoundingClientRect().top)
+  }))
+
+  const resting = await tops()
+  expect(resting.sidebar).toBeGreaterThan(60)
+
+  await page.evaluate(() => window.scrollTo(0, 700))
+  await expect.poll(() => page.evaluate(() => Math.round(window.scrollY))).toBe(700)
+  const pinned = await tops()
+  expect(pinned.sidebar).toBe(16)
+  expect(pinned.hub).toBe(16)
+  await expect(sidebar.getByTestId('filter-all')).toBeInViewport()
+  await expect(hub.getByTestId('add-session')).toBeInViewport()
+})
+
+test('marks the dashboard title with a Pro badge once subscribed', async ({ page }) => {
+  await openDashboard(page, { initialSessions: sessions, nativeProtocolVersion: '2' })
+  await expect(page.getByTestId('pro-badge')).toHaveCount(0)
+
+  await openDashboard(page, {
+    initialSessions: sessions,
+    nativeProtocolVersion: '2',
+    subscriptionStatus: 'active'
+  })
+  const badge = page.getByTestId('pro-badge')
+  await expect(badge).toHaveText('Pro')
+  await expect(badge).toHaveAttribute('aria-label', 'Premium')
+
+  // Sits at the top right of the wordmark, not on its baseline.
+  const placement = await page.locator('#title h1').evaluate(heading => {
+    const wordmark = heading.firstChild.nodeType === Node.TEXT_NODE
+      ? (() => {
+        const range = document.createRange()
+        range.selectNodeContents(heading.firstChild)
+        return range.getBoundingClientRect()
+      })()
+      : heading.getBoundingClientRect()
+    const badge = heading.querySelector('[data-testid="pro-badge"]').getBoundingClientRect()
+    return {
+      wordmarkTop: wordmark.top,
+      wordmarkBottom: wordmark.bottom,
+      wordmarkRight: wordmark.right,
+      badgeTop: badge.top,
+      badgeBottom: badge.bottom,
+      badgeLeft: badge.left
+    }
+  })
+  expect(placement.badgeLeft).toBeGreaterThanOrEqual(placement.wordmarkRight - 1)
+  expect((placement.badgeTop + placement.badgeBottom) / 2)
+    .toBeLessThan((placement.wordmarkTop + placement.wordmarkBottom) / 2)
+})
+
+test('saves both sessions after dragging a tab across them', async ({ page }) => {
+  await openDashboard(page, { initialSessions: sessions })
+  const research = page.getByTestId('session-session-research')
+  const reading = page.getByTestId('session-session-reading')
+
+  await dragTabOnto(page, research.getByTestId('visible-site').nth(0), reading.getByTestId('visible-site').last())
+
+  // The dragged tab — not one of its neighbours — has to be the one that moves.
+  await expect.poll(() => lastBridgeCommand(page, 'UpdateSession')).toMatchObject({
+    payload: {
+      bookmarks: [{
+        uuid: 'session-reading',
+        sites: [{ title: 'GitHub Actions' }, { title: 'OpenAI' }]
+      }]
+    }
+  })
+  // The emptied source is saved too, otherwise the tab reappears on refresh.
+  const sourceUpdate = await page.evaluate(() => window.__tabspaceBridgeCommands
+    .filter(command => command.name === 'UpdateSession')
+    .map(command => command.payload.bookmarks[0])
+    .find(bookmark => bookmark.uuid === 'session-research'))
+  expect(sourceUpdate.sites.map(site => site.title)).toEqual(['Cloudflare Pages'])
+
+  await expect(reading.getByTestId('visible-site')).toHaveCount(2)
+  await expect(research.getByTestId('visible-site')).toHaveCount(1)
+  await expect(research).not.toContainText('OpenAI')
+})
+
 test('uses the merge shortcut to select all tabs and merge session tags', async ({ page }) => {
   await openDashboard(page, { initialSessions: sessions })
 
@@ -581,7 +712,9 @@ test('loads, searches, filters and counts sessions', async ({ page }) => {
   }))
   expect(Math.round(searchRowAlignment.urlX)).toBe(Math.round(searchRowAlignment.titleX))
 
-  const searchExpansion = searchResult.getByTestId('toggle-session-expansion')
+  // The match count is the expander here; the card carries no separate button.
+  await expect(searchResult.getByTestId('toggle-session-expansion')).toHaveCount(0)
+  const searchExpansion = searchResult.getByTestId('search-match-count')
   await expect(searchExpansion).toHaveAttribute('aria-label', 'Expand session')
   await searchExpansion.click()
   await expect(searchResult.getByTestId('visible-site')).toHaveCount(2)
@@ -594,7 +727,7 @@ test('loads, searches, filters and counts sessions', async ({ page }) => {
   await page.locator('#keyword').fill('')
   await expect(page.locator('.session')).toHaveCount(2)
   await expect(searchResult.getByTestId('visible-site')).toHaveCount(2)
-  await expect(searchResult.getByTestId('toggle-session-expansion')).toHaveCount(0)
+  await expect(searchResult.getByTestId('search-match-count')).toHaveCount(0)
   await expect(page.getByTestId('session-stats')).toContainText('3 tabs')
 
   await searchResult.hover()
@@ -756,17 +889,26 @@ test('collapses session favicons into an iOS-style stack after ten tabs', async 
   await expect(page.getByTestId('session-session-ten-tabs').getByTestId('collapsed-site-overflow')).toHaveCount(0)
   await expect.poll(() => icons.first().evaluate(element => getComputedStyle(element).borderRadius)).toBe('50%')
 
-  const sessionExpansion = card.getByTestId('toggle-session-expansion')
+  // A collapsed card has no expand button: clicking its empty space expands it,
+  // and the favicon row is the matching keyboard control.
+  await expect(card.getByTestId('toggle-session-expansion')).toHaveCount(0)
+  const sessionExpansion = card.getByTestId('site-list')
+  await expect(sessionExpansion).toHaveAttribute('data-expander', 'true')
   await expect(sessionExpansion).toHaveAttribute('aria-label', 'Expand session')
-  await sessionExpansion.click()
+  await card.locator('.session-header').click()
   await expect(card.getByTestId('visible-site')).toHaveCount(12)
   await expect(card.locator('.site-title')).toHaveCount(12)
   await expect(card.getByTestId('collapsed-site-icon')).toHaveCount(0)
   await expect(sessionExpansion).toHaveAttribute('aria-label', 'Collapse session')
   await expect(page.getByTestId('session-session-ten-tabs').getByTestId('collapsed-site-icon')).toHaveCount(10)
-  await sessionExpansion.click()
+  await sessionExpansion.focus()
+  await sessionExpansion.press('Enter')
   await expect(card.getByTestId('collapsed-site-icon')).toHaveCount(10)
   await expect(card.locator('.site-title')).toHaveCount(0)
+  await sessionExpansion.press('Space')
+  await expect(card.getByTestId('visible-site')).toHaveCount(12)
+  await card.locator('.session-header').click()
+  await expect(card.getByTestId('collapsed-site-icon')).toHaveCount(10)
   await expect.poll(() => icons.first().evaluate(element => getComputedStyle(element).borderRadius)).toBe('50%')
 
   const iconStyle = await icons.first().evaluate(element => {
@@ -813,8 +955,22 @@ test('cycles through expanded, titles-only and compact session views', async ({ 
 
   const toggle = page.getByTestId('toggle-collapse')
   await expect(toggle).toHaveAttribute('data-view-mode', 'expanded')
+  await expect(toggle).toHaveAttribute('aria-label', 'Switch session view: Expanded')
   await expect(page.getByTestId('session-session-research').getByTestId('site-list'))
     .toHaveAttribute('data-site-drag-enabled', 'true')
+
+  // Hovering the trigger names each view, so the cycle is not icon-only guesswork.
+  await page.getByTestId('view-mode-menu').hover()
+  await expect(page.getByTestId('view-mode-expanded')).toHaveText('Expanded')
+  await expect(page.getByTestId('view-mode-expanded')).toHaveAttribute('aria-pressed', 'true')
+  await expect(page.getByTestId('view-mode-compact')).toHaveText('Compact')
+  await expect(page.getByTestId('view-mode-titles')).toHaveText('Titles only')
+  await page.getByTestId('view-mode-compact').click()
+  await expect(toggle).toHaveAttribute('data-view-mode', 'compact')
+  await expect(toggle).toHaveAttribute('aria-label', 'Switch session view: Compact')
+  await page.getByTestId('view-mode-menu').hover()
+  await page.getByTestId('view-mode-expanded').click()
+  await expect(toggle).toHaveAttribute('data-view-mode', 'expanded')
 
   await toggle.click()
   await expect(toggle).toHaveAttribute('data-view-mode', 'titles')

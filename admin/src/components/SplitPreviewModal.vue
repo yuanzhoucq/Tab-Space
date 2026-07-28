@@ -276,19 +276,28 @@ export default {
 }
 
 .split-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
   border-top: 1px solid var(--border-color, #e2e8f0);
   padding: 16px 24px;
 }
 
 .split-note {
-  margin: 0 0 12px;
+  flex: 1 1 220px;
+  margin: 0;
   font-size: 0.8rem;
+  line-height: 1.4;
   color: var(--text-secondary, #718096);
 }
 
 .split-actions {
   display: flex;
+  align-items: center;
   justify-content: flex-end;
+  flex: 0 0 auto;
   gap: 12px;
 }
 
