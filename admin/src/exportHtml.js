@@ -1,4 +1,5 @@
 import TabSpaceIcon from "!!url-loader?limit=100000!../../icon.png"
+import { faviconUrl } from "./favicon"
 
 function escapeHtml(value) {
   return String(value == null ? "" : value)
@@ -22,17 +23,6 @@ function safeWebUrl(value) {
   try {
     const parsed = new URL(/^[a-z][a-z\d+.-]*:/i.test(url) ? url : `http://${url}`)
     return parsed.protocol === "http:" || parsed.protocol === "https:" ? parsed.href : ""
-  } catch (_) {
-    return ""
-  }
-}
-
-function faviconUrl(value) {
-  const url = safeWebUrl(value)
-  if (!url) return ""
-
-  try {
-    return `${new URL(url).origin}/favicon.ico`
   } catch (_) {
     return ""
   }
@@ -66,7 +56,7 @@ function renderSite(site) {
   const url = safeWebUrl(rawUrl)
   const favicon = faviconUrl(rawUrl)
   const icon = favicon
-    ? `<span class="fav"><img src="${escapeHtml(favicon)}" alt="" loading="lazy" onerror="this.hidden=true"></span>`
+    ? `<span class="fav"><img src="${escapeHtml(favicon)}" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer" onerror="this.hidden=true;this.parentNode.classList.add('fav-placeholder')"></span>`
     : '<span class="fav fav-placeholder" aria-hidden="true"></span>'
   const content = url
     ? `<a class="link" href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(title)}</a>`

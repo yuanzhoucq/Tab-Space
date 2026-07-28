@@ -13,8 +13,8 @@ function sampleSessions() {
       timestamp: now - day,
       comment: '',
       sites: [
-        { title: 'Anthropic Docs — Building agents with the Claude API', url: 'https://docs.anthropic.com/agents' },
-        { title: 'Cloudflare Pages', url: 'https://developers.cloudflare.com/pages/' },
+        { title: 'Wikipedia', url: 'https://www.wikipedia.org/' },
+        { title: '百度', url: 'https://www.baidu.com/' },
         { title: 'Hacker News', url: 'https://news.ycombinator.com' }
       ],
       tags: [{ name: 'Work' }, { name: '@Favorite' }]

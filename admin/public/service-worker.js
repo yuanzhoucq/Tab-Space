@@ -1,7 +1,10 @@
 const CACHE_VERSION = "tab-space-admin-v3"
 const APP_SHELL_CACHE = `${CACHE_VERSION}-shell`
 const ASSET_CACHE = `${CACHE_VERSION}-assets`
+const FAVICON_CACHE_PREFIX = "tab-space-favicons-"
+const FAVICON_CACHE = `${FAVICON_CACHE_PREFIX}v1`
 const INDEX_URL = "./index.html"
+const faviconFetches = new Map()
 
 self.addEventListener("install", event => {
   event.waitUntil(
@@ -17,7 +20,10 @@ self.addEventListener("activate", event => {
     caches.keys()
       .then(keys => Promise.all(
         keys
-          .filter(key => key.startsWith("tab-space-admin-") && !key.startsWith(CACHE_VERSION))
+          .filter(key => (
+            (key.startsWith("tab-space-admin-") && !key.startsWith(CACHE_VERSION))
+            || (key.startsWith(FAVICON_CACHE_PREFIX) && key !== FAVICON_CACHE)
+          ))
           .map(key => caches.delete(key))
       ))
       .then(() => self.clients.claim())
@@ -28,6 +34,11 @@ self.addEventListener("fetch", event => {
   if (event.request.method !== "GET") return
 
   const url = new URL(event.request.url)
+  if (isRemoteFaviconRequest(event.request, url)) {
+    event.respondWith(faviconCacheFirst(event.request))
+    return
+  }
+
   if (url.origin !== self.location.origin) return
 
   if (event.request.mode === "navigate" || url.pathname.endsWith("/index.html")) {
@@ -40,6 +51,52 @@ self.addEventListener("fetch", event => {
     event.respondWith(cacheFirst(event.request))
   }
 })
+
+function isRemoteFaviconRequest(request, url) {
+  return url.origin !== self.location.origin
+    && request.destination === "image"
+    && /^\/favicon\.ico$/i.test(url.pathname)
+}
+
+async function faviconCacheFirst(request) {
+  let cache
+  let cached
+  try {
+    cache = await caches.open(FAVICON_CACHE)
+    cached = await cache.match(request)
+  } catch (error) {
+    // Private browsing or storage pressure can make Cache Storage unavailable.
+    return fetch(request)
+  }
+  if (cached) return cached
+
+  let pendingFetch = faviconFetches.get(request.url)
+  if (!pendingFetch) {
+    pendingFetch = fetchAndCacheFavicon(request, cache)
+      .finally(() => faviconFetches.delete(request.url))
+    faviconFetches.set(request.url, pendingFetch)
+  }
+
+  return (await pendingFetch).clone()
+}
+
+async function fetchAndCacheFavicon(request, cache) {
+  try {
+    const response = await fetch(request)
+    // Cross-origin images usually produce opaque responses. Cache.put supports
+    // them even though their status and headers are intentionally unreadable.
+    if (response.ok || response.type === "opaque") {
+      try {
+        await cache.put(request, response.clone())
+      } catch (error) {
+        // A full or disabled cache must not prevent the favicon from rendering.
+      }
+    }
+    return response
+  } catch (error) {
+    return Response.error()
+  }
+}
 
 async function appShellFirst(request) {
   const cache = await caches.open(APP_SHELL_CACHE)

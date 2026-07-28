@@ -168,8 +168,11 @@
           <div v-if="!isEditingSession(session)" :class="['fav', {'collapsed-fav': compactView}]">
             <img
                 :class="['fav-img', {'collapsed-fav-img': compactView}]"
-                :src="getFavicon(entry.site.url)"
-                :onerror="`src='${WangYeIcon}'`"
+                :src="getFavicon(entry.site.url) || WangYeIcon"
+                loading="lazy"
+                decoding="async"
+                referrerpolicy="no-referrer"
+                @error="useFallbackFavicon"
                 alt
             />
           </div>
@@ -346,6 +349,7 @@
   import WangYeIcon from '../assets/img/icon-webpage.svg';
   import Draggable from 'vuedraggable';
   import ExportDropdown from './ExportDropdown';
+  import { faviconUrl } from '../favicon';
   import { highlightedTextParts, matchingSiteEntries } from '../search';
 
   export default {
@@ -671,12 +675,13 @@
         this.bridge.send({ cmd: 'UpSession', bookmarks: [currentSession]})
       },
       getFavicon(url) {
-        try {
-          let origin = (new URL(this.wrapUrl(url))).origin
-          return origin + "/favicon.ico"
-        } catch {
-          return ""
-        }
+        return faviconUrl(url)
+      },
+      useFallbackFavicon(event) {
+        const image = event.currentTarget
+        if (!image || image.dataset.faviconFallback === "true") return
+        image.dataset.faviconFallback = "true"
+        image.src = this.WangYeIcon
       },
       restore(key, open, del) {
         if (open) {
