@@ -241,6 +241,12 @@ export default {
           break
         case "connection-error":
         case "request-error":
+          // The local helper refuses a save over the Free session limit; treat
+          // it exactly like the Safari bridge's SessionLimitReached message.
+          if (data.error && data.error.code === "session_limit_reached") {
+            this.handleNativeMessage("SessionLimitReached", data)
+            break
+          }
           if (!this.$store.state.nativeDetected) {
             this.$store.commit("setConnectionTimedOut", true)
           }
@@ -328,6 +334,9 @@ export default {
           if (data.redirected) this.$store.commit("setPurchaseRedirecting", true)
           break
         case "SessionLimitReached":
+          // Nothing was stored, so drop the local cards before offering the
+          // upgrade — otherwise the refused session stays on screen.
+          this.$store.commit("discardUnsavedSessions")
           this.$store.commit("setShowSubscriptionModal", true)
           break
       }

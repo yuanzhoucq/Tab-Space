@@ -375,6 +375,7 @@
 
 <script>
   import { mapState, mapGetters } from 'vuex';
+  import { isUnsavedSession } from '../store';
 
   import WangYeIcon from '../assets/img/icon-webpage.svg';
   import Draggable from 'vuedraggable';
@@ -412,7 +413,7 @@
     },
     computed: {
       ...mapState(["lang", "bridge", "keyword", "sessionViewMode", "sessions", "activeTag", "editingSessionUuid", "tabSpaceSettings", "enhancingSessionId", "splittingSessionId", "enhancedFlash"]),
-      ...mapGetters(["tags", "aiEnabled"]),
+      ...mapGetters(["tags", "aiEnabled", "canCreateSession"]),
       hasSearch() {
         return Boolean(this.keyword && this.keyword.trim())
       },
@@ -765,11 +766,11 @@
       },
       removeSessions(sessions) {
         sessions.forEach(session => {
-          if (session.uuid.slice(0,3) === "new") {
+          if (isUnsavedSession(session)) {
             this.$store.commit("spliceSessions", {start: this.sessions.findIndex(s => s.uuid === session.uuid), deleteCount: 1, items: []})
           }
         })
-        sessions = sessions.filter(s => s.uuid.slice(0,3) !== "new")
+        sessions = sessions.filter(s => !isUnsavedSession(s))
         if (sessions.filter(s => s.sites.length === 0).length > 0)
           this.bridge.send({ cmd: 'DeleteSession', bookmarks: sessions.filter(s => s.sites.length === 0) })
         sessions.filter(s => s.sites.length > 0).forEach(s => {
@@ -788,7 +789,14 @@
         if (session.sites.length === 0) {
           this.removeSessions([session])
         } else {
-          let isNewSession = session.uuid.slice(0,3) === "new"
+          let isNewSession = isUnsavedSession(session)
+          if (isNewSession && !this.canCreateSession) {
+            // The native side would refuse this session; drop the card here so
+            // the dashboard never shows a session that was not stored.
+            this.$store.commit("discardUnsavedSessions")
+            this.$store.commit("setShowSubscriptionModal", true)
+            return
+          }
           this.bridge.send({ cmd: isNewSession ? 'AppendSessions' : 'UpdateSession', bookmarks: [session] })
         }
       },
@@ -925,6 +933,12 @@
         return site.parentElement.parentElement.firstElementChild.firstElementChild.lastElementChild.id.slice(2)
       },
       startDragSite(session) {
+        // Without a free slot the dropped tabs could not be stored as a new
+        // session, and the drag would silently drop them: offer no target.
+        if (!this.canCreateSession) {
+          this.newSession = null
+          return
+        }
         let timestamp = (new Date()).getTime()
         this.newSession = {
           uuid: "new-" + timestamp,
@@ -937,7 +951,7 @@
         this.$store.commit("spliceSessions", {start: this.crtId + 1, deleteCount: 0, items: [this.newSession]})
       },
       endDragSite(e) {
-        if (this.newSession.sites.length === 0) this.$store.commit("spliceSessions", {start: this.crtId + 1, deleteCount: 1, items: []})
+        if (this.newSession && this.newSession.sites.length === 0) this.$store.commit("spliceSessions", {start: this.crtId + 1, deleteCount: 1, items: []})
         const fromId = this.getSessionIdFromDraggingSite(e.from)
         const toId = this.getSessionIdFromDraggingSite(e.to)
         if (fromId === toId) {

@@ -171,6 +171,17 @@ async function openDashboard(page, options = {}) {
         }
 
         if (name === 'AppendSessions') {
+          // Mirrors CommercializationConfig.canCreateSessions: Free stores at
+          // most five sessions and the native side saves none of a batch that
+          // would cross the line. Only protocol v2 reports a tier, and only
+          // those builds enforce the limit.
+          const requested = (payload.bookmarks || []).length
+          const tier = entitlementTier || (subscriptionStatus === 'active' ? 'pro' : 'free')
+          if (Number(nativeProtocolVersion) >= 2 && tier === 'free'
+            && currentSessions.length + requested > 5) {
+            emit('SessionLimitReached', { limit: 5 })
+            return
+          }
           for (const [index, appendedSession] of (payload.bookmarks || []).entries()) {
             const normalizedSession = clone(appendedSession)
             normalizedSession.uuid ||= `imported-${Date.now()}-${index}`
@@ -1286,6 +1297,50 @@ test('creates a session and appends it through the native bridge', async ({ page
   })
   await expect(page.locator('.session')).toHaveCount(3)
   await expect(page.locator('.session').first()).toContainText('New tab')
+})
+
+test('offers an upgrade instead of a sixth session on Free', async ({ page }) => {
+  const fullLibrary = Array.from({ length: 5 }, (_, index) => ({
+    ...sessions[0],
+    uuid: `session-${index}`,
+    title: `Session ${index}`,
+    tags: []
+  }))
+  await openDashboard(page, {
+    initialSessions: fullLibrary,
+    nativeProtocolVersion: '2',
+    entitlementTier: 'free'
+  })
+  const appendCount = await bridgeCommandCount(page, 'AppendSessions')
+
+  await page.getByTestId('add-session').click()
+
+  // The native side would refuse the save, so no card is offered for editing
+  // and nothing is sent: a refused session must never look stored.
+  await expect(page.getByTestId('plan-comparison')).toBeVisible()
+  await expect(page.locator('.session')).toHaveCount(5)
+  await expect(page.locator('.session-editing')).toHaveCount(0)
+  expect(await bridgeCommandCount(page, 'AppendSessions')).toBe(appendCount)
+})
+
+test('drops the new session card when the native side reports the Free limit', async ({ page }) => {
+  await openDashboard(page, {
+    initialSessions: sessions,
+    nativeProtocolVersion: '2',
+    entitlementTier: 'free'
+  })
+
+  await page.getByTestId('add-session').click()
+  const newCard = page.locator('.session').first()
+  await newCard.locator('.tab-edit').nth(0).fill('https://example.com/new')
+  await newCard.locator('.tab-edit').nth(1).fill('New tab')
+  // The native side owns the verdict: reply as it does when the library filled
+  // up elsewhere between opening the editor and saving.
+  await page.evaluate(() => window.__tabspaceTest.emit('SessionLimitReached', { limit: 5 }))
+
+  await expect(page.getByTestId('plan-comparison')).toBeVisible()
+  await expect(page.locator('.session')).toHaveCount(2)
+  await expect(page.locator('.session').first()).not.toContainText('New tab')
 })
 
 test('edits a complete session with modern controls and can cancel or save', async ({ page }) => {

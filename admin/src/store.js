@@ -33,6 +33,12 @@ function persistSessionViewMode(mode) {
     }
 }
 
+// A card that only exists in the dashboard: it keeps its placeholder uuid
+// until the native side accepts it and echoes back a stored session.
+export function isUnsavedSession(session) {
+    return typeof session.uuid === "string" && session.uuid.startsWith(Constants.newSessionUuidPrefix)
+}
+
 function setLang(languageCode) {
     const requestedLanguage = (languageCode || defaultTabSpaceSettings[Constants.preferredLanguageKey]).toLowerCase()
     const baseLanguage = requestedLanguage.split("-")[0]
@@ -70,6 +76,9 @@ const store = new Vuex.Store({
         // older native builds are mapped from their legacy active/free status.
         entitlementTier: "free",    // "free" | "plus" | "pro"
         subscriptionStatus: "free",  // "free" | "active"
+        // False until the native side reports a tier. Native builds that never
+        // report one predate the Free limit, so the dashboard must not apply it.
+        entitlementResolved: false,
         plusDisplayPrice: null,      // localized StoreKit price, optional in protocol v2
         aiQuotaRemaining: null,      // Int, -1 = unlimited, null = unknown
         aiQuotaResetAt: null,        // epoch seconds
@@ -88,6 +97,15 @@ const store = new Vuex.Store({
             && !!state.bridge && state.bridge.mode === "direct",
         isPremium: state => state.entitlementTier === "pro",
         hasPermanentPlus: state => state.entitlementTier === "plus",
+        // The native side counts every stored session, including the ones in
+        // Trash, so this count must not filter by tag.
+        savedSessionCount: state => state.sessions.filter(session => !isUnsavedSession(session)).length,
+        // Free stops at Constants.freeSessionLimit stored sessions. The native
+        // side enforces the same rule; this only keeps the dashboard from
+        // showing a card that was never stored.
+        canCreateSession: (state, getters) => !state.entitlementResolved
+            || state.entitlementTier !== "free"
+            || getters.savedSessionCount < Constants.freeSessionLimit,
         topSuggestion: state => state.suggestions[0] || null,
         tags: state => {
             let tags = new Set()
@@ -141,6 +159,13 @@ const store = new Vuex.Store({
             const {start, deleteCount, items} = payload
             state.sessions.splice(start, deleteCount, ...items)
         },
+        // The native side refused to store new sessions, so the cards that only
+        // ever existed in the dashboard have to go: leaving them behind makes a
+        // rejected save look successful until the next refresh.
+        discardUnsavedSessions(state) {
+            state.sessions = state.sessions.filter(session => !isUnsavedSession(session))
+            state.editingSessionUuid = ""
+        },
         setKeyword(state, newKeyword) {
             state.keyword = newKeyword
         },
@@ -191,6 +216,7 @@ const store = new Vuex.Store({
                 : (normalizedStatus === "active" ? "pro" : "free")
             state.subscriptionStatus = normalizedStatus
             state.entitlementTier = normalizedTier
+            state.entitlementResolved = true
             if (typeof plusDisplayPrice === "string" && plusDisplayPrice.trim()) {
                 state.plusDisplayPrice = plusDisplayPrice.trim()
             }

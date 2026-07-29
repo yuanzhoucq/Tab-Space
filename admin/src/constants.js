@@ -19,6 +19,13 @@ const constants = {
     // version is >= aiMinProtocolVersion.
     suggestedTagsKey: "suggested-tags",
     aiMinProtocolVersion: 2,
+    // Mirrors CommercializationConfig.freeSessionLimit on the native side. The
+    // native app stays the authority: this only stops the dashboard from
+    // creating a card the native side is going to refuse.
+    freeSessionLimit: 5,
+    // Locally created sessions carry a "new-<timestamp>" uuid until the native
+    // side accepts them and echoes back a real one.
+    newSessionUuidPrefix: "new-",
     defaultSuggestedTags: {
         "en-us": "Shopping, Development, Social, News, Video, Finance, Research, Entertainment, Work, Travel, Learning",
         "zh-cn": "购物, 开发, 社交, 新闻, 视频, 金融, 研究, 娱乐, 工作, 旅行, 学习"

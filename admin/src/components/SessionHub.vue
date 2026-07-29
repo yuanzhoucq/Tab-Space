@@ -90,7 +90,7 @@ import { mapState, mapGetters } from 'vuex'
 export default {
     computed: {
       ...mapState(["lang", "bridge", "sessions", "sessionViewMode", "activeTag", "keyword", "editingSessionUuid", "suggestions"]),
-      ...mapGetters(["displaySessions", "aiEnabled"]),
+      ...mapGetters(["displaySessions", "aiEnabled", "canCreateSession"]),
       // Each view keeps its own icon, so the button reads as "you are here"
       // instead of an unlabelled cycle. The icons describe a row of the list:
       // favicon plus title, the favicon strip on its own, then title only.
@@ -124,6 +124,12 @@ export default {
     methods: {
         insertSession() {
             if (this.editingSessionUuid) return
+            // Free is capped, and the native side would refuse the save anyway:
+            // offer the upgrade instead of an editor that cannot be stored.
+            if (!this.canCreateSession) {
+                this.$store.commit("setShowSubscriptionModal", true)
+                return
+            }
             if (this.sessionViewMode === "titles") this.$store.commit("setSessionViewMode", "expanded")
             if (this.keyword) this.$store.commit("setKeyword", "")
             let timestamp = (new Date()).getTime()
