@@ -184,5 +184,22 @@
   "quotaResetsAt": "يُعاد الضبط في {date}",
   "manageSubscription": "إدارة الاشتراك",
   "aiQuotaShort": "بقي {count} من الذكاء الاصطناعي",
-  "terms": "شروط الاستخدام"
+  "terms": "شروط الاستخدام",
+  "planPlusShort": "Plus",
+  "planTableCoreFeatures": "الميزات الأساسية",
+  "planTableSessions": "الجلسات المحفوظة",
+  "planTableAI": "التنظيم بالذكاء الاصطناعي",
+  "planTableFuturePro": "ميزات Pro المستقبلية",
+  "planTableUnlimited": "غير محدود",
+  "planTableWeeklyFive": "5 أسبوعيًا",
+  "planTableYourPlan": "خطتك",
+  "planTableIncluded": "مشمول",
+  "planTableNotIncluded": "غير مشمول",
+  "viewPlans": "عرض الخطط",
+  "multiBrowser": "متصفحات متعددة",
+  "multiBrowserStep1": "افتح Tab Space على جهاز Mac واختر رمز إقران المتصفح.",
+  "multiBrowserStep2": "ثبّت إضافة Tab Space في Chrome أو Microsoft Edge أو Firefox 121 أو أحدث.",
+  "multiBrowserStep3": "أدخل الرمز المكوّن من ستة أرقام في الإضافة لتوصيلها.",
+  "multiBrowserConnected": "هذا المتصفح متصل بـ Tab Space.",
+  "multiBrowserProNote": "دعم المتصفحات المتعددة مشمول مع Pro."
 }

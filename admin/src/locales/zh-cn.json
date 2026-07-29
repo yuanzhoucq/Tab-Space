@@ -184,5 +184,22 @@
   "quotaResetsAt": "{date} 重置",
   "manageSubscription": "管理订阅",
   "aiQuotaShort": "剩余 {count} 次 AI",
-  "terms": "使用条款"
+  "terms": "使用条款",
+  "planPlusShort": "Plus",
+  "planTableCoreFeatures": "核心功能",
+  "planTableSessions": "已保存会话",
+  "planTableAI": "AI 智能整理",
+  "planTableFuturePro": "未来的 Pro 功能",
+  "planTableUnlimited": "无限",
+  "planTableWeeklyFive": "每周 5 次",
+  "planTableYourPlan": "当前方案",
+  "planTableIncluded": "包含",
+  "planTableNotIncluded": "不包含",
+  "viewPlans": "查看方案",
+  "multiBrowser": "多浏览器",
+  "multiBrowserStep1": "在 Mac 上打开 Tab Space，选择“浏览器配对码”。",
+  "multiBrowserStep2": "在 Chrome、Microsoft Edge 或 Firefox 121 及以上版本中安装 Tab Space 扩展。",
+  "multiBrowserStep3": "在扩展中输入六位配对码即可连接。",
+  "multiBrowserConnected": "此浏览器已连接到 Tab Space。",
+  "multiBrowserProNote": "多浏览器支持包含在 Pro 中。"
 }

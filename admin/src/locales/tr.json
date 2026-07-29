@@ -184,5 +184,22 @@
   "quotaResetsAt": "{date} tarihinde sıfırlanır",
   "manageSubscription": "Aboneliği yönet",
   "aiQuotaShort": "{count} AI kaldı",
-  "terms": "Kullanım Koşulları"
+  "terms": "Kullanım Koşulları",
+  "planPlusShort": "Plus",
+  "planTableCoreFeatures": "Temel özellikler",
+  "planTableSessions": "Kaydedilen oturumlar",
+  "planTableAI": "Yapay zekâ düzenleme",
+  "planTableFuturePro": "Gelecekteki Pro özellikleri",
+  "planTableUnlimited": "Sınırsız",
+  "planTableWeeklyFive": "Haftada 5",
+  "planTableYourPlan": "Planınız",
+  "planTableIncluded": "Dahil",
+  "planTableNotIncluded": "Dahil değil",
+  "viewPlans": "Planları gör",
+  "multiBrowser": "Çoklu tarayıcı",
+  "multiBrowserStep1": "Mac'inizde Tab Space'i açın ve tarayıcı eşleştirme kodunu seçin.",
+  "multiBrowserStep2": "Tab Space uzantısını Chrome, Microsoft Edge veya Firefox 121 ya da üstüne kurun.",
+  "multiBrowserStep3": "Bağlamak için uzantıya altı haneli kodu girin.",
+  "multiBrowserConnected": "Bu tarayıcı Tab Space'e bağlı.",
+  "multiBrowserProNote": "Çoklu tarayıcı desteği Pro'ya dahildir."
 }

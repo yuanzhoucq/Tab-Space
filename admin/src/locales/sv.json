@@ -184,5 +184,22 @@
   "quotaResetsAt": "Återställs {date}",
   "manageSubscription": "Hantera prenumeration",
   "aiQuotaShort": "{count} AI kvar",
-  "terms": "Användarvillkor"
+  "terms": "Användarvillkor",
+  "planPlusShort": "Plus",
+  "planTableCoreFeatures": "Kärnfunktioner",
+  "planTableSessions": "Sparade sessioner",
+  "planTableAI": "AI-organisering",
+  "planTableFuturePro": "Framtida Pro-funktioner",
+  "planTableUnlimited": "Obegränsat",
+  "planTableWeeklyFive": "5 / vecka",
+  "planTableYourPlan": "Din plan",
+  "planTableIncluded": "Ingår",
+  "planTableNotIncluded": "Ingår inte",
+  "viewPlans": "Visa planer",
+  "multiBrowser": "Flera webbläsare",
+  "multiBrowserStep1": "Öppna Tab Space på din Mac och välj kopplingskoden för webbläsare.",
+  "multiBrowserStep2": "Installera Tab Space-tillägget i Chrome, Microsoft Edge eller Firefox 121 eller senare.",
+  "multiBrowserStep3": "Ange den sexsiffriga koden i tillägget för att ansluta det.",
+  "multiBrowserConnected": "Den här webbläsaren är ansluten till Tab Space.",
+  "multiBrowserProNote": "Stöd för flera webbläsare ingår i Pro."
 }

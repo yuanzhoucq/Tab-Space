@@ -184,5 +184,22 @@
   "quotaResetsAt": "Скидання {date}",
   "manageSubscription": "Керувати підпискою",
   "aiQuotaShort": "Залишилось {count} ШІ",
-  "terms": "Умови використання"
+  "terms": "Умови використання",
+  "planPlusShort": "Plus",
+  "planTableCoreFeatures": "Основні функції",
+  "planTableSessions": "Збережені сеанси",
+  "planTableAI": "Організація за допомогою ШІ",
+  "planTableFuturePro": "Майбутні функції Pro",
+  "planTableUnlimited": "Без обмежень",
+  "planTableWeeklyFive": "5 / тиждень",
+  "planTableYourPlan": "Ваш план",
+  "planTableIncluded": "Включено",
+  "planTableNotIncluded": "Не включено",
+  "viewPlans": "Переглянути плани",
+  "multiBrowser": "Кілька браузерів",
+  "multiBrowserStep1": "Відкрийте Tab Space на Mac і виберіть код сполучення браузера.",
+  "multiBrowserStep2": "Установіть розширення Tab Space у Chrome, Microsoft Edge або Firefox 121 чи новішій версії.",
+  "multiBrowserStep3": "Введіть шестизначний код у розширенні, щоб підключити його.",
+  "multiBrowserConnected": "Цей браузер підключено до Tab Space.",
+  "multiBrowserProNote": "Підтримка кількох браузерів входить до Pro."
 }

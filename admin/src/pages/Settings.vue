@@ -42,15 +42,23 @@
             <p v-if="!unlimitedQuota && quotaResetLabel" class="help-text">{{ quotaResetLabel }}</p>
           </div>
 
+          <!-- The plan comparison stays reachable at every tier: a Pro
+               subscriber still needs to see what the plan covers. -->
           <div class="subscription-actions">
             <button v-if="!isPremium" type="button" class="primary-action"
                     data-testid="settings-upgrade" @click="openSubscription">
               {{lang.upgrade || 'Upgrade'}}
             </button>
-            <button v-else type="button" class="secondary-action"
-                    data-testid="manage-subscription" @click="manageSubscription">
-              {{lang.manageSubscription || 'Manage subscription'}}
-            </button>
+            <template v-else>
+              <button type="button" class="secondary-action"
+                      data-testid="settings-view-plans" @click="openSubscription">
+                {{lang.viewPlans || 'View plans'}}
+              </button>
+              <button type="button" class="secondary-action"
+                      data-testid="manage-subscription" @click="manageSubscription">
+                {{lang.manageSubscription || 'Manage subscription'}}
+              </button>
+            </template>
             <button type="button" class="secondary-action" :disabled="restoring"
                     data-testid="restore-purchases" @click="restore">
               {{ restoring ? (lang.restoring || 'Restoring…') : (lang.restorePurchases || 'Restore Purchases') }}
@@ -120,6 +128,42 @@
             ></textarea>
             <p class="help-text">{{lang.suggestedTagsHint || 'Comma-separated tags the AI will prefer to use'}}</p>
           </div>
+        </div>
+
+        <!-- Multi-browser (Pro). Gated on protocol v2 for the same reason as
+             the blocks above: the pairing flow only exists in the 4.0 app. -->
+        <div class="card" v-if="aiEnabled" data-testid="multi-browser-card">
+          <h2 class="section-title">{{lang.multiBrowser || 'Multi-browser'}}</h2>
+
+          <div class="feature-lede">
+            <v-icon name="globe" class="feature-lede-icon"></v-icon>
+            <div class="feature-lede-text">
+              <p class="feature-title">{{lang.featureMultiBrowserTitle || 'Multi-browser support'}}</p>
+              <p class="help-text feature-desc">{{lang.featureMultiBrowserDesc || 'Use the same sessions in Safari, Chrome, Microsoft Edge, and Firefox.'}}</p>
+            </div>
+            <span class="plan-pill" :class="{ unlocked: isPremium }" data-testid="multi-browser-pill">
+              {{lang.planPremium || 'Pro'}}
+            </span>
+          </div>
+
+          <p v-if="isWebExtension" class="connected-note" data-testid="multi-browser-connected">
+            <v-icon name="check-circle" class="connected-icon"></v-icon>
+            <span>{{lang.multiBrowserConnected || 'This browser is connected to Tab Space.'}}</span>
+          </p>
+
+          <ol class="steps" data-testid="multi-browser-steps">
+            <li>{{lang.multiBrowserStep1 || 'Open Tab Space on your Mac and choose Browser Pairing Code.'}}</li>
+            <li>{{lang.multiBrowserStep2 || 'Install the Tab Space extension in Chrome, Microsoft Edge, or Firefox 121 or later.'}}</li>
+            <li>{{lang.multiBrowserStep3 || 'Enter the six-digit code in the extension to connect it.'}}</li>
+          </ol>
+
+          <div v-if="!isPremium" class="subscription-actions">
+            <button type="button" class="primary-action"
+                    data-testid="multi-browser-upgrade" @click="openSubscription">
+              {{lang.upgrade || 'Upgrade'}}
+            </button>
+          </div>
+          <p v-if="!isPremium" class="help-text">{{lang.multiBrowserProNote || 'Multi-browser support is included with Pro.'}}</p>
         </div>
 
         <!-- Shortcuts -->
@@ -550,6 +594,90 @@ export default {
 
 .redirect-note {
   color: var(--primary-color);
+}
+
+/* --- Multi-browser block --- */
+.feature-lede {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.feature-lede-icon {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  margin-top: 2px;
+  color: var(--primary-color);
+}
+
+.feature-lede-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.feature-title {
+  margin: 0;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.feature-desc {
+  margin-top: 0.25rem;
+}
+
+.plan-pill {
+  flex-shrink: 0;
+  padding: 2px 8px;
+  border: 1px solid var(--border-color);
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--text-secondary);
+}
+
+.plan-pill.unlocked {
+  border-color: transparent;
+  background: var(--primary-color);
+  color: #ffffff;
+}
+
+.connected-note {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 12px 0 0;
+  font-size: 0.85rem;
+  color: #10b981;
+}
+
+.connected-icon {
+  width: 15px;
+  height: 15px;
+}
+
+.steps {
+  margin: 14px 0 0;
+  padding-left: 1.3rem;
+  list-style: decimal;
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+}
+
+/* A bare global `li` rule in Admin.vue makes every list item a flex box with
+   no marker and its own padding. Undo it for these steps. */
+.steps li {
+  display: list-item;
+  list-style: decimal;
+  padding: 0;
+  margin-left: 0;
+  margin-right: 0;
+}
+
+.steps li + li {
+  margin-top: 5px;
 }
 
 .legal-links a {

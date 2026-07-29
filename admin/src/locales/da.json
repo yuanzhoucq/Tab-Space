@@ -184,5 +184,22 @@
   "quotaResetsAt": "Nulstilles {date}",
   "manageSubscription": "Administrer abonnement",
   "aiQuotaShort": "{count} AI tilbage",
-  "terms": "Vilkår for brug"
+  "terms": "Vilkår for brug",
+  "planPlusShort": "Plus",
+  "planTableCoreFeatures": "Kernefunktioner",
+  "planTableSessions": "Gemte sessioner",
+  "planTableAI": "AI-organisering",
+  "planTableFuturePro": "Fremtidige Pro-funktioner",
+  "planTableUnlimited": "Ubegrænset",
+  "planTableWeeklyFive": "5 / uge",
+  "planTableYourPlan": "Din plan",
+  "planTableIncluded": "Inkluderet",
+  "planTableNotIncluded": "Ikke inkluderet",
+  "viewPlans": "Se planer",
+  "multiBrowser": "Flere browsere",
+  "multiBrowserStep1": "Åbn Tab Space på din Mac, og vælg koden til browserparring.",
+  "multiBrowserStep2": "Installer Tab Space-udvidelsen i Chrome, Microsoft Edge eller Firefox 121 eller nyere.",
+  "multiBrowserStep3": "Indtast den sekscifrede kode i udvidelsen for at forbinde den.",
+  "multiBrowserConnected": "Denne browser er forbundet til Tab Space.",
+  "multiBrowserProNote": "Understøttelse af flere browsere er inkluderet i Pro."
 }

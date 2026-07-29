@@ -184,5 +184,22 @@
   "quotaResetsAt": "Se reinicia el {date}",
   "manageSubscription": "Gestionar suscripción",
   "aiQuotaShort": "{count} IA restantes",
-  "terms": "Términos de uso"
+  "terms": "Términos de uso",
+  "planPlusShort": "Plus",
+  "planTableCoreFeatures": "Funciones esenciales",
+  "planTableSessions": "Sesiones guardadas",
+  "planTableAI": "Organización con IA",
+  "planTableFuturePro": "Futuras funciones Pro",
+  "planTableUnlimited": "Ilimitado",
+  "planTableWeeklyFive": "5 / semana",
+  "planTableYourPlan": "Tu plan",
+  "planTableIncluded": "Incluido",
+  "planTableNotIncluded": "No incluido",
+  "viewPlans": "Ver planes",
+  "multiBrowser": "Varios navegadores",
+  "multiBrowserStep1": "Abre Tab Space en tu Mac y elige el código de vinculación del navegador.",
+  "multiBrowserStep2": "Instala la extensión de Tab Space en Chrome, Microsoft Edge o Firefox 121 o posterior.",
+  "multiBrowserStep3": "Introduce el código de seis dígitos en la extensión para conectarla.",
+  "multiBrowserConnected": "Este navegador está conectado a Tab Space.",
+  "multiBrowserProNote": "La compatibilidad con varios navegadores se incluye con Pro."
 }

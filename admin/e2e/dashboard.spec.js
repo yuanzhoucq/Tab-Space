@@ -731,7 +731,11 @@ test('maps protocol v2 Plus and keeps the weekly AI trial available', async ({ p
   await expect(page.getByTestId('settings-plus-price')).toHaveCSS('text-decoration-line', 'line-through')
   await expect(page.getByTestId('settings-plus-summary')).toBeVisible()
   await page.getByTestId('settings-upgrade').click()
-  await expect(page.getByText('Multi-browser support')).toBeVisible()
+  // The plan story lives in one comparison table now; Settings also mentions
+  // multi-browser, so scope the assertion to the table inside the dialog.
+  const comparison = page.getByTestId('plan-comparison')
+  await expect(comparison.getByText('Multi-browser support')).toBeVisible()
+  await expect(comparison.getByRole('columnheader', { name: /Plus/ })).toContainText('Your plan')
   await expect(page.getByTestId('modal-plus-price')).toHaveText('$9.99')
   await expect(page.getByTestId('modal-plus-price')).toHaveCSS('text-decoration-line', 'line-through')
   await expect(page.getByTestId('plan-yearly')).toHaveAttribute('aria-pressed', 'true')
@@ -743,6 +747,43 @@ test('maps protocol v2 Plus and keeps the weekly AI trial available', async ({ p
   await expect.poll(() => lastBridgeCommand(page, 'PurchaseSubscription')).toMatchObject({
     payload: { productId: 'tabspace.pro.monthly' }
   })
+})
+
+test('lets a Pro subscriber reopen the plan comparison from Settings', async ({ page }) => {
+  await openDashboard(page, {
+    initialSessions: sessions,
+    nativeProtocolVersion: '2',
+    entitlementTier: 'pro'
+  })
+
+  await page.getByTestId('settings-link').click()
+  await expect(page.getByTestId('plan-status')).toContainText('Pro')
+  // Upgrading is meaningless at this tier, but reading the plan is not.
+  await expect(page.getByTestId('settings-upgrade')).toHaveCount(0)
+  await page.getByTestId('settings-view-plans').click()
+
+  await expect(page.getByTestId('pro-active-message')).toBeVisible()
+  const comparison = page.getByTestId('plan-comparison')
+  await expect(comparison.getByRole('columnheader', { name: /Pro/ })).toContainText('Your plan')
+  // No purchase controls for someone who already subscribed.
+  await expect(page.getByTestId('subscription-submit')).toHaveCount(0)
+  await page.getByTestId('modal-manage-subscription').click()
+  await expect.poll(() => lastBridgeCommand(page, 'PurchaseSubscription')).toBeTruthy()
+})
+
+test('offers multi-browser setup from Settings and gates it behind Pro', async ({ page }) => {
+  await openDashboard(page, {
+    initialSessions: sessions,
+    nativeProtocolVersion: '2',
+    entitlementTier: 'free'
+  })
+
+  await page.getByTestId('settings-link').click()
+  const card = page.getByTestId('multi-browser-card')
+  await expect(card).toBeVisible()
+  await expect(card.getByTestId('multi-browser-steps').locator('li')).toHaveCount(3)
+  await card.getByTestId('multi-browser-upgrade').click()
+  await expect(page.getByTestId('plan-comparison')).toBeVisible()
 })
 
 test('saves both sessions after dragging a tab across them', async ({ page }) => {

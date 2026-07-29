@@ -184,5 +184,22 @@
   "quotaResetsAt": "Resets {date}",
   "manageSubscription": "Manage subscription",
   "aiQuotaShort": "{count} AI left",
-  "terms": "Terms of Use"
+  "terms": "Terms of Use",
+  "planPlusShort": "Plus",
+  "planTableCoreFeatures": "Core features",
+  "planTableSessions": "Saved sessions",
+  "planTableAI": "AI organizing",
+  "planTableFuturePro": "Future Pro features",
+  "planTableUnlimited": "Unlimited",
+  "planTableWeeklyFive": "5 / week",
+  "planTableYourPlan": "Your plan",
+  "planTableIncluded": "Included",
+  "planTableNotIncluded": "Not included",
+  "viewPlans": "View plans",
+  "multiBrowser": "Multi-browser",
+  "multiBrowserStep1": "Open Tab Space on your Mac and choose Browser Pairing Code.",
+  "multiBrowserStep2": "Install the Tab Space extension in Chrome, Microsoft Edge, or Firefox 121 or later.",
+  "multiBrowserStep3": "Enter the six-digit code in the extension to connect it.",
+  "multiBrowserConnected": "This browser is connected to Tab Space.",
+  "multiBrowserProNote": "Multi-browser support is included with Pro."
 }

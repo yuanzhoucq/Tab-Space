@@ -9,68 +9,29 @@
       </div>
 
       <div class="modal-content">
-        <!-- Already subscribed -->
-        <div v-if="isPremium" class="already-premium">
-          <v-icon name="check-circle" class="premium-check"></v-icon>
-          <p>{{ lang.alreadyPremium || "You're on Tab Space AI Premium." }}</p>
+        <!-- Status strip. Pro sees this instead of a dead end, because Settings
+             can now open this dialog at any tier. -->
+        <div v-if="isPremium" class="status-note is-active" data-testid="pro-active-message">
+          <v-icon name="check-circle" class="status-icon"></v-icon>
+          <p>{{ lang.alreadyPremium || "You're on Tab Space Pro." }}</p>
         </div>
 
-        <template v-else>
-          <div v-if="hasPermanentPlus" class="plus-owned" data-testid="plus-owned-message">
-            <v-icon name="check-circle" class="premium-check"></v-icon>
-            <div>
-              <div class="plus-title">
-                <strong>{{ lang.planPlus || 'Plus · Permanent' }}</strong>
-                <del v-if="plusDisplayPrice"
-                     class="plus-price"
-                     data-testid="modal-plus-price">{{ plusDisplayPrice }}</del>
-              </div>
-              <p>{{ lang.plusOwnedSummary || 'Unlimited sessions and all core features are yours permanently. You also receive 5 AI requests each week; Pro makes AI unlimited.' }}</p>
+        <div v-else-if="hasPermanentPlus" class="status-note" data-testid="plus-owned-message">
+          <v-icon name="check-circle" class="status-icon"></v-icon>
+          <div>
+            <div class="plus-title">
+              <strong>{{ lang.planPlus || 'Plus · Permanent' }}</strong>
+              <del v-if="plusDisplayPrice"
+                   class="plus-price"
+                   data-testid="modal-plus-price">{{ plusDisplayPrice }}</del>
             </div>
+            <p>{{ lang.plusOwnedSummary || 'Unlimited sessions and all core features are yours permanently. You also receive 5 AI requests each week; Pro makes AI unlimited.' }}</p>
           </div>
+        </div>
 
-          <!-- Features -->
-          <div class="features">
-            <h3>{{ lang.aiPremium || 'Tab Space Pro' }}</h3>
-            <ul>
-              <li>
-                <v-icon name="zap" class="feature-icon"></v-icon>
-                <div>
-                  <strong>{{ lang.featureEnhanceTitle || 'Smart titles & tags' }}</strong>
-                  <p>{{ lang.featureEnhanceDesc || 'AI names and tags your sessions as you save.' }}</p>
-                </div>
-              </li>
-              <li>
-                <v-icon name="server" class="feature-icon"></v-icon>
-                <div>
-                  <strong>{{ lang.featureSplitTitle || 'Topic split' }}</strong>
-                  <p>{{ lang.featureSplitDesc || 'Break a big session into clean, topic-based sessions.' }}</p>
-                </div>
-              </li>
-              <li>
-                <v-icon name="check-square" class="feature-icon"></v-icon>
-                <div>
-                  <strong>{{ lang.featureBatchTitle || 'One-click cleanup' }}</strong>
-                  <p>{{ lang.featureBatchDesc || 'Apply a whole type of suggestion across your library at once.' }}</p>
-                </div>
-              </li>
-              <li>
-                <v-icon name="trending-up" class="feature-icon"></v-icon>
-                <div>
-                  <strong>{{ lang.featureUnlimitedTitle || 'Unlimited requests' }}</strong>
-                  <p>{{ lang.featureUnlimitedDesc || 'Use AI as much as you like — no weekly limit.' }}</p>
-                </div>
-              </li>
-              <li>
-                <v-icon name="globe" class="feature-icon"></v-icon>
-                <div>
-                  <strong>{{ lang.featureMultiBrowserTitle || 'Multi-browser support' }}</strong>
-                  <p>{{ lang.featureMultiBrowserDesc || 'Use the same sessions in Safari, Chrome, Microsoft Edge, and Firefox.' }}</p>
-                </div>
-              </li>
-            </ul>
-          </div>
+        <plan-comparison></plan-comparison>
 
+        <template v-if="!isPremium">
           <!-- The selected cycle is handed to the host paywall; final localized
                pricing and purchase confirmation still live in the app.
                aria-pressed is bound as a string on purpose: Vue 2 removes an
@@ -102,14 +63,19 @@
             <span v-if="purchaseRedirecting">{{ lang.continueInApp || 'Continuing in the Tab Space app…' }}</span>
             <span v-else>{{ lang.subscribeInApp || 'Subscribe in Tab Space' }}</span>
           </button>
-
-          <button type="button" class="restore-btn" :disabled="restoring || purchaseRedirecting" @click="restore">
-            {{ restoring ? (lang.restoring || 'Restoring…') : (lang.restorePurchases || 'Restore Purchases') }}
-          </button>
-
-          <p class="managed-note">{{ lang.subscriptionManagedInApp || 'Plans and payment are handled securely in the Tab Space app.' }}</p>
-          <div class="free-tier-info">{{ lang.proOnlyInfo || 'Free and Plus include 5 AI requests each week. Pro removes the weekly limit.' }}</div>
         </template>
+
+        <button v-else type="button" class="purchase-btn standalone" data-testid="modal-manage-subscription"
+                :disabled="purchaseRedirecting" @click="manageSubscription">
+          <span v-if="purchaseRedirecting">{{ lang.continueInApp || 'Continuing in the Tab Space app…' }}</span>
+          <span v-else>{{ lang.manageSubscription || 'Manage subscription' }}</span>
+        </button>
+
+        <button type="button" class="restore-btn" :disabled="restoring || purchaseRedirecting" @click="restore">
+          {{ restoring ? (lang.restoring || 'Restoring…') : (lang.restorePurchases || 'Restore Purchases') }}
+        </button>
+
+        <p class="managed-note">{{ lang.subscriptionManagedInApp || 'Plans and payment are handled securely in the Tab Space app.' }}</p>
       </div>
     </div>
   </div>
@@ -117,9 +83,11 @@
 
 <script>
 import { mapState, mapGetters } from 'vuex'
+import PlanComparison from './PlanComparison'
 
 export default {
   name: 'SubscriptionModal',
+  components: { PlanComparison },
   data() {
     return {
       restoring: false,
@@ -146,6 +114,12 @@ export default {
       if (productId === this.monthlyProductId || productId === this.yearlyProductId) {
         this.selectedProductId = productId
       }
+    },
+    // Management, like purchasing, is owned by the host app: the native side
+    // brings it forward and replies PurchaseResult { redirected: true }.
+    manageSubscription() {
+      if (!this.bridge) return
+      this.bridge.send({ cmd: 'PurchaseSubscription' })
     },
     subscribe() {
       if (!this.bridge) return
@@ -219,25 +193,36 @@ export default {
   padding: 22px 24px;
 }
 
-.already-premium {
-  text-align: center;
-  padding: 24px 0;
-}
-
-.plus-owned {
+.status-note {
   display: flex;
-  gap: 12px;
+  gap: 10px;
   align-items: flex-start;
-  padding: 14px;
-  margin-bottom: 20px;
+  padding: 12px 14px;
+  margin-bottom: 16px;
   border-radius: 10px;
   background: rgba(16, 185, 129, 0.1);
 }
 
-.plus-owned p {
+.status-note p {
   margin: 4px 0 0;
   color: var(--text-secondary, #718096);
   font-size: 13px;
+}
+
+.status-note.is-active p {
+  margin: 0;
+  align-self: center;
+  color: var(--text-primary, #2d3748);
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.status-icon {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  margin-top: 1px;
+  color: #10b981;
 }
 
 .plus-title {
@@ -254,58 +239,11 @@ export default {
   opacity: 0.8;
 }
 
-.premium-check {
-  width: 42px;
-  height: 42px;
-  color: #10b981;
-}
-
-.features {
-  margin-bottom: 22px;
-}
-
-.features h3 {
-  font-size: 17px;
-  margin: 0 0 16px;
-}
-
-.features ul {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-}
-
-.features li {
-  display: flex;
-  gap: 12px;
-  margin-bottom: 14px;
-  align-items: flex-start;
-}
-
-.feature-icon {
-  width: 22px;
-  height: 22px;
-  color: var(--primary-color, #eb5205);
-  flex-shrink: 0;
-  margin-top: 2px;
-}
-
-.features li strong {
-  display: block;
-  margin-bottom: 3px;
-}
-
-.features li p {
-  margin: 0;
-  font-size: 13px;
-  color: var(--text-secondary, #718096);
-}
-
 .plans {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 10px;
-  margin-bottom: 18px;
+  margin: 26px 0 18px;
 }
 
 .plan-card {
@@ -322,18 +260,18 @@ export default {
 }
 
 .plan-card:hover {
-  background: rgba(235, 82, 5, 0.05);
+  background: rgba(250, 128, 114, 0.08);
 }
 
 .plan-card:focus-visible {
-  outline: 2px solid var(--primary-color, #eb5205);
+  outline: 2px solid var(--primary-color, #fa8072);
   outline-offset: 2px;
 }
 
 .plan-card.selected {
-  border-color: var(--primary-color, #eb5205);
-  background: rgba(235, 82, 5, 0.08);
-  box-shadow: 0 0 0 1px var(--primary-color, #eb5205);
+  border-color: var(--primary-color, #fa8072);
+  background: rgba(250, 128, 114, 0.12);
+  box-shadow: 0 0 0 1px var(--primary-color, #fa8072);
 }
 
 .plan-card h4 {
@@ -352,7 +290,7 @@ export default {
   top: -10px;
   left: 50%;
   transform: translateX(-50%);
-  background: var(--primary-color, #eb5205);
+  background: var(--primary-color, #fa8072);
   color: #ffffff;
   font-size: 10px;
   padding: 3px 8px;
@@ -364,13 +302,18 @@ export default {
 .purchase-btn {
   width: 100%;
   padding: 14px;
-  background: var(--primary-color, #eb5205);
+  background: var(--primary-color, #fa8072);
   color: #ffffff;
   border: none;
   border-radius: 12px;
   font-size: 15px;
   font-weight: 600;
   cursor: pointer;
+}
+
+/* No plan picker above it, so it needs its own separation from the table. */
+.purchase-btn.standalone {
+  margin-top: 22px;
 }
 
 .purchase-btn:disabled {
@@ -402,24 +345,10 @@ export default {
   color: var(--text-secondary, #718096);
 }
 
-.free-tier-info {
-  text-align: center;
-  margin-top: 12px;
-  font-size: 13px;
-  color: var(--text-secondary, #718096);
-  padding: 10px;
-  background: var(--bg-color, #f8f6f2);
-  border-radius: 8px;
-}
-
 @media (prefers-color-scheme: dark) {
   .subscription-modal {
     background: var(--card-bg, #2a2a2a);
     color: #e6e6e6;
-  }
-
-  .free-tier-info {
-    background: rgba(255, 255, 255, 0.04);
   }
 }
 </style>
