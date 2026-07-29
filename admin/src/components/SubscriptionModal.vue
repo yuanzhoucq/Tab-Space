@@ -72,12 +72,15 @@
           </div>
 
           <!-- The selected cycle is handed to the host paywall; final localized
-               pricing and purchase confirmation still live in the app. -->
+               pricing and purchase confirmation still live in the app.
+               aria-pressed is bound as a string on purpose: Vue 2 removes an
+               attribute whose bound value is `false`, which would leave the
+               unselected card with no pressed state for screen readers. -->
           <div class="plans">
             <button type="button"
                     class="plan-card"
                     :class="{ selected: selectedProductId === monthlyProductId }"
-                    :aria-pressed="selectedProductId === monthlyProductId"
+                    :aria-pressed="String(selectedProductId === monthlyProductId)"
                     data-testid="plan-monthly"
                     @click="selectProduct(monthlyProductId)">
               <h4>{{ lang.planMonthly || 'Monthly' }}</h4>
@@ -85,7 +88,7 @@
             <button type="button"
                     class="plan-card recommended"
                     :class="{ selected: selectedProductId === yearlyProductId }"
-                    :aria-pressed="selectedProductId === yearlyProductId"
+                    :aria-pressed="String(selectedProductId === yearlyProductId)"
                     data-testid="plan-yearly"
                     @click="selectProduct(yearlyProductId)">
               <div class="best-value">{{ lang.planRecommended || 'Best value' }}</div>
