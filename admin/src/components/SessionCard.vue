@@ -692,16 +692,14 @@
         })
       },
       enhanceWithAI(session) {
-        // Per-session enhance is a free-tier action; the server enforces quota
-        // and replies with a typed error if it is exhausted (handled centrally
-        // in TabSpaceBridge).
+        // Free and Plus share the Worker-enforced weekly trial quota.
         if (!this.aiEnabled || this.enhancingSessionId) return
         this.$store.commit("setEnhancingSessionId", session.uuid)
         this.bridge.send({ cmd: "EnhanceSession", uuid: session.uuid, bookmarks: [session] })
       },
       splitSession(session) {
-        // Clustering/preview is free; only *saving* the split is premium-gated
-        // (enforced in SplitPreviewModal), matching design §6.
+        // Previewing a split consumes the same non-Pro trial quota; applying
+        // the split remains gated in SplitPreviewModal.
         if (!this.aiEnabled || this.splittingSessionId) return
         this.$store.commit("setSplittingSessionId", session.uuid)
         this.bridge.send({ cmd: "ClusterTabs", uuid: session.uuid, bookmarks: [session] })

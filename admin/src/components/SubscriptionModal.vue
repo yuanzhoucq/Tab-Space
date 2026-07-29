@@ -16,9 +16,22 @@
         </div>
 
         <template v-else>
+          <div v-if="hasPermanentPlus" class="plus-owned" data-testid="plus-owned-message">
+            <v-icon name="check-circle" class="premium-check"></v-icon>
+            <div>
+              <div class="plus-title">
+                <strong>{{ lang.planPlus || 'Plus · Permanent' }}</strong>
+                <del v-if="plusDisplayPrice"
+                     class="plus-price"
+                     data-testid="modal-plus-price">{{ plusDisplayPrice }}</del>
+              </div>
+              <p>{{ lang.plusOwnedSummary || 'Unlimited sessions and all core features are yours permanently. You also receive 5 AI requests each week; Pro makes AI unlimited.' }}</p>
+            </div>
+          </div>
+
           <!-- Features -->
           <div class="features">
-            <h3>{{ lang.unlockAI || 'Unlock AI-powered organizing' }}</h3>
+            <h3>{{ lang.aiPremium || 'Tab Space Pro' }}</h3>
             <ul>
               <li>
                 <v-icon name="zap" class="feature-icon"></v-icon>
@@ -48,21 +61,41 @@
                   <p>{{ lang.featureUnlimitedDesc || 'Use AI as much as you like — no weekly limit.' }}</p>
                 </div>
               </li>
+              <li>
+                <v-icon name="globe" class="feature-icon"></v-icon>
+                <div>
+                  <strong>{{ lang.featureMultiBrowserTitle || 'Multi-browser support' }}</strong>
+                  <p>{{ lang.featureMultiBrowserDesc || 'Use the same sessions in Safari, Chrome, Microsoft Edge, and Firefox.' }}</p>
+                </div>
+              </li>
             </ul>
           </div>
 
-          <!-- Plan presentation (informational; final pricing lives in the app) -->
+          <!-- The selected cycle is handed to the host paywall; final localized
+               pricing and purchase confirmation still live in the app. -->
           <div class="plans">
-            <div class="plan-card">
+            <button type="button"
+                    class="plan-card"
+                    :class="{ selected: selectedProductId === monthlyProductId }"
+                    :aria-pressed="selectedProductId === monthlyProductId"
+                    data-testid="plan-monthly"
+                    @click="selectProduct(monthlyProductId)">
               <h4>{{ lang.planMonthly || 'Monthly' }}</h4>
-            </div>
-            <div class="plan-card recommended">
+            </button>
+            <button type="button"
+                    class="plan-card recommended"
+                    :class="{ selected: selectedProductId === yearlyProductId }"
+                    :aria-pressed="selectedProductId === yearlyProductId"
+                    data-testid="plan-yearly"
+                    @click="selectProduct(yearlyProductId)">
               <div class="best-value">{{ lang.planRecommended || 'Best value' }}</div>
               <h4>{{ lang.planYearly || 'Yearly' }}</h4>
-            </div>
+              <small>{{ lang.annualTrial || '7-day free trial' }}</small>
+            </button>
           </div>
 
-          <button type="button" class="purchase-btn" :disabled="purchaseRedirecting" @click="subscribe">
+          <button type="button" class="purchase-btn" data-testid="subscription-submit"
+                  :disabled="purchaseRedirecting" @click="subscribe">
             <span v-if="purchaseRedirecting">{{ lang.continueInApp || 'Continuing in the Tab Space app…' }}</span>
             <span v-else>{{ lang.subscribeInApp || 'Subscribe in Tab Space' }}</span>
           </button>
@@ -72,7 +105,7 @@
           </button>
 
           <p class="managed-note">{{ lang.subscriptionManagedInApp || 'Plans and payment are handled securely in the Tab Space app.' }}</p>
-          <div class="free-tier-info">{{ lang.freeTierInfo || 'Free plan: a weekly allowance of AI requests.' }}</div>
+          <div class="free-tier-info">{{ lang.proOnlyInfo || 'Free and Plus include 5 AI requests each week. Pro removes the weekly limit.' }}</div>
         </template>
       </div>
     </div>
@@ -86,12 +119,15 @@ export default {
   name: 'SubscriptionModal',
   data() {
     return {
-      restoring: false
+      restoring: false,
+      monthlyProductId: 'tabspace.pro.monthly',
+      yearlyProductId: 'tabspace.pro.yearly',
+      selectedProductId: 'tabspace.pro.yearly'
     }
   },
   computed: {
-    ...mapState(['lang', 'bridge', 'showSubscriptionModal', 'purchaseRedirecting']),
-    ...mapGetters(['isPremium'])
+    ...mapState(['lang', 'bridge', 'showSubscriptionModal', 'plusDisplayPrice', 'purchaseRedirecting']),
+    ...mapGetters(['isPremium', 'hasPermanentPlus'])
   },
   watch: {
     isPremium(active) {
@@ -103,11 +139,19 @@ export default {
     close() {
       this.$store.commit('setShowSubscriptionModal', false)
     },
+    selectProduct(productId) {
+      if (productId === this.monthlyProductId || productId === this.yearlyProductId) {
+        this.selectedProductId = productId
+      }
+    },
     subscribe() {
       if (!this.bridge) return
       // Purchases run in the host app now (design §5.2). The native side replies
       // PurchaseResult { redirected: true }, which flips purchaseRedirecting.
-      this.bridge.send({ cmd: 'PurchaseSubscription' })
+      this.bridge.send({
+        cmd: 'PurchaseSubscription',
+        productId: this.selectedProductId
+      })
     },
     restore() {
       if (!this.bridge) return
@@ -177,6 +221,36 @@ export default {
   padding: 24px 0;
 }
 
+.plus-owned {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  padding: 14px;
+  margin-bottom: 20px;
+  border-radius: 10px;
+  background: rgba(16, 185, 129, 0.1);
+}
+
+.plus-owned p {
+  margin: 4px 0 0;
+  color: var(--text-secondary, #718096);
+  font-size: 13px;
+}
+
+.plus-title {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.plus-price {
+  color: var(--text-secondary, #718096);
+  font-size: 13px;
+  font-weight: 500;
+  opacity: 0.8;
+}
+
 .premium-check {
   width: 42px;
   height: 42px;
@@ -226,7 +300,7 @@ export default {
 
 .plans {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(2, 1fr);
   gap: 10px;
   margin-bottom: 18px;
 }
@@ -237,15 +311,37 @@ export default {
   padding: 16px 10px;
   text-align: center;
   position: relative;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background-color 0.15s ease, box-shadow 0.15s ease;
 }
 
-.plan-card.recommended {
+.plan-card:hover {
+  background: rgba(235, 82, 5, 0.05);
+}
+
+.plan-card:focus-visible {
+  outline: 2px solid var(--primary-color, #eb5205);
+  outline-offset: 2px;
+}
+
+.plan-card.selected {
   border-color: var(--primary-color, #eb5205);
+  background: rgba(235, 82, 5, 0.08);
+  box-shadow: 0 0 0 1px var(--primary-color, #eb5205);
 }
 
 .plan-card h4 {
   margin: 0;
   font-size: 15px;
+}
+
+.plan-card small {
+  display: block;
+  margin-top: 5px;
+  color: var(--text-secondary, #718096);
 }
 
 .best-value {

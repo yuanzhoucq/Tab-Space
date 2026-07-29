@@ -63,7 +63,9 @@ async function openDashboard(page, options = {}) {
     collapseSessions,
     preferredLanguage,
     bannerStorageUnavailable,
-    subscriptionStatus
+    subscriptionStatus,
+    entitlementTier,
+    plusDisplayPrice
   }) => {
     const clone = value => JSON.parse(JSON.stringify(value))
     const settingsKey = 'tabspace-e2e-settings'
@@ -125,7 +127,14 @@ async function openDashboard(page, options = {}) {
         if (name === 'CheckSubscriptionStatus') {
           emit('ReturnSubscriptionStatus', {
             status: subscriptionStatus,
-            quotaRemaining: subscriptionStatus === 'active' ? -1 : 3
+            ...(Number(nativeProtocolVersion) >= 2
+              ? {
+                  tier: entitlementTier || (subscriptionStatus === 'active' ? 'pro' : 'free'),
+                  hasPermanentPlus: entitlementTier === 'plus',
+                  ...(plusDisplayPrice ? { plusDisplayPrice } : {})
+                }
+              : {}),
+            quotaRemaining: subscriptionStatus === 'active' ? -1 : 5
           })
           return
         }
@@ -242,7 +251,9 @@ async function openDashboard(page, options = {}) {
     collapseSessions: Boolean(options.collapseSessions),
     preferredLanguage: options.preferredLanguage || '',
     bannerStorageUnavailable: Boolean(options.bannerStorageUnavailable),
-    subscriptionStatus: options.subscriptionStatus || 'free'
+    subscriptionStatus: options.subscriptionStatus || 'free',
+    entitlementTier: options.entitlementTier || '',
+    plusDisplayPrice: options.plusDisplayPrice || ''
   })
 
   await page.route('**/favicon.ico', route => route.fulfill({ status: 204, body: '' }))
@@ -268,6 +279,8 @@ test('opens AI organization suggestions from the right toolbar without showing a
   await openDashboard(page, {
     initialSessions: sessionsWithMatchingTabs,
     nativeProtocolVersion: '2',
+    subscriptionStatus: 'active',
+    entitlementTier: 'pro',
     suggestions: [{
       id: 'duplicate-sessions',
       type: 'exactDuplicate',
@@ -552,7 +565,12 @@ test('offers the AI actions on titles-only rows', async ({ page }) => {
     },
     sessions[1]
   ]
-  await openDashboard(page, { initialSessions: splittableSessions, nativeProtocolVersion: '2' })
+  await openDashboard(page, {
+    initialSessions: splittableSessions,
+    nativeProtocolVersion: '2',
+    subscriptionStatus: 'active',
+    entitlementTier: 'pro'
+  })
   // The menu overlays the list while the pointer rests on it, so step away
   // before touching a row.
   const chooseView = async mode => {
@@ -666,7 +684,7 @@ test('marks the dashboard title with a Pro badge once subscribed', async ({ page
   })
   const badge = page.getByTestId('pro-badge')
   await expect(badge).toHaveText('Pro')
-  await expect(badge).toHaveAttribute('aria-label', 'Premium')
+  await expect(badge).toHaveAttribute('aria-label', 'Pro')
 
   // Sits at the top right of the wordmark, not on its baseline.
   const placement = await page.locator('#title h1').evaluate(heading => {
@@ -690,6 +708,41 @@ test('marks the dashboard title with a Pro badge once subscribed', async ({ page
   expect(placement.badgeLeft).toBeGreaterThanOrEqual(placement.wordmarkRight - 1)
   expect((placement.badgeTop + placement.badgeBottom) / 2)
     .toBeLessThan((placement.wordmarkTop + placement.wordmarkBottom) / 2)
+})
+
+test('maps protocol v2 Plus and keeps the weekly AI trial available', async ({ page }) => {
+  await openDashboard(page, {
+    initialSessions: sessions,
+    nativeProtocolVersion: '2',
+    entitlementTier: 'plus',
+    plusDisplayPrice: '$9.99'
+  })
+
+  await expect.poll(() => bridgeCommandCount(page, 'PrepareAI')).toBe(1)
+  const card = page.getByTestId('session-session-research')
+  await card.hover()
+  await expect(card.getByTestId('ai-enhance-session')).toBeVisible()
+  await card.getByTestId('ai-enhance-session').click()
+  await expect.poll(() => bridgeCommandCount(page, 'EnhanceSession')).toBe(1)
+  await expect(page.getByTestId('plan-status-link')).toContainText('5 AI')
+  await page.getByTestId('settings-link').click()
+  await expect(page.getByTestId('plan-status')).toContainText('Plus · Permanent')
+  await expect(page.getByTestId('settings-plus-price')).toHaveText('$9.99')
+  await expect(page.getByTestId('settings-plus-price')).toHaveCSS('text-decoration-line', 'line-through')
+  await expect(page.getByTestId('settings-plus-summary')).toBeVisible()
+  await page.getByTestId('settings-upgrade').click()
+  await expect(page.getByText('Multi-browser support')).toBeVisible()
+  await expect(page.getByTestId('modal-plus-price')).toHaveText('$9.99')
+  await expect(page.getByTestId('modal-plus-price')).toHaveCSS('text-decoration-line', 'line-through')
+  await expect(page.getByTestId('plan-yearly')).toHaveAttribute('aria-pressed', 'true')
+  await expect(page.getByTestId('plan-monthly')).toHaveAttribute('aria-pressed', 'false')
+  await page.getByTestId('plan-monthly').click()
+  await expect(page.getByTestId('plan-monthly')).toHaveAttribute('aria-pressed', 'true')
+  await expect(page.getByTestId('plan-yearly')).toHaveAttribute('aria-pressed', 'false')
+  await page.getByTestId('subscription-submit').click()
+  await expect.poll(() => lastBridgeCommand(page, 'PurchaseSubscription')).toMatchObject({
+    payload: { productId: 'tabspace.pro.monthly' }
+  })
 })
 
 test('saves both sessions after dragging a tab across them', async ({ page }) => {

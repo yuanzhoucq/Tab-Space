@@ -327,6 +327,9 @@ export default {
           // purchase; there is no in-extension StoreKit sheet anymore.
           if (data.redirected) this.$store.commit("setPurchaseRedirecting", true)
           break
+        case "SessionLimitReached":
+          this.$store.commit("setShowSubscriptionModal", true)
+          break
       }
     },
     handleDefault(data) {
@@ -471,13 +474,17 @@ export default {
       }
     },
     handleSubscriptionStatus(data) {
-      this.$store.commit("setSubscriptionStatus", data.status)
+      this.$store.commit("setEntitlementStatus", {
+        status: data.status,
+        tier: data.tier,
+        plusDisplayPrice: data.plusDisplayPrice
+      })
       this.applyQuota(data)
       // RestorePurchases / PurchaseSubscription both hand off to the host app.
       // Reflect that in the UI, and stop showing "continuing…" once the status
       // actually came back as subscribed.
       if (data.redirected) this.$store.commit("setPurchaseRedirecting", true)
-      if (data.status === "active") this.$store.commit("setPurchaseRedirecting", false)
+      if (this.$store.getters.isPremium) this.$store.commit("setPurchaseRedirecting", false)
     },
     // Re-ask the native side for subscription + quota. Used by Settings on
     // mount and whenever the tab regains focus after a host-app redirect, so

@@ -15,10 +15,8 @@ const ICONS = {
   orphanTags: 'tag'
 }
 
-// Merge-type applies are half-irreversible, so a single free apply is NOT
-// allowed (design §6): free users can preview/review but applying merges is
-// premium. Split preview is free; the *save* is gated inside SplitPreviewModal.
-// Orphan-tag removal is fully reversible → free.
+// Merge-type applies are half-irreversible, so a single free apply is not
+// included in the trial. Split preview is free; saving is gated separately.
 const PREMIUM_SINGLE_APPLY = new Set(['exactDuplicate', 'nearDuplicate'])
 
 export const suggestionMixin = {

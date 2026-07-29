@@ -21,13 +21,19 @@
 
           <div class="plan-row">
             <span class="plan-label">{{lang.currentPlan || 'Current plan'}}</span>
-            <span class="plan-value" :class="{ premium: isPremium }" data-testid="plan-status">
-              <v-icon v-if="isPremium" name="check-circle" class="plan-icon"></v-icon>
-              {{ isPremium ? (lang.planPremium || 'Premium') : (lang.planFree || 'Free') }}
+            <span class="plan-value" :class="{ premium: isPremium || hasPermanentPlus }" data-testid="plan-status">
+              <v-icon v-if="isPremium || hasPermanentPlus" name="check-circle" class="plan-icon"></v-icon>
+              <span>{{ currentPlanLabel }}</span>
+              <del v-if="hasPermanentPlus && plusDisplayPrice"
+                   class="plus-price"
+                   data-testid="settings-plus-price">{{ plusDisplayPrice }}</del>
             </span>
           </div>
 
-          <!-- Free tier: what is left and when it comes back. -->
+          <p v-if="hasPermanentPlus" class="help-text" data-testid="settings-plus-summary">
+            {{lang.plusOwnedSummary || 'Unlimited sessions and all core features are yours permanently. You also receive 5 AI requests each week; Pro makes AI unlimited.'}}
+          </p>
+
           <div v-if="!isPremium && quotaKnown" class="quota-block">
             <p class="quota-line">
               <template v-if="unlimitedQuota">{{lang.aiQuotaUnlimited || 'Unlimited AI requests'}}</template>
@@ -101,6 +107,7 @@
         <!-- AI (only when the native extension speaks protocol v2) -->
         <div class="card" v-if="aiEnabled">
           <h2 class="section-title">{{lang.aiSection || 'AI'}}</h2>
+          <p v-if="!isPremium" class="help-text">{{lang.proOnlyInfo || 'Free and Plus include 5 AI requests each week. Pro removes the weekly limit.'}}</p>
           <div class="form-group" style="margin-bottom: 0;">
             <label for="suggested-tags" class="form-label">{{lang.suggestedTags || 'Suggested Tags'}}</label>
             <textarea
@@ -276,8 +283,13 @@ export default {
     }
   },
   computed: {
-    ...mapState(["lang", "bridge", "tabSpaceSettings", "aiQuotaRemaining", "aiQuotaResetAt", "purchaseRedirecting"]),
-    ...mapGetters(["aiEnabled", "isPremium"]),
+    ...mapState(["lang", "bridge", "tabSpaceSettings", "aiQuotaRemaining", "aiQuotaResetAt", "plusDisplayPrice", "purchaseRedirecting"]),
+    ...mapGetters(["aiEnabled", "isPremium", "hasPermanentPlus"]),
+    currentPlanLabel() {
+      if (this.isPremium) return this.lang.planPremium || 'Pro'
+      if (this.hasPermanentPlus) return this.lang.planPlus || 'Plus · Permanent'
+      return this.lang.planFree || 'Free'
+    },
     isWebExtension() {
       return this.bridge && this.bridge.mode === "webextension"
     },
@@ -483,6 +495,12 @@ export default {
 .plan-icon {
   width: 15px;
   height: 15px;
+}
+
+.plus-price {
+  color: var(--text-secondary);
+  font-weight: 500;
+  opacity: 0.75;
 }
 
 .quota-block {

@@ -25,9 +25,8 @@
       </button>
       <backup-dropdown></backup-dropdown>
     </div>
-    <!-- Remaining-quota readout for free users only. Links to Settings rather
-         than opening the paywall, so this is a status readout and not a second
-         upsell surface. Subscribers get the Pro badge on the title instead. -->
+    <!-- Remaining-quota readout for Free and Plus. Pro gets the badge on the
+         title instead. -->
     <div v-if="aiEnabled && showPlanStatus">
       <router-link class="link plan-status" data-testid="plan-status-link"
                    to="/settings" :title="planStatusTitle" :aria-label="planStatusTitle">
@@ -71,13 +70,11 @@ export default {
     quotaKnown() {
       return this.aiQuotaRemaining !== null && this.aiQuotaRemaining !== undefined
     },
-    // Only shown once the native side has actually reported a quota, and never
-    // to subscribers — the Pro badge on the title already says that.
     showPlanStatus() {
       return !this.isPremium && this.quotaKnown
     },
     planStatusLabel() {
-      if (this.aiQuotaRemaining === -1) return this.lang.planPremium || "Premium"
+      if (this.aiQuotaRemaining === -1) return this.lang.planPremium || "Pro"
       const template = this.lang.aiQuotaShort || "{count} AI left"
       return template.replace("{count}", Math.max(0, this.aiQuotaRemaining))
     },

@@ -53,6 +53,38 @@
     "mainEntity": [
       {
         "@type": "Question",
+        "name": "What happens to people who bought the Mac app before version 4.0?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "They automatically receive permanent Plus at no charge. No action or subscription is required, and they permanently keep unlimited sessions and every feature that existed before 4.0."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "What is the Free plan limit?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Free includes all core features, up to 5 saved sessions, and 5 AI requests each week. At the session limit, Tab Space only blocks creating another session; it never deletes or hides existing sessions."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "What is the difference between Plus and Pro?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Free and Plus each include 5 AI requests per week. Plus is a one-time purchase for unlimited sessions and all core features. Pro includes Plus, makes AI organizing unlimited, adds multi-browser support for Safari, Chrome, Microsoft Edge, and Firefox, and includes future Pro features."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Will my membership work on iPhone and iPad?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "The iOS app remains a separate paid app for now. Memberships will arrive in a future iOS version; Pro will then work across platforms, and existing iOS purchasers will automatically receive Plus."
+        }
+      },
+      {
+        "@type": "Question",
         "name": "Does Tab Space sync between Mac, iPhone, and iPad?",
         "acceptedAnswer": {
           "@type": "Answer",
@@ -64,7 +96,7 @@
         "name": "Where is my data stored?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "Sessions live in a native app database on your device, outside the browser, and sync through your own iCloud. There is no account, no ads, and no data collection."
+          "text": "Sessions live in a native app database on your device, outside the browser, and sync through your own iCloud. AI only receives the session information you choose to process."
         }
       },
       {
@@ -72,7 +104,7 @@
         "name": "Which browsers does Tab Space support?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "Tab Space 4.0 supports Safari, Chrome, Microsoft Edge, and Firefox 121 or later on Mac."
+          "text": "Tab Space Pro 4.0 supports Safari, Chrome, Microsoft Edge, and Firefox 121 or later on Mac."
         }
       },
       {
@@ -113,6 +145,7 @@
     </a>
     <nav class="nav-links">
       <a class="nav-hide-mobile" href="#features">Features</a>
+      <a class="nav-hide-mobile" href="#pricing">Pricing</a>
       <a class="nav-hide-mobile" href="#faq">FAQ</a>
       <a href="index-zh.html">中文</a>
       <a class="nav-cta" href="#downloads">Download</a>
@@ -254,11 +287,55 @@
               <path d="M9 9h6v6H9z" />
             </svg>
           </div>
-          <h3>Multi-Browser</h3>
+          <h3>Pro Multi-Browser Support</h3>
           <p>Use the same sessions in Safari, Chrome, Microsoft Edge, and Firefox. A one-time local pairing keeps
-            companion browsers connected to the Mac app.</p>
+            companion browsers connected to the Mac app. This feature is included with Pro.</p>
         </div>
       </div>
+    </div>
+  </section>
+
+  <!-- Pricing Section -->
+  <section class="pricing" id="pricing">
+    <div class="container">
+      <h2>Choose what fits your Mac</h2>
+      <p class="pricing-lede">Free and Plus include 5 AI requests each week. Subscribe to Pro for unlimited AI, multi-browser support, and every new Pro feature.</p>
+      <div class="pricing-grid">
+        <article class="pricing-card">
+          <h3>Free</h3>
+          <p class="pricing-price">$0</p>
+          <p class="pricing-period">Free download</p>
+          <ul>
+            <li>All core Tab Space features</li>
+            <li>Up to 5 saved sessions</li>
+            <li>5 AI requests each week</li>
+            <li>Your existing sessions are never deleted if you reach the limit</li>
+          </ul>
+        </article>
+        <article class="pricing-card">
+          <h3>Plus</h3>
+          <p class="pricing-price">$9.99</p>
+          <p class="pricing-period">One-time purchase</p>
+          <ul>
+            <li>Everything in Free</li>
+            <li>Unlimited saved sessions, permanently</li>
+            <li>5 AI requests each week</li>
+          </ul>
+        </article>
+        <article class="pricing-card recommended">
+          <span class="pricing-badge">Recommended</span>
+          <h3>Pro</h3>
+          <p class="pricing-price">$1.99 <small>/ month</small></p>
+          <p class="pricing-period">or $19.99/year with a 7-day free trial</p>
+          <ul>
+            <li>Everything in Plus</li>
+            <li>Unlimited AI-powered organizing</li>
+            <li>Safari, Chrome, Microsoft Edge, and Firefox support</li>
+            <li>Future Pro features as they arrive</li>
+          </ul>
+        </article>
+      </div>
+      <p class="pricing-footnote">US prices shown; App Store pricing varies by region. Pro memberships will come to iPhone and iPad in a future version, and the same Pro subscription will work there.</p>
     </div>
   </section>
 
@@ -353,7 +430,7 @@
       <div class="privacy-inner">
         <h2>Your tabs are yours.</h2>
         <p>Tab Space stores sessions in a native app database on your device — outside the browser — and syncs
-          through your own iCloud. No account, no ads, no data collection.</p>
+          through your own iCloud. AI only receives the session information you choose to process.</p>
         <a class="privacy-link" href="privacy.html">Read the Privacy Policy →</a>
       </div>
     </div>
@@ -365,6 +442,22 @@
       <h2>Frequently asked questions</h2>
       <div class="faq-list">
         <details>
+          <summary>What happens to people who bought the Mac app before version 4.0?</summary>
+          <p>They automatically receive permanent Plus at no charge. No action or subscription is required, and they permanently keep unlimited sessions and every feature that existed before 4.0.</p>
+        </details>
+        <details>
+          <summary>What is the Free plan limit?</summary>
+          <p>Free includes all core features, up to 5 saved sessions, and 5 AI requests each week. At the session limit, Tab Space only blocks creating another session; it never deletes or hides sessions you already saved.</p>
+        </details>
+        <details>
+          <summary>What is the difference between Plus and Pro?</summary>
+          <p>Free and Plus both include 5 AI requests each week. Plus is a $9.99 one-time purchase for unlimited sessions and all core features. Pro includes Plus, makes AI organizing unlimited, adds multi-browser support for Safari, Chrome, Microsoft Edge, and Firefox, and includes future Pro features for $1.99 monthly or $19.99 annually. The annual plan includes a 7-day free trial.</p>
+        </details>
+        <details>
+          <summary>Will my membership work on iPhone and iPad?</summary>
+          <p>The iOS app remains a separate paid app for now. Memberships will arrive in a future iOS version; the same Pro subscription will then work across platforms, and existing iOS purchasers will automatically receive Plus.</p>
+        </details>
+        <details>
           <summary>Does Tab Space sync between Mac, iPhone, and iPad?</summary>
           <p>Yes. Sessions sync across your Macs, iPhones, and iPads through your own iCloud, with no account
             required. The Tab Space app for iPhone and iPad is available on the App Store.</p>
@@ -372,11 +465,11 @@
         <details>
           <summary>Where is my data stored?</summary>
           <p>Sessions live in a native app database on your device, outside the browser, and sync through your own
-            iCloud. There is no account, no ads, and no data collection.</p>
+            iCloud. AI only receives the session information you choose to process.</p>
         </details>
         <details>
           <summary>Which browsers does Tab Space support?</summary>
-          <p>Tab Space 4.0 supports Safari, Chrome, Microsoft Edge, and Firefox 121 or later on Mac. Sessions stay in
+          <p>Tab Space Pro 4.0 supports Safari, Chrome, Microsoft Edge, and Firefox 121 or later on Mac. Sessions stay in
             the native Mac app no matter which browser saved them.</p>
         </details>
         <details>

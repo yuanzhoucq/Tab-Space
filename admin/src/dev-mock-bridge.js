@@ -73,9 +73,10 @@ export function installMockBridge() {
   const indexOf = uuid => sessions.findIndex(s => s.uuid === uuid)
 
   // --- AI (protocol v2) mock state ---
-  let quotaRemaining = 3
+  let quotaRemaining = -1
   const quotaResetAt = Math.floor(Date.now() / 1000) + 7 * 24 * 60 * 60
-  let subscriptionStatus = 'free'
+  let subscriptionStatus = 'active'
+  let entitlementTier = 'pro'
   const quotaFields = () => ({ quotaRemaining, quotaResetAt })
   const spendQuota = () => {
     if (subscriptionStatus === 'active' || quotaRemaining === -1) return true
@@ -148,7 +149,13 @@ export function installMockBridge() {
       console.log('[mock bridge] DismissSuggestion', msg.id, msg.muteType ? '(mute type)' : '')
     },
     CheckSubscriptionStatus() {
-      emit('ReturnSubscriptionStatus', { status: subscriptionStatus, ...quotaFields() })
+      emit('ReturnSubscriptionStatus', {
+        status: subscriptionStatus,
+        tier: entitlementTier,
+        hasPermanentPlus: entitlementTier === 'plus',
+        plusDisplayPrice: '$9.99',
+        ...quotaFields()
+      })
     },
     PurchaseSubscription() {
       emit('PurchaseResult', { redirected: true })
@@ -156,12 +163,20 @@ export function installMockBridge() {
       // CheckSubscriptionStatus (Settings mount / tab refocus) sees "active".
       setTimeout(() => {
         subscriptionStatus = 'active'
+        entitlementTier = 'pro'
         quotaRemaining = -1
         console.log('[mock bridge] host-app purchase completed; status is now active')
       }, 1500)
     },
     RestorePurchases() {
-      emit('ReturnSubscriptionStatus', { status: subscriptionStatus, redirected: true, ...quotaFields() })
+      emit('ReturnSubscriptionStatus', {
+        status: subscriptionStatus,
+        tier: entitlementTier,
+        hasPermanentPlus: entitlementTier === 'plus',
+        plusDisplayPrice: '$9.99',
+        redirected: true,
+        ...quotaFields()
+      })
     },
     SetDefault(msg) {
       defaults[msg.name] = msg.value

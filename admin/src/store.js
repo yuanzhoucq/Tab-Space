@@ -66,8 +66,11 @@ const store = new Vuex.Store({
         // Local, ranked suggestion queue from GetSuggestions (top item first).
         suggestions: [],
         showSuggestionReport: false,
-        // Server-authoritative subscription + quota (never client-decided).
+        // Native entitlement tier. Protocol v2 reports Free / Plus / Pro;
+        // older native builds are mapped from their legacy active/free status.
+        entitlementTier: "free",    // "free" | "plus" | "pro"
         subscriptionStatus: "free",  // "free" | "active"
+        plusDisplayPrice: null,      // localized StoreKit price, optional in protocol v2
         aiQuotaRemaining: null,      // Int, -1 = unlimited, null = unknown
         aiQuotaResetAt: null,        // epoch seconds
         showSubscriptionModal: false,
@@ -83,7 +86,8 @@ const store = new Vuex.Store({
         // AI needs BOTH protocol v2 and an active direct bridge.
         aiEnabled: state => state.nativeProtocolVersion >= Constants.aiMinProtocolVersion
             && !!state.bridge && state.bridge.mode === "direct",
-        isPremium: state => state.subscriptionStatus === "active",
+        isPremium: state => state.entitlementTier === "pro",
+        hasPermanentPlus: state => state.entitlementTier === "plus",
         topSuggestion: state => state.suggestions[0] || null,
         tags: state => {
             let tags = new Set()
@@ -178,8 +182,18 @@ const store = new Vuex.Store({
         setShowSuggestionReport(state, show) {
             state.showSuggestionReport = show
         },
-        setSubscriptionStatus(state, status) {
-            state.subscriptionStatus = status === "active" ? "active" : "free"
+        setEntitlementStatus(state, { status, tier, plusDisplayPrice }) {
+            const normalizedStatus = status === "active" ? "active" : "free"
+            const normalizedTier = ["free", "plus", "pro"].includes(tier)
+                ? tier
+                // Compatibility with native replies that predate the explicit
+                // Free / Plus / Pro tier field.
+                : (normalizedStatus === "active" ? "pro" : "free")
+            state.subscriptionStatus = normalizedStatus
+            state.entitlementTier = normalizedTier
+            if (typeof plusDisplayPrice === "string" && plusDisplayPrice.trim()) {
+                state.plusDisplayPrice = plusDisplayPrice.trim()
+            }
         },
         setAIQuota(state, { remaining, resetAt }) {
             if (remaining !== undefined && remaining !== null) state.aiQuotaRemaining = Number(remaining)

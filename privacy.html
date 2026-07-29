@@ -8,11 +8,11 @@
 
   <title>Privacy Policy - Tab Space</title>
   <meta name="description"
-    content="How Tab Space stores and processes saved sessions, browser tab information, iCloud sync data, backups, and website analytics.">
+    content="How Tab Space stores and processes saved sessions, browser tab information, optional AI requests, iCloud sync data, backups, and website analytics.">
   <link rel="canonical" href="https://mytab.space/privacy.html">
 
   <meta property="og:title" content="Tab Space Privacy Policy">
-  <meta property="og:description" content="How Tab Space handles app data, iCloud sync, backups, and website analytics.">
+  <meta property="og:description" content="How Tab Space handles app data, optional AI processing, iCloud sync, backups, and website analytics.">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://mytab.space/privacy.html">
   <meta property="og:image" content="https://mytab.space/icon.png">
@@ -39,7 +39,7 @@
     <article class="policy-document" id="en" lang="en">
       <p class="policy-eyebrow">Privacy Policy</p>
       <h1>How Tab Space handles your data</h1>
-      <p class="policy-updated">Last updated: July 18, 2026</p>
+      <p class="policy-updated">Last updated: July 29, 2026</p>
       <p>
         This policy applies to the Tab Space apps for Mac, iPhone, and iPad; their browser extensions;
         the Tab Space dashboard; and the public website at <a href="https://mytab.space">mytab.space</a>.
@@ -81,6 +81,31 @@
         purposes and is not uploaded to servers operated by the developer.
       </p>
 
+      <h2>Optional AI organizing</h2>
+      <p>
+        AI organizing is a Pro feature and runs only when you enable or invoke it. To perform the requested
+        operation, Tab Space sends the selected session name, tab titles and URLs, existing tags, and relevant
+        tag preferences to the Tab Space AI service hosted on Cloudflare. Tab Space does not send webpage body
+        content, cookies, passwords, or your complete browsing history.
+      </p>
+      <p>
+        The service verifies an active App Store Pro subscription using Apple-signed transaction information,
+        then forwards the minimum request content to Google Gemini as the primary model provider or Cloudflare
+        Workers AI as a fallback. Those providers process the content to return an organizing result. Their
+        handling is governed by
+        <a href="https://policies.google.com/privacy" target="_blank" rel="noopener">Google's Privacy Policy</a>
+        and <a href="https://www.cloudflare.com/privacypolicy/" target="_blank" rel="noopener">Cloudflare's Privacy Policy</a>.
+      </p>
+      <p>
+        The developer does not intentionally store AI request content or model output on the AI service, and
+        content logging is disabled. Requests are processed transiently; infrastructure providers may retain
+        limited security and abuse-prevention records under their own policies. The returned title, tags, or
+        grouping are stored only in your app after you accept or apply them and may then sync through your iCloud.
+        You can delete those results by editing or deleting the affected sessions. Because the service keeps no
+        developer-operated copy of request content, there is no separate server copy for the developer to retrieve
+        or delete.
+      </p>
+
       <h2>Backups, retention, and deletion</h2>
       <p>
         Sessions remain in the app until you delete them. Items in Trash remain there until they are permanently
@@ -96,9 +121,10 @@
 
       <h2>Data the developer does not collect</h2>
       <p>
-        The Tab Space apps do not send the developer your saved sessions, browsing history, page contents, iCloud
-        records, contacts, location, or advertising identifiers. The apps contain no advertising or developer-run
-        behavioral tracking.
+        Except for the specific session information you choose to submit to optional AI organizing, the Tab Space
+        apps do not send the developer your saved sessions, browsing history, page contents, iCloud records,
+        contacts, location, or advertising identifiers. The apps contain no advertising or developer-run behavioral
+        tracking.
       </p>
 
       <h2>Public website analytics</h2>
@@ -128,7 +154,7 @@
     <article class="policy-document" id="zh" lang="zh-Hans">
       <p class="policy-eyebrow">隐私政策</p>
       <h1>Tab Space 如何处理你的数据</h1>
-      <p class="policy-updated">最后更新：2026 年 7 月 18 日</p>
+      <p class="policy-updated">最后更新：2026 年 7 月 29 日</p>
       <p>
         本政策适用于 Mac、iPhone 和 iPad 版 Tab Space、相应的浏览器扩展、Tab Space Dashboard，
         以及 <a href="https://mytab.space">mytab.space</a> 官网。
@@ -164,6 +190,26 @@
         会话内容只在你的设备上用于这些功能，不会上传到开发者运营的服务器。
       </p>
 
+      <h2>可选的 AI 整理</h2>
+      <p>
+        AI 整理是 Pro 功能，只有在你启用或主动调用时才会运行。为完成所选操作，Tab Space 会把所选会话名称、
+        标签页标题和 URL、已有标签及相关标签偏好发送到托管在 Cloudflare 上的 Tab Space AI 服务。
+        Tab Space 不会发送网页正文、Cookie、密码或你的完整浏览历史。
+      </p>
+      <p>
+        该服务使用 Apple 签名的交易信息验证有效的 App Store Pro 订阅，然后把完成请求所需的最少内容转发给
+        主要模型提供方 Google Gemini，或在需要时使用 Cloudflare Workers AI 作为备用。相关数据处理受
+        <a href="https://policies.google.com/privacy" target="_blank" rel="noopener">Google 隐私政策</a>
+        和 <a href="https://www.cloudflare.com/privacypolicy/" target="_blank" rel="noopener">Cloudflare 隐私政策</a>
+        约束。
+      </p>
+      <p>
+        开发者不会在 AI 服务中主动保存 AI 请求内容或模型输出，并已关闭内容日志。请求只做临时处理；
+        基础设施提供方可能依其政策保留有限的安全与防滥用记录。返回的标题、标签或分组只有在你接受或应用后才会保存到
+        App 中，并可能通过你的 iCloud 同步。你可以通过编辑或删除相关会话来删除这些结果。由于服务不保留由开发者运营的
+        请求内容副本，因此没有另一份服务器副本可供开发者读取或删除。
+      </p>
+
       <h2>备份、保留与删除</h2>
       <p>
         会话会一直保留到你将其删除；废纸篓中的项目会保留到被永久删除。自动备份保存在 App 的本地容器中，
@@ -177,8 +223,8 @@
 
       <h2>开发者不收集的数据</h2>
       <p>
-        Tab Space App 不会向开发者发送你保存的会话、浏览历史、网页内容、iCloud 记录、通讯录、位置或广告标识符。
-        App 不包含广告，也不进行由开发者运营的行为追踪。
+        除你主动提交给可选 AI 整理功能的特定会话信息外，Tab Space App 不会向开发者发送你保存的会话、
+        浏览历史、网页内容、iCloud 记录、通讯录、位置或广告标识符。App 不包含广告，也不进行由开发者运营的行为追踪。
       </p>
 
       <h2>官网分析</h2>
