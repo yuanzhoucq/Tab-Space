@@ -197,7 +197,7 @@
   "planTableNotIncluded": "Не включено",
   "viewPlans": "Посмотреть планы",
   "multiBrowser": "Несколько браузеров",
-  "multiBrowserStep1": "Откройте Tab Space на Mac и выберите код сопряжения браузера.",
+  "multiBrowserStep1": "Откройте Tab Space на Mac, выберите «Поддержка нескольких браузеров», затем «Показать код сопряжения».",
   "multiBrowserStep2": "Установите расширение Tab Space в Chrome, Microsoft Edge или Firefox 121 и новее.",
   "multiBrowserStep3": "Введите шестизначный код в расширении, чтобы подключить его.",
   "multiBrowserConnected": "Этот браузер подключён к Tab Space.",

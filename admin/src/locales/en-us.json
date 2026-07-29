@@ -197,7 +197,7 @@
   "planTableNotIncluded": "Not included",
   "viewPlans": "View plans",
   "multiBrowser": "Multi-browser",
-  "multiBrowserStep1": "Open Tab Space on your Mac and choose Browser Pairing Code.",
+  "multiBrowserStep1": "Open Tab Space on your Mac, choose Multi-Browser Support, then Show Pairing Code.",
   "multiBrowserStep2": "Install the Tab Space extension in Chrome, Microsoft Edge, or Firefox 121 or later.",
   "multiBrowserStep3": "Enter the six-digit code in the extension to connect it.",
   "multiBrowserConnected": "This browser is connected to Tab Space.",

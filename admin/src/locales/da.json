@@ -197,7 +197,7 @@
   "planTableNotIncluded": "Ikke inkluderet",
   "viewPlans": "Se planer",
   "multiBrowser": "Flere browsere",
-  "multiBrowserStep1": "Åbn Tab Space på din Mac, og vælg koden til browserparring.",
+  "multiBrowserStep1": "Åbn Tab Space på din Mac, vælg Understøttelse af flere browsere, og vælg derefter Vis parringskode.",
   "multiBrowserStep2": "Installer Tab Space-udvidelsen i Chrome, Microsoft Edge eller Firefox 121 eller nyere.",
   "multiBrowserStep3": "Indtast den sekscifrede kode i udvidelsen for at forbinde den.",
   "multiBrowserConnected": "Denne browser er forbundet til Tab Space.",

@@ -197,7 +197,7 @@
   "planTableNotIncluded": "غير مشمول",
   "viewPlans": "عرض الخطط",
   "multiBrowser": "متصفحات متعددة",
-  "multiBrowserStep1": "افتح Tab Space على جهاز Mac واختر رمز إقران المتصفح.",
+  "multiBrowserStep1": "افتح Tab Space على جهاز Mac، واختر دعم المتصفحات المتعددة، ثم اعرض رمز الإقران.",
   "multiBrowserStep2": "ثبّت إضافة Tab Space في Chrome أو Microsoft Edge أو Firefox 121 أو أحدث.",
   "multiBrowserStep3": "أدخل الرمز المكوّن من ستة أرقام في الإضافة لتوصيلها.",
   "multiBrowserConnected": "هذا المتصفح متصل بـ Tab Space.",

@@ -197,7 +197,7 @@
   "planTableNotIncluded": "Non inclus",
   "viewPlans": "Voir les formules",
   "multiBrowser": "Plusieurs navigateurs",
-  "multiBrowserStep1": "Ouvrez Tab Space sur votre Mac et choisissez le code d'association du navigateur.",
+  "multiBrowserStep1": "Ouvrez Tab Space sur votre Mac, choisissez Prise en charge multinavigateur, puis Afficher le code de jumelage.",
   "multiBrowserStep2": "Installez l'extension Tab Space dans Chrome, Microsoft Edge ou Firefox 121 ou version ultérieure.",
   "multiBrowserStep3": "Saisissez le code à six chiffres dans l'extension pour la connecter.",
   "multiBrowserConnected": "Ce navigateur est connecté à Tab Space.",

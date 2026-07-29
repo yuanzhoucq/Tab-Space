@@ -197,7 +197,7 @@
   "planTableNotIncluded": "含まない",
   "viewPlans": "プランを見る",
   "multiBrowser": "マルチブラウザ",
-  "multiBrowserStep1": "Mac で Tab Space を開き、ブラウザのペアリングコードを選択します。",
+  "multiBrowserStep1": "Mac で Tab Space を開き、マルチブラウザ対応を選択してから、ペアリングコードを表示を選びます。",
   "multiBrowserStep2": "Chrome、Microsoft Edge、または Firefox 121 以降に Tab Space 拡張機能をインストールします。",
   "multiBrowserStep3": "拡張機能に 6 桁のコードを入力して接続します。",
   "multiBrowserConnected": "このブラウザは Tab Space に接続されています。",

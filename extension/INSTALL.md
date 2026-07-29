@@ -34,7 +34,8 @@ Dashboard tab.
 ## Pair a browser
 
 1. Open Tab Space on your Mac.
-2. Click **Browser Pairing Code…** in the Tab Space main window.
+2. Click **Multi-Browser Support…** in the Tab Space main window, then **Show
+   Pairing Code**.
 3. Open the Tab Space extension and enter the six-digit code.
 
 The code is one-time use. The extension keeps its issued token in browser-local

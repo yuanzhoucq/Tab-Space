@@ -197,7 +197,7 @@
   "planTableNotIncluded": "不包含",
   "viewPlans": "查看方案",
   "multiBrowser": "多浏览器",
-  "multiBrowserStep1": "在 Mac 上打开 Tab Space，选择“浏览器配对码”。",
+  "multiBrowserStep1": "在 Mac 上打开 Tab Space，选择“多浏览器支持”，然后点按“显示配对码”。",
   "multiBrowserStep2": "在 Chrome、Microsoft Edge 或 Firefox 121 及以上版本中安装 Tab Space 扩展。",
   "multiBrowserStep3": "在扩展中输入六位配对码即可连接。",
   "multiBrowserConnected": "此浏览器已连接到 Tab Space。",
