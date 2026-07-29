@@ -129,7 +129,6 @@ function manifestFor(target) {
   } else {
     manifest.permissions.push("offscreen")
     manifest.background = { service_worker: "background.js" }
-    manifest.version_name = development ? "4.0 RC Dev" : "4.0 RC"
   }
   return manifest
 }

@@ -31,6 +31,7 @@ async function main() {
     const manifest = await worker.evaluate(() => chrome.runtime.getManifest())
     assert.equal(manifest.name, target.endsWith('-dev') ? 'Tab Space (Dev)' : 'Tab Space')
     assert.equal(manifest.version, '1.0.0')
+    assert.equal('version_name' in manifest, false)
     assert.equal(manifest.manifest_version, 3)
     const offscreenReady = await worker.evaluate(async () => {
       for (let attempt = 0; attempt < 50; attempt += 1) {
