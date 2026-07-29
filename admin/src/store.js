@@ -64,6 +64,10 @@ const store = new Vuex.Store({
         // this being >= Constants.aiMinProtocolVersion so the dashboard stays
         // clean against older extensions.
         nativeProtocolVersion: 0,
+        // `null` means the bridge does not negotiate named capabilities
+        // (Safari direct/legacy bridges). WebExtensions provide an explicit
+        // list so older local helpers can keep unsupported AI hidden.
+        nativeCapabilities: null,
         enhancingSessionId: "",
         splittingSessionId: "",
         splitPreview: null,          // { clusters, totalTabs, originalUuid }
@@ -92,9 +96,15 @@ const store = new Vuex.Store({
     },
     getters: {
         // Single source of truth for whether the AI UI may appear at all.
-        // AI needs BOTH protocol v2 and an active direct bridge.
+        // Safari protocol v2 has AI built in. Companion WebExtensions also
+        // require the local helper's explicit AI capability.
         aiEnabled: state => state.nativeProtocolVersion >= Constants.aiMinProtocolVersion
-            && !!state.bridge && state.bridge.mode === "direct",
+            && !!state.bridge
+            && (state.bridge.mode === "direct"
+                || (state.bridge.mode === "webextension"
+                    && Array.isArray(state.nativeCapabilities)
+                    && state.nativeCapabilities.includes("ai.v1")
+                    && state.nativeCapabilities.includes("dashboard.ai.v1"))),
         isPremium: state => state.entitlementTier === "pro",
         hasPermanentPlus: state => state.entitlementTier === "plus",
         // The native side counts every stored session, including the ones in
@@ -188,6 +198,9 @@ const store = new Vuex.Store({
         // --- AI mutations ---
         setNativeProtocolVersion(state, version) {
             state.nativeProtocolVersion = Number(version) || 0
+        },
+        setNativeCapabilities(state, capabilities) {
+            state.nativeCapabilities = Array.isArray(capabilities) ? capabilities : null
         },
         setEnhancingSessionId(state, newId) {
             state.enhancingSessionId = newId

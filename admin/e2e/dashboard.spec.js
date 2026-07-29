@@ -1,4 +1,5 @@
 const fs = require('fs/promises')
+const path = require('path')
 const { test, expect } = require('@playwright/test')
 
 const sessions = [
@@ -438,6 +439,80 @@ async function openAppExtensionDashboard(page, initialSessions) {
 
   await page.route('**/favicon.ico', route => route.fulfill({ status: 204, body: '' }))
   await page.goto('http://localhost:47317/')
+}
+
+async function openWebExtensionDashboard(page, capabilities) {
+  await page.addInitScript(({ testSessions, bridgeCapabilities }) => {
+    const clone = value => JSON.parse(JSON.stringify(value))
+    const channel = 'tabspace-webextension-v2'
+    window.__tabspaceBridgeCommands = []
+
+    const post = (type, payload = {}) => {
+      window.postMessage({
+        channel,
+        source: 'extension',
+        type,
+        ...payload
+      }, window.location.origin)
+    }
+    const nativeMessage = message => post('native-message', { message })
+
+    window.addEventListener('message', event => {
+      const data = event.data
+      if (event.source !== window || data.channel !== channel || data.source !== 'dashboard') return
+      if (data.type === 'probe') {
+        post('ready', { protocolVersion: 2 })
+        post('connected', {
+          bridgeInfo: {
+            connected: true,
+            protocolVersion: 2,
+            capabilities: bridgeCapabilities
+          }
+        })
+        return
+      }
+      if (data.type !== 'request' || !data.message) return
+      const command = clone(data.message)
+      window.__tabspaceBridgeCommands.push({ name: command.cmd, payload: command })
+      if (command.cmd === 'CheckBookmarks') {
+        nativeMessage({ cmd: 'ReturnBookmarks', bookmarks: clone(testSessions) })
+      } else if (command.cmd === 'CheckDefault') {
+        nativeMessage({
+          cmd: 'ReturnDefault',
+          id: command.name,
+          value: command.name === 'tabspace-native-protocol-version' ? '2' : ''
+        })
+      } else if (command.cmd === 'GetSuggestions') {
+        nativeMessage({ cmd: 'ReturnSuggestions', suggestions: '[]' })
+      } else if (command.cmd === 'CheckSubscriptionStatus') {
+        nativeMessage({
+          cmd: 'ReturnSubscriptionStatus',
+          status: 'free',
+          tier: 'free',
+          quotaRemaining: 5
+        })
+      }
+      post('request-complete', { requestId: data.requestId })
+    })
+  }, { testSessions: sessions, bridgeCapabilities: capabilities })
+
+  const distRoot = path.resolve(__dirname, '..', 'dist')
+  await page.route('http://127.0.0.1:8080/**', async route => {
+    const pathname = new URL(route.request().url()).pathname
+    const relativePath = pathname === '/' ? 'index.html' : pathname.replace(/^\/+/, '')
+    const filePath = path.resolve(distRoot, relativePath)
+    if (!filePath.startsWith(`${distRoot}${path.sep}`)) {
+      await route.fulfill({ status: 404, body: '' })
+      return
+    }
+    try {
+      await fs.access(filePath)
+      await route.fulfill({ path: filePath })
+    } catch (_) {
+      await route.fulfill({ status: 404, body: '' })
+    }
+  })
+  await page.goto('http://127.0.0.1:8080/')
 }
 
 async function lastBridgeCommand(page, name) {
@@ -938,6 +1013,33 @@ test('connects localhost through the Safari App Extension DOM bridge', async ({ 
   await expect.poll(() => bridgeCommandCount(page, 'CheckBookmarks')).toBeGreaterThan(0)
   await page.waitForTimeout(1200)
   await expect(page.locator('#bridgeStorage')).toHaveCount(0)
+})
+
+test('enables AI and subscription UI through a capable companion WebExtension', async ({ page }) => {
+  await openWebExtensionDashboard(page, [
+    'sessions.read',
+    'ai.v1',
+    'suggestions.v1',
+    'subscription.v1',
+    'dashboard.ai.v1'
+  ])
+
+  await expect(page.locator('.session')).toHaveCount(2)
+  await expect(page.getByTestId('ai-enhance-session').first()).toBeVisible()
+  await expect.poll(() => bridgeCommandCount(page, 'PrepareAI')).toBe(1)
+  await page.getByRole('link', { name: 'Settings' }).click()
+  await expect(page.getByTestId('subscription-card')).toBeVisible()
+  await expect.poll(() => bridgeCommandCount(page, 'CheckSubscriptionStatus')).toBeGreaterThan(0)
+})
+
+test('keeps AI hidden when an older WebExtension only forwards the native capability', async ({ page }) => {
+  await openWebExtensionDashboard(page, ['sessions.read', 'ai.v1'])
+
+  await expect(page.locator('.session')).toHaveCount(2)
+  await expect(page.getByTestId('ai-enhance-session')).toHaveCount(0)
+  await expect.poll(() => bridgeCommandCount(page, 'PrepareAI')).toBe(0)
+  await page.getByRole('link', { name: 'Settings' }).click()
+  await expect(page.getByTestId('subscription-card')).toHaveCount(0)
 })
 
 test('falls back to the legacy iframe bridge used by build 89', async ({ page }) => {

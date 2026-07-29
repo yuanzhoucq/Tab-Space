@@ -52,6 +52,14 @@ test('lists only non-trash sessions as popup append destinations', () => {
   }])
 })
 
+test('advertises dashboard AI only when both the helper and this extension support it', () => {
+  assert.deepEqual(background.dashboardCapabilities(['sessions.read']), ['sessions.read'])
+  assert.deepEqual(
+    background.dashboardCapabilities(['sessions.read', 'ai.v1']),
+    ['sessions.read', 'ai.v1', 'dashboard.ai.v1']
+  )
+})
+
 test('maps every dashboard data command onto protocol v2 methods', () => {
   assert.equal(background.dashboardCommandToOperation({ cmd: 'CheckBookmarks' }).method, 'sessions.list')
   assert.equal(background.dashboardCommandToOperation({ cmd: 'AppendSessions', bookmarks: '[]' }).method, 'sessions.append')
@@ -65,10 +73,88 @@ test('maps every dashboard data command onto protocol v2 methods', () => {
   assert.equal(background.dashboardCommandToOperation({ cmd: 'ListBackups' }).method, 'backups.list')
   assert.equal(background.dashboardCommandToOperation({ cmd: 'ForceBackup' }).method, 'backups.create')
   assert.equal(background.dashboardCommandToOperation({ cmd: 'RestoreBackup', filename: 'a' }).method, 'backups.restore')
+  assert.equal(background.dashboardCommandToOperation({ cmd: 'PrepareAI' }).method, 'ai.prepare')
+  assert.deepEqual(
+    background.dashboardCommandToOperation({
+      cmd: 'EnhanceSession',
+      uuid: 'session-1',
+      bookmarks: [{ uuid: 'session-1', sites: [{ title: 'Example', url: 'https://example.com' }] }]
+    }),
+    {
+      kind: 'native',
+      method: 'ai.enhance',
+      params: {
+        uuid: 'session-1',
+        sites: [{ title: 'Example', url: 'https://example.com' }]
+      }
+    }
+  )
+  assert.equal(background.dashboardCommandToOperation({ cmd: 'ClusterTabs', bookmarks: [{}] }).method, 'ai.cluster')
+  assert.equal(background.dashboardCommandToOperation({ cmd: 'SaveSplitSessions', clusters: '[]' }).method, 'sessions.saveSplit')
+  assert.equal(background.dashboardCommandToOperation({ cmd: 'GetSuggestions' }).method, 'suggestions.list')
+  assert.equal(background.dashboardCommandToOperation({ cmd: 'DismissSuggestion', id: 's-1' }).method, 'suggestions.dismiss')
+  assert.equal(background.dashboardCommandToOperation({ cmd: 'CheckSubscriptionStatus' }).method, 'subscription.status')
+  assert.equal(background.dashboardCommandToOperation({ cmd: 'PurchaseSubscription' }).method, 'subscription.purchase')
+  assert.equal(background.dashboardCommandToOperation({ cmd: 'RestorePurchases' }).method, 'subscription.restore')
   assert.deepEqual(background.dashboardMessageForEvent({ event: 'sessions.changed', revision: 9 }), {
     cmd: 'SessionsChangedRemotely',
     revision: 9
   })
+})
+
+test('maps protocol v2 AI and subscription results back to dashboard messages', () => {
+  assert.deepEqual(
+    background.dashboardMessagesFor(
+      { kind: 'native', method: 'ai.enhance' },
+      {
+        uuid: 'session-1',
+        title: 'Research',
+        tags: [{ name: 'Work' }],
+        quotaRemaining: 4,
+        quotaResetAt: 123
+      }
+    ),
+    [{
+      cmd: 'ReturnEnhancedSession',
+      uuid: 'session-1',
+      title: 'Research',
+      tags: '[{"name":"Work"}]',
+      quotaRemaining: 4,
+      quotaResetAt: 123
+    }]
+  )
+  assert.deepEqual(
+    background.dashboardMessagesFor(
+      { kind: 'native', method: 'ai.cluster' },
+      { originalUuid: 'session-1', clusters: [{ name: 'One', tags: [], sites: [] }] }
+    ),
+    [{
+      cmd: 'ReturnSplitPreview',
+      originalUuid: 'session-1',
+      clusters: '[{"name":"One","tags":[],"sites":[]}]'
+    }]
+  )
+  assert.deepEqual(
+    background.dashboardMessagesFor(
+      { kind: 'native', method: 'suggestions.list' },
+      { suggestions: [{ id: 'suggestion-1' }] }
+    ),
+    [{ cmd: 'ReturnSuggestions', suggestions: '[{"id":"suggestion-1"}]' }]
+  )
+  assert.deepEqual(
+    background.dashboardMessagesFor(
+      { kind: 'native', method: 'subscription.status' },
+      { status: 'active', tier: 'pro', quotaRemaining: -1 }
+    ),
+    [{ cmd: 'ReturnSubscriptionStatus', status: 'active', tier: 'pro', quotaRemaining: -1 }]
+  )
+  assert.deepEqual(
+    background.dashboardMessagesFor(
+      { kind: 'native', method: 'subscription.purchase' },
+      { redirected: true }
+    ),
+    [{ cmd: 'PurchaseResult', redirected: true }]
+  )
 })
 
 test('saving never closes tabs before the native acknowledgement', async () => {

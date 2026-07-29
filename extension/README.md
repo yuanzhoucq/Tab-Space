@@ -84,6 +84,11 @@ after the macOS app acknowledges that it has persisted the session. The popup
 can remember whether to open the Dashboard or close the saved tabs afterward;
 tab closing still runs only after that acknowledgement.
 
+AI requests, quota status, and subscription actions use that same authenticated
+local bridge. StoreKit transactions and AI authentication material remain in
+the Mac app/helper; the WebExtension only translates Dashboard commands and
+returns the resulting UI payloads.
+
 The popup saves all eligible tabs by default and keeps per-tab selection behind
 the **Choose Tabs** disclosure. Its single destination menu can create a new
 session or atomically append to an existing session through the helper. Sessions

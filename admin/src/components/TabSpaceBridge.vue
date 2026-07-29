@@ -156,6 +156,7 @@ export default {
       this.clearBookmarkRefreshTimer()
       this.directMode = true
       this.bridgeModeResolved = true
+      this.$store.commit("setNativeCapabilities", null)
       const directBridge = {
         send: msg => document.dispatchEvent(new CustomEvent(appExtensionEvent("command"), {
           detail: JSON.stringify({ name: msg.cmd, data: msg })
@@ -175,6 +176,7 @@ export default {
       this.directMode = true
       this.webExtensionMode = false
       this.bridgeModeResolved = true
+      this.$store.commit("setNativeCapabilities", null)
       window.__tabspace_bridge.onMessage = (name, message) => {
         // Spread the raw payload first so reply-specific fields (status,
         // quotaRemaining, quotaResetAt, redirected, error, title, tags,
@@ -231,6 +233,13 @@ export default {
           break
         case "connected":
           this.setupWebExtensionBridge()
+          this.$store.commit(
+            "setNativeCapabilities",
+            data.bridgeInfo && Array.isArray(data.bridgeInfo.capabilities)
+              ? data.bridgeInfo.capabilities
+              : []
+          )
+          this.initAI()
           this.markNativeDetected()
           this.requestInitialData(this.bridge)
           break
@@ -359,7 +368,7 @@ export default {
     // Idempotent: guarded so it runs a single time per bridge session.
     initAI() {
       if (this.aiInitialized) return
-      if (this.$store.state.nativeProtocolVersion < Constants.aiMinProtocolVersion) return
+      if (!this.$store.getters.aiEnabled) return
       if (!this.bridge) return
       this.aiInitialized = true
       this.prepareAI()

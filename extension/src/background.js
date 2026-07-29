@@ -120,6 +120,17 @@
     }))
   }
 
+  function dashboardCapabilities(nativeCapabilities) {
+    const capabilities = Array.isArray(nativeCapabilities) ? [...nativeCapabilities] : []
+    // This marker belongs to the WebExtension adapter, not the native helper.
+    // Requiring it keeps a newly updated app from exposing AI through an older
+    // extension release that forwards `ai.v1` but cannot map its commands.
+    if (capabilities.includes("ai.v1") && !capabilities.includes("dashboard.ai.v1")) {
+      capabilities.push("dashboard.ai.v1")
+    }
+    return capabilities
+  }
+
   function parseBookmarks(bookmarks) {
     if (typeof bookmarks !== "string") return bookmarks || []
     try {
@@ -141,7 +152,14 @@
       case "DeleteSession":
         return { kind: "native", method: "sessions.delete", params: { sessions: parseBookmarks(msg.bookmarks) } }
       case "MergeSessions":
-        return { kind: "native", method: "sessions.merge", params: { sessions: parseBookmarks(msg.bookmarks) } }
+        return {
+          kind: "native",
+          method: "sessions.merge",
+          params: {
+            sessions: parseBookmarks(msg.bookmarks),
+            deduplicateSites: msg.deduplicateSites === true
+          }
+        }
       case "UpSession":
         return { kind: "native", method: "sessions.up", params: { sessions: parseBookmarks(msg.bookmarks) } }
       case "MoveSession":
@@ -156,6 +174,61 @@
         return { kind: "native", method: "backups.create", params: {} }
       case "RestoreBackup":
         return { kind: "native", method: "backups.restore", params: { filename: msg.filename } }
+      case "PrepareAI":
+        return { kind: "native", method: "ai.prepare", params: {} }
+      case "EnhanceSession": {
+        const session = parseBookmarks(msg.bookmarks)[0] || {}
+        return {
+          kind: "native",
+          method: "ai.enhance",
+          params: {
+            uuid: msg.uuid || session.uuid || "",
+            sites: session.sites || []
+          }
+        }
+      }
+      case "ClusterTabs": {
+        const session = parseBookmarks(msg.bookmarks)[0] || {}
+        return {
+          kind: "native",
+          method: "ai.cluster",
+          params: {
+            uuid: msg.uuid || session.uuid || "",
+            sites: session.sites || []
+          }
+        }
+      }
+      case "SaveSplitSessions":
+        return {
+          kind: "native",
+          method: "sessions.saveSplit",
+          params: {
+            clusters: parseBookmarks(msg.clusters),
+            originalUuid: msg.originalUuid || ""
+          }
+        }
+      case "GetSuggestions":
+        return { kind: "native", method: "suggestions.list", params: {} }
+      case "DismissSuggestion":
+        return {
+          kind: "native",
+          method: "suggestions.dismiss",
+          params: {
+            id: msg.id || "",
+            muteType: msg.muteType === true,
+            type: msg.type || ""
+          }
+        }
+      case "CheckSubscriptionStatus":
+        return { kind: "native", method: "subscription.status", params: {} }
+      case "PurchaseSubscription":
+        return {
+          kind: "native",
+          method: "subscription.purchase",
+          params: typeof msg.productId === "string" ? { productId: msg.productId } : {}
+        }
+      case "RestorePurchases":
+        return { kind: "native", method: "subscription.restore", params: {} }
       case "RestoreSession":
         return { kind: "browser", method: "tabs.restore", params: { sessions: parseBookmarks(msg.bookmarks) } }
       default:
@@ -179,6 +252,36 @@
     }
     if (operation.method === "backups.create") {
       return [{ cmd: "BackupComplete" }]
+    }
+    if (operation.method === "ai.enhance") {
+      return [{
+        cmd: "ReturnEnhancedSession",
+        ...result,
+        ...(result && result.tags !== undefined
+          ? { tags: typeof result.tags === "string" ? result.tags : JSON.stringify(result.tags) }
+          : {})
+      }]
+    }
+    if (operation.method === "ai.cluster") {
+      return [{
+        cmd: "ReturnSplitPreview",
+        ...result,
+        ...(result && result.clusters !== undefined
+          ? { clusters: typeof result.clusters === "string" ? result.clusters : JSON.stringify(result.clusters) }
+          : {})
+      }]
+    }
+    if (operation.method === "suggestions.list") {
+      return [{
+        cmd: "ReturnSuggestions",
+        suggestions: JSON.stringify((result && result.suggestions) || [])
+      }]
+    }
+    if (operation.method === "subscription.status" || operation.method === "subscription.restore") {
+      return [{ cmd: "ReturnSubscriptionStatus", ...(result || {}) }]
+    }
+    if (operation.method === "subscription.purchase") {
+      return [{ cmd: "PurchaseResult", ...(result || {}) }]
     }
     return []
   }
@@ -564,7 +667,7 @@
         return client.connect().then(handshake => ({
           connected: true,
           protocolVersion: handshake.protocolVersion,
-          capabilities: handshake.capabilities || []
+          capabilities: dashboardCapabilities(handshake.capabilities)
         }))
       }
     }
@@ -695,6 +798,7 @@
     LocalBridgeClient,
     PROTOCOL_VERSION,
     dashboardCommandToOperation,
+    dashboardCapabilities,
     dashboardMessageForEvent,
     dashboardMessagesFor,
     browserFamily,
