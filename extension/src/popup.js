@@ -42,6 +42,7 @@
     success: count => `${count} 个标签页已保存，并会通过 iCloud 同步。`,
     appendSuccess: count => `${count} 个标签页已追加到所选会话。`,
     sessionUnavailable: "所选会话已不存在或已移入回收站，请重新选择。",
+    proRequired: "多浏览器支持包含在 Tab Space Pro 中。请在 Mac 上打开 Tab Space 升级。",
     done: "完成",
     doneCloseSaved: "完成并关闭已保存标签页",
     closeFailed: "标签页已保存，但未能关闭，请手动关闭。",
@@ -80,6 +81,7 @@
     success: count => `${count} tab${count === 1 ? " is" : "s are"} saved and will sync through iCloud.`,
     appendSuccess: count => `${count} tab${count === 1 ? " was" : "s were"} added to the selected session.`,
     sessionUnavailable: "The selected session no longer exists or is in Trash. Choose another session.",
+    proRequired: "Multi-browser support is included with Tab Space Pro. Open Tab Space on your Mac to upgrade.",
     done: "Done",
     doneCloseSaved: "Done and Close Saved Tabs",
     closeFailed: "The tabs were saved, but could not be closed. Please close them manually.",
@@ -263,6 +265,11 @@
         closeTabsAfterSave: elements.closeTabsAfterSave.checked
       })
       if (!response || !response.ok) {
+        // Multi-browser support is Pro-only, and the pairing screen is the wrong
+        // answer here: the code would be accepted and then every request refused.
+        if (response && response.error && response.error.code === "pro_required") {
+          throw new Error(strings.proRequired)
+        }
         if (response && response.error && ["pairing_required", "authentication_failed"].includes(response.error.code)) {
           showPairing(response.error)
           return

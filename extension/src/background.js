@@ -392,7 +392,9 @@
             "pairing_rate_limited",
             "invalid_client",
             "authentication_failed",
-            "credential_store_failed"
+            "credential_store_failed",
+            // Terminal: without Pro no amount of retrying or re-pairing helps.
+            "pro_required"
           ].includes(error.code)) {
             throw error
           }

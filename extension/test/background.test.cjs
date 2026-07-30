@@ -483,3 +483,26 @@ test('trusts only dashboard origins the extension is built for', () => {
   assert.equal(background.isDashboardUrl('not a url'), false)
   assert.equal(background.isDashboardUrl(undefined), false)
 })
+
+test('treats a Pro-only refusal as terminal instead of re-pairing', () => {
+  // Multi-browser support is a Pro benefit enforced by the helper's bridge. The
+  // extension must not react by retrying the handshake or showing the pairing
+  // screen: the code would be accepted and every request refused afterwards.
+  const backgroundSource = readFileSync(join(extensionRoot, 'src/background.js'), 'utf8')
+  const popup = readFileSync(join(extensionRoot, 'src/popup.js'), 'utf8')
+
+  const terminalCodes = backgroundSource.slice(
+    backgroundSource.indexOf('if (error && ['),
+    backgroundSource.indexOf('].includes(error.code))')
+  )
+  assert.equal(terminalCodes.includes('"pro_required"'), true)
+
+  const proBranch = popup.indexOf('response.error.code === "pro_required"')
+  const pairingBranch = popup.indexOf('["pairing_required", "authentication_failed"].includes(response.error.code)')
+  assert.notEqual(proBranch, -1)
+  assert.notEqual(pairingBranch, -1)
+  assert.equal(proBranch < pairingBranch, true, 'the Pro check must precede the pairing fallback')
+  assert.equal(popup.includes('strings.proRequired'), true)
+  assert.equal(popup.includes('proRequired: "Multi-browser support is included with Tab Space Pro.'), true)
+  assert.equal(popup.includes('proRequired: "多浏览器支持包含在 Tab Space Pro 中。'), true)
+})
