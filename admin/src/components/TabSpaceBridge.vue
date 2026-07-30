@@ -256,6 +256,13 @@ export default {
             this.handleNativeMessage("SessionLimitReached", data)
             break
           }
+          // Multi-browser support is Pro-only. Reaching the dashboard through a
+          // companion browser without Pro is an upgrade prompt, not a lost
+          // connection — showing "can't reach the app" would be misleading.
+          if (data.error && data.error.code === "pro_required") {
+            this.$store.commit("setShowSubscriptionModal", true)
+            break
+          }
           if (!this.$store.state.nativeDetected) {
             this.$store.commit("setConnectionTimedOut", true)
           }
@@ -373,6 +380,10 @@ export default {
       this.aiInitialized = true
       this.prepareAI()
       this.bridge.send({cmd: "CheckDefault", name: Constants.suggestedTagsKey})
+      // Settings renders the auto-enhance toggle from these two, and both are
+      // "off" until the native side says otherwise.
+      this.bridge.send({cmd: "CheckDefault", name: Constants.aiConsentVersionKey})
+      this.bridge.send({cmd: "CheckDefault", name: Constants.autoEnhanceKey})
       this.bridge.send({cmd: "CheckSubscriptionStatus"})
       this.refreshSuggestions()
     },
@@ -396,6 +407,16 @@ export default {
     // Typed errors replace the demo's "empty result = failure" convention.
     handleAIError(data) {
       this.applyQuota(data)
+      if (data.error === "consent_required") {
+        // Nothing was sent. This is not a failure to report — the user has simply
+        // never been told what AI sends, so show the disclosure and re-run their
+        // original request if they accept.
+        this.$store.commit("setAIConsentPrompt", {
+          show: true,
+          retry: this.retryPayloadFor(data)
+        })
+        return
+      }
       if (data.error === "quota_exceeded") {
         // A local StoreKit test purchase can make the native client premium
         // while the remote AI service still sees a free entitlement because

@@ -201,5 +201,19 @@
   "multiBrowserStep2": "Установіть розширення Tab Space у Chrome, Microsoft Edge або Firefox 121 чи новішій версії.",
   "multiBrowserStep3": "Введіть шестизначний код у розширенні, щоб підключити його.",
   "multiBrowserConnected": "Цей браузер підключено до Tab Space.",
-  "multiBrowserProNote": "Підтримка кількох браузерів входить до Pro."
+  "multiBrowserProNote": "Підтримка кількох браузерів входить до Pro.",
+  "aiAutoEnhanceTitle": "Назви й теги від ШІ",
+  "aiAutoEnhanceDescription": "Після збереження вкладок ШІ автоматично називає сесію та додає теги. Надсилаються лише заголовки сторінок і URL.",
+  "aiConsentTitle": "Перед тим як Tab Space задіє ШІ",
+  "aiConsentLede": "Функції ШІ надсилають частину даних про ваші вкладки за межі пристрою. Ось що саме відбувається.",
+  "aiConsentSentTitle": "Що надсилається",
+  "aiConsentSentDetail": "Лише заголовки сторінок і URL вкладок цієї сесії. Ніколи — вміст сторінок, файли cookie, дані форм або будь-що з інших вкладок.",
+  "aiConsentRecipientsTitle": "Хто це отримує",
+  "aiConsentRecipientsDetail": "Сервіс Tab Space AI, розміщений у Cloudflare; він передає заголовки та URL до Google Gemini для формування результату. Tab Space не зберігає їх і не використовує для навчання моделей.",
+  "aiConsentQuotaTitle": "Скільки це витрачає",
+  "aiConsentQuotaDetail": "Free і Plus включають 5 запитів ШІ на тиждень; кожна дія ШІ витрачає один. Pro знімає тижневий ліміт.",
+  "aiConsentRevokeNote": "Ви можете знову вимкнути ШІ будь-коли в налаштуваннях. Поки він вимкнений, нічого не надсилається.",
+  "aiConsentAccept": "Дозволити й продовжити",
+  "aiConsentDecline": "Не зараз",
+  "privacyPolicy": "Політика конфіденційності"
 }

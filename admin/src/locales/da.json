@@ -201,5 +201,19 @@
   "multiBrowserStep2": "Installer Tab Space-udvidelsen i Chrome, Microsoft Edge eller Firefox 121 eller nyere.",
   "multiBrowserStep3": "Indtast den sekscifrede kode i udvidelsen for at forbinde den.",
   "multiBrowserConnected": "Denne browser er forbundet til Tab Space.",
-  "multiBrowserProNote": "Understøttelse af flere browsere er inkluderet i Pro."
+  "multiBrowserProNote": "Understøttelse af flere browsere er inkluderet i Pro.",
+  "aiAutoEnhanceTitle": "AI-titler og -tags",
+  "aiAutoEnhanceDescription": "Når du har gemt faneblade, navngiver AI automatisk sessionen og tilføjer tags. Kun sidetitler og URL'er sendes.",
+  "aiConsentTitle": "Før Tab Space bruger AI",
+  "aiConsentLede": "AI-funktioner sender visse oplysninger om dine faneblade ud af din enhed. Her er præcis hvad der sker.",
+  "aiConsentSentTitle": "Hvad der sendes",
+  "aiConsentSentDetail": "Kun sidetitler og URL'er for fanebladene i den session. Aldrig sideindhold, cookies, formulardata eller noget fra andre faneblade.",
+  "aiConsentRecipientsTitle": "Hvem der modtager det",
+  "aiConsentRecipientsDetail": "Tab Space AI-tjenesten, der hostes på Cloudflare, og som videresender titler og URL'er til Google Gemini for at generere resultatet. Tab Space gemmer dem ikke og bruger dem ikke til at træne modeller.",
+  "aiConsentQuotaTitle": "Hvad det koster",
+  "aiConsentQuotaDetail": "Free og Plus inkluderer 5 AI-anmodninger om ugen; hver AI-handling bruger én. Pro fjerner den ugentlige grænse.",
+  "aiConsentRevokeNote": "Du kan altid slå AI fra igen i indstillingerne. Så længe det er slået fra, sendes der ingenting.",
+  "aiConsentAccept": "Tillad og fortsæt",
+  "aiConsentDecline": "Ikke nu",
+  "privacyPolicy": "Privatlivspolitik"
 }

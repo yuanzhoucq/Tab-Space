@@ -90,6 +90,12 @@ const store = new Vuex.Store({
         purchaseRedirecting: false,  // set once the native side confirms a redirect
         // Transient, non-blocking AI error toast: { message, retry } | null.
         aiToast: null,
+        // AI data-flow disclosure. The native side refuses every AI request with
+        // "consent_required" until the user accepts, so this modal is the only
+        // way any title or URL ever reaches the AI service.
+        showAIConsentModal: false,
+        // Request to re-send once consent is granted: a bridge payload | null.
+        aiConsentPendingRetry: null,
         tabSpaceSettings: {
             ...defaultTabSpaceSettings
         }
@@ -247,6 +253,10 @@ const store = new Vuex.Store({
         },
         setAIToast(state, toast) {
             state.aiToast = toast
+        },
+        setAIConsentPrompt(state, { show, retry = null }) {
+            state.showAIConsentModal = show
+            state.aiConsentPendingRetry = show ? retry : null
         },
         setTabSpaceSetting(state, {key, value}) {
             let settings = { ...state.tabSpaceSettings }

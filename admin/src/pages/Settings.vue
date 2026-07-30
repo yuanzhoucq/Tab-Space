@@ -116,6 +116,29 @@
         <div class="card" v-if="aiEnabled">
           <h2 class="section-title">{{lang.aiSection || 'AI'}}</h2>
           <p v-if="!isPremium" class="help-text">{{lang.proOnlyInfo || 'Free and Plus include 5 AI requests each week. Pro removes the weekly limit.'}}</p>
+
+          <!-- Auto-enhance is the only AI path that runs without an explicit
+               click, so it is off until the user turns it on here and accepts
+               the data-flow disclosure. -->
+          <div class="setting-list">
+            <div class="setting-item">
+              <label for="ai-auto-enhance" class="setting-label">
+                {{lang.aiAutoEnhanceTitle || 'AI titles and tags'}}
+              </label>
+              <toggle-button
+                id="ai-auto-enhance"
+                data-testid="ai-auto-enhance-toggle"
+                :value="autoEnhanceEnabled"
+                :sync="true"
+                :color="{checked: '#fa8072', unchecked: '#ccc'}"
+                @change="setAutoEnhance"
+              />
+            </div>
+          </div>
+          <p class="help-text" style="margin-bottom: 18px;">
+            {{lang.aiAutoEnhanceDescription || 'After you save tabs, AI names the session and adds tags automatically. Only page titles and URLs are sent.'}}
+          </p>
+
           <div class="form-group" style="margin-bottom: 0;">
             <label for="suggested-tags" class="form-label">{{lang.suggestedTags || 'Suggested Tags'}}</label>
             <textarea
@@ -366,6 +389,17 @@ export default {
     suggestedTagsValue() {
       return this.tabSpaceSettings[Constants.suggestedTagsKey] || ''
     },
+    aiConsentGranted() {
+      const accepted = Number(this.tabSpaceSettings[Constants.aiConsentVersionKey] || 0)
+      return accepted >= Constants.aiConsentVersion
+    },
+    // Mirrors AutoEnhance.isEnabled on the native side: the toggle only reads as
+    // on when consent is in place, so revoking consent cannot leave the UI
+    // claiming that background enhancement is still running.
+    autoEnhanceEnabled() {
+      return this.aiConsentGranted
+        && this.tabSpaceSettings[Constants.autoEnhanceKey] === 'true'
+    },
     currentDefaultTags() {
       const lang = this.tabSpaceSettings[Constants.preferredLanguageKey] || 'en-us'
       return Constants.defaultSuggestedTags[lang] || Constants.defaultSuggestedTags['en-us']
@@ -394,6 +428,22 @@ export default {
     setDefault(e, setting) {
       const value = e.value ? "true" : "false";
       this.bridge.send({cmd: "SetDefault", name: setting, value})
+    },
+    // Turning auto-enhance ON is the first moment background AI would start
+    // sending data, so it needs the disclosure first. Turning it OFF is always
+    // allowed immediately.
+    setAutoEnhance(e) {
+      if (!this.bridge) return
+      if (e.value && !this.aiConsentGranted) {
+        this.$store.commit("setAIConsentPrompt", {
+          show: true,
+          retry: {cmd: "SetDefault", name: Constants.autoEnhanceKey, value: "true"}
+        })
+        return
+      }
+      const value = e.value ? "true" : "false"
+      this.bridge.send({cmd: "SetDefault", name: Constants.autoEnhanceKey, value})
+      this.$store.commit("setTabSpaceSetting", {key: Constants.autoEnhanceKey, value})
     },
     setLanguage(e) {
       this.bridge.send({cmd: "SetDefault", name: Constants.preferredLanguageKey, value: e.target.value})

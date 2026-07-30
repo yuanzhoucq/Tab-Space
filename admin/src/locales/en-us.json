@@ -201,5 +201,19 @@
   "multiBrowserStep2": "Install the Tab Space extension in Chrome, Microsoft Edge, or Firefox 121 or later.",
   "multiBrowserStep3": "Enter the six-digit code in the extension to connect it.",
   "multiBrowserConnected": "This browser is connected to Tab Space.",
-  "multiBrowserProNote": "Multi-browser support is included with Pro."
+  "multiBrowserProNote": "Multi-browser support is included with Pro.",
+  "aiAutoEnhanceTitle": "AI titles and tags",
+  "aiAutoEnhanceDescription": "After you save tabs, AI names the session and adds tags automatically. Only page titles and URLs are sent.",
+  "aiConsentTitle": "Before Tab Space uses AI",
+  "aiConsentLede": "AI features send some information about your tabs off your device. Here is exactly what happens.",
+  "aiConsentSentTitle": "What is sent",
+  "aiConsentSentDetail": "Only the page titles and URLs of the tabs in that session. Never page contents, cookies, form data, or anything from other tabs.",
+  "aiConsentRecipientsTitle": "Who receives it",
+  "aiConsentRecipientsDetail": "The Tab Space AI service, hosted on Cloudflare, which forwards the titles and URLs to Google Gemini to generate the result. Tab Space does not store them and does not use them to train models.",
+  "aiConsentQuotaTitle": "What it costs you",
+  "aiConsentQuotaDetail": "Free and Plus include 5 AI requests each week. Each AI action uses one. Pro removes the weekly limit.",
+  "aiConsentRevokeNote": "You can turn AI off again at any time in Settings. Nothing is sent while it is off.",
+  "aiConsentAccept": "Allow and continue",
+  "aiConsentDecline": "Not now",
+  "privacyPolicy": "Privacy Policy"
 }

@@ -19,6 +19,12 @@ const constants = {
     // version is >= aiMinProtocolVersion.
     suggestedTagsKey: "suggested-tags",
     aiMinProtocolVersion: 2,
+    // AI data-flow disclosure (design §7). The native side refuses every AI
+    // request with "consent_required" until this default matches its
+    // AIConsent.currentVersion, so these two must be bumped together.
+    aiConsentVersionKey: "ai-data-disclosure-accepted-version",
+    aiConsentVersion: 1,
+    autoEnhanceKey: "ai-auto-enhance-enabled",
     // Mirrors CommercializationConfig.freeSessionLimit on the native side. The
     // native app stays the authority: this only stops the dashboard from
     // creating a card the native side is going to refuse.

@@ -201,5 +201,19 @@
   "multiBrowserStep2": "Zainstaluj rozszerzenie Tab Space w Chrome, Microsoft Edge lub Firefoksie 121 albo nowszym.",
   "multiBrowserStep3": "Wpisz sześciocyfrowy kod w rozszerzeniu, aby je połączyć.",
   "multiBrowserConnected": "Ta przeglądarka jest połączona z Tab Space.",
-  "multiBrowserProNote": "Obsługa wielu przeglądarek jest częścią planu Pro."
+  "multiBrowserProNote": "Obsługa wielu przeglądarek jest częścią planu Pro.",
+  "aiAutoEnhanceTitle": "Tytuły i tagi od SI",
+  "aiAutoEnhanceDescription": "Po zapisaniu kart SI automatycznie nazywa sesję i dodaje tagi. Wysyłane są tylko tytuły stron i adresy URL.",
+  "aiConsentTitle": "Zanim Tab Space użyje SI",
+  "aiConsentLede": "Funkcje SI wysyłają część informacji o Twoich kartach poza urządzenie. Oto co dokładnie się dzieje.",
+  "aiConsentSentTitle": "Co jest wysyłane",
+  "aiConsentSentDetail": "Tylko tytuły stron i adresy URL kart z tej sesji. Nigdy treść stron, pliki cookie, dane formularzy ani cokolwiek z innych kart.",
+  "aiConsentRecipientsTitle": "Kto to otrzymuje",
+  "aiConsentRecipientsDetail": "Usługa Tab Space AI hostowana w Cloudflare, która przekazuje tytuły i adresy URL do Google Gemini, aby wygenerować wynik. Tab Space ich nie przechowuje ani nie używa do trenowania modeli.",
+  "aiConsentQuotaTitle": "Ile to zużywa",
+  "aiConsentQuotaDetail": "Free i Plus obejmują 5 żądań SI tygodniowo; każde działanie SI zużywa jedno. Pro znosi limit tygodniowy.",
+  "aiConsentRevokeNote": "SI możesz wyłączyć w każdej chwili w ustawieniach. Gdy jest wyłączona, nic nie jest wysyłane.",
+  "aiConsentAccept": "Zezwól i kontynuuj",
+  "aiConsentDecline": "Nie teraz",
+  "privacyPolicy": "Polityka prywatności"
 }

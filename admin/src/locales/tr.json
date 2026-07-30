@@ -201,5 +201,19 @@
   "multiBrowserStep2": "Tab Space uzantısını Chrome, Microsoft Edge veya Firefox 121 ya da üstüne kurun.",
   "multiBrowserStep3": "Bağlamak için uzantıya altı haneli kodu girin.",
   "multiBrowserConnected": "Bu tarayıcı Tab Space'e bağlı.",
-  "multiBrowserProNote": "Çoklu tarayıcı desteği Pro'ya dahildir."
+  "multiBrowserProNote": "Çoklu tarayıcı desteği Pro'ya dahildir.",
+  "aiAutoEnhanceTitle": "Yapay zekâ başlıkları ve etiketleri",
+  "aiAutoEnhanceDescription": "Sekmeleri kaydettikten sonra yapay zekâ oturumu otomatik olarak adlandırır ve etiket ekler. Yalnızca sayfa başlıkları ve URL'ler gönderilir.",
+  "aiConsentTitle": "Tab Space yapay zekâyı kullanmadan önce",
+  "aiConsentLede": "Yapay zekâ özellikleri, sekmelerinizle ilgili bazı bilgileri cihazınızın dışına gönderir. Tam olarak ne olduğu aşağıda.",
+  "aiConsentSentTitle": "Gönderilenler",
+  "aiConsentSentDetail": "Yalnızca o oturumdaki sekmelerin sayfa başlıkları ve URL'leri. Sayfa içeriği, çerezler, form verileri veya diğer sekmelerden hiçbir şey gönderilmez.",
+  "aiConsentRecipientsTitle": "Kimler alır",
+  "aiConsentRecipientsDetail": "Cloudflare üzerinde barındırılan Tab Space yapay zekâ hizmeti; sonucu oluşturmak için başlıkları ve URL'leri Google Gemini'ye iletir. Tab Space bunları saklamaz ve model eğitiminde kullanmaz.",
+  "aiConsentQuotaTitle": "Ne kadar tüketir",
+  "aiConsentQuotaDetail": "Free ve Plus haftada 5 yapay zekâ isteği içerir; her yapay zekâ işlemi bir istek tüketir. Pro haftalık sınırı kaldırır.",
+  "aiConsentRevokeNote": "Yapay zekâyı istediğiniz zaman ayarlardan yeniden kapatabilirsiniz. Kapalıyken hiçbir şey gönderilmez.",
+  "aiConsentAccept": "İzin ver ve devam et",
+  "aiConsentDecline": "Şimdi değil",
+  "privacyPolicy": "Gizlilik Politikası"
 }

@@ -201,5 +201,19 @@
   "multiBrowserStep2": "Instala la extensión de Tab Space en Chrome, Microsoft Edge o Firefox 121 o posterior.",
   "multiBrowserStep3": "Introduce el código de seis dígitos en la extensión para conectarla.",
   "multiBrowserConnected": "Este navegador está conectado a Tab Space.",
-  "multiBrowserProNote": "La compatibilidad con varios navegadores se incluye con Pro."
+  "multiBrowserProNote": "La compatibilidad con varios navegadores se incluye con Pro.",
+  "aiAutoEnhanceTitle": "Títulos y etiquetas con IA",
+  "aiAutoEnhanceDescription": "Después de guardar pestañas, la IA nombra la sesión y añade etiquetas automáticamente. Solo se envían los títulos y las URL de las páginas.",
+  "aiConsentTitle": "Antes de que Tab Space use IA",
+  "aiConsentLede": "Las funciones de IA envían parte de la información de tus pestañas fuera de tu dispositivo. Esto es exactamente lo que ocurre.",
+  "aiConsentSentTitle": "Qué se envía",
+  "aiConsentSentDetail": "Solo los títulos y las URL de las páginas de las pestañas de esa sesión. Nunca el contenido de las páginas, las cookies, los datos de formularios ni nada de otras pestañas.",
+  "aiConsentRecipientsTitle": "Quién lo recibe",
+  "aiConsentRecipientsDetail": "El servicio de IA de Tab Space, alojado en Cloudflare, que reenvía los títulos y las URL a Google Gemini para generar el resultado. Tab Space no los almacena ni los usa para entrenar modelos.",
+  "aiConsentQuotaTitle": "Qué consume",
+  "aiConsentQuotaDetail": "Free y Plus incluyen 5 solicitudes de IA por semana; cada acción de IA consume una. Pro elimina el límite semanal.",
+  "aiConsentRevokeNote": "Puedes volver a desactivar la IA en cualquier momento en los ajustes. Mientras esté desactivada no se envía nada.",
+  "aiConsentAccept": "Permitir y continuar",
+  "aiConsentDecline": "Ahora no",
+  "privacyPolicy": "Política de privacidad"
 }

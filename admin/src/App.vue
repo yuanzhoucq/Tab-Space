@@ -6,6 +6,7 @@
     <split-preview-modal></split-preview-modal>
     <subscription-modal></subscription-modal>
     <suggestion-report-modal></suggestion-report-modal>
+    <ai-consent-modal></ai-consent-modal>
     <ai-toast></ai-toast>
   </div>
 </template>
@@ -16,6 +17,9 @@
   import SplitPreviewModal from './components/SplitPreviewModal'
   import SubscriptionModal from './components/SubscriptionModal'
   import SuggestionReportModal from './components/SuggestionReportModal'
+  // Filenames keep the AI prefix; the local binding uses Ai so the kebab-case
+  // tag resolves (<ai-consent-modal>, not <a-i-consent-modal>). Same as AIToast.
+  import AiConsentModal from './components/AIConsentModal'
   import AiToast from './components/AIToast'
 
   export default {
@@ -26,6 +30,7 @@
       SplitPreviewModal,
       SubscriptionModal,
       SuggestionReportModal,
+      AiConsentModal,
       AiToast
     }
   }

@@ -201,5 +201,19 @@
   "multiBrowserStep2": "Installeer de Tab Space-extensie in Chrome, Microsoft Edge of Firefox 121 of nieuwer.",
   "multiBrowserStep3": "Voer de zescijferige code in de extensie in om te verbinden.",
   "multiBrowserConnected": "Deze browser is verbonden met Tab Space.",
-  "multiBrowserProNote": "Ondersteuning voor meerdere browsers zit bij Pro."
+  "multiBrowserProNote": "Ondersteuning voor meerdere browsers zit bij Pro.",
+  "aiAutoEnhanceTitle": "AI-titels en -tags",
+  "aiAutoEnhanceDescription": "Nadat je tabbladen hebt opgeslagen, geeft AI de sessie automatisch een naam en voegt tags toe. Alleen paginatitels en URL's worden verzonden.",
+  "aiConsentTitle": "Voordat Tab Space AI gebruikt",
+  "aiConsentLede": "AI-functies sturen bepaalde informatie over je tabbladen buiten je apparaat. Dit is precies wat er gebeurt.",
+  "aiConsentSentTitle": "Wat wordt verzonden",
+  "aiConsentSentDetail": "Alleen de paginatitels en URL's van de tabbladen in die sessie. Nooit pagina-inhoud, cookies, formuliergegevens of iets uit andere tabbladen.",
+  "aiConsentRecipientsTitle": "Wie het ontvangt",
+  "aiConsentRecipientsDetail": "De Tab Space AI-service, gehost op Cloudflare, die de titels en URL's doorstuurt naar Google Gemini om het resultaat te genereren. Tab Space slaat ze niet op en gebruikt ze niet om modellen te trainen.",
+  "aiConsentQuotaTitle": "Wat het kost",
+  "aiConsentQuotaDetail": "Free en Plus bevatten 5 AI-verzoeken per week; elke AI-actie gebruikt er één. Pro heft de weeklimiet op.",
+  "aiConsentRevokeNote": "Je kunt AI op elk moment weer uitschakelen in de instellingen. Zolang het uit staat, wordt er niets verzonden.",
+  "aiConsentAccept": "Toestaan en doorgaan",
+  "aiConsentDecline": "Niet nu",
+  "privacyPolicy": "Privacybeleid"
 }

@@ -201,5 +201,19 @@
   "multiBrowserStep2": "Installera Tab Space-tillägget i Chrome, Microsoft Edge eller Firefox 121 eller senare.",
   "multiBrowserStep3": "Ange den sexsiffriga koden i tillägget för att ansluta det.",
   "multiBrowserConnected": "Den här webbläsaren är ansluten till Tab Space.",
-  "multiBrowserProNote": "Stöd för flera webbläsare ingår i Pro."
+  "multiBrowserProNote": "Stöd för flera webbläsare ingår i Pro.",
+  "aiAutoEnhanceTitle": "AI-titlar och taggar",
+  "aiAutoEnhanceDescription": "När du har sparat flikar namnger AI sessionen automatiskt och lägger till taggar. Endast sidtitlar och webbadresser skickas.",
+  "aiConsentTitle": "Innan Tab Space använder AI",
+  "aiConsentLede": "AI-funktioner skickar viss information om dina flikar utanför enheten. Så här ser det ut i detalj.",
+  "aiConsentSentTitle": "Vad som skickas",
+  "aiConsentSentDetail": "Endast sidtitlar och webbadresser för flikarna i den sessionen. Aldrig sidinnehåll, cookies, formulärdata eller något från andra flikar.",
+  "aiConsentRecipientsTitle": "Vem som tar emot det",
+  "aiConsentRecipientsDetail": "Tab Space AI-tjänsten, som körs på Cloudflare och vidarebefordrar titlar och webbadresser till Google Gemini för att skapa resultatet. Tab Space lagrar dem inte och använder dem inte för att träna modeller.",
+  "aiConsentQuotaTitle": "Vad det kostar",
+  "aiConsentQuotaDetail": "Free och Plus omfattar 5 AI-förfrågningar per vecka; varje AI-åtgärd använder en. Pro tar bort veckogränsen.",
+  "aiConsentRevokeNote": "Du kan stänga av AI igen när som helst i inställningarna. Medan det är avstängt skickas ingenting.",
+  "aiConsentAccept": "Tillåt och fortsätt",
+  "aiConsentDecline": "Inte nu",
+  "privacyPolicy": "Integritetspolicy"
 }

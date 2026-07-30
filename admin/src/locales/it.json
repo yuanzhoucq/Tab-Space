@@ -201,5 +201,19 @@
   "multiBrowserStep2": "Installa l'estensione Tab Space in Chrome, Microsoft Edge o Firefox 121 o versioni successive.",
   "multiBrowserStep3": "Inserisci il codice a sei cifre nell'estensione per collegarla.",
   "multiBrowserConnected": "Questo browser è collegato a Tab Space.",
-  "multiBrowserProNote": "Il supporto multi-browser è incluso con Pro."
+  "multiBrowserProNote": "Il supporto multi-browser è incluso con Pro.",
+  "aiAutoEnhanceTitle": "Titoli e tag con l’IA",
+  "aiAutoEnhanceDescription": "Dopo il salvataggio delle schede, l’IA assegna automaticamente un nome alla sessione e aggiunge i tag. Vengono inviati solo i titoli e gli URL delle pagine.",
+  "aiConsentTitle": "Prima che Tab Space usi l’IA",
+  "aiConsentLede": "Le funzioni di IA inviano alcune informazioni sulle tue schede fuori dal dispositivo. Ecco esattamente cosa accade.",
+  "aiConsentSentTitle": "Cosa viene inviato",
+  "aiConsentSentDetail": "Solo i titoli e gli URL delle pagine delle schede di quella sessione. Mai il contenuto delle pagine, i cookie, i dati dei moduli o qualsiasi cosa da altre schede.",
+  "aiConsentRecipientsTitle": "Chi li riceve",
+  "aiConsentRecipientsDetail": "Il servizio IA di Tab Space, ospitato su Cloudflare, che inoltra titoli e URL a Google Gemini per generare il risultato. Tab Space non li conserva e non li usa per addestrare modelli.",
+  "aiConsentQuotaTitle": "Quanto consuma",
+  "aiConsentQuotaDetail": "Free e Plus includono 5 richieste IA a settimana; ogni azione IA ne consuma una. Pro rimuove il limite settimanale.",
+  "aiConsentRevokeNote": "Puoi disattivare di nuovo l’IA in qualsiasi momento nelle impostazioni. Mentre è disattivata non viene inviato nulla.",
+  "aiConsentAccept": "Consenti e continua",
+  "aiConsentDecline": "Non ora",
+  "privacyPolicy": "Informativa sulla privacy"
 }

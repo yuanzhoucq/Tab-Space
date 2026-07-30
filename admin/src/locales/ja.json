@@ -201,5 +201,19 @@
   "multiBrowserStep2": "Chrome、Microsoft Edge、または Firefox 121 以降に Tab Space 拡張機能をインストールします。",
   "multiBrowserStep3": "拡張機能に 6 桁のコードを入力して接続します。",
   "multiBrowserConnected": "このブラウザは Tab Space に接続されています。",
-  "multiBrowserProNote": "マルチブラウザ対応は Pro に含まれています。"
+  "multiBrowserProNote": "マルチブラウザ対応は Pro に含まれています。",
+  "aiAutoEnhanceTitle": "AI によるタイトルとタグ",
+  "aiAutoEnhanceDescription": "タブを保存すると、AI が自動でセッションに名前を付けてタグを追加します。送信されるのはページのタイトルと URL のみです。",
+  "aiConsentTitle": "Tab Space が AI を使う前に",
+  "aiConsentLede": "AI 機能は、タブに関する一部の情報をデバイス外へ送信します。送信される内容は次のとおりです。",
+  "aiConsentSentTitle": "送信される内容",
+  "aiConsentSentDetail": "そのセッションに含まれるタブのページタイトルと URL のみです。ページの内容、Cookie、フォームの入力内容、他のタブの情報は送信されません。",
+  "aiConsentRecipientsTitle": "送信先",
+  "aiConsentRecipientsDetail": "Cloudflare 上で稼働する Tab Space AI サービスです。結果を生成するために、タイトルと URL を Google Gemini へ転送します。Tab Space はこれらを保存せず、モデルの学習にも使用しません。",
+  "aiConsentQuotaTitle": "消費される回数",
+  "aiConsentQuotaDetail": "Free と Plus では週 5 回の AI リクエストを利用でき、AI 操作ごとに 1 回消費します。Pro には週ごとの上限がありません。",
+  "aiConsentRevokeNote": "AI はいつでも設定からオフに戻せます。オフの間は何も送信されません。",
+  "aiConsentAccept": "許可して続ける",
+  "aiConsentDecline": "後で",
+  "privacyPolicy": "プライバシーポリシー"
 }

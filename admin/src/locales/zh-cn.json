@@ -201,5 +201,19 @@
   "multiBrowserStep2": "在 Chrome、Microsoft Edge 或 Firefox 121 及以上版本中安装 Tab Space 扩展。",
   "multiBrowserStep3": "在扩展中输入六位配对码即可连接。",
   "multiBrowserConnected": "此浏览器已连接到 Tab Space。",
-  "multiBrowserProNote": "多浏览器支持包含在 Pro 中。"
+  "multiBrowserProNote": "多浏览器支持包含在 Pro 中。",
+  "aiAutoEnhanceTitle": "AI 标题与标签",
+  "aiAutoEnhanceDescription": "保存标签页后，AI 会自动命名会话并添加标签。仅发送页面标题和网址。",
+  "aiConsentTitle": "Tab Space 使用 AI 之前",
+  "aiConsentLede": "AI 功能会将有关标签页的部分信息发送到设备之外。以下是具体情况。",
+  "aiConsentSentTitle": "发送的内容",
+  "aiConsentSentDetail": "仅该会话中标签页的页面标题和网址。绝不发送页面内容、Cookie、表单数据，也不发送其他标签页的任何信息。",
+  "aiConsentRecipientsTitle": "接收方",
+  "aiConsentRecipientsDetail": "托管在 Cloudflare 上的 Tab Space AI 服务，它会将标题和网址转发给 Google Gemini 以生成结果。Tab Space 不会存储这些数据，也不会用于训练模型。",
+  "aiConsentQuotaTitle": "额度消耗",
+  "aiConsentQuotaDetail": "Free 和 Plus 每周包含 5 次 AI 请求，每次 AI 操作消耗 1 次。Pro 不受每周额度限制。",
+  "aiConsentRevokeNote": "你可以随时在“设置”中重新关闭 AI。关闭期间不会发送任何内容。",
+  "aiConsentAccept": "允许并继续",
+  "aiConsentDecline": "暂不",
+  "privacyPolicy": "隐私政策"
 }

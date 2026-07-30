@@ -201,5 +201,19 @@
   "multiBrowserStep2": "Installiere die Tab Space-Erweiterung in Chrome, Microsoft Edge oder Firefox 121 oder neuer.",
   "multiBrowserStep3": "Gib den sechsstelligen Code in der Erweiterung ein, um sie zu verbinden.",
   "multiBrowserConnected": "Dieser Browser ist mit Tab Space verbunden.",
-  "multiBrowserProNote": "Unterstützung mehrerer Browser ist in Pro enthalten."
+  "multiBrowserProNote": "Unterstützung mehrerer Browser ist in Pro enthalten.",
+  "aiAutoEnhanceTitle": "KI-Titel und -Tags",
+  "aiAutoEnhanceDescription": "Nach dem Speichern von Tabs benennt die KI die Sitzung automatisch und fügt Tags hinzu. Gesendet werden nur Seitentitel und URLs.",
+  "aiConsentTitle": "Bevor Tab Space KI verwendet",
+  "aiConsentLede": "KI-Funktionen senden einige Informationen über Ihre Tabs von Ihrem Gerät. Das passiert dabei genau.",
+  "aiConsentSentTitle": "Was gesendet wird",
+  "aiConsentSentDetail": "Nur die Seitentitel und URLs der Tabs in dieser Sitzung. Niemals Seiteninhalte, Cookies, Formulardaten oder Inhalte anderer Tabs.",
+  "aiConsentRecipientsTitle": "Wer sie erhält",
+  "aiConsentRecipientsDetail": "Der bei Cloudflare gehostete Tab Space KI-Dienst, der Titel und URLs zur Erzeugung des Ergebnisses an Google Gemini weiterleitet. Tab Space speichert sie nicht und verwendet sie nicht zum Trainieren von Modellen.",
+  "aiConsentQuotaTitle": "Was es kostet",
+  "aiConsentQuotaDetail": "Free und Plus enthalten 5 KI-Anfragen pro Woche; jede KI-Aktion verbraucht eine. Pro hebt das Wochenlimit auf.",
+  "aiConsentRevokeNote": "Sie können die KI jederzeit in den Einstellungen wieder ausschalten. Solange sie aus ist, wird nichts gesendet.",
+  "aiConsentAccept": "Erlauben und fortfahren",
+  "aiConsentDecline": "Jetzt nicht",
+  "privacyPolicy": "Datenschutzerklärung"
 }

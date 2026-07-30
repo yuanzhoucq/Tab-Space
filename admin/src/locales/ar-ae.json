@@ -201,5 +201,19 @@
   "multiBrowserStep2": "ثبّت إضافة Tab Space في Chrome أو Microsoft Edge أو Firefox 121 أو أحدث.",
   "multiBrowserStep3": "أدخل الرمز المكوّن من ستة أرقام في الإضافة لتوصيلها.",
   "multiBrowserConnected": "هذا المتصفح متصل بـ Tab Space.",
-  "multiBrowserProNote": "دعم المتصفحات المتعددة مشمول مع Pro."
+  "multiBrowserProNote": "دعم المتصفحات المتعددة مشمول مع Pro.",
+  "aiAutoEnhanceTitle": "عناوين ووسوم بالذكاء الاصطناعي",
+  "aiAutoEnhanceDescription": "بعد حفظ علامات التبويب، يسمّي الذكاء الاصطناعي الجلسة تلقائيًا ويضيف الوسوم. تُرسل عناوين الصفحات وعناوين URL فقط.",
+  "aiConsentTitle": "قبل أن يستخدم Tab Space الذكاء الاصطناعي",
+  "aiConsentLede": "ترسل ميزات الذكاء الاصطناعي بعض المعلومات عن علامات التبويب خارج جهازك. في ما يلي ما يحدث بالتفصيل.",
+  "aiConsentSentTitle": "ما يُرسل",
+  "aiConsentSentDetail": "عناوين الصفحات وعناوين URL لعلامات التبويب في تلك الجلسة فقط. لا يُرسل أبدًا محتوى الصفحات أو ملفات تعريف الارتباط أو بيانات النماذج أو أي شيء من علامات تبويب أخرى.",
+  "aiConsentRecipientsTitle": "من يتلقّاها",
+  "aiConsentRecipientsDetail": "خدمة الذكاء الاصطناعي في Tab Space المستضافة على Cloudflare، وهي تُحوِّل العناوين وعناوين URL إلى Google Gemini لإنشاء النتيجة. لا يخزّنها Tab Space ولا يستخدمها لتدريب النماذج.",
+  "aiConsentQuotaTitle": "ما تستهلكه",
+  "aiConsentQuotaDetail": "يتضمّن Free وPlus ‏5 طلبات ذكاء اصطناعي أسبوعيًا، ويستهلك كل إجراء طلبًا واحدًا. ويلغي Pro الحد الأسبوعي.",
+  "aiConsentRevokeNote": "يمكنك إيقاف الذكاء الاصطناعي مرة أخرى في أي وقت من الإعدادات. ولا يُرسل أي شيء أثناء إيقافه.",
+  "aiConsentAccept": "السماح والمتابعة",
+  "aiConsentDecline": "ليس الآن",
+  "privacyPolicy": "سياسة الخصوصية"
 }

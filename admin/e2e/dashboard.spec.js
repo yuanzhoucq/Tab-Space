@@ -66,13 +66,18 @@ async function openDashboard(page, options = {}) {
     bannerStorageUnavailable,
     subscriptionStatus,
     entitlementTier,
-    plusDisplayPrice
+    plusDisplayPrice,
+    aiConsentAccepted
   }) => {
     const clone = value => JSON.parse(JSON.stringify(value))
     const settingsKey = 'tabspace-e2e-settings'
     if (collapseSessions) localStorage.setItem('tabspace-session-cards-collapsed', 'true')
     const storedSettings = JSON.parse(localStorage.getItem(settingsKey) || '{}')
     if (preferredLanguage) storedSettings['preferred-language'] = preferredLanguage
+    // The AI data-flow disclosure is a one-time first-run step. Tests that are
+    // about anything else start from a user who has already accepted it.
+    if (aiConsentAccepted) storedSettings['ai-data-disclosure-accepted-version'] = '1'
+    else delete storedSettings['ai-data-disclosure-accepted-version']
     let currentSessions = clone(testSessions)
 
     window.__tabspaceBridgeCommands = []
@@ -144,6 +149,25 @@ async function openDashboard(page, options = {}) {
           storedSettings[payload.name] = payload.value
           localStorage.setItem(settingsKey, JSON.stringify(storedSettings))
           emit('ReturnDefault', { id: payload.name, value: payload.value })
+          return
+        }
+
+        if (name === 'EnhanceSession') {
+          // Mirrors the native gate: AIClient refuses every AI request with
+          // consent_required until the data-flow disclosure has been accepted at
+          // the current version (AIConsent.currentVersion).
+          const accepted = Number(storedSettings['ai-data-disclosure-accepted-version'] || 0)
+          const uuid = payload.uuid
+          if (accepted < 1) {
+            emit('ReturnEnhancedSession', { uuid, error: 'consent_required' })
+            return
+          }
+          emit('ReturnEnhancedSession', {
+            uuid,
+            title: 'Enhanced by AI',
+            tags: JSON.stringify([{ name: 'Research' }]),
+            quotaRemaining: 4
+          })
           return
         }
 
@@ -265,7 +289,8 @@ async function openDashboard(page, options = {}) {
     bannerStorageUnavailable: Boolean(options.bannerStorageUnavailable),
     subscriptionStatus: options.subscriptionStatus || 'free',
     entitlementTier: options.entitlementTier || '',
-    plusDisplayPrice: options.plusDisplayPrice || ''
+    plusDisplayPrice: options.plusDisplayPrice || '',
+    aiConsentAccepted: options.aiConsentAccepted !== false
   })
 
   await page.route('**/favicon.ico', route => route.fulfill({ status: 204, body: '' }))
@@ -1977,4 +2002,94 @@ test('recovers automatically when a hashed application script is served as HTML'
   const errors = runtimeErrors.get(page)
   expect(errors.some(message => /MIME type|Refused to execute/i.test(message))).toBe(true)
   errors.length = 0
+})
+
+test('asks for the AI data-flow disclosure before the first AI request, then retries it', async ({ page }) => {
+  // The native side refuses every AI request with consent_required until the user
+  // has been told what leaves the device. The dashboard must answer that with the
+  // disclosure — not an error toast — and must not lose the click that triggered it.
+  await openDashboard(page, {
+    initialSessions: sessions,
+    nativeProtocolVersion: '2',
+    entitlementTier: 'plus',
+    aiConsentAccepted: false
+  })
+
+  const card = page.getByTestId('session-session-research')
+  await card.hover()
+  await card.getByTestId('ai-enhance-session').click()
+
+  const modal = page.getByTestId('ai-consent-modal')
+  await expect(modal).toBeVisible()
+  // The disclosure has to name the fields, the recipients and the quota cost.
+  await expect(modal).toContainText('page titles and URLs')
+  await expect(modal).toContainText('Cloudflare')
+  await expect(modal).toContainText('Google Gemini')
+  await expect(modal).toContainText('5 AI requests each week')
+
+  await modal.getByTestId('ai-consent-accept').click()
+  await expect(modal).toBeHidden()
+
+  // Acceptance is recorded through the normal defaults path...
+  await expect.poll(() => lastBridgeCommand(page, 'SetDefault')).toMatchObject({
+    payload: { name: 'ai-data-disclosure-accepted-version', value: '1' }
+  })
+  // ...and the original request is re-sent, so the enhance actually happens.
+  await expect.poll(() => bridgeCommandCount(page, 'EnhanceSession')).toBe(2)
+  await expect(page.getByTestId('session-session-research')).toContainText('Enhanced by AI')
+})
+
+test('sends nothing when the AI disclosure is declined', async ({ page }) => {
+  await openDashboard(page, {
+    initialSessions: sessions,
+    nativeProtocolVersion: '2',
+    entitlementTier: 'plus',
+    aiConsentAccepted: false
+  })
+
+  const card = page.getByTestId('session-session-research')
+  await card.hover()
+  await card.getByTestId('ai-enhance-session').click()
+
+  const modal = page.getByTestId('ai-consent-modal')
+  await expect(modal).toBeVisible()
+  await modal.getByTestId('ai-consent-decline').click()
+  await expect(modal).toBeHidden()
+
+  // No acceptance recorded and no retry: the one refused attempt is all there was.
+  const defaultWrites = await page.evaluate(() => window.__tabspaceBridgeCommands
+    .filter(command => command.name === 'SetDefault'
+      && command.payload.name === 'ai-data-disclosure-accepted-version').length)
+  expect(defaultWrites).toBe(0)
+  await expect.poll(() => bridgeCommandCount(page, 'EnhanceSession')).toBe(1)
+})
+
+test('requires the disclosure before auto-enhance can be switched on', async ({ page }) => {
+  // Auto-enhance runs without an explicit click each time, so turning it on is
+  // exactly the moment the disclosure is due.
+  await openDashboard(page, {
+    initialSessions: sessions,
+    nativeProtocolVersion: '2',
+    entitlementTier: 'plus',
+    aiConsentAccepted: false
+  })
+
+  await page.getByTestId('settings-link').click()
+  const toggle = page.getByTestId('ai-auto-enhance-toggle')
+  await expect(toggle).toBeVisible()
+  await toggle.click()
+
+  const modal = page.getByTestId('ai-consent-modal')
+  await expect(modal).toBeVisible()
+
+  // Nothing is enabled while the disclosure is still on screen.
+  const earlyWrites = await page.evaluate(() => window.__tabspaceBridgeCommands
+    .filter(command => command.name === 'SetDefault'
+      && command.payload.name === 'ai-auto-enhance-enabled').length)
+  expect(earlyWrites).toBe(0)
+
+  await modal.getByTestId('ai-consent-accept').click()
+  await expect.poll(() => lastBridgeCommand(page, 'SetDefault')).toMatchObject({
+    payload: { name: 'ai-auto-enhance-enabled', value: 'true' }
+  })
 })

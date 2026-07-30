@@ -201,5 +201,19 @@
   "multiBrowserStep2": "Chrome, Microsoft Edge 또는 Firefox 121 이상에 Tab Space 확장 프로그램을 설치하세요.",
   "multiBrowserStep3": "확장 프로그램에 여섯 자리 코드를 입력해 연결하세요.",
   "multiBrowserConnected": "이 브라우저는 Tab Space에 연결되어 있습니다.",
-  "multiBrowserProNote": "멀티 브라우저 지원은 Pro에 포함되어 있습니다."
+  "multiBrowserProNote": "멀티 브라우저 지원은 Pro에 포함되어 있습니다.",
+  "aiAutoEnhanceTitle": "AI 제목 및 태그",
+  "aiAutoEnhanceDescription": "탭을 저장하면 AI가 세션 이름을 자동으로 지정하고 태그를 추가합니다. 페이지 제목과 URL만 전송됩니다.",
+  "aiConsentTitle": "Tab Space가 AI를 사용하기 전에",
+  "aiConsentLede": "AI 기능은 탭에 관한 일부 정보를 기기 외부로 전송합니다. 정확히 어떤 일이 일어나는지 알려드립니다.",
+  "aiConsentSentTitle": "전송되는 항목",
+  "aiConsentSentDetail": "해당 세션에 포함된 탭의 페이지 제목과 URL만 전송됩니다. 페이지 내용, 쿠키, 양식 데이터, 다른 탭의 정보는 전송되지 않습니다.",
+  "aiConsentRecipientsTitle": "수신 대상",
+  "aiConsentRecipientsDetail": "Cloudflare에서 호스팅되는 Tab Space AI 서비스이며, 결과를 생성하기 위해 제목과 URL을 Google Gemini로 전달합니다. Tab Space는 이를 저장하지 않으며 모델 학습에도 사용하지 않습니다.",
+  "aiConsentQuotaTitle": "사용되는 횟수",
+  "aiConsentQuotaDetail": "Free와 Plus는 매주 5회의 AI 요청을 포함하며, AI 작업마다 1회가 사용됩니다. Pro는 주간 제한이 없습니다.",
+  "aiConsentRevokeNote": "설정에서 언제든지 AI를 다시 끌 수 있습니다. 꺼져 있는 동안에는 아무것도 전송되지 않습니다.",
+  "aiConsentAccept": "허용하고 계속",
+  "aiConsentDecline": "나중에",
+  "privacyPolicy": "개인정보 처리방침"
 }

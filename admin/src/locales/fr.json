@@ -201,5 +201,19 @@
   "multiBrowserStep2": "Installez l'extension Tab Space dans Chrome, Microsoft Edge ou Firefox 121 ou version ultérieure.",
   "multiBrowserStep3": "Saisissez le code à six chiffres dans l'extension pour la connecter.",
   "multiBrowserConnected": "Ce navigateur est connecté à Tab Space.",
-  "multiBrowserProNote": "La prise en charge de plusieurs navigateurs est incluse avec Pro."
+  "multiBrowserProNote": "La prise en charge de plusieurs navigateurs est incluse avec Pro.",
+  "aiAutoEnhanceTitle": "Titres et tags par l’IA",
+  "aiAutoEnhanceDescription": "Après l’enregistrement des onglets, l’IA nomme automatiquement la session et ajoute des tags. Seuls les titres et les URL des pages sont envoyés.",
+  "aiConsentTitle": "Avant que Tab Space utilise l’IA",
+  "aiConsentLede": "Les fonctions d’IA envoient certaines informations sur vos onglets hors de votre appareil. Voici exactement ce qui se passe.",
+  "aiConsentSentTitle": "Ce qui est envoyé",
+  "aiConsentSentDetail": "Uniquement les titres et les URL des pages des onglets de cette session. Jamais le contenu des pages, les cookies, les données de formulaire ni quoi que ce soit provenant d’autres onglets.",
+  "aiConsentRecipientsTitle": "Qui les reçoit",
+  "aiConsentRecipientsDetail": "Le service d’IA Tab Space, hébergé sur Cloudflare, qui transmet les titres et les URL à Google Gemini pour générer le résultat. Tab Space ne les conserve pas et ne les utilise pas pour entraîner des modèles.",
+  "aiConsentQuotaTitle": "Ce que cela consomme",
+  "aiConsentQuotaDetail": "Free et Plus incluent 5 requêtes d’IA par semaine ; chaque action d’IA en consomme une. Pro supprime la limite hebdomadaire.",
+  "aiConsentRevokeNote": "Vous pouvez désactiver l’IA à tout moment dans les réglages. Rien n’est envoyé lorsqu’elle est désactivée.",
+  "aiConsentAccept": "Autoriser et continuer",
+  "aiConsentDecline": "Pas maintenant",
+  "privacyPolicy": "Politique de confidentialité"
 }
