@@ -403,7 +403,7 @@ test('builds valid browser-specific Manifest V3 packages', () => {
     assert.equal(manifest.permissions.includes('storage'), true)
   }
   for (const target of ['chrome', 'edge', 'firefox']) {
-    assert.equal(existsSync(join(extensionRoot, `dist/packages/tab-space-1.0.0-${target}.zip`)), true)
+    assert.equal(existsSync(join(extensionRoot, `dist/packages/tab-space-1.1.0-${target}.zip`)), true)
     for (const size of [16, 32, 48, 128]) {
       assert.deepEqual(
         readFileSync(join(extensionRoot, `dist/${target}/toolbar-${size}.png`)),

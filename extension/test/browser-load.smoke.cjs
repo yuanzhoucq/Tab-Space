@@ -30,7 +30,7 @@ async function main() {
     const worker = context.serviceWorkers()[0] || await context.waitForEvent('serviceworker', { timeout: 15000 })
     const manifest = await worker.evaluate(() => chrome.runtime.getManifest())
     assert.equal(manifest.name, target.endsWith('-dev') ? 'Tab Space (Dev)' : 'Tab Space')
-    assert.equal(manifest.version, '1.0.0')
+    assert.equal(manifest.version, '1.1.0')
     assert.equal('version_name' in manifest, false)
     assert.equal(manifest.manifest_version, 3)
     const offscreenReady = await worker.evaluate(async () => {
