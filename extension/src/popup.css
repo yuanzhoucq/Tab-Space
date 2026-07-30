@@ -1,0 +1,54 @@
+:root {
+  color-scheme: light dark;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --accent: #fa8072;
+  --accent-strong: #d76f64;
+  --separator: color-mix(in srgb, CanvasText 12%, transparent);
+  --subtle: color-mix(in srgb, CanvasText 5%, transparent);
+}
+
+body { margin: 0; min-width: 360px; background: Canvas; color: CanvasText; }
+main { padding: 16px; }
+.brand { display: flex; gap: 12px; align-items: flex-start; }
+.logo { width: 48px; height: 48px; flex: 0 0 48px; border-radius: 12px; object-fit: cover; }
+h1 { margin: 0 0 4px; font-size: 18px; }
+h2 { margin: 0 0 8px; font-size: 18px; }
+p { margin: 0; color: GrayText; font-size: 13px; line-height: 1.4; }
+.actions { display: grid; gap: 8px; margin-top: 14px; }
+.actions button {
+  width: 100%; padding: 10px 14px; border-radius: 10px; font: inherit; font-weight: 650;
+}
+.utility-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.primary-action { border: 1px solid var(--accent-strong); background: var(--accent-strong); color: white; }
+.secondary-action { border: 1px solid color-mix(in srgb, var(--accent) 55%, transparent); background: color-mix(in srgb, var(--accent) 8%, Canvas); color: var(--accent-strong); }
+.text-action { border: 0; background: transparent; color: var(--accent-strong); }
+button:disabled { opacity: .45; }
+.save-destination { display: grid; gap: 8px; margin-top: 14px; }
+.destination-row { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 10px; align-items: center; }
+.destination-row label { color: GrayText; font-size: 12px; font-weight: 650; }
+.save-destination select { box-sizing: border-box; width: 100%; min-width: 0; padding: 8px 30px 8px 10px; border: 1px solid var(--separator); border-radius: 9px; background: Canvas; color: CanvasText; font: inherit; font-size: 12px; }
+.save-options { display: grid; gap: 9px; margin: 14px 0 0; padding: 12px; border: 1px solid var(--separator); border-radius: 12px; }
+.save-options legend { padding: 0 5px; color: GrayText; font-size: 11px; font-weight: 650; }
+.save-option { display: grid; grid-template-columns: 20px minmax(0, 1fr); gap: 9px; align-items: center; cursor: pointer; font-size: 12px; line-height: 1.35; }
+.save-option input { width: 17px; height: 17px; margin: 0; accent-color: var(--accent); }
+#tab-section { margin-top: 12px; }
+.list-header { display: flex; align-items: center; justify-content: space-between; min-height: 30px; }
+.text-button { width: auto; padding: 5px 0 5px 10px; border: 0; background: transparent; color: var(--accent-strong); font-size: 12px; font-weight: 650; }
+.tab-list { max-height: 310px; overflow-y: auto; border: 1px solid var(--separator); border-radius: 12px; background: var(--subtle); }
+.tab-row { display: grid; grid-template-columns: 24px minmax(0, 1fr); gap: 9px; align-items: center; min-height: 48px; padding: 8px 10px; cursor: pointer; }
+.tab-row + .tab-row { border-top: 1px solid var(--separator); }
+.tab-row.current-tab { background: color-mix(in srgb, var(--accent) 7%, Canvas); }
+.tab-row input { width: 18px; height: 18px; margin: 0; accent-color: var(--accent); }
+.tab-copy { min-width: 0; }
+.tab-title, .tab-url { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tab-title { font-size: 13px; font-weight: 600; }
+.tab-url { margin-top: 2px; color: GrayText; font-size: 11px; }
+.loading { padding: 26px 8px 18px; color: GrayText; font-size: 13px; text-align: center; }
+#status, #pairing-status, #success-status { min-height: 18px; margin-top: 10px; text-align: center; }
+#status.error, #pairing-status.error, #success-status.error { color: #d33b36; }
+.pairing-view { margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--separator); }
+#pairing-code { box-sizing: border-box; width: 100%; margin-top: 14px; padding: 11px 12px; border: 1px solid var(--separator); border-radius: 10px; background: Canvas; color: CanvasText; font: 600 22px ui-monospace, monospace; letter-spacing: .28em; text-align: center; }
+.success-view { padding: 28px 8px 12px; text-align: center; }
+.success-icon { display: grid; place-items: center; width: 58px; height: 58px; margin: 0 auto 14px; border-radius: 50%; background: color-mix(in srgb, var(--accent) 13%, Canvas); color: var(--accent-strong); }
+.success-icon svg { width: 34px; height: 34px; fill: none; stroke: currentColor; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
+.success-view p { margin: 8px auto 18px; }

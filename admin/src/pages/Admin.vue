@@ -3,7 +3,14 @@
     <div id="main">
       <navbar v-if="nativeDetected && initialRefresh"></navbar>
       <div id="title" :class="{'title-centered': !nativeDetected || !initialRefresh}">
-        <h1>Tab Space</h1>
+        <h1>
+          Tab Space
+          <span v-if="isPremium"
+                class="pro-badge"
+                data-testid="pro-badge"
+                :title="lang.planPremium"
+                :aria-label="lang.planPremium">Pro</span>
+        </h1>
         <input v-if="nativeDetected && initialRefresh"
                type="text" name="keyword" id="keyword" v-model="keyword"
                :placeholder="lang.searchPlaceholder">
@@ -66,7 +73,7 @@
 <script>
   import _ from 'lodash'
   import { VueLoading } from 'vue-loading-template'
-  import { mapState } from 'vuex'
+  import { mapState, mapGetters } from 'vuex'
 
   import IosBanner from '../components/IosBanner'
   import Navbar from '../components/Navbar'
@@ -99,6 +106,7 @@
         "sessions",
         "initialRefresh"
       ]),
+      ...mapGetters(["isPremium"]),
       showLoadingState() {
         return (!this.nativeDetected && !this.connectionTimedOut)
           || (this.nativeDetected && !this.initialRefresh)
@@ -209,6 +217,24 @@
     margin: 10px 0;
   }
 
+  /* Subscription marker, set as a superscript on the wordmark rather than a
+     second upsell surface. */
+  .pro-badge {
+    display: inline-block;
+    margin-left: 4px;
+    padding: 2px 7px;
+    border-radius: 999px;
+    background: linear-gradient(135deg, #fa8072, #eb5205);
+    color: #ffffff;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    line-height: 1.2;
+    text-transform: uppercase;
+    vertical-align: super;
+    cursor: default;
+  }
+
   #title:not(.title-centered) h1 {
     margin-left: var(--dashboard-sidebar-column);
     transform: translateY(-12px);
@@ -261,6 +287,9 @@
       align-items: center;
       gap: 4px;
       margin: 0 0 10px;
+      /* Stacked layout: the rail sits above the list, so pinning it would just
+         eat the screen. */
+      position: static;
     }
   }
 

@@ -39,7 +39,7 @@
     <article class="policy-document" id="en" lang="en">
       <p class="policy-eyebrow">Privacy Policy</p>
       <h1>How Tab Space handles your data</h1>
-      <p class="policy-updated">Last updated: July 29, 2026</p>
+      <p class="policy-updated">Last updated: July 30, 2026</p>
       <p>
         This policy applies to the Tab Space apps for Mac, iPhone, and iPad; their browser extensions;
         the Tab Space dashboard; and the public website at <a href="https://mytab.space">mytab.space</a>.
@@ -83,16 +83,24 @@
 
       <h2>Optional AI organizing</h2>
       <p>
-        AI organizing is a Pro feature and runs only when you enable or invoke it. To perform the requested
-        operation, Tab Space sends the selected session name, tab titles and URLs, existing tags, and relevant
-        tag preferences to the Tab Space AI service hosted on Cloudflare. Tab Space does not send webpage body
-        content, cookies, passwords, or your complete browsing history.
+        AI organizing is off until you turn it on. Before the first AI request, Tab Space shows you what would be
+        sent, who receives it, and how it affects your weekly allowance, and asks you to agree. Nothing is sent
+        unless you do, and turning AI off again in Settings stops it. Automatic AI naming of newly saved sessions
+        is a separate switch that is also off by default.
       </p>
       <p>
-        The service verifies an active App Store Pro subscription using Apple-signed transaction information,
-        then forwards the minimum request content to Google Gemini as the primary model provider or Cloudflare
-        Workers AI as a fallback. Those providers process the content to return an organizing result. Their
-        handling is governed by
+        Every plan includes a weekly allowance of AI requests, and a Tab Space Pro subscription removes that
+        limit. To perform the requested operation, Tab Space sends the selected session name, tab titles and URLs,
+        existing tags, and relevant tag preferences to the Tab Space AI service hosted on Cloudflare. Tab Space
+        does not send webpage body content, cookies, passwords, or your complete browsing history.
+      </p>
+      <p>
+        Each request carries a random account identifier, used only to count your usage against the weekly
+        allowance. If your device supplies Apple-signed transaction information, the service verifies it and
+        lifts the weekly limit for an active App Store Pro subscription; requests without a verified
+        subscription are still served within the allowance. The service then forwards the minimum request
+        content to Google Gemini as the primary model provider or Cloudflare Workers AI as a fallback. Those
+        providers process the content to return an organizing result. Their handling is governed by
         <a href="https://policies.google.com/privacy" target="_blank" rel="noopener">Google's Privacy Policy</a>
         and <a href="https://www.cloudflare.com/privacypolicy/" target="_blank" rel="noopener">Cloudflare's Privacy Policy</a>.
       </p>
@@ -117,6 +125,17 @@
         Because the developer does not operate a Tab Space account or receive your session database, the developer
         cannot retrieve or delete that data for you. You can manage local data in the app, remove the app and its
         data through the operating system, and manage iCloud data through your Apple Account settings.
+      </p>
+
+      <h2>Website icons</h2>
+      <p>
+        To show a recognizable icon next to a saved tab, Tab Space requests that site's icon. The Safari extension's
+        tab list requests icons from Google's public favicon service, which means the domain name of that tab (for
+        example <code>example.com</code>) is sent to Google, without the full URL, the page title, or any account
+        identifier. Google's handling is governed by
+        <a href="https://policies.google.com/privacy" target="_blank" rel="noopener">Google's Privacy Policy</a>.
+        Elsewhere Tab Space requests the icon directly from the site itself, which means the site's own server sees
+        that request. Icons are cached on your device.
       </p>
 
       <h2>Data the developer does not collect</h2>
@@ -154,7 +173,7 @@
     <article class="policy-document" id="zh" lang="zh-Hans">
       <p class="policy-eyebrow">隐私政策</p>
       <h1>Tab Space 如何处理你的数据</h1>
-      <p class="policy-updated">最后更新：2026 年 7 月 29 日</p>
+      <p class="policy-updated">最后更新：2026 年 7 月 30 日</p>
       <p>
         本政策适用于 Mac、iPhone 和 iPad 版 Tab Space、相应的浏览器扩展、Tab Space Dashboard，
         以及 <a href="https://mytab.space">mytab.space</a> 官网。
@@ -192,12 +211,19 @@
 
       <h2>可选的 AI 整理</h2>
       <p>
-        AI 整理是 Pro 功能，只有在你启用或主动调用时才会运行。为完成所选操作，Tab Space 会把所选会话名称、
-        标签页标题和 URL、已有标签及相关标签偏好发送到托管在 Cloudflare 上的 Tab Space AI 服务。
-        Tab Space 不会发送网页正文、Cookie、密码或你的完整浏览历史。
+        AI 整理默认关闭，需由你主动开启。在发出第一次 AI 请求之前，Tab Space 会明确告知将要发送的内容、
+        接收方以及对每周额度的影响，并请你确认。未经确认不会发送任何内容；在设置中重新关闭 AI 即可停止发送。
+        保存标签页后自动用 AI 命名会话是一个单独的开关，同样默认关闭。
       </p>
       <p>
-        该服务使用 Apple 签名的交易信息验证有效的 App Store Pro 订阅，然后把完成请求所需的最少内容转发给
+        所有档位每周都包含一定次数的 AI 请求额度，订阅 Tab Space Pro 可解除该限制。为完成所选操作，
+        Tab Space 会把所选会话名称、标签页标题和 URL、已有标签及相关标签偏好发送到托管在 Cloudflare 上的
+        Tab Space AI 服务。Tab Space 不会发送网页正文、Cookie、密码或你的完整浏览历史。
+      </p>
+      <p>
+        每次请求都会附带一个随机账号标识，仅用于统计你在每周额度内的使用次数。如果你的设备提供了
+        Apple 签名的交易信息，该服务会进行验证，并为有效的 App Store Pro 订阅解除每周限制；
+        未通过订阅验证的请求仍会在额度范围内正常处理。随后该服务会把完成请求所需的最少内容转发给
         主要模型提供方 Google Gemini，或在需要时使用 Cloudflare Workers AI 作为备用。相关数据处理受
         <a href="https://policies.google.com/privacy" target="_blank" rel="noopener">Google 隐私政策</a>
         和 <a href="https://www.cloudflare.com/privacypolicy/" target="_blank" rel="noopener">Cloudflare 隐私政策</a>
@@ -219,6 +245,15 @@
       <p>
         由于开发者不运营 Tab Space 账号，也不会收到你的会话数据库，因此无法代你读取或删除这些数据。
         你可以在 App 中管理本地数据、通过操作系统移除 App 及其数据，并在 Apple 账户设置中管理 iCloud 数据。
+      </p>
+
+      <h2>网站图标</h2>
+      <p>
+        为了在已保存的标签页旁显示可识别的网站图标，Tab Space 会请求该网站的图标。Safari 扩展的标签页列表
+        使用 Google 的公共 favicon 服务，因此该标签页的域名（例如 <code>example.com</code>）会被发送给 Google，
+        但不包含完整 URL、页面标题或任何账号标识。Google 的数据处理受
+        <a href="https://policies.google.com/privacy" target="_blank" rel="noopener">Google 隐私政策</a>约束。
+        在其他位置，Tab Space 会直接向网站本身请求图标，因此该网站的服务器会看到这次请求。图标会缓存在你的设备上。
       </p>
 
       <h2>开发者不收集的数据</h2>

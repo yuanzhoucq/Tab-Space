@@ -1,4 +1,5 @@
 const fs = require('fs/promises')
+const path = require('path')
 const { test, expect } = require('@playwright/test')
 
 const sessions = [
@@ -66,7 +67,22 @@ async function openDashboard(page, options = {}) {
     ? initialSessions.length
     : options.expectedSessionCount
 
-  await page.addInitScript(({ testSessions, testBackups, malformedBookmarks, bundledDashboard, collapseSessions, preferredLanguage, bannerStorageUnavailable, ratingBannerReady }) => {
+  await page.addInitScript(({
+    testSessions,
+    testBackups,
+    testSuggestions,
+    nativeProtocolVersion,
+    malformedBookmarks,
+    bundledDashboard,
+    collapseSessions,
+    preferredLanguage,
+    bannerStorageUnavailable,
+    ratingBannerReady,
+    subscriptionStatus,
+    entitlementTier,
+    plusDisplayPrice,
+    aiConsentAccepted
+  }) => {
     const clone = value => JSON.parse(JSON.stringify(value))
     const settingsKey = 'tabspace-e2e-settings'
     if (collapseSessions) localStorage.setItem('tabspace-session-cards-collapsed', 'true')
@@ -76,6 +92,10 @@ async function openDashboard(page, options = {}) {
     }
     const storedSettings = JSON.parse(localStorage.getItem(settingsKey) || '{}')
     if (preferredLanguage) storedSettings['preferred-language'] = preferredLanguage
+    // The AI data-flow disclosure is a one-time first-run step. Tests that are
+    // about anything else start from a user who has already accepted it.
+    if (aiConsentAccepted) storedSettings['ai-data-disclosure-accepted-version'] = '1'
+    else delete storedSettings['ai-data-disclosure-accepted-version']
     let currentSessions = clone(testSessions)
 
     window.__tabspaceBridgeCommands = []
@@ -116,7 +136,29 @@ async function openDashboard(page, options = {}) {
         if (name === 'CheckDefault') {
           emit('ReturnDefault', {
             id: payload.name,
-            value: storedSettings[payload.name] || ''
+            value: payload.name === 'tabspace-native-protocol-version'
+              ? nativeProtocolVersion
+              : (storedSettings[payload.name] || '')
+          })
+          return
+        }
+
+        if (name === 'GetSuggestions') {
+          emit('ReturnSuggestions', { suggestions: JSON.stringify(testSuggestions) })
+          return
+        }
+
+        if (name === 'CheckSubscriptionStatus') {
+          emit('ReturnSubscriptionStatus', {
+            status: subscriptionStatus,
+            ...(Number(nativeProtocolVersion) >= 2
+              ? {
+                  tier: entitlementTier || (subscriptionStatus === 'active' ? 'pro' : 'free'),
+                  hasPermanentPlus: entitlementTier === 'plus',
+                  ...(plusDisplayPrice ? { plusDisplayPrice } : {})
+                }
+              : {}),
+            quotaRemaining: subscriptionStatus === 'active' ? -1 : 5
           })
           return
         }
@@ -125,6 +167,25 @@ async function openDashboard(page, options = {}) {
           storedSettings[payload.name] = payload.value
           localStorage.setItem(settingsKey, JSON.stringify(storedSettings))
           emit('ReturnDefault', { id: payload.name, value: payload.value })
+          return
+        }
+
+        if (name === 'EnhanceSession') {
+          // Mirrors the native gate: AIClient refuses every AI request with
+          // consent_required until the data-flow disclosure has been accepted at
+          // the current version (AIConsent.currentVersion).
+          const accepted = Number(storedSettings['ai-data-disclosure-accepted-version'] || 0)
+          const uuid = payload.uuid
+          if (accepted < 1) {
+            emit('ReturnEnhancedSession', { uuid, error: 'consent_required' })
+            return
+          }
+          emit('ReturnEnhancedSession', {
+            uuid,
+            title: 'Enhanced by AI',
+            tags: JSON.stringify([{ name: 'Research' }]),
+            quotaRemaining: 4
+          })
           return
         }
 
@@ -153,6 +214,17 @@ async function openDashboard(page, options = {}) {
         }
 
         if (name === 'AppendSessions') {
+          // Mirrors CommercializationConfig.canCreateSessions: Free stores at
+          // most five sessions and the native side saves none of a batch that
+          // would cross the line. Only protocol v2 reports a tier, and only
+          // those builds enforce the limit.
+          const requested = (payload.bookmarks || []).length
+          const tier = entitlementTier || (subscriptionStatus === 'active' ? 'pro' : 'free')
+          if (Number(nativeProtocolVersion) >= 2 && tier === 'free'
+            && currentSessions.length + requested > 5) {
+            emit('SessionLimitReached', { limit: 5 })
+            return
+          }
           for (const [index, appendedSession] of (payload.bookmarks || []).entries()) {
             const normalizedSession = clone(appendedSession)
             normalizedSession.uuid ||= `imported-${Date.now()}-${index}`
@@ -226,12 +298,18 @@ async function openDashboard(page, options = {}) {
   }, {
     testSessions: initialSessions,
     testBackups: options.backups || [],
+    testSuggestions: options.suggestions || [],
+    nativeProtocolVersion: options.nativeProtocolVersion || '1',
     malformedBookmarks: Boolean(options.malformedBookmarks),
     bundledDashboard: Boolean(options.bundledDashboard),
     collapseSessions: Boolean(options.collapseSessions),
     preferredLanguage: options.preferredLanguage || '',
     bannerStorageUnavailable: Boolean(options.bannerStorageUnavailable),
-    ratingBannerReady: Boolean(options.ratingBannerReady)
+    ratingBannerReady: Boolean(options.ratingBannerReady),
+    subscriptionStatus: options.subscriptionStatus || 'free',
+    entitlementTier: options.entitlementTier || '',
+    plusDisplayPrice: options.plusDisplayPrice || '',
+    aiConsentAccepted: options.aiConsentAccepted !== false
   })
 
   await page.route('**/favicon.ico', route => route.fulfill({ status: 204, body: '' }))
@@ -241,6 +319,79 @@ async function openDashboard(page, options = {}) {
     await expect(page.locator('.session')).toHaveCount(expectedSessionCount)
   }
 }
+
+test('opens AI organization suggestions from the right toolbar without showing a banner', async ({ page }) => {
+  const sessionsWithMatchingTabs = [
+    sessions[0],
+    {
+      ...sessions[0],
+      uuid: 'session-reading',
+      title: 'Reading list',
+      timestamp: 1767312000000,
+      sites: sessions[0].sites.map(site => ({ ...site })),
+      tags: [{ name: 'Personal' }]
+    }
+  ]
+  await openDashboard(page, {
+    initialSessions: sessionsWithMatchingTabs,
+    nativeProtocolVersion: '2',
+    subscriptionStatus: 'active',
+    entitlementTier: 'pro',
+    suggestions: [{
+      id: 'duplicate-sessions',
+      type: 'exactDuplicate',
+      sessionUuids: ['session-research', 'session-reading'],
+      tagNames: [],
+      confidence: 1,
+      impact: 3
+    }]
+  })
+
+  await expect.poll(() => lastBridgeCommand(page, 'PrepareAI')).not.toBeNull()
+  await expect(page.getByTestId('ai-suggestion-card')).toHaveCount(0)
+  const organize = page.getByTestId('organize-library')
+  await expect(organize).toBeVisible()
+  await expect(organize).toHaveAttribute('aria-label', 'View all 1 suggestions')
+  await expect(organize.getByTestId('organize-suggestion-count')).toHaveText('1')
+
+  await organize.click()
+  const report = page.getByRole('dialog')
+  await expect(report).toBeVisible()
+  await expect(report.getByRole('heading', { name: 'Cleanup report' })).toBeVisible()
+  await expect(report).toContainText('Duplicate sessions')
+  await expect(report).not.toContainText('⭐')
+
+  const review = report.getByTestId('review-suggestion-duplicate-sessions')
+  await expect(review).toHaveAttribute('aria-expanded', 'false')
+  await review.click()
+  const details = report.getByTestId('review-details-duplicate-sessions')
+  await expect(details.getByTestId('review-session-session-research')).toContainText('Research')
+  await expect(details.getByTestId('review-session-session-research')).toContainText('OpenAI')
+  await expect(details.getByTestId('review-session-session-reading')).toContainText('Reading list')
+  await expect(details.getByTestId('review-session-session-reading')).toContainText('OpenAI')
+  await expect(details.getByTestId('review-session-session-reading')).toContainText('Personal')
+  const item = report.getByTestId('report-item-duplicate-sessions')
+  // The panel slides down from translateY(-4px); measuring mid-transition puts
+  // it above the row it belongs under.
+  await expect.poll(() => details.evaluate(element => getComputedStyle(element).transform)).toBe('none')
+  const layout = await item.evaluate(element => {
+    const row = element.querySelector('.report-item-main').getBoundingClientRect()
+    const preview = element.querySelector('.report-item-detail').getBoundingClientRect()
+    return {
+      rowBottom: row.bottom,
+      previewTop: preview.top,
+      rowLeft: row.left,
+      previewLeft: preview.left,
+      rowRight: row.right,
+      previewRight: preview.right
+    }
+  })
+  expect(layout.previewTop).toBeGreaterThanOrEqual(layout.rowBottom - 1)
+  expect(Math.abs(layout.previewLeft - layout.rowLeft)).toBeLessThanOrEqual(1)
+  expect(Math.abs(layout.previewRight - layout.rowRight)).toBeLessThanOrEqual(1)
+  await expect(review).toHaveAttribute('aria-expanded', 'true')
+  await expect(report).toBeVisible()
+})
 
 test('shows the iOS launch banner at card width and persists dismissal', async ({ page }) => {
   await openDashboard(page, { initialSessions: sessions })
@@ -374,6 +525,116 @@ test('goes quiet for a while when the rating banner is closed, then gives up', a
   await expect(banner).toHaveCount(0)
 })
 
+async function openAppExtensionDashboard(page, initialSessions) {
+  await page.addInitScript(testSessions => {
+    const clone = value => JSON.parse(JSON.stringify(value))
+    const bridgeEvent = name => `tabspace:app-extension:${name}`
+    window.__tabspaceBridgeCommands = []
+
+    const emit = (name, message = {}) => {
+      document.dispatchEvent(new CustomEvent(bridgeEvent('message'), {
+        detail: JSON.stringify({ name, message: clone(message) })
+      }))
+    }
+    const announce = () => {
+      document.dispatchEvent(new CustomEvent(bridgeEvent('ready'), {
+        detail: JSON.stringify({ protocolVersion: 1 })
+      }))
+    }
+
+    document.addEventListener(bridgeEvent('probe'), announce)
+    document.addEventListener(bridgeEvent('command'), event => {
+      const command = JSON.parse(event.detail)
+      window.__tabspaceBridgeCommands.push(clone(command))
+      if (command.name === 'CheckBookmarks') {
+        emit('ReturnBookmarks', { value: clone(testSessions) })
+      } else if (command.name === 'CheckDefault') {
+        emit('ReturnDefault', {
+          id: command.data.name,
+          value: command.data.name === 'tabspace-native-protocol-version' ? '1' : ''
+        })
+      }
+    })
+  }, initialSessions)
+
+  await page.route('**/favicon.ico', route => route.fulfill({ status: 204, body: '' }))
+  await page.goto('http://localhost:47317/')
+}
+
+async function openWebExtensionDashboard(page, capabilities) {
+  await page.addInitScript(({ testSessions, bridgeCapabilities }) => {
+    const clone = value => JSON.parse(JSON.stringify(value))
+    const channel = 'tabspace-webextension-v2'
+    window.__tabspaceBridgeCommands = []
+
+    const post = (type, payload = {}) => {
+      window.postMessage({
+        channel,
+        source: 'extension',
+        type,
+        ...payload
+      }, window.location.origin)
+    }
+    const nativeMessage = message => post('native-message', { message })
+
+    window.addEventListener('message', event => {
+      const data = event.data
+      if (event.source !== window || data.channel !== channel || data.source !== 'dashboard') return
+      if (data.type === 'probe') {
+        post('ready', { protocolVersion: 2 })
+        post('connected', {
+          bridgeInfo: {
+            connected: true,
+            protocolVersion: 2,
+            capabilities: bridgeCapabilities
+          }
+        })
+        return
+      }
+      if (data.type !== 'request' || !data.message) return
+      const command = clone(data.message)
+      window.__tabspaceBridgeCommands.push({ name: command.cmd, payload: command })
+      if (command.cmd === 'CheckBookmarks') {
+        nativeMessage({ cmd: 'ReturnBookmarks', bookmarks: clone(testSessions) })
+      } else if (command.cmd === 'CheckDefault') {
+        nativeMessage({
+          cmd: 'ReturnDefault',
+          id: command.name,
+          value: command.name === 'tabspace-native-protocol-version' ? '2' : ''
+        })
+      } else if (command.cmd === 'GetSuggestions') {
+        nativeMessage({ cmd: 'ReturnSuggestions', suggestions: '[]' })
+      } else if (command.cmd === 'CheckSubscriptionStatus') {
+        nativeMessage({
+          cmd: 'ReturnSubscriptionStatus',
+          status: 'free',
+          tier: 'free',
+          quotaRemaining: 5
+        })
+      }
+      post('request-complete', { requestId: data.requestId })
+    })
+  }, { testSessions: sessions, bridgeCapabilities: capabilities })
+
+  const distRoot = path.resolve(__dirname, '..', 'dist')
+  await page.route('http://127.0.0.1:8080/**', async route => {
+    const pathname = new URL(route.request().url()).pathname
+    const relativePath = pathname === '/' ? 'index.html' : pathname.replace(/^\/+/, '')
+    const filePath = path.resolve(distRoot, relativePath)
+    if (!filePath.startsWith(`${distRoot}${path.sep}`)) {
+      await route.fulfill({ status: 404, body: '' })
+      return
+    }
+    try {
+      await fs.access(filePath)
+      await route.fulfill({ path: filePath })
+    } catch (_) {
+      await route.fulfill({ status: 404, body: '' })
+    }
+  })
+  await page.goto('http://127.0.0.1:8080/')
+}
+
 async function lastBridgeCommand(page, name) {
   return page.evaluate(commandName => {
     const commands = window.__tabspaceBridgeCommands.filter(command => command.name === commandName)
@@ -477,6 +738,291 @@ test('keeps the dragged tab preview under the pointer', async ({ page }) => {
   await page.mouse.up()
 })
 
+// Homes in on the target while the drag is live: dropping a tab removes it from
+// the source list and inserts a placeholder session, so the target keeps moving
+// under the pointer.
+async function dragTabOnto(page, sourceTab, targetTab) {
+  const sourceBox = await sourceTab.boundingBox()
+  let x = sourceBox.x + sourceBox.width - 12
+  let y = sourceBox.y + sourceBox.height / 2
+  await page.mouse.move(x, y)
+  await page.mouse.down()
+  y += 15
+  await page.mouse.move(x, y, { steps: 4 })
+  for (let attempt = 0; attempt < 60; attempt += 1) {
+    await page.waitForTimeout(50)
+    const targetBox = await targetTab.boundingBox()
+    const deltaX = targetBox.x + targetBox.width - 12 - x
+    const deltaY = targetBox.y + targetBox.height / 2 - y
+    if (Math.abs(deltaX) < 3 && Math.abs(deltaY) < 3) break
+    x += Math.max(-15, Math.min(15, deltaX))
+    y += Math.max(-15, Math.min(15, deltaY))
+    await page.mouse.move(x, y)
+  }
+  await page.waitForTimeout(150)
+  await page.mouse.up()
+}
+
+test('offers the AI actions on titles-only rows', async ({ page }) => {
+  const splittableSessions = [
+    {
+      ...sessions[0],
+      sites: [...sessions[0].sites, { title: 'Hacker News', url: 'https://news.ycombinator.com' }]
+    },
+    sessions[1]
+  ]
+  await openDashboard(page, {
+    initialSessions: splittableSessions,
+    nativeProtocolVersion: '2',
+    subscriptionStatus: 'active',
+    entitlementTier: 'pro'
+  })
+  // The menu overlays the list while the pointer rests on it, so step away
+  // before touching a row.
+  const chooseView = async mode => {
+    await page.getByTestId('view-mode-menu').hover()
+    await page.getByTestId(`view-mode-${mode}`).click()
+    await page.mouse.move(0, 300)
+    await expect(page.getByTestId('view-mode-titles')).toBeHidden()
+  }
+  await chooseView('titles')
+
+  const research = page.getByTestId('titles-only-session-card').getByTestId('session-session-research')
+  const reading = page.getByTestId('titles-only-session-card').getByTestId('session-session-reading')
+
+  // Open stays the rightmost control on the row.
+  const order = await research.locator('.titles-only-session-summary').evaluate(row => (
+    [...row.querySelectorAll('button')].map(button => button.dataset.testid)
+  ))
+  expect(order.slice(-3)).toEqual(['ai-enhance-session', 'ai-split-session', 'restore-session'])
+
+  // Splitting needs at least three tabs; the single-tab session only enhances.
+  await expect(reading.getByTestId('ai-enhance-session')).toHaveCount(1)
+  await expect(reading.getByTestId('ai-split-session')).toHaveCount(0)
+
+  await research.getByTestId('ai-enhance-session').click()
+  await expect.poll(() => lastBridgeCommand(page, 'EnhanceSession')).toMatchObject({
+    payload: { uuid: 'session-research' }
+  })
+
+  await chooseView('expanded')
+  await chooseView('titles')
+  await research.getByTestId('ai-split-session').click()
+  await expect.poll(() => lastBridgeCommand(page, 'ClusterTabs')).toMatchObject({
+    payload: { uuid: 'session-research' }
+  })
+})
+
+test('scrolls rather than squashing the tag filters in a short window', async ({ page }) => {
+  const taggedSessions = Array.from({ length: 12 }, (unused, index) => ({
+    uuid: `session-${index}`,
+    title: `Session ${index + 1}`,
+    timestamp: 1767225600000 + index,
+    comment: '',
+    sites: [{ title: `Example ${index}`, url: `https://example.com/${index}` }],
+    tags: [{ name: `Tag ${String(index).padStart(2, '0')}` }]
+  }))
+  await page.setViewportSize({ width: 1280, height: 380 })
+  await openDashboard(page, { initialSessions: taggedSessions })
+
+  const sidebar = page.locator('.session-sidebar')
+  const filters = sidebar.locator('.tag-filter')
+  await expect(filters.first()).toBeVisible()
+
+  // The rail is capped to the window, so its content has to overflow…
+  const metrics = await sidebar.evaluate(element => ({
+    scrollHeight: element.scrollHeight,
+    clientHeight: element.clientHeight
+  }))
+  expect(metrics.scrollHeight).toBeGreaterThan(metrics.clientHeight)
+
+  // …and each filter has to keep its full height instead of being squeezed to
+  // fit, which is what a column flex container does to its children by default.
+  const heights = await filters.evaluateAll(elements => elements.map(element => (
+    Math.round(element.getBoundingClientRect().height)
+  )))
+  const tallest = Math.max(...heights)
+  for (const height of heights) expect(height).toBe(tallest)
+  expect(tallest).toBeGreaterThanOrEqual(30)
+})
+
+test('keeps the tag filters and the toolbar pinned while the list scrolls', async ({ page }) => {
+  const manySessions = Array.from({ length: 14 }, (unused, index) => ({
+    uuid: `session-${index}`,
+    title: `Session ${index + 1}`,
+    timestamp: 1767225600000 + index,
+    comment: '',
+    sites: [
+      { title: `Example ${index}`, url: `https://example.com/${index}` },
+      { title: `Another ${index}`, url: `https://example.org/${index}` }
+    ],
+    tags: [{ name: index % 2 ? 'Work' : 'Reading' }]
+  }))
+  await openDashboard(page, { initialSessions: manySessions })
+
+  const sidebar = page.locator('.session-sidebar')
+  const hub = page.locator('.session-hub')
+  const tops = async () => page.evaluate(() => ({
+    sidebar: Math.round(document.querySelector('.session-sidebar').getBoundingClientRect().top),
+    hub: Math.round(document.querySelector('.session-hub').getBoundingClientRect().top)
+  }))
+
+  const resting = await tops()
+  expect(resting.sidebar).toBeGreaterThan(60)
+
+  await page.evaluate(() => window.scrollTo(0, 700))
+  await expect.poll(() => page.evaluate(() => Math.round(window.scrollY))).toBe(700)
+  const pinned = await tops()
+  expect(pinned.sidebar).toBe(16)
+  expect(pinned.hub).toBe(16)
+  await expect(sidebar.getByTestId('filter-all')).toBeInViewport()
+  await expect(hub.getByTestId('add-session')).toBeInViewport()
+})
+
+test('marks the dashboard title with a Pro badge once subscribed', async ({ page }) => {
+  await openDashboard(page, { initialSessions: sessions, nativeProtocolVersion: '2' })
+  await expect(page.getByTestId('pro-badge')).toHaveCount(0)
+
+  await openDashboard(page, {
+    initialSessions: sessions,
+    nativeProtocolVersion: '2',
+    subscriptionStatus: 'active'
+  })
+  const badge = page.getByTestId('pro-badge')
+  await expect(badge).toHaveText('Pro')
+  await expect(badge).toHaveAttribute('aria-label', 'Pro')
+
+  // Sits at the top right of the wordmark, not on its baseline.
+  const placement = await page.locator('#title h1').evaluate(heading => {
+    const wordmark = heading.firstChild.nodeType === Node.TEXT_NODE
+      ? (() => {
+        const range = document.createRange()
+        range.selectNodeContents(heading.firstChild)
+        return range.getBoundingClientRect()
+      })()
+      : heading.getBoundingClientRect()
+    const badge = heading.querySelector('[data-testid="pro-badge"]').getBoundingClientRect()
+    return {
+      wordmarkTop: wordmark.top,
+      wordmarkBottom: wordmark.bottom,
+      wordmarkRight: wordmark.right,
+      badgeTop: badge.top,
+      badgeBottom: badge.bottom,
+      badgeLeft: badge.left
+    }
+  })
+  expect(placement.badgeLeft).toBeGreaterThanOrEqual(placement.wordmarkRight - 1)
+  expect((placement.badgeTop + placement.badgeBottom) / 2)
+    .toBeLessThan((placement.wordmarkTop + placement.wordmarkBottom) / 2)
+})
+
+test('maps protocol v2 Plus and keeps the weekly AI trial available', async ({ page }) => {
+  await openDashboard(page, {
+    initialSessions: sessions,
+    nativeProtocolVersion: '2',
+    entitlementTier: 'plus',
+    plusDisplayPrice: '$9.99'
+  })
+
+  await expect.poll(() => bridgeCommandCount(page, 'PrepareAI')).toBe(1)
+  // Permanent Plus is not Pro: the weekly free-tier AI allowance still applies,
+  // so the readout starts at five and one enhancement spends one of them.
+  await expect(page.getByTestId('plan-status-link')).toContainText('5 AI')
+  const card = page.getByTestId('session-session-research')
+  await card.hover()
+  await expect(card.getByTestId('ai-enhance-session')).toBeVisible()
+  await card.getByTestId('ai-enhance-session').click()
+  await expect.poll(() => bridgeCommandCount(page, 'EnhanceSession')).toBe(1)
+  await expect(page.getByTestId('plan-status-link')).toContainText('4 AI')
+  await page.getByTestId('settings-link').click()
+  await expect(page.getByTestId('plan-status')).toContainText('Plus · Permanent')
+  await expect(page.getByTestId('settings-plus-price')).toHaveText('$9.99')
+  await expect(page.getByTestId('settings-plus-price')).toHaveCSS('text-decoration-line', 'line-through')
+  await expect(page.getByTestId('settings-plus-summary')).toBeVisible()
+  await page.getByTestId('settings-upgrade').click()
+  // The plan story lives in one comparison table now; Settings also mentions
+  // multi-browser, so scope the assertion to the table inside the dialog.
+  const comparison = page.getByTestId('plan-comparison')
+  await expect(comparison.getByText('Multi-browser support')).toBeVisible()
+  await expect(comparison.getByRole('columnheader', { name: /Plus/ })).toContainText('Your plan')
+  await expect(page.getByTestId('modal-plus-price')).toHaveText('$9.99')
+  await expect(page.getByTestId('modal-plus-price')).toHaveCSS('text-decoration-line', 'line-through')
+  await expect(page.getByTestId('plan-yearly')).toHaveAttribute('aria-pressed', 'true')
+  await expect(page.getByTestId('plan-monthly')).toHaveAttribute('aria-pressed', 'false')
+  await page.getByTestId('plan-monthly').click()
+  await expect(page.getByTestId('plan-monthly')).toHaveAttribute('aria-pressed', 'true')
+  await expect(page.getByTestId('plan-yearly')).toHaveAttribute('aria-pressed', 'false')
+  await page.getByTestId('subscription-submit').click()
+  await expect.poll(() => lastBridgeCommand(page, 'PurchaseSubscription')).toMatchObject({
+    payload: { productId: 'tabspace.pro.monthly' }
+  })
+})
+
+test('lets a Pro subscriber reopen the plan comparison from Settings', async ({ page }) => {
+  await openDashboard(page, {
+    initialSessions: sessions,
+    nativeProtocolVersion: '2',
+    entitlementTier: 'pro'
+  })
+
+  await page.getByTestId('settings-link').click()
+  await expect(page.getByTestId('plan-status')).toContainText('Pro')
+  // Upgrading is meaningless at this tier, but reading the plan is not.
+  await expect(page.getByTestId('settings-upgrade')).toHaveCount(0)
+  await page.getByTestId('settings-view-plans').click()
+
+  await expect(page.getByTestId('pro-active-message')).toBeVisible()
+  const comparison = page.getByTestId('plan-comparison')
+  await expect(comparison.getByRole('columnheader', { name: /Pro/ })).toContainText('Your plan')
+  // No purchase controls for someone who already subscribed.
+  await expect(page.getByTestId('subscription-submit')).toHaveCount(0)
+  await page.getByTestId('modal-manage-subscription').click()
+  await expect.poll(() => lastBridgeCommand(page, 'PurchaseSubscription')).toBeTruthy()
+})
+
+test('offers multi-browser setup from Settings and gates it behind Pro', async ({ page }) => {
+  await openDashboard(page, {
+    initialSessions: sessions,
+    nativeProtocolVersion: '2',
+    entitlementTier: 'free'
+  })
+
+  await page.getByTestId('settings-link').click()
+  const card = page.getByTestId('multi-browser-card')
+  await expect(card).toBeVisible()
+  await expect(card.getByTestId('multi-browser-steps').locator('li')).toHaveCount(3)
+  await card.getByTestId('multi-browser-upgrade').click()
+  await expect(page.getByTestId('plan-comparison')).toBeVisible()
+})
+
+test('saves both sessions after dragging a tab across them', async ({ page }) => {
+  await openDashboard(page, { initialSessions: sessions })
+  const research = page.getByTestId('session-session-research')
+  const reading = page.getByTestId('session-session-reading')
+
+  await dragTabOnto(page, research.getByTestId('visible-site').nth(0), reading.getByTestId('visible-site').last())
+
+  // The dragged tab — not one of its neighbours — has to be the one that moves.
+  await expect.poll(() => lastBridgeCommand(page, 'UpdateSession')).toMatchObject({
+    payload: {
+      bookmarks: [{
+        uuid: 'session-reading',
+        sites: [{ title: 'GitHub Actions' }, { title: 'OpenAI' }]
+      }]
+    }
+  })
+  // The emptied source is saved too, otherwise the tab reappears on refresh.
+  const sourceUpdate = await page.evaluate(() => window.__tabspaceBridgeCommands
+    .filter(command => command.name === 'UpdateSession')
+    .map(command => command.payload.bookmarks[0])
+    .find(bookmark => bookmark.uuid === 'session-research'))
+  expect(sourceUpdate.sites.map(site => site.title)).toEqual(['Cloudflare Pages'])
+
+  await expect(reading.getByTestId('visible-site')).toHaveCount(2)
+  await expect(research.getByTestId('visible-site')).toHaveCount(1)
+  await expect(research).not.toContainText('OpenAI')
+})
+
 test('uses the merge shortcut to select all tabs and merge session tags', async ({ page }) => {
   await openDashboard(page, { initialSessions: sessions })
 
@@ -548,7 +1094,9 @@ test('loads, searches, filters and counts sessions', async ({ page }) => {
   }))
   expect(Math.round(searchRowAlignment.urlX)).toBe(Math.round(searchRowAlignment.titleX))
 
-  const searchExpansion = searchResult.getByTestId('toggle-session-expansion')
+  // The match count is the expander here; the card carries no separate button.
+  await expect(searchResult.getByTestId('toggle-session-expansion')).toHaveCount(0)
+  const searchExpansion = searchResult.getByTestId('search-match-count')
   await expect(searchExpansion).toHaveAttribute('aria-label', 'Expand session')
   await searchExpansion.click()
   await expect(searchResult.getByTestId('visible-site')).toHaveCount(2)
@@ -561,7 +1109,7 @@ test('loads, searches, filters and counts sessions', async ({ page }) => {
   await page.locator('#keyword').fill('')
   await expect(page.locator('.session')).toHaveCount(2)
   await expect(searchResult.getByTestId('visible-site')).toHaveCount(2)
-  await expect(searchResult.getByTestId('toggle-session-expansion')).toHaveCount(0)
+  await expect(searchResult.getByTestId('search-match-count')).toHaveCount(0)
   await expect(page.getByTestId('session-stats')).toContainText('3 tabs')
 
   await searchResult.hover()
@@ -578,6 +1126,74 @@ test('loads, searches, filters and counts sessions', async ({ page }) => {
   await expect(page.getByTestId('session-session-research')).toBeHidden()
   await page.getByTestId('filter-all').click()
   await expect(page.locator('.session')).toHaveCount(2)
+})
+
+test('connects localhost through the Safari App Extension DOM bridge', async ({ page }) => {
+  await openAppExtensionDashboard(page, sessions)
+
+  await expect(page.locator('.session')).toHaveCount(2)
+  await expect.poll(() => page.evaluate(() => window.__tabspace_bridge)).toBeUndefined()
+  await expect.poll(() => bridgeCommandCount(page, 'CheckBookmarks')).toBeGreaterThan(0)
+  await page.waitForTimeout(1200)
+  await expect(page.locator('#bridgeStorage')).toHaveCount(0)
+})
+
+test('enables AI and subscription UI through a capable companion WebExtension', async ({ page }) => {
+  await openWebExtensionDashboard(page, [
+    'sessions.read',
+    'ai.v1',
+    'suggestions.v1',
+    'subscription.v1',
+    'dashboard.ai.v1'
+  ])
+
+  await expect(page.locator('.session')).toHaveCount(2)
+  await expect(page.getByTestId('ai-enhance-session').first()).toBeVisible()
+  await expect.poll(() => bridgeCommandCount(page, 'PrepareAI')).toBe(1)
+  await page.getByRole('link', { name: 'Settings' }).click()
+  await expect(page.getByTestId('subscription-card')).toBeVisible()
+  await expect.poll(() => bridgeCommandCount(page, 'CheckSubscriptionStatus')).toBeGreaterThan(0)
+})
+
+test('keeps AI hidden when an older WebExtension only forwards the native capability', async ({ page }) => {
+  await openWebExtensionDashboard(page, ['sessions.read', 'ai.v1'])
+
+  await expect(page.locator('.session')).toHaveCount(2)
+  await expect(page.getByTestId('ai-enhance-session')).toHaveCount(0)
+  await expect.poll(() => bridgeCommandCount(page, 'PrepareAI')).toBe(0)
+  await page.getByRole('link', { name: 'Settings' }).click()
+  await expect(page.getByTestId('subscription-card')).toHaveCount(0)
+})
+
+test('falls back to the legacy iframe bridge used by build 89', async ({ page }) => {
+  const serializedSessions = JSON.stringify(sessions).replace(/</g, '\\u003c')
+  await page.route('**/storage.html?method=get', route => route.fulfill({
+    contentType: 'text/html',
+    body: `<!doctype html><script>
+      const sessions = ${serializedSessions}
+      window.addEventListener('message', event => {
+        if (!event.data || event.data.cmd !== 'CheckDefault') return
+        parent.postMessage({
+          cmd: 'ReturnDefault',
+          id: event.data.name,
+          value: event.data.name === 'tabspace-native-protocol-version' ? '1' : ''
+        }, '*')
+      })
+      setTimeout(() => parent.postMessage({
+        cmd: 'ReturnBookmarks',
+        bookmarks: JSON.stringify(sessions)
+      }, '*'), 50)
+    <\/script>`
+  }))
+  await page.route('**/favicon.ico', route => route.fulfill({ status: 204, body: '' }))
+  await page.goto('http://localhost:47317/')
+
+  await expect(page.locator('#bridgeStorage')).toHaveAttribute(
+    'src',
+    'https://static.mytab.space/storage.html?method=get'
+  )
+  await expect(page.locator('.session')).toHaveCount(2)
+  await expect(page.getByTestId('session-session-research')).toBeVisible()
 })
 
 test('finds and safely deletes matches at the end of a session with thousands of tabs', async ({ page }) => {
@@ -682,17 +1298,26 @@ test('collapses session favicons into an iOS-style stack after ten tabs', async 
   await expect(page.getByTestId('session-session-ten-tabs').getByTestId('collapsed-site-overflow')).toHaveCount(0)
   await expect.poll(() => icons.first().evaluate(element => getComputedStyle(element).borderRadius)).toBe('50%')
 
-  const sessionExpansion = card.getByTestId('toggle-session-expansion')
+  // A collapsed card has no expand button: clicking its empty space expands it,
+  // and the favicon row is the matching keyboard control.
+  await expect(card.getByTestId('toggle-session-expansion')).toHaveCount(0)
+  const sessionExpansion = card.getByTestId('site-list')
+  await expect(sessionExpansion).toHaveAttribute('data-expander', 'true')
   await expect(sessionExpansion).toHaveAttribute('aria-label', 'Expand session')
-  await sessionExpansion.click()
+  await card.locator('.session-header').click()
   await expect(card.getByTestId('visible-site')).toHaveCount(12)
   await expect(card.locator('.site-title')).toHaveCount(12)
   await expect(card.getByTestId('collapsed-site-icon')).toHaveCount(0)
   await expect(sessionExpansion).toHaveAttribute('aria-label', 'Collapse session')
   await expect(page.getByTestId('session-session-ten-tabs').getByTestId('collapsed-site-icon')).toHaveCount(10)
-  await sessionExpansion.click()
+  await sessionExpansion.focus()
+  await sessionExpansion.press('Enter')
   await expect(card.getByTestId('collapsed-site-icon')).toHaveCount(10)
   await expect(card.locator('.site-title')).toHaveCount(0)
+  await sessionExpansion.press('Space')
+  await expect(card.getByTestId('visible-site')).toHaveCount(12)
+  await card.locator('.session-header').click()
+  await expect(card.getByTestId('collapsed-site-icon')).toHaveCount(10)
   await expect.poll(() => icons.first().evaluate(element => getComputedStyle(element).borderRadius)).toBe('50%')
 
   const iconStyle = await icons.first().evaluate(element => {
@@ -739,8 +1364,22 @@ test('cycles through expanded, titles-only and compact session views', async ({ 
 
   const toggle = page.getByTestId('toggle-collapse')
   await expect(toggle).toHaveAttribute('data-view-mode', 'expanded')
+  await expect(toggle).toHaveAttribute('aria-label', 'Switch session view: Expanded')
   await expect(page.getByTestId('session-session-research').getByTestId('site-list'))
     .toHaveAttribute('data-site-drag-enabled', 'true')
+
+  // Hovering the trigger names each view, so the cycle is not icon-only guesswork.
+  await page.getByTestId('view-mode-menu').hover()
+  await expect(page.getByTestId('view-mode-expanded')).toHaveText('Expanded')
+  await expect(page.getByTestId('view-mode-expanded')).toHaveAttribute('aria-pressed', 'true')
+  await expect(page.getByTestId('view-mode-compact')).toHaveText('Compact')
+  await expect(page.getByTestId('view-mode-titles')).toHaveText('Titles only')
+  await page.getByTestId('view-mode-compact').click()
+  await expect(toggle).toHaveAttribute('data-view-mode', 'compact')
+  await expect(toggle).toHaveAttribute('aria-label', 'Switch session view: Compact')
+  await page.getByTestId('view-mode-menu').hover()
+  await page.getByTestId('view-mode-expanded').click()
+  await expect(toggle).toHaveAttribute('data-view-mode', 'expanded')
 
   await toggle.click()
   await expect(toggle).toHaveAttribute('data-view-mode', 'titles')
@@ -870,8 +1509,8 @@ test('creates a session and appends it through the native bridge', async ({ page
 
   await page.getByTestId('add-session').click()
   const newCard = page.locator('.session').first()
-  await newCard.hover()
-  await newCard.getByTestId('edit-session').click()
+  await expect(newCard).toHaveClass(/session-editing/)
+  await expect(newCard.getByTestId('session-title-input')).toBeFocused()
   await newCard.locator('.tab-edit').nth(0).fill('https://example.com/new')
   await newCard.locator('.tab-edit').nth(1).fill('New tab')
   await newCard.getByTestId('save-session').click()
@@ -883,6 +1522,50 @@ test('creates a session and appends it through the native bridge', async ({ page
   })
   await expect(page.locator('.session')).toHaveCount(3)
   await expect(page.locator('.session').first()).toContainText('New tab')
+})
+
+test('offers an upgrade instead of a sixth session on Free', async ({ page }) => {
+  const fullLibrary = Array.from({ length: 5 }, (_, index) => ({
+    ...sessions[0],
+    uuid: `session-${index}`,
+    title: `Session ${index}`,
+    tags: []
+  }))
+  await openDashboard(page, {
+    initialSessions: fullLibrary,
+    nativeProtocolVersion: '2',
+    entitlementTier: 'free'
+  })
+  const appendCount = await bridgeCommandCount(page, 'AppendSessions')
+
+  await page.getByTestId('add-session').click()
+
+  // The native side would refuse the save, so no card is offered for editing
+  // and nothing is sent: a refused session must never look stored.
+  await expect(page.getByTestId('plan-comparison')).toBeVisible()
+  await expect(page.locator('.session')).toHaveCount(5)
+  await expect(page.locator('.session-editing')).toHaveCount(0)
+  expect(await bridgeCommandCount(page, 'AppendSessions')).toBe(appendCount)
+})
+
+test('drops the new session card when the native side reports the Free limit', async ({ page }) => {
+  await openDashboard(page, {
+    initialSessions: sessions,
+    nativeProtocolVersion: '2',
+    entitlementTier: 'free'
+  })
+
+  await page.getByTestId('add-session').click()
+  const newCard = page.locator('.session').first()
+  await newCard.locator('.tab-edit').nth(0).fill('https://example.com/new')
+  await newCard.locator('.tab-edit').nth(1).fill('New tab')
+  // The native side owns the verdict: reply as it does when the library filled
+  // up elsewhere between opening the editor and saving.
+  await page.evaluate(() => window.__tabspaceTest.emit('SessionLimitReached', { limit: 5 }))
+
+  await expect(page.getByTestId('plan-comparison')).toBeVisible()
+  await expect(page.locator('.session')).toHaveCount(2)
+  await expect(page.locator('.session').first()).not.toContainText('New tab')
 })
 
 test('edits a complete session with modern controls and can cancel or save', async ({ page }) => {
@@ -1114,7 +1797,7 @@ test('directs visitors without the app to the Tab Space website', async ({ page 
 
   await expect.poll(() => page.evaluate(() => window.location.hostname)).toBe('localhost')
   await expect(page.getByText('Connecting to Tab Space...')).toBeVisible()
-  await expect(page.getByRole('heading', { name: 'Tab Space app not detected' })).toBeVisible({ timeout: 5000 })
+  await expect(page.getByRole('heading', { name: 'Tab Space Helper not detected' })).toBeVisible({ timeout: 5000 })
   await expect(page.getByTestId('extension-permission-hint')).toHaveText(
     'Click the Tab Space extension button in Safari and choose “Always Allow on Every Website”; otherwise, Tab Space cannot access your tabs.'
   )
@@ -1417,4 +2100,94 @@ test('recovers automatically when a hashed application script is served as HTML'
   const errors = runtimeErrors.get(page)
   expect(errors.some(message => /MIME type|Refused to execute/i.test(message))).toBe(true)
   errors.length = 0
+})
+
+test('asks for the AI data-flow disclosure before the first AI request, then retries it', async ({ page }) => {
+  // The native side refuses every AI request with consent_required until the user
+  // has been told what leaves the device. The dashboard must answer that with the
+  // disclosure — not an error toast — and must not lose the click that triggered it.
+  await openDashboard(page, {
+    initialSessions: sessions,
+    nativeProtocolVersion: '2',
+    entitlementTier: 'plus',
+    aiConsentAccepted: false
+  })
+
+  const card = page.getByTestId('session-session-research')
+  await card.hover()
+  await card.getByTestId('ai-enhance-session').click()
+
+  const modal = page.getByTestId('ai-consent-modal')
+  await expect(modal).toBeVisible()
+  // The disclosure has to name the fields, the recipients and the quota cost.
+  await expect(modal).toContainText('page titles and URLs')
+  await expect(modal).toContainText('Cloudflare')
+  await expect(modal).toContainText('Google Gemini')
+  await expect(modal).toContainText('5 AI requests each week')
+
+  await modal.getByTestId('ai-consent-accept').click()
+  await expect(modal).toBeHidden()
+
+  // Acceptance is recorded through the normal defaults path...
+  await expect.poll(() => lastBridgeCommand(page, 'SetDefault')).toMatchObject({
+    payload: { name: 'ai-data-disclosure-accepted-version', value: '1' }
+  })
+  // ...and the original request is re-sent, so the enhance actually happens.
+  await expect.poll(() => bridgeCommandCount(page, 'EnhanceSession')).toBe(2)
+  await expect(page.getByTestId('session-session-research')).toContainText('Enhanced by AI')
+})
+
+test('sends nothing when the AI disclosure is declined', async ({ page }) => {
+  await openDashboard(page, {
+    initialSessions: sessions,
+    nativeProtocolVersion: '2',
+    entitlementTier: 'plus',
+    aiConsentAccepted: false
+  })
+
+  const card = page.getByTestId('session-session-research')
+  await card.hover()
+  await card.getByTestId('ai-enhance-session').click()
+
+  const modal = page.getByTestId('ai-consent-modal')
+  await expect(modal).toBeVisible()
+  await modal.getByTestId('ai-consent-decline').click()
+  await expect(modal).toBeHidden()
+
+  // No acceptance recorded and no retry: the one refused attempt is all there was.
+  const defaultWrites = await page.evaluate(() => window.__tabspaceBridgeCommands
+    .filter(command => command.name === 'SetDefault'
+      && command.payload.name === 'ai-data-disclosure-accepted-version').length)
+  expect(defaultWrites).toBe(0)
+  await expect.poll(() => bridgeCommandCount(page, 'EnhanceSession')).toBe(1)
+})
+
+test('requires the disclosure before auto-enhance can be switched on', async ({ page }) => {
+  // Auto-enhance runs without an explicit click each time, so turning it on is
+  // exactly the moment the disclosure is due.
+  await openDashboard(page, {
+    initialSessions: sessions,
+    nativeProtocolVersion: '2',
+    entitlementTier: 'plus',
+    aiConsentAccepted: false
+  })
+
+  await page.getByTestId('settings-link').click()
+  const toggle = page.getByTestId('ai-auto-enhance-toggle')
+  await expect(toggle).toBeVisible()
+  await toggle.click()
+
+  const modal = page.getByTestId('ai-consent-modal')
+  await expect(modal).toBeVisible()
+
+  // Nothing is enabled while the disclosure is still on screen.
+  const earlyWrites = await page.evaluate(() => window.__tabspaceBridgeCommands
+    .filter(command => command.name === 'SetDefault'
+      && command.payload.name === 'ai-auto-enhance-enabled').length)
+  expect(earlyWrites).toBe(0)
+
+  await modal.getByTestId('ai-consent-accept').click()
+  await expect.poll(() => lastBridgeCommand(page, 'SetDefault')).toMatchObject({
+    payload: { name: 'ai-auto-enhance-enabled', value: 'true' }
+  })
 })

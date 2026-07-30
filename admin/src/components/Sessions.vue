@@ -33,6 +33,35 @@
             <span class="titles-only-session-count" data-testid="titles-only-session-count">
               {{ session.sites.length }} {{ session.sites.length === 1 ? (lang.tab || 'tab') : (lang.tabs || 'tabs') }}
             </span>
+            <!-- Same AI actions the expanded cards offer; a collapsed row is
+                 where they are most useful, since the titles are what AI edits.
+                 Open stays last so the row ends on the primary action. -->
+            <button
+                v-if="aiEnabled"
+                type="button"
+                class="titles-only-session-btn titles-only-ai-btn"
+                data-testid="ai-enhance-session"
+                :class="{'loading': enhancingSessionId === session.uuid}"
+                :title="lang.aiEnhance || 'AI Enhance'"
+                :aria-label="lang.aiEnhance || 'AI Enhance'"
+                @click.stop.prevent="enhanceWithAI(session)"
+            >
+              <v-icon :name="enhancingSessionId === session.uuid ? 'loader' : 'zap'"
+                      :class="{'spinner': enhancingSessionId === session.uuid}"></v-icon>
+            </button>
+            <button
+                v-if="aiEnabled && session.sites.length >= 3"
+                type="button"
+                class="titles-only-session-btn titles-only-ai-btn"
+                data-testid="ai-split-session"
+                :class="{'loading': splittingSessionId === session.uuid}"
+                :title="lang.splitSession || 'Split Topics'"
+                :aria-label="lang.splitSession || 'Split Topics'"
+                @click.stop.prevent="splitSession(session)"
+            >
+              <v-icon :name="splittingSessionId === session.uuid ? 'loader' : 'server'"
+                      :class="{'spinner': splittingSessionId === session.uuid}"></v-icon>
+            </button>
             <button
                 type="button"
                 class="titles-only-session-btn"
@@ -109,8 +138,17 @@
       }
     },
     computed: {
-      ...mapState(["lang", "bridge", "sessions", "activeTag", "keyword", "sessionViewMode"]),
-      ...mapGetters(["displaySessions"]),
+      ...mapState([
+        "lang",
+        "bridge",
+        "sessions",
+        "activeTag",
+        "keyword",
+        "sessionViewMode",
+        "enhancingSessionId",
+        "splittingSessionId"
+      ]),
+      ...mapGetters(["displaySessions", "aiEnabled"]),
       hasSearch() {
         return Boolean(this.keyword && this.keyword.trim())
       },
@@ -170,6 +208,18 @@
       restoreSession(session) {
         const currentSession = this.sessions.find(item => item.uuid === session.uuid) || session
         this.bridge.send({ cmd: 'RestoreSession', bookmarks: [currentSession] })
+      },
+      // Quota and premium gating live on the native/server side and in the
+      // split preview, so these mirror the card buttons exactly.
+      enhanceWithAI(session) {
+        if (!this.aiEnabled || this.enhancingSessionId) return
+        this.$store.commit('setEnhancingSessionId', session.uuid)
+        this.bridge.send({ cmd: 'EnhanceSession', uuid: session.uuid, bookmarks: [session] })
+      },
+      splitSession(session) {
+        if (!this.aiEnabled || this.splittingSessionId) return
+        this.$store.commit('setSplittingSessionId', session.uuid)
+        this.bridge.send({ cmd: 'ClusterTabs', uuid: session.uuid, bookmarks: [session] })
       },
       setHoverId(uuid) {
         this.hoverId=uuid
@@ -368,6 +418,46 @@
     stroke: currentColor !important;
   }
 
+  /* Same colour coding as the expanded cards: enhance is gold, split is purple.
+     The colour has to land on the icon itself — the shared `.icon` rule sets
+     `color` there, which is what its `stroke: currentColor` resolves against. */
+  .titles-only-ai-btn[data-testid="ai-enhance-session"] svg {
+    color: #eab308;
+  }
+
+  .titles-only-ai-btn[data-testid="ai-enhance-session"]:hover svg {
+    color: #ca8a04;
+  }
+
+  .titles-only-ai-btn[data-testid="ai-enhance-session"]:hover {
+    background-color: rgba(234, 179, 8, 0.1);
+  }
+
+  .titles-only-ai-btn[data-testid="ai-split-session"] svg {
+    color: #8b5cf6;
+  }
+
+  .titles-only-ai-btn[data-testid="ai-split-session"]:hover svg {
+    color: #7c3aed;
+  }
+
+  .titles-only-ai-btn[data-testid="ai-split-session"]:hover {
+    background-color: rgba(139, 92, 246, 0.1);
+  }
+
+  .titles-only-ai-btn.loading {
+    pointer-events: none;
+  }
+
+  .titles-only-ai-btn .spinner {
+    animation: titles-only-spin 1s linear infinite;
+  }
+
+  @keyframes titles-only-spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+
   @media (prefers-color-scheme: dark) {
     .session-placeholder {
       color: #bdbdbd;
@@ -382,6 +472,30 @@
     .titles-only-session-btn:hover {
       color: var(--text-primary, #f7fafc);
       background-color: rgba(255, 255, 255, 0.08);
+    }
+
+    .titles-only-ai-btn[data-testid="ai-enhance-session"] svg {
+      color: #facc15;
+    }
+
+    .titles-only-ai-btn[data-testid="ai-enhance-session"]:hover svg {
+      color: #fde047;
+    }
+
+    .titles-only-ai-btn[data-testid="ai-enhance-session"]:hover {
+      background-color: rgba(250, 204, 21, 0.15);
+    }
+
+    .titles-only-ai-btn[data-testid="ai-split-session"] svg {
+      color: #a78bfa;
+    }
+
+    .titles-only-ai-btn[data-testid="ai-split-session"]:hover svg {
+      color: #c4b5fd;
+    }
+
+    .titles-only-ai-btn[data-testid="ai-split-session"]:hover {
+      background-color: rgba(167, 139, 250, 0.15);
     }
 
     .titles-only-session-summary:hover .titles-only-session-expand-hit-area {

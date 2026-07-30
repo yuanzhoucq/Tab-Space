@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+
+  <!-- SEO -->
+  <title>Multi-Browser Support - Tab Space for Chrome, Edge &amp; Firefox</title>
+  <meta name="description"
+    content="How to connect Chrome, Microsoft Edge, and Firefox to Tab Space on your Mac: install the extension, enter the pairing code, and use the same sessions in every browser.">
+  <link rel="canonical" href="https://mytab.space/multi-browser.html">
+
+  <!-- Social -->
+  <meta name="twitter:site" content="@joyuer">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta property="og:title" content="Tab Space Multi-Browser Support">
+  <meta property="og:description"
+    content="Connect Chrome, Microsoft Edge, and Firefox to the Tab Space Mac app with a one-time local pairing code.">
+  <meta property="og:type" content="article">
+  <meta property="og:url" content="https://mytab.space/multi-browser.html">
+  <meta property="og:image" content="https://mytab.space/icon.png">
+
+  <!-- Icons -->
+  <link rel="icon" type="image/png" href="icon.png">
+  <link rel="apple-touch-icon" href="icon.png">
+
+  <!-- Styles -->
+  <link rel="stylesheet" href="assets/css/main.css">
+  <style>
+    .policy-document ol,
+    .policy-document ul {
+      padding-left: 1.3em;
+      margin: 12px 0;
+    }
+
+    .policy-document li {
+      line-height: 1.7;
+      margin-bottom: 6px;
+    }
+
+    .policy-document h3 {
+      margin: 24px 0 8px;
+      font-size: 1.05rem;
+    }
+
+    .policy-document code {
+      font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 0.9em;
+      padding: 2px 6px;
+      border-radius: 5px;
+      background: rgba(128, 128, 128, 0.16);
+    }
+
+    .browser-status {
+      margin: 16px 0;
+      padding: 14px 18px;
+      border: 1px solid rgba(128, 128, 128, 0.35);
+      border-radius: 10px;
+    }
+
+    .browser-status h3 {
+      margin-top: 0;
+    }
+
+    .browser-status p:last-child {
+      margin-bottom: 0;
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <a class="nav-brand" href="index.html">
+      <img src="icon.png" width="28" height="28" alt="">
+      <span>Tab Space</span>
+    </a>
+    <nav class="nav-links">
+      <a href="#en">English</a>
+      <a href="#zh">中文</a>
+      <a class="nav-cta" href="index.html">Home</a>
+    </nav>
+  </header>
+
+  <main class="policy-page">
+    <article class="policy-document" id="en" lang="en">
+      <p class="policy-eyebrow">Multi-Browser Support</p>
+      <h1>Use Tab Space in Chrome, Edge, and Firefox</h1>
+      <p>
+        Tab Space is a native Mac app. Alongside Safari, it can also save and restore tabs in Google Chrome,
+        Microsoft Edge, and Firefox. Whichever browser saves a session, the session lives in the Mac app and syncs
+        through your own iCloud — so a workspace saved in Chrome opens again in Safari, on your iPhone, or on your
+        iPad.
+      </p>
+      <p>
+        Companion browsers connect to the Mac app once, with a local pairing code. Multi-browser support is
+        included with <a href="index.html#pricing">Tab Space Pro</a>.
+      </p>
+
+      <h2>What you need</h2>
+      <ul>
+        <li>Tab Space 4.0 or later for Mac (macOS 11 or later), launched at least once.</li>
+        <li>A Tab Space Pro subscription.</li>
+        <li>Google Chrome, Microsoft Edge, or Firefox 121 or later on the same Mac.</li>
+      </ul>
+
+      <h2>Step 1 — Install the extension</h2>
+
+      <div class="browser-status">
+        <h3>Firefox</h3>
+        <p>
+          Install Tab Space from
+          <a href="https://addons.mozilla.org/firefox/addon/tab-space/" target="_blank" rel="noopener">Firefox
+            Add-ons</a>. Firefox 121 or later is required.
+        </p>
+      </div>
+
+      <div class="browser-status">
+        <h3>Chrome and Microsoft Edge</h3>
+        <p>
+          The Chrome Web Store and Microsoft Edge Add-ons listings are in review. Until they are published, you can
+          load the extension manually from the
+          <a href="https://github.com/yuanzhoucq/Tab-Space/releases" target="_blank" rel="noopener">Tab Space
+            releases page on GitHub</a>:
+        </p>
+        <ol>
+          <li>Download the Chrome or Edge package and unzip it. Keep the unzipped folder somewhere permanent — the
+            browser loads the extension from that folder every time it starts.</li>
+          <li>Open <code>chrome://extensions</code> in Chrome, or <code>edge://extensions</code> in Edge.</li>
+          <li>Turn on <strong>Developer mode</strong>.</li>
+          <li>Choose <strong>Load unpacked</strong> and select the unzipped folder.</li>
+        </ol>
+        <p>
+          A manually loaded extension shows a developer-mode notice on each browser launch. That notice disappears
+          once you reinstall Tab Space from the store listing.
+        </p>
+      </div>
+
+      <h2>Step 2 — Get your pairing code</h2>
+      <ol>
+        <li>Open Tab Space on your Mac.</li>
+        <li>Click <strong>Multi-Browser Support…</strong> in the main window.</li>
+        <li>Click <strong>Show Pairing Code</strong>. A six-digit code appears; <strong>Copy Code</strong> puts it
+          on the clipboard.</li>
+      </ol>
+      <p>
+        The first time you do this, Tab Space registers a small background helper as a login item. If macOS asks
+        for approval, enable <strong>Tab Space Helper</strong> in System Settings → General → Login Items, then
+        show the code again. After pairing, the Mac app does not have to stay open — the helper keeps working in
+        the background.
+      </p>
+
+      <h2>Step 3 — Connect the browser</h2>
+      <ol>
+        <li>Click the Tab Space icon in the browser toolbar.</li>
+        <li>Enter the six-digit code.</li>
+      </ol>
+      <p>
+        That is the whole setup. The browser can now save its open tabs into Tab Space and restore any saved
+        session. Repeat the three steps for each additional browser: every browser gets its own pairing code, and
+        the code changes after a browser connects.
+      </p>
+
+      <h2>How the connection works</h2>
+      <ul>
+        <li><strong>Everything stays on your Mac.</strong> The browser talks to the Tab Space helper over the local
+          loopback interface (<code>127.0.0.1</code>). No session content passes through a server run by the
+          developer.</li>
+        <li><strong>The pairing code is used once.</strong> After it is accepted, the helper issues a token that is
+          kept in the Mac Keychain, while the browser keeps its copy in local extension storage.</li>
+        <li><strong>Sessions are not stored in the browser.</strong> They live in the Mac app's database and sync
+          with iCloud, so they survive a browser profile reset.</li>
+        <li><strong>A save is confirmed by the Mac app.</strong> Tabs are only closed after the app acknowledges
+          that the session was written.</li>
+      </ul>
+
+      <h2>If a browser will not connect</h2>
+      <ul>
+        <li><strong>"Tab Space Helper was not detected."</strong> Open Tab Space once, then check System Settings →
+          General → Login Items and make sure Tab Space Helper is enabled.</li>
+        <li><strong>The code is rejected.</strong> Codes are single-use. Open Multi-Browser Support in the Mac app,
+          choose <strong>New Code</strong>, and enter the fresh code.</li>
+        <li><strong>Firefox forgets the extension.</strong> A temporary add-on loaded through
+          <code>about:debugging</code> is removed when Firefox quits — install the signed version from Firefox
+          Add-ons instead.</li>
+        <li>Still stuck? Write to <a href="mailto:support@mytab.space">support@mytab.space</a>.</li>
+      </ul>
+    </article>
+
+    <hr class="policy-divider">
+
+    <article class="policy-document" id="zh" lang="zh-Hans">
+      <p class="policy-eyebrow">多浏览器支持</p>
+      <h1>在 Chrome、Edge 和 Firefox 中使用 Tab Space</h1>
+      <p>
+        Tab Space 是一款原生 Mac App。除 Safari 外，它也可以在 Google Chrome、Microsoft Edge 和 Firefox
+        中保存和恢复标签页。无论由哪个浏览器保存，会话都保存在 Mac App 中，并通过你自己的 iCloud
+        同步——在 Chrome 中保存的工作区，可以在 Safari、iPhone 或 iPad 上重新打开。
+      </p>
+      <p>
+        配套浏览器只需使用本地配对码连接一次。多浏览器支持包含在
+        <a href="index-zh.html#pricing">Tab Space Pro</a> 中。
+      </p>
+
+      <h2>准备工作</h2>
+      <ul>
+        <li>Mac 版 Tab Space 4.0 或更新版本（macOS 11 或更新版本），并至少启动过一次。</li>
+        <li>Tab Space Pro 订阅。</li>
+        <li>同一台 Mac 上的 Google Chrome、Microsoft Edge 或 Firefox 121 及以上版本。</li>
+      </ul>
+
+      <h2>第一步 — 安装扩展</h2>
+
+      <div class="browser-status">
+        <h3>Firefox</h3>
+        <p>
+          从 <a href="https://addons.mozilla.org/firefox/addon/tab-space/" target="_blank"
+            rel="noopener">Firefox Add-ons</a> 安装 Tab Space，需要 Firefox 121 或更新版本。
+        </p>
+      </div>
+
+      <div class="browser-status">
+        <h3>Chrome 和 Microsoft Edge</h3>
+        <p>
+          Chrome 应用商店和 Microsoft Edge 加载项的上架审核仍在进行中。在正式上架前，可以从
+          <a href="https://github.com/yuanzhoucq/Tab-Space/releases" target="_blank" rel="noopener">GitHub
+            的 Tab Space 发布页</a>手动加载扩展：
+        </p>
+        <ol>
+          <li>下载 Chrome 或 Edge 的安装包并解压。请把解压后的文件夹放在固定位置——浏览器每次启动都会从该文件夹加载扩展。</li>
+          <li>在 Chrome 中打开 <code>chrome://extensions</code>，在 Edge 中打开 <code>edge://extensions</code>。</li>
+          <li>打开<strong>开发者模式</strong>。</li>
+          <li>选择<strong>加载已解压的扩展程序</strong>，然后选中解压后的文件夹。</li>
+        </ol>
+        <p>
+          手动加载的扩展会在每次启动浏览器时显示开发者模式提示。等商店版本上架后重新安装，该提示就会消失。
+        </p>
+      </div>
+
+      <h2>第二步 — 获取配对码</h2>
+      <ol>
+        <li>在 Mac 上打开 Tab Space。</li>
+        <li>在主窗口中点按<strong>多浏览器支持…</strong>。</li>
+        <li>点按<strong>显示配对码</strong>，会出现一个六位数字的配对码，<strong>拷贝配对码</strong>可以直接复制到剪贴板。</li>
+      </ol>
+      <p>
+        首次操作时，Tab Space 会把一个后台 Helper 注册为登录项。如果 macOS 请求确认，请在“系统设置”→“通用”→“登录项”中启用
+        <strong>Tab Space Helper</strong>，然后重新显示配对码。配对完成后，Mac App 不需要一直开着，Helper 会在后台继续工作。
+      </p>
+
+      <h2>第三步 — 连接浏览器</h2>
+      <ol>
+        <li>点按浏览器工具栏中的 Tab Space 图标。</li>
+        <li>输入六位配对码。</li>
+      </ol>
+      <p>
+        设置到此完成。该浏览器现在可以把打开的标签页保存到 Tab Space，也可以恢复任意已保存的会话。
+        每增加一个浏览器都重复这三步：每个浏览器使用各自的配对码，并且浏览器连接成功后配对码会自动更新。
+      </p>
+
+      <h2>连接是如何工作的</h2>
+      <ul>
+        <li><strong>所有数据都留在你的 Mac 上。</strong>浏览器通过本地回环接口（<code>127.0.0.1</code>）与 Tab Space Helper
+          通信，会话内容不会经过开发者的服务器。</li>
+        <li><strong>配对码只能使用一次。</strong>验证通过后，Helper 会签发一个令牌保存在 Mac 钥匙串中，浏览器则把自己的副本保存在扩展的本地存储里。</li>
+        <li><strong>会话不保存在浏览器中。</strong>它们保存在 Mac App 的数据库中并通过 iCloud 同步，即使浏览器配置被重置也不会丢失。</li>
+        <li><strong>保存以 Mac App 的确认为准。</strong>只有在 App 确认会话已写入后，标签页才会被关闭。</li>
+      </ul>
+
+      <h2>如果浏览器无法连接</h2>
+      <ul>
+        <li><strong>提示未检测到 Tab Space Helper。</strong>先打开一次 Tab Space，再到“系统设置”→“通用”→“登录项”中确认 Tab Space
+          Helper 已启用。</li>
+        <li><strong>配对码被拒绝。</strong>配对码是一次性的。在 Mac App 中打开“多浏览器支持”，选择<strong>新配对码</strong>，再输入新的配对码。</li>
+        <li><strong>Firefox 重启后扩展消失。</strong>通过 <code>about:debugging</code> 加载的临时附加组件会在 Firefox
+          退出时被移除，请改从 Firefox Add-ons 安装已签名的版本。</li>
+        <li>仍然无法解决？请联系 <a href="mailto:support@mytab.space">support@mytab.space</a>。</li>
+      </ul>
+    </article>
+  </main>
+
+  <footer>
+    <div class="container">
+      <div class="inner">
+        <p class="author">
+          <a href="index.html">Tab Space</a>
+          <span class="divider">•</span>
+          <a href="mailto:support@mytab.space">support@mytab.space</a>
+          <span class="divider">•</span>
+          <a href="https://github.com/yuanzhoucq/Tab-Space" target="_blank" rel="noopener">GitHub</a>
+        </p>
+      </div>
+    </div>
+  </footer>
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "Which browsers can Tab Space save tabs from?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Safari on Mac, iPhone, and iPad, plus Google Chrome, Microsoft Edge, and Firefox 121 or later on Mac. Multi-browser support is included with Tab Space Pro."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "How do I connect Chrome, Edge, or Firefox to Tab Space?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Install the Tab Space extension in that browser, open Tab Space on your Mac, click Multi-Browser Support and then Show Pairing Code, and enter the six-digit code in the extension. The code is single use and changes after a browser connects."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Does the Tab Space Mac app have to stay open?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "No. Pairing registers a small background helper as a login item. Once it is enabled, saving and restoring tabs works with the main app closed."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Where is the data sent when a browser saves tabs?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Nowhere outside your Mac. The extension talks to the Tab Space helper over the local loopback interface at 127.0.0.1, and sessions are stored in the Mac app's database and synced through your own iCloud."
+        }
+      }
+    ]
+  }
+  </script>
+</body>
+
+</html>

@@ -7,10 +7,9 @@ import Settings from './pages/Settings.vue'
 import feather from 'vue-icon'
 
 import store from './store'
-import config from './config'
 import buildInfo from './build-info'
+import { installAIWorkerWarmup } from './ai-warmup'
 Vue.config.productionTip = false
-Vue.prototype.$myConfig = config
 
 Vue.use(VueRouter)
 Vue.use(feather, 'v-icon')
@@ -38,6 +37,7 @@ if (window.__tabspace_bridge && typeof window.__tabspace_bridge.markReady === 'f
   window.__tabspace_bridge.markReady()
 }
 window.dispatchEvent(new CustomEvent('tabspace:dashboard-ready'))
+installAIWorkerWarmup()
 
 console.log(`Tab Space dashboard build ${buildInfo.shortSha}${buildInfo.time ? ` (${buildInfo.time})` : ''}`)
 

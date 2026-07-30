@@ -2,6 +2,7 @@
   <div :class="[embedded ? 'embedded-session' : 'session', {'session-editing': isEditingSession(session)}]"
       :id="embedded ? null : session.uuid"
       :data-testid="embedded ? 'embedded-session-content' : `session-${session.uuid}`"
+      @click="handleCardClick"
       @keydown="handleSessionEditKeydown($event, session)">
     <div v-if="!embedded" class="session-header">
       <div class="session-header-left">
@@ -20,20 +21,34 @@
         <div
             v-else
             class="session-title"
+            :class="{'ai-updated': aiFlash}"
             :id="'id'+session.uuid"
             @click.stop="editSessionName(session.uuid)"
             @blur="updateSessionName"
         >
-          <span
-              v-for="(part, index) in highlightParts(session.title || (`${lang.saveAt} ${(new Date(Number(session.timestamp))).Format('yyyy-MM-dd hh:mm')}`))"
-              :key="index"
-              :class="{'highlight': part.match}"
-          >{{ part.text }}</span>
+          <span v-if="typewriterActive" class="typewriter">{{ typewriterText }}<span class="cursor">|</span></span>
+          <template v-else>
+            <span
+                v-for="(part, index) in highlightParts(session.title || (`${lang.saveAt} ${(new Date(Number(session.timestamp))).Format('yyyy-MM-dd hh:mm')}`))"
+                :key="index"
+                :class="{'highlight': part.match}"
+            >{{ part.text }}</span>
+          </template>
         </div>
-        <span v-if="hasSearch" class="search-match-count" data-testid="search-match-count">
+        <!-- In search results the match count doubles as the expander, so the
+             card needs no separate expand button. -->
+        <button v-if="hasSearch"
+                type="button"
+                class="search-match-count"
+                data-testid="search-match-count"
+                :data-expander="canToggleTemporaryExpansion ? 'true' : 'false'"
+                :aria-expanded="temporarilyExpanded ? 'true' : 'false'"
+                :aria-label="temporaryExpansionLabel"
+                :title="temporaryExpansionLabel"
+                @click.stop="toggleTemporaryExpansion">
           {{ searchResultEntries.length }} / {{ session.sites.length }}
           {{ session.sites.length === 1 ? (lang.tab || 'tab') : (lang.tabs || 'tabs') }}
-        </span>
+        </button>
       </div>
       <div class="session-header-right">
         <template v-if="isEditingSession(session)">
@@ -63,17 +78,29 @@
                 :title="lang.cancel" :aria-label="lang.cancel">
           <v-icon name="x" class="btn-icon"></v-icon>
         </button>
-        <button v-if="canToggleTemporaryExpansion && !isEditingSession(session) && !bulkSelectionMode"
-                type="button" class="btn" data-testid="toggle-session-expansion"
-                @click.stop="toggleTemporaryExpansion"
-                :title="temporaryExpansionLabel" :aria-label="temporaryExpansionLabel">
-          <v-icon :name="temporarilyExpanded ? 'minimize' : 'maximize'" class="btn-icon"></v-icon>
-        </button>
         <button v-if="!bulkSelectionMode && !isEditingSession(session)" type="button" class="btn" data-testid="restore-session" @click.stop="restore(session.uuid, true, false)"
                 :title="lang.openSession || 'Open'" :aria-label="lang.openSession || 'Open'">
           <v-icon name="external-link" class="btn-icon"></v-icon>
         </button>
-        <button v-if="!bulkSelectionMode && !isEditingSession(session)" type="button" class="btn del-btn" data-testid="delete-session" @click.stop="restore(session.uuid, false, true)"
+        <button v-if="aiEnabled && !bulkSelectionMode && !isEditingSession(session)"
+                type="button" class="btn ai-btn" data-testid="ai-enhance-session"
+                :class="{ 'loading': enhancingSessionId === session.uuid }"
+                :title="lang.aiEnhance || 'AI Enhance'" :aria-label="lang.aiEnhance || 'AI Enhance'"
+                @click.stop="enhanceWithAI(session)">
+          <v-icon v-if="enhancingSessionId === session.uuid" name="loader" class="btn-icon spinner"></v-icon>
+          <v-icon v-else name="zap" class="btn-icon"></v-icon>
+        </button>
+        <button v-if="aiEnabled && session.sites.length >= 3 && !bulkSelectionMode && !isEditingSession(session)"
+                type="button" class="btn split-btn" data-testid="ai-split-session"
+                :class="{ 'loading': splittingSessionId === session.uuid }"
+                :title="lang.splitSession || 'Split Topics'" :aria-label="lang.splitSession || 'Split Topics'"
+                @click.stop="splitSession(session)">
+          <v-icon v-if="splittingSessionId === session.uuid" name="loader" class="btn-icon spinner"></v-icon>
+          <v-icon v-else name="server" class="btn-icon"></v-icon>
+        </button>
+        <button v-if="!bulkSelectionMode && !isEditingSession(session)"
+                type="button" class="btn del-btn" data-testid="delete-session"
+                @click.stop="restore(session.uuid, false, true)"
                 :title="lang.deleteSession || 'Delete'" :aria-label="lang.deleteSession || 'Delete'">
           <v-icon name="trash-2" class="btn-icon"></v-icon>
         </button>
@@ -88,7 +115,23 @@
     <ul
         :class="['session-sites', {'collapsed-sites': compactView, 'editing-sites': isEditingSession(session)}]"
         data-testid="site-list"
-        :data-site-drag-enabled="canDragSites ? 'true' : 'false'">
+        :data-site-drag-enabled="canDragSites ? 'true' : 'false'"
+        v-bind="collapsedExpanderAttrs"
+        @keydown="handleCollapsedRowKeydown">
+      <!-- Kept outside <draggable>: a `v-if` element in the draggable's header
+           slot leaves an empty placeholder vnode at the front of the default
+           slot, which shifts every index vuedraggable maps back onto
+           `session.sites` — dragged tabs then resolve to the wrong site (or to
+           `undefined`, silently dropping the move). -->
+      <li
+          v-if="isEditingSession(session)"
+          class="site-editor-columns"
+          aria-hidden="true">
+        <span></span>
+        <span>URL</span>
+        <span>{{ lang.tabTitle }}</span>
+        <span></span>
+      </li>
       <draggable
           :disabled="!canDragSites"
           :force-fallback="true"
@@ -99,16 +142,6 @@
           group="shared"
           @start="() => startDragSite(session)"
           @end="endDragSite">
-        <li
-            slot="header"
-            v-if="isEditingSession(session)"
-            class="site-editor-columns"
-            aria-hidden="true">
-          <span></span>
-          <span>URL</span>
-          <span>{{ lang.tabTitle }}</span>
-          <span></span>
-        </li>
         <li
           v-for="(entry, visibleIndex) in visibleSiteEntries"
           v-bind:key="`${session.uuid}-${entry.originalIndex}`"
@@ -345,6 +378,7 @@
 
 <script>
   import { mapState, mapGetters } from 'vuex';
+  import { isUnsavedSession } from '../store';
 
   import WangYeIcon from '../assets/img/icon-webpage.svg';
   import Draggable from 'vuedraggable';
@@ -372,12 +406,18 @@
         bulkSelectionMode: false,
         bulkSelectionPreviousExpansion: false,
         selectedSiteIndexes: [],
-        bulkMoveTargetUuid: ""
+        bulkMoveTargetUuid: "",
+        // AI enhance animation (typewriter title + golden flash)
+        typewriterActive: false,
+        typewriterText: "",
+        typewriterTimer: null,
+        aiFlash: false,
+        flashTimer: null
       }
     },
     computed: {
-      ...mapState(["lang", "bridge", "keyword", "sessionViewMode", "sessions", "activeTag", "editingSessionUuid", "tabSpaceSettings"]),
-      ...mapGetters(["tags"]),
+      ...mapState(["lang", "bridge", "keyword", "sessionViewMode", "sessions", "activeTag", "editingSessionUuid", "tabSpaceSettings", "enhancingSessionId", "splittingSessionId", "enhancedFlash"]),
+      ...mapGetters(["tags", "aiEnabled", "canCreateSession"]),
       hasSearch() {
         return Boolean(this.keyword && this.keyword.trim())
       },
@@ -397,7 +437,23 @@
           && !this.bulkSelectionMode
       },
       canToggleTemporaryExpansion() {
+        if (this.isEditingSession(this.session) || this.bulkSelectionMode) return false
         return this.sessionViewMode === "compact" || this.hasSearch
+      },
+      // A collapsed card expands by clicking anywhere in its empty space; the
+      // favicon row carries the matching keyboard affordance so the card needs
+      // no dedicated expand button. Search results use the match count instead,
+      // which stays a real button because the list still holds links.
+      collapsedExpanderAttrs() {
+        if (!this.canToggleTemporaryExpansion || this.hasSearch) return {}
+        return {
+          role: "button",
+          tabindex: "0",
+          "data-expander": "true",
+          "aria-expanded": this.temporarilyExpanded ? "true" : "false",
+          "aria-label": this.temporaryExpansionLabel,
+          title: this.temporaryExpansionLabel
+        }
       },
       canBulkMove() {
         return !this.hasSearch
@@ -472,6 +528,9 @@
       }
     },
     watch: {
+      editingSessionUuid(id) {
+        if (id === this.session.uuid) this.prepareSessionEdit(this.session)
+      },
       showTagBtns() {
         this.tagEditorId = false
       },
@@ -487,11 +546,22 @@
       },
       tagKeyword() {
         this.tagSuggestionIndex = -1
+      },
+      enhancedFlash(flash) {
+        // The bridge sets this after a successful EnhanceSession; only the
+        // matching card plays the reveal animation.
+        if (flash && flash.uuid === this.session.uuid) {
+          this.runEnhanceAnimation(flash.title)
+        }
       }
     },
+    beforeDestroy() {
+      if (this.typewriterTimer) clearInterval(this.typewriterTimer)
+      if (this.flashTimer) clearTimeout(this.flashTimer)
+    },
     methods: {
-      startSessionEdit(session) {
-        if (this.embedded || this.editingSessionUuid) return
+      prepareSessionEdit(session) {
+        if (this.embedded || this.editSnapshot) return
         this.editSnapshot = {
           title: session.title,
           sites: session.sites.map(site => ({...site}))
@@ -499,11 +569,15 @@
         this.editPreviousExpansion = this.temporarilyExpanded
         this.temporarilyExpanded = true
         this.tagEditorId = false
-        this.editingSessionUuid = session.uuid
         if (session.sites.length === 0) session.sites.push({title: "", url: ""})
         this.$nextTick(() => {
           if (this.$refs.sessionTitleInput) this.$refs.sessionTitleInput.focus()
         })
+      },
+      startSessionEdit(session) {
+        if (this.embedded || this.editingSessionUuid) return
+        this.prepareSessionEdit(session)
+        this.editingSessionUuid = session.uuid
       },
       saveSessionEdit(session) {
         if (!this.isEditingSession(session)) return
@@ -622,8 +696,61 @@
           bookmarks: [source]
         })
       },
+      enhanceWithAI(session) {
+        // Free and Plus share the Worker-enforced weekly trial quota.
+        if (!this.aiEnabled || this.enhancingSessionId) return
+        this.$store.commit("setEnhancingSessionId", session.uuid)
+        this.bridge.send({ cmd: "EnhanceSession", uuid: session.uuid, bookmarks: [session] })
+      },
+      splitSession(session) {
+        // Previewing a split consumes the same non-Pro trial quota; applying
+        // the split remains gated in SplitPreviewModal.
+        if (!this.aiEnabled || this.splittingSessionId) return
+        this.$store.commit("setSplittingSessionId", session.uuid)
+        this.bridge.send({ cmd: "ClusterTabs", uuid: session.uuid, bookmarks: [session] })
+      },
+      runEnhanceAnimation(title) {
+        this.aiFlash = true
+        clearTimeout(this.flashTimer)
+        this.flashTimer = setTimeout(() => { this.aiFlash = false }, 2000)
+        if (title) this.typeTitle(title)
+        // Consume the flash so it does not replay on re-render.
+        this.$store.commit("setEnhancedFlash", null)
+      },
+      typeTitle(fullTitle) {
+        if (this.typewriterTimer) clearInterval(this.typewriterTimer)
+        this.typewriterActive = true
+        this.typewriterText = ""
+        let index = 0
+        this.typewriterTimer = setInterval(() => {
+          if (index < fullTitle.length) {
+            this.typewriterText = fullTitle.substring(0, index + 1)
+            index++
+          } else {
+            clearInterval(this.typewriterTimer)
+            this.typewriterTimer = null
+            setTimeout(() => { this.typewriterActive = false; this.typewriterText = "" }, 400)
+          }
+        }, 28)
+      },
       toggleTemporaryExpansion() {
         this.temporarilyExpanded = !this.temporarilyExpanded
+      },
+      handleCollapsedRowKeydown(event) {
+        if (!this.collapsedExpanderAttrs.role) return
+        if (event.key !== "Enter" && event.key !== " " && event.key !== "Spacebar") return
+        event.preventDefault()
+        event.stopPropagation()
+        this.toggleTemporaryExpansion()
+      },
+      // Anything the card already reacts to keeps its own behaviour; the empty
+      // space around it toggles the collapsed card open.
+      handleCardClick(event) {
+        if (!this.canToggleTemporaryExpansion) return
+        if (event.target.closest(
+          "a, button, input, select, textarea, label, [contenteditable='true'], .tag, .session-title, .del-item, .handle"
+        )) return
+        this.toggleTemporaryExpansion()
       },
       highlightParts(value) {
         return highlightedTextParts(value, this.keyword)
@@ -643,11 +770,11 @@
       },
       removeSessions(sessions) {
         sessions.forEach(session => {
-          if (session.uuid.slice(0,3) === "new") {
+          if (isUnsavedSession(session)) {
             this.$store.commit("spliceSessions", {start: this.sessions.findIndex(s => s.uuid === session.uuid), deleteCount: 1, items: []})
           }
         })
-        sessions = sessions.filter(s => s.uuid.slice(0,3) !== "new")
+        sessions = sessions.filter(s => !isUnsavedSession(s))
         if (sessions.filter(s => s.sites.length === 0).length > 0)
           this.bridge.send({ cmd: 'DeleteSession', bookmarks: sessions.filter(s => s.sites.length === 0) })
         sessions.filter(s => s.sites.length > 0).forEach(s => {
@@ -666,7 +793,14 @@
         if (session.sites.length === 0) {
           this.removeSessions([session])
         } else {
-          let isNewSession = session.uuid.slice(0,3) === "new"
+          let isNewSession = isUnsavedSession(session)
+          if (isNewSession && !this.canCreateSession) {
+            // The native side would refuse this session; drop the card here so
+            // the dashboard never shows a session that was not stored.
+            this.$store.commit("discardUnsavedSessions")
+            this.$store.commit("setShowSubscriptionModal", true)
+            return
+          }
           this.bridge.send({ cmd: isNewSession ? 'AppendSessions' : 'UpdateSession', bookmarks: [session] })
         }
       },
@@ -804,6 +938,12 @@
         return site.parentElement.parentElement.firstElementChild.firstElementChild.lastElementChild.id.slice(2)
       },
       startDragSite(session) {
+        // Without a free slot the dropped tabs could not be stored as a new
+        // session, and the drag would silently drop them: offer no target.
+        if (!this.canCreateSession) {
+          this.newSession = null
+          return
+        }
         let timestamp = (new Date()).getTime()
         this.newSession = {
           uuid: "new-" + timestamp,
@@ -816,7 +956,7 @@
         this.$store.commit("spliceSessions", {start: this.crtId + 1, deleteCount: 0, items: [this.newSession]})
       },
       endDragSite(e) {
-        if (this.newSession.sites.length === 0) this.$store.commit("spliceSessions", {start: this.crtId + 1, deleteCount: 1, items: []})
+        if (this.newSession && this.newSession.sites.length === 0) this.$store.commit("spliceSessions", {start: this.crtId + 1, deleteCount: 1, items: []})
         const fromId = this.getSessionIdFromDraggingSite(e.from)
         const toId = this.getSessionIdFromDraggingSite(e.to)
         if (fromId === toId) {
@@ -1106,9 +1246,42 @@
   .search-match-count {
     color: var(--text-secondary, #718096);
     flex-shrink: 0;
+    font: inherit;
     font-size: 11px;
     margin-right: 10px;
+    padding: 2px 6px;
+    border: 0;
+    border-radius: 6px;
+    background: transparent;
     white-space: nowrap;
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+  }
+
+  .search-match-count[data-expander="false"] {
+    cursor: default;
+  }
+
+  .search-match-count[data-expander="true"]:hover {
+    background-color: rgba(0, 0, 0, 0.06);
+    color: var(--text-primary, #2d3748);
+  }
+
+  .search-match-count:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 2px var(--primary-color, #fa8072);
+  }
+
+  /* Collapsed cards expand from the favicon row, which is also the keyboard
+     target for the same action. */
+  .session-sites[role="button"] {
+    outline: none;
+    cursor: pointer;
+  }
+
+  .session-sites[role="button"]:focus-visible {
+    border-radius: 6px;
+    box-shadow: 0 0 0 2px var(--primary-color, #fa8072);
   }
 
   .site-title {
@@ -1208,6 +1381,9 @@
     gap: 8px;
     box-sizing: border-box;
     width: 100%;
+    /* Drops the global list-item margins so the labels line up with the rows
+       below, and matches that list's row gap. */
+    margin: 0 0 5px;
     padding: 0 8px 1px;
     color: var(--text-secondary, #718096);
     font-size: 10px;
@@ -1544,6 +1720,73 @@
     stroke: var(--text-primary, #2d3748) !important;
   }
 
+  /* AI Enhance button — gold */
+  .ai-btn svg,
+  .ai-btn .btn-icon {
+    stroke: #eab308 !important;
+  }
+
+  .ai-btn:hover {
+    background-color: rgba(234, 179, 8, 0.1);
+  }
+
+  .ai-btn:hover svg,
+  .ai-btn:hover .btn-icon {
+    stroke: #ca8a04 !important;
+  }
+
+  /* Split button — purple */
+  .split-btn svg,
+  .split-btn .btn-icon {
+    stroke: #8b5cf6 !important;
+  }
+
+  .split-btn:hover {
+    background-color: rgba(139, 92, 246, 0.1);
+  }
+
+  .split-btn:hover svg,
+  .split-btn:hover .btn-icon {
+    stroke: #7c3aed !important;
+  }
+
+  .btn.loading {
+    pointer-events: none;
+  }
+
+  .spinner {
+    animation: spin 1s linear infinite;
+  }
+
+  @keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+
+  /* Golden reveal after an AI enhance */
+  .session-title.ai-updated {
+    animation: ai-glow 0.5s ease-out 3;
+  }
+
+  @keyframes ai-glow {
+    0% { box-shadow: inset 0 -10px #fadc23, 0 0 5px rgba(250, 220, 35, 0.3); transform: scale(1); }
+    50% { box-shadow: inset 0 -10px #ffd700, 0 0 22px rgba(255, 215, 0, 0.7); transform: scale(1.02); }
+    100% { box-shadow: inset 0 -10px #fadc23, 0 0 5px rgba(250, 220, 35, 0.3); transform: scale(1); }
+  }
+
+  .session-title .cursor {
+    display: inline-block;
+    margin-left: 1px;
+    color: #eab308;
+    font-weight: normal;
+    animation: blink 0.7s step-end infinite;
+  }
+
+  @keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0; }
+  }
+
   .del-btn:hover svg,
   .del-btn:hover .btn-icon {
     stroke: #eb5205 !important;
@@ -1672,6 +1915,11 @@
       background-color: rgba(250, 128, 114, 0.08);
     }
 
+    .search-match-count[data-expander="true"]:hover {
+      background-color: rgba(255, 255, 255, 0.08);
+      color: var(--text-primary, #f7fafc);
+    }
+
     .link {
       background-color: #00000000;
     }
@@ -1698,6 +1946,34 @@
     .btn:hover svg,
     .btn:hover .btn-icon {
       stroke: var(--text-primary, #f7fafc) !important;
+    }
+
+    .ai-btn svg,
+    .ai-btn .btn-icon {
+      stroke: #facc15 !important;
+    }
+
+    .ai-btn:hover {
+      background-color: rgba(250, 204, 21, 0.15);
+    }
+
+    .ai-btn:hover svg,
+    .ai-btn:hover .btn-icon {
+      stroke: #fde047 !important;
+    }
+
+    .split-btn svg,
+    .split-btn .btn-icon {
+      stroke: #a78bfa !important;
+    }
+
+    .split-btn:hover {
+      background-color: rgba(167, 139, 250, 0.15);
+    }
+
+    .split-btn:hover svg,
+    .split-btn:hover .btn-icon {
+      stroke: #c4b5fd !important;
     }
 
     .del-btn:hover {

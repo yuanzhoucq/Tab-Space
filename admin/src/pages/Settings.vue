@@ -13,13 +13,78 @@
       </header>
 
       <div class="settings-content">
+        <!-- Subscription (only when the native extension speaks protocol v2).
+             Purchases and management happen in the host app; this block is the
+             persistent status + restore surface App Review expects. -->
+        <div class="card" v-if="aiEnabled" data-testid="subscription-card">
+          <h2 class="section-title">{{lang.subscription || 'Subscription'}}</h2>
+
+          <div class="plan-row">
+            <span class="plan-label">{{lang.currentPlan || 'Current plan'}}</span>
+            <span class="plan-value" :class="{ premium: isPremium || hasPermanentPlus }" data-testid="plan-status">
+              <v-icon v-if="isPremium || hasPermanentPlus" name="check-circle" class="plan-icon"></v-icon>
+              <span>{{ currentPlanLabel }}</span>
+              <del v-if="hasPermanentPlus && plusDisplayPrice"
+                   class="plus-price"
+                   data-testid="settings-plus-price">{{ plusDisplayPrice }}</del>
+            </span>
+          </div>
+
+          <p v-if="hasPermanentPlus" class="help-text" data-testid="settings-plus-summary">
+            {{lang.plusOwnedSummary || 'Unlimited sessions and all core features are yours permanently. You also receive 5 AI requests each week; Pro makes AI unlimited.'}}
+          </p>
+
+          <div v-if="!isPremium && quotaKnown" class="quota-block">
+            <p class="quota-line">
+              <template v-if="unlimitedQuota">{{lang.aiQuotaUnlimited || 'Unlimited AI requests'}}</template>
+              <template v-else>{{ quotaLabel }}</template>
+            </p>
+            <p v-if="!unlimitedQuota && quotaResetLabel" class="help-text">{{ quotaResetLabel }}</p>
+          </div>
+
+          <!-- The plan comparison stays reachable at every tier: a Pro
+               subscriber still needs to see what the plan covers. -->
+          <div class="subscription-actions">
+            <button v-if="!isPremium" type="button" class="primary-action"
+                    data-testid="settings-upgrade" @click="openSubscription">
+              {{lang.upgrade || 'Upgrade'}}
+            </button>
+            <template v-else>
+              <button type="button" class="secondary-action"
+                      data-testid="settings-view-plans" @click="openSubscription">
+                {{lang.viewPlans || 'View plans'}}
+              </button>
+              <button type="button" class="secondary-action"
+                      data-testid="manage-subscription" @click="manageSubscription">
+                {{lang.manageSubscription || 'Manage subscription'}}
+              </button>
+            </template>
+            <button type="button" class="secondary-action" :disabled="restoring"
+                    data-testid="restore-purchases" @click="restore">
+              {{ restoring ? (lang.restoring || 'Restoring…') : (lang.restorePurchases || 'Restore Purchases') }}
+            </button>
+          </div>
+
+          <p v-if="purchaseRedirecting" class="help-text redirect-note" data-testid="redirect-note">
+            {{lang.continueInApp || 'Continuing in the Tab Space app…'}}
+          </p>
+          <p class="help-text">{{lang.subscriptionManagedInApp || 'Plans and payment are handled securely in the Tab Space app.'}}</p>
+          <p class="help-text legal-links">
+            <!-- Apple's standard EULA: it governs these purchases unless we
+                 publish our own terms, and mytab.space has no terms page. -->
+            <a href="https://www.apple.com/legal/internet-services/itunes/dev/stdeula/" target="_blank" rel="noopener">{{lang.terms || 'Terms of Use'}}</a>
+            <span class="footer-sep">·</span>
+            <a href="https://mytab.space/privacy.html" target="_blank" rel="noopener">{{lang.privacy}}</a>
+          </p>
+        </div>
+
         <!-- General Preferences -->
         <div class="card">
           <h2 class="section-title">{{lang.generalPreferences}}</h2>
           <div class="setting-list">
-            <div class="setting-item" v-for="setting in settings" :key="setting">
+            <div class="setting-item" v-for="setting in settingsForBridge" :key="setting">
               <label :for="setting" class="setting-label">{{lang[setting]}}</label>
-              <toggle-button 
+              <toggle-button
                 :id="setting"
                 :value="tabSpaceSettings[setting]==='true'"
                 :sync="true"
@@ -47,8 +112,85 @@
           </div>
         </div>
 
+        <!-- AI (only when the native extension speaks protocol v2) -->
+        <div class="card" v-if="aiEnabled">
+          <h2 class="section-title">{{lang.aiSection || 'AI'}}</h2>
+          <p v-if="!isPremium" class="help-text">{{lang.proOnlyInfo || 'Free and Plus include 5 AI requests each week. Pro removes the weekly limit.'}}</p>
+
+          <!-- Auto-enhance is the only AI path that runs without an explicit
+               click, so it is off until the user turns it on here and accepts
+               the data-flow disclosure. -->
+          <div class="setting-list">
+            <div class="setting-item">
+              <label for="ai-auto-enhance" class="setting-label">
+                {{lang.aiAutoEnhanceTitle || 'AI titles and tags'}}
+              </label>
+              <toggle-button
+                id="ai-auto-enhance"
+                data-testid="ai-auto-enhance-toggle"
+                :value="autoEnhanceEnabled"
+                :sync="true"
+                :color="{checked: '#fa8072', unchecked: '#ccc'}"
+                @change="setAutoEnhance"
+              />
+            </div>
+          </div>
+          <p class="help-text" style="margin-bottom: 18px;">
+            {{lang.aiAutoEnhanceDescription || 'After you save tabs, AI names the session and adds tags automatically. Only page titles and URLs are sent.'}}
+          </p>
+
+          <div class="form-group" style="margin-bottom: 0;">
+            <label for="suggested-tags" class="form-label">{{lang.suggestedTags || 'Suggested Tags'}}</label>
+            <textarea
+              id="suggested-tags"
+              class="form-input form-textarea"
+              rows="3"
+              v-model="tagsDraft"
+              :placeholder="currentDefaultTags"
+              @blur="saveSuggestedTags"
+            ></textarea>
+            <p class="help-text">{{lang.suggestedTagsHint || 'Comma-separated tags the AI will prefer to use'}}</p>
+          </div>
+        </div>
+
+        <!-- Multi-browser (Pro). Gated on protocol v2 for the same reason as
+             the blocks above: the pairing flow only exists in the 4.0 app. -->
+        <div class="card" v-if="aiEnabled" data-testid="multi-browser-card">
+          <h2 class="section-title">{{lang.multiBrowser || 'Multi-browser'}}</h2>
+
+          <div class="feature-lede">
+            <v-icon name="globe" class="feature-lede-icon"></v-icon>
+            <div class="feature-lede-text">
+              <p class="feature-title">{{lang.featureMultiBrowserTitle || 'Multi-browser support'}}</p>
+              <p class="help-text feature-desc">{{lang.featureMultiBrowserDesc || 'Use the same sessions in Safari, Chrome, Microsoft Edge, and Firefox.'}}</p>
+            </div>
+            <span class="plan-pill" :class="{ unlocked: isPremium }" data-testid="multi-browser-pill">
+              {{lang.planPremium || 'Pro'}}
+            </span>
+          </div>
+
+          <p v-if="isWebExtension" class="connected-note" data-testid="multi-browser-connected">
+            <v-icon name="check-circle" class="connected-icon"></v-icon>
+            <span>{{lang.multiBrowserConnected || 'This browser is connected to Tab Space.'}}</span>
+          </p>
+
+          <ol class="steps" data-testid="multi-browser-steps">
+            <li>{{lang.multiBrowserStep1 || 'Open Tab Space on your Mac, choose Multi-Browser Support, then Show Pairing Code.'}}</li>
+            <li>{{lang.multiBrowserStep2 || 'Install the Tab Space extension in Chrome, Microsoft Edge, or Firefox 121 or later.'}}</li>
+            <li>{{lang.multiBrowserStep3 || 'Enter the six-digit code in the extension to connect it.'}}</li>
+          </ol>
+
+          <div v-if="!isPremium" class="subscription-actions">
+            <button type="button" class="primary-action"
+                    data-testid="multi-browser-upgrade" @click="openSubscription">
+              {{lang.upgrade || 'Upgrade'}}
+            </button>
+          </div>
+          <p v-if="!isPremium" class="help-text">{{lang.multiBrowserProNote || 'Multi-browser support is included with Pro.'}}</p>
+        </div>
+
         <!-- Shortcuts -->
-        <div class="card">
+        <div class="card" v-if="!isWebExtension">
           <h2 class="section-title">{{lang.shortcuts}}</h2>
           <p class="text-muted text-sm mb-4">{{lang.shortcutTip}}</p>
           
@@ -178,7 +320,7 @@
 
 <script>
 import { ToggleButton } from 'vue-js-toggle-button'
-import { mapState } from 'vuex'
+import { mapState, mapGetters } from 'vuex'
 import Constants from '../constants'
 import buildInfo from '../build-info'
 
@@ -190,14 +332,118 @@ export default {
   data() {
     return {
       ...Constants,
-      buildInfo
+      buildInfo,
+      tagsDraft: "",
+      restoring: false
     };
   },
-  computed: mapState(["lang", "bridge", "tabSpaceSettings"]),
+  mounted() {
+    // Status can be stale if the user subscribed in the host app since the last
+    // bridge handshake; re-ask every time Settings opens.
+    this.refreshSubscriptionStatus()
+  },
+  watch: {
+    // Keep the editable draft in step with the native default once it arrives.
+    suggestedTagsValue: {
+      immediate: true,
+      handler(value) { this.tagsDraft = value }
+    }
+  },
+  computed: {
+    ...mapState(["lang", "bridge", "tabSpaceSettings", "aiQuotaRemaining", "aiQuotaResetAt", "plusDisplayPrice", "purchaseRedirecting"]),
+    ...mapGetters(["aiEnabled", "isPremium", "hasPermanentPlus"]),
+    currentPlanLabel() {
+      if (this.isPremium) return this.lang.planPremium || 'Pro'
+      if (this.hasPermanentPlus) return this.lang.planPlus || 'Plus · Permanent'
+      return this.lang.planFree || 'Free'
+    },
+    isWebExtension() {
+      return this.bridge && this.bridge.mode === "webextension"
+    },
+    settingsForBridge() {
+      if (!this.isWebExtension) return this.settings
+      const safariOnly = new Set(["shift-shortcuts", "disable-shortcuts", "disable-context-menus"])
+      return this.settings.filter(setting => !safariOnly.has(setting))
+    },
+    quotaKnown() {
+      return this.aiQuotaRemaining !== null && this.aiQuotaRemaining !== undefined
+    },
+    unlimitedQuota() {
+      return this.aiQuotaRemaining === -1
+    },
+    quotaLabel() {
+      const template = this.lang.aiQuotaRemaining || '{count} AI requests left this week'
+      return template.replace('{count}', Math.max(0, this.aiQuotaRemaining))
+    },
+    quotaResetLabel() {
+      if (!this.aiQuotaResetAt) return ''
+      const resetDate = new Date(this.aiQuotaResetAt * 1000)
+      if (isNaN(resetDate.getTime())) return ''
+      const locale = this.tabSpaceSettings[Constants.preferredLanguageKey] || undefined
+      const formatted = resetDate.toLocaleString(locale, {
+        month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit'
+      })
+      const template = this.lang.quotaResetsAt || 'Resets {date}'
+      return template.replace('{date}', formatted)
+    },
+    suggestedTagsValue() {
+      return this.tabSpaceSettings[Constants.suggestedTagsKey] || ''
+    },
+    aiConsentGranted() {
+      const accepted = Number(this.tabSpaceSettings[Constants.aiConsentVersionKey] || 0)
+      return accepted >= Constants.aiConsentVersion
+    },
+    // Mirrors AutoEnhance.isEnabled on the native side: the toggle only reads as
+    // on when consent is in place, so revoking consent cannot leave the UI
+    // claiming that background enhancement is still running.
+    autoEnhanceEnabled() {
+      return this.aiConsentGranted
+        && this.tabSpaceSettings[Constants.autoEnhanceKey] === 'true'
+    },
+    currentDefaultTags() {
+      const lang = this.tabSpaceSettings[Constants.preferredLanguageKey] || 'en-us'
+      return Constants.defaultSuggestedTags[lang] || Constants.defaultSuggestedTags['en-us']
+    }
+  },
   methods: {
+    refreshSubscriptionStatus() {
+      if (!this.aiEnabled || !this.bridge) return
+      this.bridge.send({cmd: "CheckSubscriptionStatus"})
+    },
+    openSubscription() {
+      this.$store.commit("setShowSubscriptionModal", true)
+    },
+    // Management, like purchasing, is owned by the host app: the native side
+    // brings it forward and replies PurchaseResult { redirected: true }.
+    manageSubscription() {
+      if (!this.bridge) return
+      this.bridge.send({cmd: "PurchaseSubscription"})
+    },
+    restore() {
+      if (!this.bridge) return
+      this.restoring = true
+      this.bridge.send({cmd: "RestorePurchases"})
+      setTimeout(() => { this.restoring = false }, 3000)
+    },
     setDefault(e, setting) {
       const value = e.value ? "true" : "false";
       this.bridge.send({cmd: "SetDefault", name: setting, value})
+    },
+    // Turning auto-enhance ON is the first moment background AI would start
+    // sending data, so it needs the disclosure first. Turning it OFF is always
+    // allowed immediately.
+    setAutoEnhance(e) {
+      if (!this.bridge) return
+      if (e.value && !this.aiConsentGranted) {
+        this.$store.commit("setAIConsentPrompt", {
+          show: true,
+          retry: {cmd: "SetDefault", name: Constants.autoEnhanceKey, value: "true"}
+        })
+        return
+      }
+      const value = e.value ? "true" : "false"
+      this.bridge.send({cmd: "SetDefault", name: Constants.autoEnhanceKey, value})
+      this.$store.commit("setTabSpaceSetting", {key: Constants.autoEnhanceKey, value})
     },
     setLanguage(e) {
       this.bridge.send({cmd: "SetDefault", name: Constants.preferredLanguageKey, value: e.target.value})
@@ -205,6 +451,26 @@ export default {
     setExternalBrowser(number, e) {
       let key = number == 1 ? Constants.externalBrowser1Key : Constants.externalBrowser2Key
       this.bridge.send({cmd: "SetDefault", name: key, value: e.target.value})
+    },
+    saveSuggestedTags() {
+      const raw = (this.tagsDraft || '').trim()
+      if (!raw) {
+        // Empty is fine — the native side falls back to the language default.
+        this.tagsDraft = ''
+        this.bridge.send({cmd: "SetDefault", name: Constants.suggestedTagsKey, value: ''})
+        return
+      }
+      const tags = raw
+        .split(/[,;\n]+/)
+        .map(t => t.trim())
+        .filter(t => t && t.length <= 50)
+      if (tags.length === 0) {
+        this.tagsDraft = this.suggestedTagsValue
+        return
+      }
+      const normalized = tags.join(', ')
+      this.tagsDraft = normalized
+      this.bridge.send({cmd: "SetDefault", name: Constants.suggestedTagsKey, value: normalized})
     }
   }
 };
@@ -291,6 +557,207 @@ export default {
   font-weight: 500;
   font-size: 0.9rem;
   color: var(--text-primary);
+}
+
+/* --- Subscription block --- */
+.plan-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.plan-label {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.plan-value {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.plan-value.premium {
+  color: #10b981;
+}
+
+.plan-icon {
+  width: 15px;
+  height: 15px;
+}
+
+.plus-price {
+  color: var(--text-secondary);
+  font-weight: 500;
+  opacity: 0.75;
+}
+
+.quota-block {
+  margin-top: 10px;
+}
+
+.quota-line {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.subscription-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.primary-action {
+  padding: 8px 16px;
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #ffffff;
+  background: var(--primary-color);
+  border: 0;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+}
+
+.secondary-action {
+  padding: 8px 16px;
+  font: inherit;
+  font-size: 0.85rem;
+  color: var(--text-primary);
+  background: transparent;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+}
+
+.secondary-action:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.redirect-note {
+  color: var(--primary-color);
+}
+
+/* --- Multi-browser block --- */
+.feature-lede {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.feature-lede-icon {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  margin-top: 2px;
+  color: var(--primary-color);
+}
+
+.feature-lede-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.feature-title {
+  margin: 0;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.feature-desc {
+  margin-top: 0.25rem;
+}
+
+.plan-pill {
+  flex-shrink: 0;
+  padding: 2px 8px;
+  border: 1px solid var(--border-color);
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--text-secondary);
+}
+
+.plan-pill.unlocked {
+  border-color: transparent;
+  background: var(--primary-color);
+  color: #ffffff;
+}
+
+.connected-note {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 12px 0 0;
+  font-size: 0.85rem;
+  color: #10b981;
+}
+
+.connected-icon {
+  width: 15px;
+  height: 15px;
+}
+
+.steps {
+  margin: 14px 0 0;
+  padding-left: 1.3rem;
+  list-style: decimal;
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+}
+
+/* A bare global `li` rule in Admin.vue makes every list item a flex box with
+   no marker and its own padding. Undo it for these steps. */
+.steps li {
+  display: list-item;
+  list-style: decimal;
+  padding: 0;
+  margin-left: 0;
+  margin-right: 0;
+}
+
+.steps li + li {
+  margin-top: 5px;
+}
+
+.legal-links a {
+  color: inherit;
+}
+
+.form-input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 8px 12px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  line-height: 1.4;
+  color: var(--text-primary);
+  background-color: var(--bg-color);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.form-input:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 2px rgba(250, 128, 114, 0.2);
+}
+
+.form-textarea {
+  resize: vertical;
+  min-height: 80px;
+  font-family: inherit;
 }
 
 /* Custom Select Styles */
