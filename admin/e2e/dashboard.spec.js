@@ -830,12 +830,15 @@ test('maps protocol v2 Plus and keeps the weekly AI trial available', async ({ p
   })
 
   await expect.poll(() => bridgeCommandCount(page, 'PrepareAI')).toBe(1)
+  // Permanent Plus is not Pro: the weekly free-tier AI allowance still applies,
+  // so the readout starts at five and one enhancement spends one of them.
+  await expect(page.getByTestId('plan-status-link')).toContainText('5 AI')
   const card = page.getByTestId('session-session-research')
   await card.hover()
   await expect(card.getByTestId('ai-enhance-session')).toBeVisible()
   await card.getByTestId('ai-enhance-session').click()
   await expect.poll(() => bridgeCommandCount(page, 'EnhanceSession')).toBe(1)
-  await expect(page.getByTestId('plan-status-link')).toContainText('5 AI')
+  await expect(page.getByTestId('plan-status-link')).toContainText('4 AI')
   await page.getByTestId('settings-link').click()
   await expect(page.getByTestId('plan-status')).toContainText('Plus · Permanent')
   await expect(page.getByTestId('settings-plus-price')).toHaveText('$9.99')
