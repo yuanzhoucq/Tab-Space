@@ -189,6 +189,41 @@ async function openDashboard(page, options = {}) {
           return
         }
 
+        if (name === 'ClusterTabs') {
+          const session = (payload.bookmarks || [])[0] || { sites: [] }
+          const half = Math.ceil(session.sites.length / 2)
+          emit('ReturnSplitPreview', {
+            clusters: JSON.stringify([
+              { name: 'Topic A', tags: ['Work'], sites: session.sites.slice(0, half) },
+              { name: 'Topic B', tags: ['Reading'], sites: session.sites.slice(half) }
+            ].filter(cluster => cluster.sites.length > 0)),
+            totalTabs: session.sites.length,
+            originalUuid: payload.uuid,
+            quotaRemaining: subscriptionStatus === 'active' ? -1 : 4
+          })
+          return
+        }
+
+        if (name === 'SaveSplitSessions') {
+          const now = Date.now()
+          const clusters = JSON.parse(payload.clusters || '[]')
+          currentSessions.unshift(...clusters.map((cluster, index) => ({
+            uuid: `split-${now}-${index}`,
+            title: cluster.name,
+            timestamp: now,
+            comment: '',
+            sites: cluster.sites,
+            tags: cluster.tags || []
+          })))
+          // Native never hard-deletes the original; it tags it @Trash.
+          const original = currentSessions.find(session => session.uuid === payload.originalUuid)
+          if (original && !(original.tags || []).some(tag => tag.name === '@Trash')) {
+            original.tags = [...(original.tags || []), { name: '@Trash' }]
+          }
+          returnBookmarks()
+          return
+        }
+
         if (name === 'ListBackups') {
           emit('ReturnBackups', { backups: JSON.stringify(testBackups) })
           return
@@ -811,6 +846,34 @@ test('offers the AI actions on titles-only rows', async ({ page }) => {
   await expect.poll(() => lastBridgeCommand(page, 'ClusterTabs')).toMatchObject({
     payload: { uuid: 'session-research' }
   })
+})
+
+test('lets a free user apply the split their weekly AI request paid for', async ({ page }) => {
+  await openDashboard(page, {
+    initialSessions: [
+      {
+        ...sessions[0],
+        sites: [...sessions[0].sites, { title: 'Hacker News', url: 'https://news.ycombinator.com' }]
+      },
+      sessions[1]
+    ],
+    nativeProtocolVersion: '2',
+    entitlementTier: 'free'
+  })
+
+  await page.getByTestId('session-session-research').getByTestId('ai-split-session').click()
+
+  const modal = page.locator('.split-modal')
+  await expect(modal).toBeVisible()
+  await modal.locator('.split-btn-primary').click()
+
+  // The split lands instead of hitting a paywall: Pro sells volume, not the feature.
+  await expect(page.locator('.subscription-modal')).toHaveCount(0)
+  await expect.poll(() => lastBridgeCommand(page, 'SaveSplitSessions')).toMatchObject({
+    payload: { originalUuid: 'session-research' }
+  })
+  await expect(page.getByTestId('session-session-research')).toHaveCount(0)
+  await expect(page.locator('.sessions-list')).toContainText('Topic A')
 })
 
 test('scrolls rather than squashing the tag filters in a short window', async ({ page }) => {

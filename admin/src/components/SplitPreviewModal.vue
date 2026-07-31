@@ -43,7 +43,7 @@
 </template>
 
 <script>
-import { mapState, mapGetters } from 'vuex'
+import { mapState } from 'vuex'
 import WangYeIcon from '../assets/img/icon-webpage.svg'
 
 export default {
@@ -56,7 +56,6 @@ export default {
   },
   computed: {
     ...mapState(['lang', 'bridge', 'splitPreview']),
-    ...mapGetters(['isPremium']),
     visible() {
       return Boolean(this.splitPreview && this.splitPreview.clusters && this.splitPreview.clusters.length > 0)
     },
@@ -110,12 +109,10 @@ export default {
       }
     },
     saveAsMultiple() {
-      // Applying a split is premium (design §6: "preview visible, apply requires
-      // subscription"). Free users get the upgrade prompt instead.
-      if (!this.isPremium) {
-        this.$store.commit('setShowSubscriptionModal', true)
-        return
-      }
+      // Applying a split is not gated by tier: the split the user already paid a
+      // weekly AI request for has to land, otherwise the trial burns the quota
+      // and delivers nothing. Pro sells volume (unlimited requests), not the
+      // capability itself.
       const validSessions = this.previewSessions.filter(s => s.sites.length > 0)
       const clustersData = validSessions.map(session => ({
         name: session.title,

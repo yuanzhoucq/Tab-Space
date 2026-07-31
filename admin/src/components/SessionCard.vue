@@ -703,8 +703,8 @@
         this.bridge.send({ cmd: "EnhanceSession", uuid: session.uuid, bookmarks: [session] })
       },
       splitSession(session) {
-        // Previewing a split consumes the same non-Pro trial quota; applying
-        // the split remains gated in SplitPreviewModal.
+        // A split costs one request from the same weekly trial quota as an
+        // enhance, and applying it is open to every tier.
         if (!this.aiEnabled || this.splittingSessionId) return
         this.$store.commit("setSplittingSessionId", session.uuid)
         this.bridge.send({ cmd: "ClusterTabs", uuid: session.uuid, bookmarks: [session] })
