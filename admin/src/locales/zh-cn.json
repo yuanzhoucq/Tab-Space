@@ -146,6 +146,8 @@
   "restoring": "恢复中…",
   "restorePurchases": "恢复购买",
   "subscriptionManagedInApp": "套餐与支付均在 Tab Space 应用中安全处理。",
+  "subscriptionActivated": "订阅已生效，现在可以使用 AI 了。",
+  "subscriptionActivationPending": "已在 Tab Space 应用中订阅？刷新面板即可开始使用。",
   "freeTierInfo": "免费版：每周有一定次数的 AI 请求额度。",
   "aiQuotaUnlimited": "无限 AI 请求",
   "aiQuotaRemaining": "本周还剩 {count} 次 AI 请求",

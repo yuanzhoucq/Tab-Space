@@ -88,6 +88,14 @@ const store = new Vuex.Store({
         aiQuotaResetAt: null,        // epoch seconds
         showSubscriptionModal: false,
         purchaseRedirecting: false,  // set once the native side confirms a redirect
+        // Stays true from the redirect until the native side reports a higher
+        // tier. Closing the dialog clears purchaseRedirecting, but the purchase
+        // itself is still in flight in the host app, so the status refresh on
+        // return must not depend on the dialog being open.
+        purchaseAwaitingActivation: false,
+        // Last resort after the status refresh kept reporting the old tier:
+        // asks the user to reload instead of leaving AI silently unusable.
+        showSubscriptionRefreshPrompt: false,
         // Transient, non-blocking AI error toast: { message, retry } | null.
         aiToast: null,
         // AI data-flow disclosure. The native side refuses every AI request with
@@ -250,6 +258,13 @@ const store = new Vuex.Store({
         },
         setPurchaseRedirecting(state, redirecting) {
             state.purchaseRedirecting = redirecting
+        },
+        setPurchaseAwaitingActivation(state, awaiting) {
+            state.purchaseAwaitingActivation = awaiting
+            if (!awaiting) state.showSubscriptionRefreshPrompt = false
+        },
+        setShowSubscriptionRefreshPrompt(state, show) {
+            state.showSubscriptionRefreshPrompt = show
         },
         setAIToast(state, toast) {
             state.aiToast = toast

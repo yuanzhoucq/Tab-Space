@@ -97,6 +97,10 @@ async function openDashboard(page, options = {}) {
     if (aiConsentAccepted) storedSettings['ai-data-disclosure-accepted-version'] = '1'
     else delete storedSettings['ai-data-disclosure-accepted-version']
     let currentSessions = clone(testSessions)
+    // Mutable so a test can play out a purchase: the host app grants the new
+    // tier while the dashboard is in the background, exactly as StoreKit does.
+    let currentTier = entitlementTier || (subscriptionStatus === 'active' ? 'pro' : 'free')
+    let currentStatus = subscriptionStatus
 
     window.__tabspaceBridgeCommands = []
     window.__tabspaceRestoredSessions = []
@@ -118,6 +122,12 @@ async function openDashboard(page, options = {}) {
     window.__tabspaceTest = {
       setSessions(value) {
         currentSessions = clone(value)
+      },
+      // Stands in for a purchase completed in the host app while the dashboard
+      // was in the background.
+      setEntitlement(tier) {
+        currentTier = tier
+        currentStatus = tier === 'free' ? 'free' : 'active'
       },
       emit
     }
@@ -150,16 +160,23 @@ async function openDashboard(page, options = {}) {
 
         if (name === 'CheckSubscriptionStatus') {
           emit('ReturnSubscriptionStatus', {
-            status: subscriptionStatus,
+            status: currentStatus,
             ...(Number(nativeProtocolVersion) >= 2
               ? {
-                  tier: entitlementTier || (subscriptionStatus === 'active' ? 'pro' : 'free'),
-                  hasPermanentPlus: entitlementTier === 'plus',
+                  tier: currentTier,
+                  hasPermanentPlus: currentTier === 'plus',
                   ...(plusDisplayPrice ? { plusDisplayPrice } : {})
                 }
               : {}),
-            quotaRemaining: subscriptionStatus === 'active' ? -1 : 5
+            quotaRemaining: currentStatus === 'active' ? -1 : 5
           })
+          return
+        }
+
+        if (name === 'PurchaseSubscription' || name === 'RestorePurchases') {
+          // Purchases live in the host app; the extension only reports that it
+          // brought the app forward.
+          emit('PurchaseResult', { redirected: true })
           return
         }
 
@@ -254,7 +271,7 @@ async function openDashboard(page, options = {}) {
           // would cross the line. Only protocol v2 reports a tier, and only
           // those builds enforce the limit.
           const requested = (payload.bookmarks || []).length
-          const tier = entitlementTier || (subscriptionStatus === 'active' ? 'pro' : 'free')
+          const tier = currentTier
           if (Number(nativeProtocolVersion) >= 2 && tier === 'free'
             && currentSessions.length + requested > 5) {
             emit('SessionLimitReached', { limit: 5 })
@@ -1041,6 +1058,62 @@ test('lets a Pro subscriber reopen the plan comparison from Settings', async ({ 
   await expect(page.getByTestId('subscription-submit')).toHaveCount(0)
   await page.getByTestId('modal-manage-subscription').click()
   await expect.poll(() => lastBridgeCommand(page, 'PurchaseSubscription')).toBeTruthy()
+})
+
+test('picks up a purchase made in the host app when the tab regains focus', async ({ page }) => {
+  await openDashboard(page, {
+    initialSessions: sessions,
+    nativeProtocolVersion: '2',
+    entitlementTier: 'free',
+    aiConsentAccepted: true
+  })
+
+  await page.getByTestId('settings-link').click()
+  await page.getByTestId('settings-upgrade').click()
+  await page.getByTestId('subscription-submit').click()
+  await expect(page.getByTestId('subscription-submit')).toContainText('Continuing in the Tab Space app')
+
+  // The purchase completes in the host app. Switching apps leaves the tab
+  // "visible", so focus — not visibilitychange — is what brings the user back.
+  await page.evaluate(() => {
+    window.__tabspaceTest.setEntitlement('pro')
+    window.dispatchEvent(new Event('focus'))
+  })
+
+  await expect(page.locator('.ai-toast')).toContainText('Your subscription is active')
+  await expect(page.locator('.subscription-modal')).toHaveCount(0)
+  await expect(page.getByTestId('plan-status')).toContainText('Pro')
+  await expect(page.getByTestId('subscription-refresh-toast')).toHaveCount(0)
+})
+
+test('asks for a refresh when AI still reports the pre-purchase entitlement', async ({ page }) => {
+  await openDashboard(page, {
+    initialSessions: sessions,
+    nativeProtocolVersion: '2',
+    entitlementTier: 'free',
+    aiConsentAccepted: true
+  })
+
+  await page.getByTestId('settings-link').click()
+  await page.getByTestId('settings-upgrade').click()
+  await page.getByTestId('subscription-submit').click()
+  await expect(page.getByTestId('subscription-submit')).toContainText('Continuing in the Tab Space app')
+
+  // Back from the host app, but the AI service is still answering on the old
+  // token: offering the paywall again would ask for a second purchase.
+  await page.evaluate(() => {
+    window.dispatchEvent(new Event('focus'))
+    window.__tabspaceTest.emit('ReturnEnhancedSession', {
+      uuid: 'session-research',
+      error: 'quota_exceeded'
+    })
+  })
+
+  const prompt = page.getByTestId('subscription-refresh-toast')
+  await expect(prompt).toContainText('Refresh the dashboard')
+  await page.evaluate(() => { window.__tabspaceReloadMarker = true })
+  await prompt.getByTestId('subscription-refresh-reload').click()
+  await expect.poll(() => page.evaluate(() => window.__tabspaceReloadMarker)).toBeUndefined()
 })
 
 test('offers multi-browser setup from Settings and gates it behind Pro', async ({ page }) => {

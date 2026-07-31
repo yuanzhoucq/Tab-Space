@@ -146,6 +146,8 @@
   "restoring": "Przywracanie…",
   "restorePurchases": "Przywróć zakupy",
   "subscriptionManagedInApp": "Plany i płatności są bezpiecznie obsługiwane w aplikacji Tab Space.",
+  "subscriptionActivated": "Twoja subskrypcja jest aktywna. AI jest gotowe do użycia.",
+  "subscriptionActivationPending": "Subskrypcja wykupiona w aplikacji Tab Space? Odśwież panel, aby zacząć z niej korzystać.",
   "freeTierInfo": "Plan darmowy: tygodniowy limit żądań AI.",
   "aiQuotaUnlimited": "Nieograniczone żądania AI",
   "aiQuotaRemaining": "Pozostało {count} żądań AI w tym tygodniu",

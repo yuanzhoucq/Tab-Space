@@ -146,6 +146,8 @@
   "restoring": "Restaurando…",
   "restorePurchases": "Restaurar compras",
   "subscriptionManagedInApp": "Los planes y el pago se gestionan de forma segura en la app de Tab Space.",
+  "subscriptionActivated": "Tu suscripción está activa. La IA ya está lista.",
+  "subscriptionActivationPending": "¿Te suscribiste en la app de Tab Space? Actualiza el panel para empezar a usarla.",
   "freeTierInfo": "Plan gratuito: una asignación semanal de solicitudes de IA.",
   "aiQuotaUnlimited": "Solicitudes de IA ilimitadas",
   "aiQuotaRemaining": "{count} solicitudes de IA restantes esta semana",

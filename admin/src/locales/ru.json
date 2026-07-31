@@ -146,6 +146,8 @@
   "restoring": "Восстановление…",
   "restorePurchases": "Восстановить покупки",
   "subscriptionManagedInApp": "Тарифы и оплата безопасно обрабатываются в приложении Tab Space.",
+  "subscriptionActivated": "Подписка активна. ИИ готов к работе.",
+  "subscriptionActivationPending": "Оформили подписку в приложении Tab Space? Обновите панель, чтобы начать пользоваться.",
   "freeTierInfo": "Бесплатный тариф: недельный лимит ИИ-запросов.",
   "aiQuotaUnlimited": "Безлимитные ИИ-запросы",
   "aiQuotaRemaining": "Осталось {count} ИИ-запросов на этой неделе",

@@ -146,6 +146,8 @@
   "restoring": "جارٍ الاستعادة…",
   "restorePurchases": "استعادة المشتريات",
   "subscriptionManagedInApp": "تتم إدارة الخطط والدفع بأمان في تطبيق Tab Space.",
+  "subscriptionActivated": "اشتراكك مفعّل الآن، ويمكنك استخدام الذكاء الاصطناعي.",
+  "subscriptionActivationPending": "هل اشتركت في تطبيق Tab Space؟ حدّث لوحة التحكم لبدء الاستخدام.",
   "freeTierInfo": "الخطة المجانية: رصيد أسبوعي من طلبات الذكاء الاصطناعي.",
   "aiQuotaUnlimited": "طلبات ذكاء اصطناعي غير محدودة",
   "aiQuotaRemaining": "تبقّى {count} من طلبات الذكاء الاصطناعي هذا الأسبوع",

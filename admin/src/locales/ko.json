@@ -146,6 +146,8 @@
   "restoring": "복원 중…",
   "restorePurchases": "구매 복원",
   "subscriptionManagedInApp": "요금제와 결제는 Tab Space 앱에서 안전하게 처리됩니다.",
+  "subscriptionActivated": "구독이 활성화되었습니다. 이제 AI를 사용할 수 있습니다.",
+  "subscriptionActivationPending": "Tab Space 앱에서 구독하셨나요? 대시보드를 새로 고치면 사용할 수 있습니다.",
   "freeTierInfo": "무료 플랜: 매주 일정량의 AI 요청.",
   "aiQuotaUnlimited": "무제한 AI 요청",
   "aiQuotaRemaining": "이번 주 남은 AI 요청 {count}회",

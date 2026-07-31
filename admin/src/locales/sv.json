@@ -146,6 +146,8 @@
   "restoring": "Återställer…",
   "restorePurchases": "Återställ köp",
   "subscriptionManagedInApp": "Planer och betalning hanteras säkert i Tab Space-appen.",
+  "subscriptionActivated": "Din prenumeration är aktiv. AI är redo att användas.",
+  "subscriptionActivationPending": "Prenumererat i Tab Space-appen? Uppdatera panelen för att komma igång.",
   "freeTierInfo": "Gratisplan: ett veckotillägg av AI-förfrågningar.",
   "aiQuotaUnlimited": "Obegränsade AI-förfrågningar",
   "aiQuotaRemaining": "{count} AI-förfrågningar kvar denna vecka",

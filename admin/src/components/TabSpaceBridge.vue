@@ -49,7 +49,16 @@ export default {
       bookmarkRefreshAttempt: 0,
       defaultsRequested: false,
       webExtensionRequestId: 0,
-      aiInitialized: false
+      aiInitialized: false,
+      // Post-purchase activation polling. The host app writes the new
+      // entitlement to the shared App Group, and the extension picks it up
+      // asynchronously, so a single check on return is often too early.
+      subscriptionPollTimer: null,
+      subscriptionPollAttempt: 0,
+      subscriptionPollInterval: 3000,
+      subscriptionPollMaxAttempts: 10,
+      // Tier at the moment of the redirect; activation means "higher than this".
+      purchaseBaselineTier: null
     }
   },
   computed: {
@@ -71,6 +80,10 @@ export default {
     document.addEventListener(appExtensionEvent("ready"), this.handleAppExtensionBridgeReady)
     document.addEventListener(appExtensionEvent("message"), this.handleAppExtensionMessage)
     document.addEventListener("visibilitychange", this.handleVisibilityChange)
+    // Switching to the host app leaves the dashboard tab "visible", so
+    // visibilitychange alone never fires for the desktop purchase round trip.
+    window.addEventListener("focus", this.handleWindowFocus)
+    window.addEventListener("pageshow", this.handleWindowFocus)
     this.startAppDetectionTimeout()
     this.probeWebExtension()
     if (window.__tabspace_bridge) {
@@ -87,9 +100,12 @@ export default {
     document.removeEventListener(appExtensionEvent("ready"), this.handleAppExtensionBridgeReady)
     document.removeEventListener(appExtensionEvent("message"), this.handleAppExtensionMessage)
     document.removeEventListener("visibilitychange", this.handleVisibilityChange)
+    window.removeEventListener("focus", this.handleWindowFocus)
+    window.removeEventListener("pageshow", this.handleWindowFocus)
     this.clearAppDetectionTimer()
     this.clearInitialDataTimer()
     this.clearBookmarkRefreshTimer()
+    this.clearSubscriptionPollTimer()
   },
   methods: {
     redirectLegacyBridgeLoopbackHost() {
@@ -347,7 +363,7 @@ export default {
         case "PurchaseResult":
           // The native side redirected the user to the host app to complete the
           // purchase; there is no in-extension StoreKit sheet anymore.
-          if (data.redirected) this.$store.commit("setPurchaseRedirecting", true)
+          if (data.redirected) this.beginPurchaseRedirect()
           break
         case "SessionLimitReached":
           // Nothing was stored, so drop the local cards before offering the
@@ -418,6 +434,13 @@ export default {
         return
       }
       if (data.error === "quota_exceeded") {
+        // Subscribed in the host app moments ago, yet the AI service still
+        // answers on the old entitlement. Offering the paywall again would ask
+        // the user to buy what they just bought; ask for a reload instead.
+        if (this.$store.state.purchaseAwaitingActivation) {
+          this.$store.commit("setShowSubscriptionRefreshPrompt", true)
+          return
+        }
         // A local StoreKit test purchase can make the native client premium
         // while the remote AI service still sees a free entitlement because
         // Xcode's locally signed transaction is not an Apple sandbox receipt.
@@ -522,8 +545,61 @@ export default {
       // RestorePurchases / PurchaseSubscription both hand off to the host app.
       // Reflect that in the UI, and stop showing "continuing…" once the status
       // actually came back as subscribed.
-      if (data.redirected) this.$store.commit("setPurchaseRedirecting", true)
+      if (data.redirected) this.beginPurchaseRedirect()
       if (this.$store.getters.isPremium) this.$store.commit("setPurchaseRedirecting", false)
+      this.checkPurchaseActivated()
+    },
+    // A purchase or restore is now running in the host app. Remember the tier we
+    // are leaving so the reply that carries the new one can be recognised.
+    beginPurchaseRedirect() {
+      if (!this.$store.state.purchaseAwaitingActivation) {
+        this.purchaseBaselineTier = this.$store.state.entitlementTier
+      }
+      this.$store.commit("setPurchaseRedirecting", true)
+      this.$store.commit("setPurchaseAwaitingActivation", true)
+    },
+    // The status reply landed: if the tier finally moved, the purchase is live.
+    checkPurchaseActivated() {
+      if (!this.$store.state.purchaseAwaitingActivation) return
+      if (this.$store.state.entitlementTier === this.purchaseBaselineTier) return
+      this.clearSubscriptionPollTimer()
+      this.$store.commit("setPurchaseAwaitingActivation", false)
+      this.purchaseBaselineTier = null
+      // Re-authenticate against the AI service under the new entitlement, so the
+      // first request after the purchase is not answered on a free-tier token.
+      this.prepareAI()
+      this.$store.commit("setAIToast", {messageKey: "subscriptionActivated", retry: null})
+    },
+    // Re-ask until the new entitlement reaches the extension. The host app
+    // writes it to the shared App Group, so it can arrive after the user is
+    // already back in the browser; a single check on return often misses it.
+    startSubscriptionPolling() {
+      if (!this.$store.state.purchaseAwaitingActivation) return
+      if (this.subscriptionPollTimer) return
+      this.subscriptionPollAttempt = 0
+      this.pollSubscriptionStatus()
+    },
+    pollSubscriptionStatus() {
+      this.subscriptionPollTimer = null
+      if (!this.$store.state.purchaseAwaitingActivation) return
+      this.refreshSubscriptionStatus()
+      this.subscriptionPollAttempt += 1
+      if (this.subscriptionPollAttempt >= this.subscriptionPollMaxAttempts) {
+        // Everything the dashboard can do from here has been tried; a reload is
+        // the one action left, so say so instead of failing the next AI request.
+        this.$store.commit("setShowSubscriptionRefreshPrompt", true)
+        return
+      }
+      this.subscriptionPollTimer = setTimeout(
+        () => this.pollSubscriptionStatus(),
+        this.subscriptionPollInterval
+      )
+    },
+    clearSubscriptionPollTimer() {
+      if (this.subscriptionPollTimer) {
+        clearTimeout(this.subscriptionPollTimer)
+        this.subscriptionPollTimer = null
+      }
     },
     // Re-ask the native side for subscription + quota. Used by Settings on
     // mount and whenever the tab regains focus after a host-app redirect, so
@@ -535,9 +611,14 @@ export default {
     },
     handleVisibilityChange() {
       if (document.visibilityState !== "visible") return
-      // Only worth a round trip when a purchase/restore redirect is pending.
-      if (!this.$store.state.purchaseRedirecting) return
-      this.refreshSubscriptionStatus()
+      this.handleWindowFocus()
+    },
+    handleWindowFocus() {
+      // Only worth a round trip while a purchase/restore is still unconfirmed.
+      // Not gated on purchaseRedirecting: closing the dialog clears that flag
+      // even though the purchase is still running in the host app.
+      if (!this.$store.state.purchaseAwaitingActivation) return
+      this.startSubscriptionPolling()
     },
     markDashboardReady() {
       if (window.__tabspace_bridge && typeof window.__tabspace_bridge.markReady === "function") {

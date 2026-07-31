@@ -146,6 +146,8 @@
   "restoring": "Wiederherstellen…",
   "restorePurchases": "Käufe wiederherstellen",
   "subscriptionManagedInApp": "Tarife und Zahlung werden sicher in der Tab Space App abgewickelt.",
+  "subscriptionActivated": "Dein Abo ist aktiv. KI kann jetzt genutzt werden.",
+  "subscriptionActivationPending": "In der Tab Space App abonniert? Aktualisiere das Dashboard, um loszulegen.",
   "freeTierInfo": "Kostenloser Tarif: ein wöchentliches Kontingent an KI-Anfragen.",
   "aiQuotaUnlimited": "Unbegrenzte KI-Anfragen",
   "aiQuotaRemaining": "{count} KI-Anfragen übrig diese Woche",

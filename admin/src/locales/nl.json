@@ -146,6 +146,8 @@
   "restoring": "Herstellen…",
   "restorePurchases": "Aankopen herstellen",
   "subscriptionManagedInApp": "Abonnementen en betaling worden veilig afgehandeld in de Tab Space-app.",
+  "subscriptionActivated": "Je abonnement is actief. AI is klaar voor gebruik.",
+  "subscriptionActivationPending": "Geabonneerd in de Tab Space-app? Vernieuw het dashboard om te beginnen.",
   "freeTierInfo": "Gratis plan: een wekelijks tegoed aan AI-verzoeken.",
   "aiQuotaUnlimited": "Onbeperkte AI-verzoeken",
   "aiQuotaRemaining": "Nog {count} AI-verzoeken deze week",

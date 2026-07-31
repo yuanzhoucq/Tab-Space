@@ -146,6 +146,8 @@
   "restoring": "Geri yükleniyor…",
   "restorePurchases": "Satın alımları geri yükle",
   "subscriptionManagedInApp": "Planlar ve ödeme Tab Space uygulamasında güvenle yönetilir.",
+  "subscriptionActivated": "Aboneliğiniz etkin. Yapay zeka kullanıma hazır.",
+  "subscriptionActivationPending": "Tab Space uygulamasında abone mi oldunuz? Kullanmaya başlamak için panoyu yenileyin.",
   "freeTierInfo": "Ücretsiz plan: haftalık AI istek hakkı.",
   "aiQuotaUnlimited": "Sınırsız AI isteği",
   "aiQuotaRemaining": "Bu hafta kalan {count} AI isteği",

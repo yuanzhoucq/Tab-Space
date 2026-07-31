@@ -146,6 +146,8 @@
   "restoring": "Відновлення…",
   "restorePurchases": "Відновити покупки",
   "subscriptionManagedInApp": "Плани й оплата безпечно обробляються в застосунку Tab Space.",
+  "subscriptionActivated": "Передплата активна. ШІ готовий до роботи.",
+  "subscriptionActivationPending": "Оформили передплату в застосунку Tab Space? Оновіть панель, щоб почати користуватися.",
   "freeTierInfo": "Безкоштовний план: щотижневий ліміт запитів ШІ.",
   "aiQuotaUnlimited": "Необмежені запити ШІ",
   "aiQuotaRemaining": "Залишилось {count} запитів ШІ цього тижня",

@@ -146,6 +146,8 @@
   "restoring": "Gendanner…",
   "restorePurchases": "Gendan køb",
   "subscriptionManagedInApp": "Planer og betaling håndteres sikkert i Tab Space-appen.",
+  "subscriptionActivated": "Dit abonnement er aktivt. AI er klar til brug.",
+  "subscriptionActivationPending": "Abonneret i Tab Space-appen? Opdatér dashboardet for at komme i gang.",
   "freeTierInfo": "Gratis plan: et ugentligt antal AI-forespørgsler.",
   "aiQuotaUnlimited": "Ubegrænsede AI-forespørgsler",
   "aiQuotaRemaining": "{count} AI-forespørgsler tilbage i denne uge",
