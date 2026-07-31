@@ -7,6 +7,7 @@ on:
       - 'assets/**'
       - 'icon.png'
       - '_headers'
+      - '_redirects'
       - '.github/workflows/cloudflare-pages-site.yml'
   workflow_dispatch:
 
@@ -30,7 +31,7 @@ jobs:
       - name: Assemble site
         run: |
           mkdir -p dist
-          cp ./*.html icon.png _headers dist/
+          cp ./*.html icon.png _headers _redirects dist/
           cp -R assets dist/assets
           find dist -name '.DS_Store' -delete
 
@@ -42,7 +43,7 @@ jobs:
               exit 1
             fi
           done
-          for required in index.html index-zh.html privacy.html changelog.html redirect.html storage.html _headers assets/css/main.css; do
+          for required in index.html index-zh.html privacy.html changelog.html redirect.html storage.html 404.html _headers _redirects assets/css/main.css; do
             if [ ! -e "dist/$required" ]; then
               echo "Refusing to deploy: dist/$required is missing" >&2
               exit 1
