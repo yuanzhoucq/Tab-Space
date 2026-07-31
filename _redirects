@@ -1,0 +1,13 @@
+# Cloudflare Pages strips the .html suffix by default and 308s /redirect.html
+# to /redirect. Shipped Safari extensions cannot tolerate that: the injected
+# content script compares location.pathname against the literal "/redirect.html"
+# (Tab-Works Extension/tabspace.js), so the rewritten path silently disables the
+# native hand-off for every installed build, which will never update.
+#
+# A 200 rewrite serves the same asset while leaving the address bar — and
+# therefore location.pathname — on /redirect.html.
+/redirect.html  /redirect  200
+
+# storage.html deliberately has no rule. Its only consumer is the legacy iframe
+# relay, which matches the host static.mytab.space, a different origin that is
+# not served by this Pages project and does not strip the suffix.
