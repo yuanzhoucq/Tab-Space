@@ -531,6 +531,38 @@ header {
     font-size: 0.875rem;
 }
 
+/* Notice that a plan or feature is not shipping yet, so it reads as a caveat
+   rather than as ordinary fine print. */
+.pricing-note {
+    max-width: 46rem;
+    margin: 0 auto 8px;
+    padding: 12px 18px;
+    border: 1px solid var(--color-brand-tint);
+    border-radius: 12px;
+    background: var(--color-brand-tint);
+    color: var(--color-text-secondary);
+    line-height: 1.55;
+}
+
+/* "Beta" chip next to a feature heading. */
+.badge-beta {
+    display: inline-block;
+    margin-left: 8px;
+    padding: 2px 9px;
+    border-radius: 999px;
+    background: var(--color-brand-tint);
+    color: var(--color-brand-strong);
+    font-size: 0.6875rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    vertical-align: middle;
+}
+
+.subtitle-note {
+    color: var(--color-brand-strong);
+}
+
 .pricing-card ul {
     margin: 24px 0 0;
     padding-left: 1.2rem;
