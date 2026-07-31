@@ -1,6 +1,10 @@
 <template>
   <div class="sessions-list" :data-session-view-mode="sessionViewMode">
-    <div v-if="displaySessions.length===0" class="session-placeholder">{{ lang.nothingHere }}</div>
+    <template v-if="displaySessions.length===0">
+      <!-- Only for an empty filter result; the "no sessions at all" case is covered
+           by the getting-started empty state in Admin.vue. -->
+      <div v-if="sessions.length > 0" class="session-placeholder">{{ lang.nothingHere }}</div>
+    </template>
     <div v-else-if="titlesOnlyView" class="session titles-only-card" data-testid="titles-only-session-card">
       <transition-group tag="div" name="session">
         <div

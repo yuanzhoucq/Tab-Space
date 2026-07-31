@@ -43,8 +43,13 @@
           <button class="secondary-button" type="button" @click="reload">{{lang.retry}}</button>
         </div>
       </div>
-      <div class="empty-state" v-if="nativeDetected && initialRefresh && sessions.length < 1">
+      <div class="empty-state" v-if="nativeDetected && initialRefresh && sessions.length < 1" data-testid="empty-state">
         <p>{{lang.noSessions}}</p>
+        <p class="empty-state-tip">{{lang.noSessionsTip}}</p>
+        <a class="link empty-state-link"
+           href="https://mytab.space/#features"
+           target="_blank"
+           rel="noopener noreferrer">{{lang.howToUse}}</a>
       </div>
       <div v-if="nativeDetected && initialRefresh" class="sessions-container">
         <session-sidebar></session-sidebar>
@@ -380,6 +385,17 @@
     color: #666666;
     margin: 20px auto;
     text-align: center;
+  }
+
+  .empty-state-tip {
+    margin: 6px auto 10px;
+    max-width: 420px;
+    font-size: 14px;
+    line-height: 1.5;
+  }
+
+  .empty-state-link {
+    font-size: 14px;
   }
 
   #keyword {
