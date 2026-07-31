@@ -5,7 +5,11 @@
 # native hand-off for every installed build, which will never update.
 #
 # A 200 rewrite serves the same asset while leaving the address bar — and
-# therefore location.pathname — on /redirect.html.
+# therefore location.pathname — on /redirect.html. Cloudflare does not document
+# the precedence, but an explicit rule here was confirmed in production to win
+# over the built-in suffix stripping. Re-check this after any Pages runtime
+# change: if the rule stops winning, /redirect.html silently 308s again and the
+# native hand-off breaks with no other symptom.
 /redirect.html  /redirect  200
 
 # storage.html deliberately has no rule. Its only consumer is the legacy iframe
