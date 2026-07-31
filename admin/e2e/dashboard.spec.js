@@ -1127,6 +1127,15 @@ test('offers multi-browser setup from Settings and gates it behind Pro', async (
   const card = page.getByTestId('multi-browser-card')
   await expect(card).toBeVisible()
   await expect(card.getByTestId('multi-browser-steps').locator('li')).toHaveCount(3)
+  await expect(card.getByTestId('multi-browser-guide'))
+    .toHaveAttribute('href', 'https://mytab.space/multi-browser.html')
+
+  // Subscription, AI, then multi-browser lead the page: the paid features stay
+  // above the general preferences.
+  await expect(page.locator('.settings-content > .card').nth(0)).toHaveAttribute('data-testid', 'subscription-card')
+  await expect(page.locator('.settings-content > .card').nth(1)).toContainText('AI')
+  await expect(page.locator('.settings-content > .card').nth(2)).toHaveAttribute('data-testid', 'multi-browser-card')
+
   await card.getByTestId('multi-browser-upgrade').click()
   await expect(page.getByTestId('plan-comparison')).toBeVisible()
 })
@@ -1906,7 +1915,11 @@ test('refreshes sessions after a native remote-change notification', async ({ pa
 test('shows a safe empty state when there are no sessions', async ({ page }) => {
   await openDashboard(page, { initialSessions: [] })
 
-  await expect(page.locator('.empty-state')).toHaveText('No saved sessions yet.')
+  await expect(page.locator('.empty-state')).toContainText('No saved sessions yet.')
+  await expect(page.locator('.empty-state')).toContainText('Click the Tab Space icon in the Safari toolbar')
+  await expect(page.getByRole('link', { name: 'How to use Tab Space' })).toBeVisible()
+  // The empty state is the only "nothing here" message on an empty dashboard.
+  await expect(page.locator('.session-placeholder')).toHaveCount(0)
   await expect(page.getByTestId('session-stats')).toContainText('0 sessions')
   await expect(page.getByTestId('session-stats')).toContainText('0 tabs')
 })
