@@ -1,0 +1,58 @@
+name: Deploy Marketing Site to Cloudflare Pages
+
+on:
+  push:
+    paths:
+      - '*.html'
+      - 'assets/**'
+      - 'icon.png'
+      - '_headers'
+      - '.github/workflows/cloudflare-pages-site.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: cloudflare-pages-site-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      deployments: write
+
+    steps:
+      - uses: actions/checkout@v6
+
+      # The site is plain static HTML with no build step. Assemble an explicit
+      # allowlist rather than deploying the repository root, so the Admin
+      # dashboard, workflows, and agent docs can never leak into the site.
+      - name: Assemble site
+        run: |
+          mkdir -p dist
+          cp ./*.html icon.png _headers dist/
+          cp -R assets dist/assets
+          find dist -name '.DS_Store' -delete
+
+      - name: Verify the deploy contains only site files
+        run: |
+          for unexpected in admin .github .claude CLAUDE.md AGENTS.md README.md CNAME; do
+            if [ -e "dist/$unexpected" ]; then
+              echo "Refusing to deploy: dist/$unexpected should not be published" >&2
+              exit 1
+            fi
+          done
+          for required in index.html index-zh.html privacy.html changelog.html redirect.html storage.html _headers assets/css/main.css; do
+            if [ ! -e "dist/$required" ]; then
+              echo "Refusing to deploy: dist/$required is missing" >&2
+              exit 1
+            fi
+          done
+
+      - name: Deploy to Cloudflare Pages
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages deploy dist --project-name=tab-space-site --branch=${{ github.ref_name }} --commit-dirty=true
+          gitHubToken: ${{ secrets.GITHUB_TOKEN }}

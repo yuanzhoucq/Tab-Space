@@ -1,0 +1,25 @@
+/*
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+
+# Marketing-site assets are not content-hashed, so nothing here may be
+# marked immutable except the font, whose bytes never change.
+# Everything else revalidates cheaply via ETag.
+
+/*.html
+  Cache-Control: no-cache, no-transform
+
+/
+  Cache-Control: no-cache, no-transform
+
+/assets/css/*
+  Cache-Control: no-cache, no-transform
+
+/assets/img/*
+  Cache-Control: public, max-age=86400, must-revalidate
+
+/assets/*.woff2
+  Cache-Control: public, max-age=31536000, immutable
+
+/assets/*.mp4
+  Cache-Control: public, max-age=604800, must-revalidate
