@@ -415,6 +415,14 @@ export default {
     // --- AI reply handlers ---
     applyQuota(data) {
       if (data.quotaRemaining === undefined && data.quotaResetAt === undefined) return
+      // The AI service only reports -1 (unlimited) for Pro. If a non-Pro tier is
+      // paired with -1, the native side is reporting a stale quota from before
+      // an entitlement change; do not surface it, or Settings/Plan would claim
+      // "Unlimited" for a Free/Plus user.
+      if (data.quotaRemaining === -1 && this.$store.state.entitlementTier !== "pro") {
+        this.$store.commit("clearAIQuota")
+        return
+      }
       this.$store.commit("setAIQuota", {
         remaining: data.quotaRemaining,
         resetAt: data.quotaResetAt

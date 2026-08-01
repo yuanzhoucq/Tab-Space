@@ -81,6 +81,7 @@ async function openDashboard(page, options = {}) {
     subscriptionStatus,
     entitlementTier,
     plusDisplayPrice,
+    quotaRemaining,
     aiConsentAccepted
   }) => {
     const clone = value => JSON.parse(JSON.stringify(value))
@@ -168,7 +169,9 @@ async function openDashboard(page, options = {}) {
                   ...(plusDisplayPrice ? { plusDisplayPrice } : {})
                 }
               : {}),
-            quotaRemaining: currentStatus === 'active' ? -1 : 5
+            quotaRemaining: quotaRemaining !== undefined
+              ? quotaRemaining
+              : (currentStatus === 'active' ? -1 : 5)
           })
           return
         }
@@ -361,6 +364,7 @@ async function openDashboard(page, options = {}) {
     subscriptionStatus: options.subscriptionStatus || 'free',
     entitlementTier: options.entitlementTier || '',
     plusDisplayPrice: options.plusDisplayPrice || '',
+    quotaRemaining: options.quotaRemaining,
     aiConsentAccepted: options.aiConsentAccepted !== false
   })
 
@@ -1036,6 +1040,25 @@ test('maps protocol v2 Plus and keeps the weekly AI trial available', async ({ p
   await expect.poll(() => lastBridgeCommand(page, 'PurchaseSubscription')).toMatchObject({
     payload: { productId: 'tabspace.pro.monthly' }
   })
+})
+
+test('never dresses a stale unlimited quota up as Pro for permanent Plus', async ({ page }) => {
+  // Reproduces the production desync: the native tier cache says Plus while a
+  // pre-change server quota (-1 = unlimited) is still in flight. The dashboard
+  // must not claim "Pro" on the navbar or "Unlimited" in Settings for a Plus
+  // user; the quota is unknown until the native side reports a consistent one.
+  await openDashboard(page, {
+    initialSessions: sessions,
+    nativeProtocolVersion: '2',
+    entitlementTier: 'plus',
+    quotaRemaining: -1
+  })
+
+  await expect(page.getByTestId('pro-badge')).toHaveCount(0)
+  await expect(page.getByTestId('plan-status-link')).toHaveCount(0)
+  await page.getByTestId('settings-link').click()
+  await expect(page.getByTestId('plan-status')).toContainText('Plus · Permanent')
+  await expect(page.getByText('Unlimited AI requests')).toHaveCount(0)
 })
 
 test('lets a Pro subscriber reopen the plan comparison from Settings', async ({ page }) => {

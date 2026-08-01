@@ -71,10 +71,14 @@ export default {
       return this.aiQuotaRemaining !== null && this.aiQuotaRemaining !== undefined
     },
     showPlanStatus() {
-      return !this.isPremium && this.quotaKnown
+      // -1 means unlimited, which the AI service only ever grants to Pro.
+      // A non-Pro tier paired with -1 is stale native data, not a real quota;
+      // showing "Pro" (or an unlimited readout) for it would contradict the
+      // plan shown in Settings, so treat the quota as unknown instead.
+      return !this.isPremium && this.quotaKnown && this.aiQuotaRemaining !== -1
     },
     planStatusLabel() {
-      if (this.aiQuotaRemaining === -1) return this.lang.planPremium || "Pro"
+      if (this.aiQuotaRemaining === -1) return this.lang.aiQuotaUnlimited || "Unlimited AI requests"
       const template = this.lang.aiQuotaShort || "{count} AI left"
       return template.replace("{count}", Math.max(0, this.aiQuotaRemaining))
     },

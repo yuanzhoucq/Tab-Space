@@ -252,6 +252,10 @@ const store = new Vuex.Store({
             if (remaining !== undefined && remaining !== null) state.aiQuotaRemaining = Number(remaining)
             if (resetAt !== undefined && resetAt !== null) state.aiQuotaResetAt = Number(resetAt)
         },
+        clearAIQuota(state) {
+            state.aiQuotaRemaining = null
+            state.aiQuotaResetAt = null
+        },
         setShowSubscriptionModal(state, show) {
             state.showSubscriptionModal = show
             if (!show) state.purchaseRedirecting = false

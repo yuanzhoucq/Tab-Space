@@ -34,12 +34,14 @@
             {{lang.plusOwnedSummary || 'Unlimited sessions and all core features are yours permanently. You also receive 5 AI requests each week; Pro makes AI unlimited.'}}
           </p>
 
-          <div v-if="!isPremium && quotaKnown" class="quota-block">
+          <!-- -1 (unlimited) is only meaningful for Pro; when a non-Pro tier is
+               paired with it the native state is stale, so do not present an
+               "Unlimited" readout that contradicts the plan shown above. -->
+          <div v-if="!isPremium && quotaKnown && !unlimitedQuota" class="quota-block">
             <p class="quota-line">
-              <template v-if="unlimitedQuota">{{lang.aiQuotaUnlimited || 'Unlimited AI requests'}}</template>
-              <template v-else>{{ quotaLabel }}</template>
+              {{ quotaLabel }}
             </p>
-            <p v-if="!unlimitedQuota && quotaResetLabel" class="help-text">{{ quotaResetLabel }}</p>
+            <p v-if="quotaResetLabel" class="help-text">{{ quotaResetLabel }}</p>
           </div>
 
           <!-- The plan comparison stays reachable at every tier: a Pro
