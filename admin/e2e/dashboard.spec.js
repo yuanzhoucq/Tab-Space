@@ -1314,6 +1314,10 @@ test('falls back to the legacy iframe bridge used by build 89', async ({ page })
   const serializedSessions = JSON.stringify(sessions).replace(/</g, '\\u003c')
   await page.route('**/storage.html?method=get', route => route.fulfill({
     contentType: 'text/html',
+    // The `\/` is the HTML-script escape convention: if this generated HTML is
+    // ever embedded inside another script block, a raw `</script>` would close
+    // that block early. ESLint cannot see that intent, so disable the rule here.
+    /* eslint-disable no-useless-escape */
     body: `<!doctype html><script>
       const sessions = ${serializedSessions}
       window.addEventListener('message', event => {
@@ -1329,6 +1333,7 @@ test('falls back to the legacy iframe bridge used by build 89', async ({ page })
         bookmarks: JSON.stringify(sessions)
       }, '*'), 50)
     <\/script>`
+    /* eslint-enable no-useless-escape */
   }))
   await page.route('**/favicon.ico', route => route.fulfill({ status: 204, body: '' }))
   await page.goto('http://localhost:47317/')
@@ -1884,6 +1889,7 @@ test('restores, favorites, reorders, trashes and permanently deletes sessions', 
   await expect(research).toBeVisible()
   await expect(page.getByTestId('export-menu')).toHaveCount(0)
   await expect(research.getByTestId('export-session-menu')).toHaveCount(0)
+  await expect(page.getByTestId('add-session')).toHaveCount(0)
   await page.getByTestId('empty-trash').click()
   await expect(research).toHaveCount(0)
   await expect.poll(() => lastBridgeCommand(page, 'DeleteSession')).toMatchObject({
@@ -2153,6 +2159,7 @@ test('hides exports when every session is in trash', async ({ page }) => {
   await expect(page.getByTestId('session-session-research')).toBeVisible()
   await expect(page.getByTestId('export-menu')).toHaveCount(0)
   await expect(page.getByTestId('export-session-menu')).toHaveCount(0)
+  await expect(page.getByTestId('add-session')).toHaveCount(0)
 })
 
 test('uses fallback titles and escapes Markdown link text', async ({ page }) => {

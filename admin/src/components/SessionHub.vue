@@ -78,7 +78,7 @@
       </button>
       <!-- Last in the rail: the new session lands at the top of the list, so the
            button sits away from the controls that act on what is already there. -->
-      <button type="button" class="hub-btn" data-testid="add-session" :aria-label="lang.newSession" :title="lang.newSession" @click="insertSession">
+      <button v-if="activeTag !== '@Trash'" type="button" class="hub-btn" data-testid="add-session" :aria-label="lang.newSession" :title="lang.newSession" @click="insertSession">
           <v-icon class="button" :stroke-width="1.2" name="plus-circle" fill="rgba(250, 128, 114, 0.2)"
       stroke="salmon"></v-icon>
       </button>
