@@ -13,6 +13,7 @@
   "all": "全部",
   "movePrompt": "移动会话",
   "tagPrompt": "添加标签...",
+  "removeTagPrompt": "点击删除标签",
   "editPrompt": "编辑会话",
   "topPrompt": "移动到顶部",
   "mergePrompt": "合并会话...",

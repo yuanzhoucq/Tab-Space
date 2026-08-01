@@ -10,6 +10,7 @@
   "about": "O nas",
   "all": "Wszystkie",
   "tagPrompt": "Dodaj tagi...",
+  "removeTagPrompt": "Kliknij, aby usunąć tag",
   "whatsNew": "<strong style='color: salmon'>Nowość</strong>",
   "export": "Eksportuj",
   "import": "Importuj",

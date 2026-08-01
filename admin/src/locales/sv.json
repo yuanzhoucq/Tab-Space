@@ -10,6 +10,7 @@
   "about": "Om",
   "all": "Alla",
   "tagPrompt": "Lägg till taggar här...",
+  "removeTagPrompt": "Klicka för att ta bort taggen",
   "whatsNew": "<strong style='color: salmon'>Nyheter</strong>",
   "export": "Exportera",
   "import": "Importera",

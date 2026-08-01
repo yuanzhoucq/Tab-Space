@@ -13,6 +13,7 @@
   "all": "الكل",
   "movePrompt": "تحريك الجلسة",
   "tagPrompt": "إضافة علامات هنا...",
+  "removeTagPrompt": "انقر لإزالة العلامة",
   "editPrompt": "تحرير الجلسة",
   "topPrompt": "تحريك إلى أعلى",
   "mergePrompt": "دمج مع الجلسة …",

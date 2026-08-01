@@ -10,6 +10,7 @@
   "about": "정보",
   "all": "전체",
   "tagPrompt": "여기에 태그 달기...",
+  "removeTagPrompt": "클릭하여 태그 삭제",
   "whatsNew": "<strong style='color: salmon'>새소식</strong>",
   "export": "내보내기",
   "import": "불러오기",

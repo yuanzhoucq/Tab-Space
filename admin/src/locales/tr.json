@@ -10,6 +10,7 @@
   "about": "Hakkımızda",
   "all": "Hepsi",
   "tagPrompt": "Buraya etiket ekle...",
+  "removeTagPrompt": "Etiketi kaldırmak için tıklayın",
   "whatsNew": "<strong style='color: salmon'>Yenilikler</strong>",
   "export": "Dışarıya aktar",
   "import": "İçeriye Aktar",

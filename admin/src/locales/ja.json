@@ -13,6 +13,7 @@
   "all": "すべて",
   "movePrompt": "セッションの移動",
   "tagPrompt": "ここにタグを入力",
+  "removeTagPrompt": "クリックでタグを削除",
   "editPrompt": "セッションの編集",
   "topPrompt": "最上部に移動",
   "mergePrompt": "ここに統合したいセッションを入力",

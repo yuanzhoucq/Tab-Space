@@ -13,6 +13,7 @@
   "all": "Alle",
   "movePrompt": "Verplaats sessie",
   "tagPrompt": "Voeg hier tags toe...",
+  "removeTagPrompt": "Klik om de tag te verwijderen",
   "editPrompt": "Bewerk sessie",
   "topPrompt": "Verplaats naar boven",
   "mergePrompt": "Voeg samen met sessie...",

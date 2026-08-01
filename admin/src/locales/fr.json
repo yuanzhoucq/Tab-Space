@@ -13,6 +13,7 @@
   "all": "Tout",
   "movePrompt": "Déplacer la session",
   "tagPrompt": "Ajouter des tags ici...",
+  "removeTagPrompt": "Cliquer pour retirer le tag",
   "editPrompt": "Modifier la session",
   "topPrompt": "Déplacer en haut",
   "mergePrompt": "Fusionner avec la session...",

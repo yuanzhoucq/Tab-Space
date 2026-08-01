@@ -10,6 +10,7 @@
   "about": "Про автора",
   "all": "Всі",
   "tagPrompt": "Додати теги...",
+  "removeTagPrompt": "Натисніть, щоб видалити тег",
   "whatsNew": "Що <strong style='color: salmon'>Нового</strong>",
   "export": "Експорт",
   "import": "Імпорт",

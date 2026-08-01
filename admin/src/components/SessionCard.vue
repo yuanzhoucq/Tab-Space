@@ -297,7 +297,7 @@
           v-for="tag in visibleTags(session)"
           @click="hasSearch || isEditingSession(session) ? null : removeTag(tag.name, session)"
           v-bind:key="tag.name"
-          :title="tag.name === '@Trash' ? (lang.restore || '') : ''"
+          :aria-label="tagTooltip(tag)"
       >
         <span
             v-for="(part, index) in highlightParts(tag.name === '@Trash' ? lang.trashBin : tag.name)"
@@ -305,7 +305,7 @@
             :class="{'highlight': part.match}"
         >{{ part.text }}</span>
       </div>
-      <button type="button" class="tag-btn" data-testid="add-tag" :title="lang.tagPrompt" :aria-label="lang.tagPrompt"
+      <button type="button" class="tag-btn" data-testid="add-tag" :aria-label="lang.tagPrompt"
               v-if="!hasSearch && !isEditingSession(session) && tagEditorId !== session.uuid" @click="e => addTag(e, session.uuid)">
         <v-icon name="tag" style="margin-bottom: -4px" :stroke-width="1.5"></v-icon>
       </button>
@@ -353,21 +353,21 @@
       </button>
       <div v-if="showTagBtns && !hasSearch && !isEditingSession(session)" style="display: flex; transition: 3s">
         <button type="button" class="tag-btn" data-testid="bulk-select-tabs"
-          v-if="canBulkMove" :title="lang.selectTabs" :aria-label="lang.selectTabs"
+          v-if="canBulkMove" :aria-label="lang.selectTabs"
           @click.stop="beginBulkSelection(false)">
           <v-icon name="check-square" :stroke-width="1.5"></v-icon>
         </button>
-        <button type="button" data-testid="edit-session" :title="lang.editPrompt" :aria-label="lang.editPrompt"
+        <button type="button" data-testid="edit-session" :aria-label="lang.editPrompt"
         v-if="!embedded && !editingSessionUuid" class="tag-btn"
         @click="startSessionEdit(session)">
           <v-icon name="edit" :stroke-width="1.5"></v-icon>
         </button>
-        <button type="button" class="tag-btn" data-testid="pin-session" :title="lang.topPrompt" :aria-label="lang.topPrompt"
+        <button type="button" class="tag-btn" data-testid="pin-session" :aria-label="lang.topPrompt"
         @click.stop.prevent="() => upSession(session)">
           <v-icon name="arrow-up-circle" :stroke-width="1.5"></v-icon>
         </button>
         <button type="button" class="tag-btn" data-testid="merge-session"
-          v-if="canBulkMove" :title="lang.mergePrompt" :aria-label="lang.mergePrompt"
+          v-if="canBulkMove" :aria-label="lang.mergePrompt"
           @click.stop="beginBulkSelection(true)">
           <v-icon name="git-merge" :stroke-width="1.8"></v-icon>
         </button>
@@ -762,6 +762,12 @@
         // @Favorite is presented by the star button, not as a pill
         return session.tags.filter(t => t.name !== "@Favorite")
       },
+      tagTooltip(tag) {
+        if (this.hasSearch || this.isEditingSession(this.session)) return ""
+        return tag.name === "@Trash"
+          ? (this.lang.restore || "")
+          : (this.lang.removeTagPrompt || "")
+      },
       wrapUrl(url) {
         return (url.indexOf("://") === -1) ? "http://" + url : url
       },
@@ -1123,14 +1129,24 @@
   .tag:hover {
     cursor: pointer;
     text-decoration: line-through;
-    opacity: 0.8;
     transition: 0.2s;
+  }
+
+  .tag > span {
+    transition: opacity 0.2s;
+  }
+
+  .tag:hover > span {
+    opacity: 0.8;
   }
 
   .tag.search-tag:hover {
     cursor: default;
-    opacity: 1;
     text-decoration: none;
+  }
+
+  .tag.search-tag:hover > span {
+    opacity: 1;
   }
 
   .btn-icon {
@@ -1158,9 +1174,75 @@
     flex-shrink: 0;
   }
 
+  .tag-btn svg {
+    transition: opacity 0.6s;
+  }
+
   .tag-btn:hover {
+    transition: 0.1s;
+  }
+
+  .tag-btn:hover svg {
     opacity: 0.7;
     transition: 0.1s;
+  }
+
+  /* Native `title` tooltips wait on the OS hover delay, so the card's
+     bottom-row actions get an instant CSS tooltip from their aria-label. */
+  .session-tags .tag-btn,
+  .session-tags .tag {
+    position: relative;
+  }
+
+  .session-tags .tag-btn[aria-label]:not([aria-label=""]):hover::after,
+  .session-tags .tag-btn[aria-label]:not([aria-label=""]):focus-visible::after,
+  .session-tags .tag[aria-label]:not([aria-label=""]):hover::after,
+  .session-tags .tag[aria-label]:not([aria-label=""]):focus-visible::after {
+    content: attr(aria-label);
+    position: absolute;
+    bottom: calc(100% + 7px);
+    left: 50%;
+    transform: translateX(-50%);
+    white-space: nowrap;
+    padding: 4px 8px;
+    border-radius: 6px;
+    background-color: var(--card-bg, #ffffff);
+    color: var(--text-primary, #2d3748);
+    border: 1px solid var(--border-color, #d6dce5);
+    font-size: 12px;
+    font-weight: 500;
+    line-height: 1.35;
+    text-decoration: none;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
+    pointer-events: none;
+    z-index: 120;
+    animation: tabspace-tooltip-in 0.1s ease-out;
+  }
+
+  .session-tags .tag-btn[aria-label]:not([aria-label=""]):hover::before,
+  .session-tags .tag-btn[aria-label]:not([aria-label=""]):focus-visible::before,
+  .session-tags .tag[aria-label]:not([aria-label=""]):hover::before,
+  .session-tags .tag[aria-label]:not([aria-label=""]):focus-visible::before {
+    content: "";
+    position: absolute;
+    bottom: calc(100% + 2px);
+    left: 50%;
+    transform: translateX(-50%);
+    border: 5px solid transparent;
+    border-top-color: var(--card-bg, #ffffff);
+    pointer-events: none;
+    z-index: 120;
+  }
+
+  @keyframes tabspace-tooltip-in {
+    from {
+      opacity: 0;
+      transform: translateX(-50%) translateY(2px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
   }
 
   @media (prefers-color-scheme: dark) {

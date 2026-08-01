@@ -10,6 +10,7 @@
   "about": "Acerca de",
   "all": "Todo",
   "tagPrompt": "Agregar etiquetas aquí...",
+  "removeTagPrompt": "Haz clic para quitar la etiqueta",
   "whatsNew": "Qué hay de <strong style='color: salmon'>Nuevo</strong>",
   "export": "Exportar",
   "import": "Importar",
