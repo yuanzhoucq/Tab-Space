@@ -57,7 +57,6 @@
               class="btn edit-cancel-btn"
               data-testid="cancel-session-edit"
               @click.stop="cancelSessionEdit(session)"
-              :title="lang.cancel"
               :aria-label="lang.cancel">
             <v-icon name="x" class="btn-icon"></v-icon>
           </button>
@@ -66,7 +65,6 @@
               class="btn edit-save-btn"
               data-testid="save-session"
               @click.stop="saveSessionEdit(session)"
-              :title="lang.saveChanges"
               :aria-label="lang.saveChanges">
             <v-icon name="check" class="btn-icon"></v-icon>
             <span>{{ lang.saveChanges }}</span>
@@ -75,17 +73,17 @@
         <button v-if="bulkSelectionMode"
                 type="button" class="btn" data-testid="cancel-bulk-select"
                 @click.stop="cancelBulkSelection"
-                :title="lang.cancel" :aria-label="lang.cancel">
+                :aria-label="lang.cancel">
           <v-icon name="x" class="btn-icon"></v-icon>
         </button>
         <button v-if="!bulkSelectionMode && !isEditingSession(session)" type="button" class="btn restore-btn" data-testid="restore-session" @click.stop="restore(session.uuid, true, false)"
-                :title="lang.openSession || 'Open'" :aria-label="lang.openSession || 'Open'">
+                :aria-label="lang.openSession || 'Open'">
           <v-icon name="external-link" class="btn-icon" :stroke-width="2.4"></v-icon>
         </button>
         <button v-if="aiEnabled && !bulkSelectionMode && !isEditingSession(session)"
                 type="button" class="btn ai-btn" data-testid="ai-enhance-session"
                 :class="{ 'loading': enhancingSessionId === session.uuid }"
-                :title="lang.aiEnhance || 'AI Enhance'" :aria-label="lang.aiEnhance || 'AI Enhance'"
+                :aria-label="lang.aiEnhance || 'AI Enhance'"
                 @click.stop="enhanceWithAI(session)">
           <v-icon v-if="enhancingSessionId === session.uuid" name="loader" class="btn-icon spinner"></v-icon>
           <v-icon v-else name="zap" class="btn-icon"></v-icon>
@@ -93,7 +91,7 @@
         <button v-if="aiEnabled && session.sites.length >= 3 && !bulkSelectionMode && !isEditingSession(session)"
                 type="button" class="btn split-btn" data-testid="ai-split-session"
                 :class="{ 'loading': splittingSessionId === session.uuid }"
-                :title="lang.splitSession || 'Split Topics'" :aria-label="lang.splitSession || 'Split Topics'"
+                :aria-label="lang.splitSession || 'Split Topics'"
                 @click.stop="splitSession(session)">
           <v-icon v-if="splittingSessionId === session.uuid" name="loader" class="btn-icon spinner"></v-icon>
           <v-icon v-else name="server" class="btn-icon"></v-icon>
@@ -101,11 +99,11 @@
         <button v-if="!bulkSelectionMode && !isEditingSession(session)"
                 type="button" class="btn del-btn" data-testid="delete-session"
                 @click.stop="restore(session.uuid, false, true)"
-                :title="lang.deleteSession || 'Delete'" :aria-label="lang.deleteSession || 'Delete'">
+                :aria-label="lang.deleteSession || 'Delete'">
           <v-icon name="trash-2" class="btn-icon"></v-icon>
         </button>
         <div v-if="activeTag !== '@Trash' && !bulkSelectionMode && !isEditingSession(session)" class="export" data-testid="export-session-menu">
-          <button type="button" class="btn" :title="lang.exportSession || 'Export'" :aria-label="lang.exportSession || 'Export'">
+          <button type="button" class="btn export-btn" :aria-label="lang.exportSession || 'Export'">
             <v-icon name="share-2" class="btn-icon"></v-icon>
           </button>
           <export-dropdown :selectedSessions="[session]"></export-dropdown>
@@ -1188,16 +1186,20 @@
   }
 
   /* Native `title` tooltips wait on the OS hover delay, so the card's
-     bottom-row actions get an instant CSS tooltip from their aria-label. */
+     action buttons get an instant CSS tooltip from their aria-label.
+     Buttons with their own hover menu (export) are excluded. */
   .session-tags .tag-btn,
-  .session-tags .tag {
+  .session-tags .tag,
+  .session-header-right .btn:not(.export-btn) {
     position: relative;
   }
 
   .session-tags .tag-btn[aria-label]:not([aria-label=""]):hover::after,
   .session-tags .tag-btn[aria-label]:not([aria-label=""]):focus-visible::after,
   .session-tags .tag[aria-label]:not([aria-label=""]):hover::after,
-  .session-tags .tag[aria-label]:not([aria-label=""]):focus-visible::after {
+  .session-tags .tag[aria-label]:not([aria-label=""]):focus-visible::after,
+  .session-header-right .btn:not(.export-btn)[aria-label]:not([aria-label=""]):hover::after,
+  .session-header-right .btn:not(.export-btn)[aria-label]:not([aria-label=""]):focus-visible::after {
     content: attr(aria-label);
     position: absolute;
     bottom: calc(100% + 7px);
@@ -1222,7 +1224,9 @@
   .session-tags .tag-btn[aria-label]:not([aria-label=""]):hover::before,
   .session-tags .tag-btn[aria-label]:not([aria-label=""]):focus-visible::before,
   .session-tags .tag[aria-label]:not([aria-label=""]):hover::before,
-  .session-tags .tag[aria-label]:not([aria-label=""]):focus-visible::before {
+  .session-tags .tag[aria-label]:not([aria-label=""]):focus-visible::before,
+  .session-header-right .btn:not(.export-btn)[aria-label]:not([aria-label=""]):hover::before,
+  .session-header-right .btn:not(.export-btn)[aria-label]:not([aria-label=""]):focus-visible::before {
     content: "";
     position: absolute;
     bottom: calc(100% + 2px);
