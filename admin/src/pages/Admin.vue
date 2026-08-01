@@ -69,6 +69,7 @@
       <a class="link" href="https://mytab.space/#faq" target="_blank" rel="noopener">FAQ</a>
       <span class="footer-sep"></span>
       <a class="link" href="https://mytab.space/privacy.html" target="_blank" rel="noopener">{{lang.privacy}}</a>
+      <a class="link footer-credit" href="https://joyuer.cn/" target="_blank" rel="noopener">{{lang.madeBy}}</a>
     </footer>
   </div>
 </template>
@@ -183,6 +184,7 @@
   footer {
     display: flex;
     justify-content: center;
+    flex-wrap: wrap;
     font-size: 14px;
   }
 
@@ -249,6 +251,14 @@
 
   .footer-sep {
     width: 10px;
+  }
+
+  .footer-credit {
+    flex-basis: 100%;
+    margin: 6px 0 12px;
+    text-align: center;
+    font-size: 12px;
+    opacity: 0.7;
   }
 
   .sessions-container {

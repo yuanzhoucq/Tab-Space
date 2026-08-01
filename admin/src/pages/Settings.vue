@@ -316,6 +316,8 @@
         <p class="build-info">
           <a v-if="buildInfo.commitUrl" :href="buildInfo.commitUrl" target="_blank" rel="noopener">Build {{buildInfo.shortSha}}{{buildInfo.time ? ` · ${buildInfo.time}` : ''}}</a>
           <span v-else>Build {{buildInfo.shortSha}}</span>
+          <span class="build-sep">·</span>
+          <a href="https://joyuer.cn/" target="_blank" rel="noopener">{{lang.madeBy}}</a>
         </p>
       </footer>
     </div>
@@ -940,6 +942,10 @@ export default {
 
 .build-info a:hover {
   color: var(--primary-color);
+}
+
+.build-sep {
+  margin: 0 6px;
 }
 
 @media (max-width: 600px) {
