@@ -56,19 +56,14 @@ if ('serviceWorker' in navigator && window.location.protocol === 'https:') {
   })
 
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register(`${process.env.BASE_URL}service-worker.js`).then(registration => {
-      registration.update().catch(() => {})
-      registration.addEventListener('updatefound', () => {
-        const worker = registration.installing
-        if (!worker) return
-        worker.addEventListener('statechange', () => {
-          if (worker.state === 'installed' && navigator.serviceWorker.controller) {
-            promptForDashboardUpdate()
-          }
-        })
+    navigator.serviceWorker.register(`${process.env.BASE_URL}service-worker.js`)
+      .then(registration => {
+        // The service worker itself announces TABSPACE_APP_UPDATE_READY only
+        // after it has verified that the new shell's assets are reachable.
+        registration.update().catch(() => {})
       })
-    }).catch(error => {
-      console.log('Service worker registration failed:', error)
-    })
+      .catch(error => {
+        console.log('Service worker registration failed:', error)
+      })
   })
 }
