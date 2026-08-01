@@ -78,9 +78,9 @@
                 :title="lang.cancel" :aria-label="lang.cancel">
           <v-icon name="x" class="btn-icon"></v-icon>
         </button>
-        <button v-if="!bulkSelectionMode && !isEditingSession(session)" type="button" class="btn" data-testid="restore-session" @click.stop="restore(session.uuid, true, false)"
+        <button v-if="!bulkSelectionMode && !isEditingSession(session)" type="button" class="btn restore-btn" data-testid="restore-session" @click.stop="restore(session.uuid, true, false)"
                 :title="lang.openSession || 'Open'" :aria-label="lang.openSession || 'Open'">
-          <v-icon name="external-link" class="btn-icon"></v-icon>
+          <v-icon name="external-link" class="btn-icon" :stroke-width="2.4"></v-icon>
         </button>
         <button v-if="aiEnabled && !bulkSelectionMode && !isEditingSession(session)"
                 type="button" class="btn ai-btn" data-testid="ai-enhance-session"
@@ -1800,6 +1800,21 @@
   .btn:hover svg,
   .btn:hover .btn-icon {
     stroke: var(--text-primary, #2d3748) !important;
+  }
+
+  /* Restore button — theme salmon */
+  .restore-btn svg,
+  .restore-btn .btn-icon {
+    stroke: var(--primary-color, #fa8072) !important;
+  }
+
+  .restore-btn:hover {
+    background-color: rgba(250, 128, 114, 0.12);
+  }
+
+  .restore-btn:hover svg,
+  .restore-btn:hover .btn-icon {
+    stroke: var(--primary-color-hover, #e07060) !important;
   }
 
   /* AI Enhance button — gold */
