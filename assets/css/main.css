@@ -352,6 +352,244 @@ header {
     font-weight: 400;
 }
 
+.release-badge {
+    display: inline-flex;
+    align-items: center;
+    margin-bottom: 22px;
+    padding: 7px 14px;
+    border: 1px solid rgba(250, 128, 114, 0.36);
+    border-radius: 999px;
+    background: var(--color-brand-tint);
+    color: var(--color-brand-strong);
+    font-size: 0.8125rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+}
+
+/* Version 4.0 launch stories */
+.release-experience {
+    display: grid;
+    gap: 28px;
+    width: 100%;
+}
+
+.release-story {
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+    border-radius: var(--radius-xl);
+    text-align: left;
+    box-shadow: 0 30px 90px rgba(38, 20, 25, 0.18);
+}
+
+.release-story::before,
+.release-story::after {
+    content: '';
+    position: absolute;
+    z-index: -1;
+    border-radius: 50%;
+    filter: blur(1px);
+    pointer-events: none;
+}
+
+.release-story-ai {
+    padding: 68px 68px 0;
+    background:
+        radial-gradient(circle at 82% 15%, rgba(255, 217, 199, 0.72), transparent 30%),
+        linear-gradient(145deg, #ef7c70 0%, #c45159 48%, #70233d 100%);
+}
+
+.release-story-ai::before {
+    width: 460px;
+    height: 460px;
+    top: -280px;
+    right: 8%;
+    border: 2px solid rgba(255, 255, 255, 0.18);
+}
+
+.release-story-ai::after {
+    width: 640px;
+    height: 640px;
+    bottom: -510px;
+    left: -180px;
+    border: 2px solid rgba(255, 255, 255, 0.12);
+}
+
+.release-story-browsers {
+    padding: 64px;
+    background:
+        radial-gradient(circle at 88% 12%, rgba(95, 177, 255, 0.22), transparent 28%),
+        radial-gradient(circle at 12% 90%, rgba(250, 128, 114, 0.22), transparent 34%),
+        #121827;
+}
+
+.release-story-browsers::before {
+    width: 520px;
+    height: 520px;
+    top: -370px;
+    right: -100px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.release-story-copy {
+    position: relative;
+    z-index: 2;
+    max-width: 760px;
+}
+
+.story-eyebrow {
+    display: inline-block;
+    margin-bottom: 18px;
+    color: rgba(255, 255, 255, 0.76);
+    font-size: 0.78rem;
+    font-weight: 800;
+    letter-spacing: 0.11em;
+    text-transform: uppercase;
+}
+
+.release-story h2 {
+    max-width: 850px;
+    color: #fff;
+    font-size: clamp(2.2rem, 5vw, 4.4rem);
+    line-height: 0.98;
+    letter-spacing: -0.045em;
+}
+
+.release-story-copy > p {
+    max-width: 670px;
+    margin: 24px 0 0;
+    color: rgba(255, 255, 255, 0.78);
+    font-size: 1.1rem;
+}
+
+.story-pills,
+.browser-strip {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    padding: 0;
+    list-style: none;
+}
+
+.story-pills {
+    margin-top: 28px;
+}
+
+.story-pills li {
+    padding: 7px 14px;
+    border: 1px solid rgba(255, 255, 255, 0.24);
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.12);
+    color: #fff;
+    font-size: 0.82rem;
+    font-weight: 650;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+}
+
+.release-story-media {
+    position: relative;
+    z-index: 1;
+    overflow: hidden;
+    margin-top: 48px;
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    border-bottom: 0;
+    border-radius: 22px 22px 0 0;
+    background: #f7f2ed;
+    box-shadow: 0 34px 80px rgba(30, 13, 24, 0.34);
+}
+
+.release-story-media img {
+    display: block;
+    width: 100%;
+}
+
+.window-chrome {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    height: 38px;
+    padding: 0 14px;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.07);
+    background: rgba(255, 255, 255, 0.88);
+    color: #77777d;
+    font-size: 0.7rem;
+}
+
+.window-chrome > span:last-child {
+    grid-column: 2;
+}
+
+.window-dots {
+    display: flex;
+    gap: 6px;
+}
+
+.window-dots i {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background: #ff5f57;
+}
+
+.window-dots i:nth-child(2) {
+    background: #febc2e;
+}
+
+.window-dots i:nth-child(3) {
+    background: #28c840;
+}
+
+.browser-strip {
+    margin: 30px 0 24px;
+}
+
+.browser-strip li {
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+    padding: 7px 13px 7px 8px;
+    border: 1px solid rgba(255, 255, 255, 0.13);
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.07);
+    color: #fff;
+    font-size: 0.84rem;
+    font-weight: 650;
+}
+
+.browser-mark {
+    display: inline-flex;
+    width: 28px;
+    height: 28px;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    color: #fff;
+    font-size: 0.7rem;
+    font-weight: 800;
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.3);
+}
+
+.browser-mark.safari { background: linear-gradient(145deg, #42c5ff, #1469e8); }
+.browser-mark.chrome { background: conic-gradient(#e74b3c 0 33%, #f1c40f 0 66%, #22a559 0); }
+.browser-mark.edge { background: linear-gradient(145deg, #0fc6a8, #1878e5 68%); }
+.browser-mark.firefox { background: linear-gradient(145deg, #ffb025, #ef4b4b 54%, #7241c8); }
+
+.story-link {
+    display: inline-flex;
+    color: #fff;
+    font-weight: 700;
+}
+
+.story-link:hover {
+    color: #fff;
+    opacity: 0.78;
+}
+
+.release-story-browsers .browser-media {
+    margin-top: 44px;
+}
+
 /* Video Section */
 .app-main .img {
     position: relative;
@@ -531,8 +769,7 @@ header {
     font-size: 0.875rem;
 }
 
-/* Notice that a plan or feature is not shipping yet, so it reads as a caveat
-   rather than as ordinary fine print. */
+/* Release and plan context note. */
 .pricing-note {
     max-width: 46rem;
     margin: 0 auto 8px;
@@ -1045,6 +1282,15 @@ footer .divider {
 
 /* Responsive */
 @media (max-width: 900px) {
+    .release-story-ai,
+    .release-story-browsers {
+        padding: 48px 40px 0;
+    }
+
+    .release-story-browsers .browser-media {
+        margin-top: 36px;
+    }
+
     .showcase-row {
         grid-template-columns: 1fr;
         gap: 32px;
@@ -1078,6 +1324,53 @@ footer .divider {
 
     .app-main .container {
         gap: 48px;
+    }
+
+    .release-experience {
+        gap: 18px;
+    }
+
+    .release-story {
+        border-radius: 24px;
+    }
+
+    .release-story-ai,
+    .release-story-browsers {
+        padding: 36px 22px 0;
+    }
+
+    .release-story h2 {
+        font-size: clamp(2rem, 11vw, 3rem);
+    }
+
+    .release-story-copy > p {
+        font-size: 1rem;
+    }
+
+    .release-story-media,
+    .release-story-browsers .browser-media {
+        width: calc(100% + 20px);
+        margin-top: 32px;
+        margin-left: -10px;
+        border-radius: 14px 14px 0 0;
+    }
+
+    .window-chrome {
+        display: none;
+    }
+
+    .browser-strip {
+        gap: 8px;
+    }
+
+    .browser-strip li {
+        padding-right: 10px;
+        font-size: 0.76rem;
+    }
+
+    .browser-mark {
+        width: 24px;
+        height: 24px;
     }
 
     .features,

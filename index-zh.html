@@ -7,16 +7,16 @@
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
 
   <!-- SEO -->
-  <title>Tab Space - 支持 Safari、Chrome、Edge 和 Firefox 的标签页管理器</title>
+  <title>Tab Space 4.0 - 支持 AI 与多浏览器的标签页管理器</title>
   <meta name="description"
-    content="Tab Space 在 Mac、iPhone 和 iPad 上保存 Safari 标签页，并在 Mac 上保存 Chrome、Edge 和 Firefox 标签页，支持 iCloud 同步、标签、搜索和自动备份。">
+    content="Tab Space 4.0 可选用 AI 为会话命名、推荐标签并按主题拆分，同时把 Safari、Chrome、Edge 和 Firefox 标签页汇总到同一款原生 Mac App。">
   <meta name="keywords" content="Tab Space, Safari 扩展, Chrome 扩展, Firefox 扩展, 标签管理, 书签管理, macOS, iPhone, iPad, iOS, onetab 替代">
 
   <!-- Social -->
   <meta name="twitter:site" content="@joyuer">
   <meta name="twitter:card" content="summary_large_image">
-  <meta property="og:title" content="Tab Space - 跨浏览器保存你的标签页">
-  <meta property="og:description" content="在 Mac、iPhone 和 iPad 上保存 Safari 标签页，并在 Mac 上保存 Chrome、Edge 和 Firefox 标签页，通过你自己的 iCloud 同步。">
+  <meta property="og:title" content="Tab Space 4.0 - 四个浏览器，一个空间，AI 帮你整理">
+  <meta property="og:description" content="用 AI 整理保存的会话，并把 Safari、Chrome、Edge 和 Firefox 标签页汇总到同一款原生 Mac App。">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://mytab.space/index-zh.html">
   <meta property="og:image" content="https://mytab.space/icon.png">
@@ -41,7 +41,8 @@
       "https://apps.apple.com/cn/app/tab-space/id1473726602?mt=12",
       "https://apps.apple.com/cn/app/tab-space-%E6%A0%87%E7%AD%BE%E9%A1%B5%E4%BF%9D%E5%AD%98/id6790127383?itscg=30200&itsct=apps_box_link&mttnsubad=6790127383"
     ],
-    "description": "Tab Space 在 Mac、iPhone 和 iPad 上保存 Safari 标签页，并在 Mac 上把 Chrome、Microsoft Edge 和 Firefox 标签页保存为可搜索的工作空间。",
+    "softwareVersion": "4.0",
+    "description": "Tab Space 4.0 可选用 AI 整理保存的会话，并把 Safari、Chrome、Microsoft Edge 和 Firefox 标签页汇总到同一款原生 Mac App。",
     "author": { "@type": "Person", "name": "Joyuer", "url": "https://joyuer.cn/" }
   }
   </script>
@@ -68,10 +69,11 @@
     <div class="container">
       <article class="app-article">
         <div class="inner">
-          <h1>保存标签页，<br><span class="brand-text">释放注意力。</span></h1>
+          <span class="release-badge">4.0 版本 · 现已发布</span>
+          <h1>四个浏览器，一个空间。<br><span class="brand-text">AI 帮你整理。</span></h1>
           <p class="description">
-            <strong>Tab Space</strong> 把打开的浏览器标签页保存为一个个可搜索、可加标签、自动备份并通过
-            iCloud 同步的会话——现在关掉满屏的杂乱，之后随时从原处继续。
+            <strong>Tab Space 4.0</strong> 可选用 AI 把打开的标签页变成有标题、有标签的会话，并将
+            Safari、Chrome、Edge 和 Firefox 汇总到同一款原生 Mac App——自动备份，通过你自己的 iCloud 同步。
           </p>
 
           <!-- Download -->
@@ -88,37 +90,60 @@
 
           <div class="app-buttons-sub">
             <a href="changelog.html" class="changelog-link">
-              更新日志（英文）
+              查看 4.0 更新内容（英文）
             </a>
           </div>
 
-          <p class="subtitle">Mac、iPhone 和 iPad 支持 Safari · macOS 11+ · iOS 16+<br>
-            <span class="subtitle-note">Mac 上的 Chrome、Edge 和 Firefox 121+ —— Beta，随 4.0 推出</span></p>
+          <p class="subtitle">Mac 版 4.0 · macOS 11+ · 免费下载<br>
+            <span class="subtitle-note">Mac 支持 Safari、Chrome、Edge 和 Firefox 121+ · iPhone 与 iPad 版已上架</span></p>
         </div>
       </article>
 
-      <!-- Video Demo -->
-      <div class="img">
-        <div class="loader" id="video-loader">
-          <svg width="24" height="30" viewBox="0 0 24 30" xmlns="http://www.w3.org/2000/svg">
-            <rect x="0" y="0" width="4" height="10">
-              <animateTransform attributeType="xml" attributeName="transform" type="translate" values="0 0; 0 20; 0 0"
-                begin="0" dur="0.6s" repeatCount="indefinite" />
-            </rect>
-            <rect x="10" y="0" width="4" height="10">
-              <animateTransform attributeType="xml" attributeName="transform" type="translate" values="0 0; 0 20; 0 0"
-                begin="0.2s" dur="0.6s" repeatCount="indefinite" />
-            </rect>
-            <rect x="20" y="0" width="4" height="10">
-              <animateTransform attributeType="xml" attributeName="transform" type="translate" values="0 0; 0 20; 0 0"
-                begin="0.4s" dur="0.6s" repeatCount="indefinite" />
-            </rect>
-          </svg>
-        </div>
-        <video id="app-video" preload="auto" poster="assets/img/poster.jpg" autoplay loop muted playsinline
-          onplay="document.getElementById('video-loader').style.display='none';">
-          <source src="./assets/Tab_Space_Demo.mp4" type="video/mp4">
-        </video>
+      <!-- 以纯产品截图配合 HTML 文案呈现 4.0 的两项核心能力 -->
+      <div class="release-experience" aria-label="Tab Space 4.0 重点功能">
+        <article class="release-story release-story-ai">
+          <div class="release-story-copy">
+            <span class="story-eyebrow">可选 AI · 4.0 新功能</span>
+            <h2>三十个标签页，<br>变成一个清晰的想法。</h2>
+            <p>Tab Space 可以为会话命名、推荐合适的标签，也能把混在一起的标签页按主题拆分。京都旅行、课程资料、研究项目，不用手动归档也能一眼认出。</p>
+            <ul class="story-pills" aria-label="AI 整理功能">
+              <li>自动命名</li>
+              <li>推荐标签</li>
+              <li>按主题拆分</li>
+            </ul>
+          </div>
+          <div class="release-story-media">
+            <div class="window-chrome" aria-hidden="true">
+              <span class="window-dots"><i></i><i></i><i></i></span>
+              <span>Tab Space · 京都秋日之旅</span>
+            </div>
+            <img src="assets/img/dashboard-ai-4-zh.webp" width="1800" height="918"
+              alt="Tab Space 用 AI 整理京都旅行、机器学习与气候研究会话，每个保存的网页都带有网站图标">
+          </div>
+        </article>
+
+        <article class="release-story release-story-browsers">
+          <div class="release-story-copy">
+            <span class="story-eyebrow">Pro · 4.0 Beta</span>
+            <h2>四个浏览器，<br>同一个会话库。</h2>
+            <p>在一个浏览器里保存，换一个浏览器继续打开。所有会话依然存放在原生 Mac App 中，并通过你自己的 iCloud 同步。</p>
+            <ul class="browser-strip" aria-label="支持的浏览器">
+              <li><span class="browser-mark safari">S</span>Safari</li>
+              <li><span class="browser-mark chrome">C</span>Chrome</li>
+              <li><span class="browser-mark edge">E</span>Edge</li>
+              <li><span class="browser-mark firefox">F</span>Firefox</li>
+            </ul>
+            <a class="story-link" href="multi-browser.html#zh">设置多浏览器支持 →</a>
+          </div>
+          <div class="release-story-media browser-media">
+            <div class="window-chrome" aria-hidden="true">
+              <span class="window-dots"><i></i><i></i><i></i></span>
+              <span>Tab Space · 多浏览器</span>
+            </div>
+            <img src="assets/img/multi-browser-4-zh.webp" width="1800" height="429"
+              alt="Tab Space 为 Safari、Chrome、Microsoft Edge 和 Firefox 提供多浏览器设置">
+          </div>
+        </article>
       </div>
     </div>
   </section>
@@ -197,7 +222,7 @@
             </svg>
           </div>
           <h3>多浏览器支持 <span class="badge-beta">Beta</span></h3>
-          <p>同一套会话可在 Safari、Chrome、Microsoft Edge 和 Firefox 中使用。配套浏览器只需一次本地配对即可连接 Mac App。此功能包含在 Pro 中，目前为 Beta，<strong>将随 4.0 版本推出，尚未发布。</strong>
+          <p>同一套会话可在 Safari、Chrome、Microsoft Edge 和 Firefox 中使用。配套浏览器只需一次本地配对即可连接 Mac App。此功能已随 4.0 推出，包含在 Pro 中，目前为 Beta。
             <a href="multi-browser.html#zh">查看设置指南 →</a></p>
         </div>
       </div>
@@ -209,7 +234,6 @@
     <div class="container">
       <h2>选择适合你的 Mac 方案</h2>
       <p class="pricing-lede">Free 和 Plus 每周包含 5 次 AI 请求；订阅 Pro 可无限使用 AI、获得多浏览器支持及之后推出的 Pro 新功能。</p>
-      <p class="pricing-note"><strong>以下定价适用于即将推出的 4.0 版本，该版本尚未发布。</strong>当前 Mac App 仍为一次性购买；在 4.0 之前购买过的用户将免费获得永久 Plus。</p>
       <div class="pricing-grid">
         <article class="pricing-card">
           <h3>Free</h3>
@@ -280,8 +304,8 @@
             alt="Tab Space 自动为保存的会话命名并添加标签" loading="lazy">
         </div>
         <div class="showcase-copy">
-          <h2>4.0 即将推出：让 AI 命名和分类</h2>
-          <p>保存一堆标签页后，Tab Space 可以自动拟好会话标题、补上合适的标签，你不用自己起名也能在之后找回。Free 和 Plus 每周包含 5 次 AI 请求，Pro 不限次数。<strong>4.0 版本尚未发布。</strong></p>
+          <h2>让 AI 接手整理工作</h2>
+          <p>保存一堆标签页后，Tab Space 可以自动拟好会话标题、补上合适的标签，也能把混杂的会话按主题拆分。AI 完全可选且默认关闭；Free 和 Plus 每周包含 5 次请求，Pro 不限次数。</p>
         </div>
       </div>
 
@@ -365,7 +389,7 @@
         </details>
         <details>
           <summary>Plus 和 Pro 有什么区别？</summary>
-          <p>Free 和 Plus 都包含每周 5 次 AI 请求。Plus 是 $9.99 一次性购买，永久解锁无限会话和全部基础功能。Pro 包含 Plus，AI 不限次数，并支持 Safari、Chrome、Microsoft Edge 和 Firefox（Beta），以及未来 Pro 功能，月付 $1.99 或年付 $17.99；年付含 7 天免费试用。以上方案随 4.0 版本推出，该版本尚未发布。</p>
+          <p>Free 和 Plus 都包含每周 5 次 AI 请求。Plus 是 $9.99 一次性购买，永久解锁无限会话和全部基础功能。Pro 包含 Plus，AI 不限次数，并支持 Safari、Chrome、Microsoft Edge 和 Firefox（Beta），以及未来 Pro 功能，月付 $1.99 或年付 $17.99；年付含 7 天免费试用。</p>
         </details>
         <details>
           <summary>会员能在 iPhone 和 iPad 上使用吗？</summary>
@@ -381,7 +405,7 @@
         </details>
         <details>
           <summary>Tab Space 支持哪些浏览器？</summary>
-          <p>多浏览器支持是 Tab Space Pro 4.0 的 Beta 功能，该版本即将推出、尚未发布。它在 Mac 上支持 Safari、Chrome、Microsoft Edge 和 Firefox 121 或更新版本。无论由哪个浏览器保存，会话都留在原生 Mac App 中。
+          <p>多浏览器支持现已作为 Tab Space Pro 4.0 的 Beta 功能提供。它在 Mac 上支持 Safari、Chrome、Microsoft Edge 和 Firefox 121 或更新版本。无论由哪个浏览器保存，会话都留在原生 Mac App 中。
             扩展已上架 <a href="https://chromewebstore.google.com/detail/tab-space/nhheanllfhaincfgjpdiacdnfgkipeep" target="_blank" rel="noopener">Chrome 应用商店</a>，Microsoft Edge 可直接安装同一个扩展。
             该功能仍处于 Beta 阶段，如遇问题欢迎及时反馈至 <a href="mailto:support@mytab.space">support@mytab.space</a>。
             详见<a href="multi-browser.html#zh">多浏览器设置指南</a>。</p>
