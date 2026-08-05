@@ -26,13 +26,6 @@
             </div>
           </li>
           <li>
-            <v-icon name="shield" class="highlight-icon"></v-icon>
-            <div>
-              <p class="highlight-title">{{ lang.whatsNewSessionsTitle }}</p>
-              <p class="highlight-detail">{{ lang.whatsNewSessionsDetail }}</p>
-            </div>
-          </li>
-          <li>
             <v-icon name="zap" class="highlight-icon"></v-icon>
             <div>
               <p class="highlight-title">{{ lang.whatsNewAiTitle }}</p>

@@ -231,8 +231,6 @@
   "whatsNewLede": "4.0 では料金の仕組みが変わり、AI 整理とマルチブラウザ対応が加わりました。",
   "whatsNewPlusTitle": "買い切りの永久 Plus",
   "whatsNewPlusDetail": "Tab Space は無料になり、主要機能をすべて使えてセッションは 5 件まで保存できます。一度の購入でこの上限が永久になくなります。サブスクリプションもアカウントも不要です。",
-  "whatsNewSessionsTitle": "保存済みのセッションはそのまま",
-  "whatsNewSessionsDetail": "Free の上限に達しても、保存済みのセッションが削除されたり隠されたりすることはありません。",
   "whatsNewAiTitle": "任意で使える AI 整理",
   "whatsNewAiDetail": "AI がセッションに名前を付け、タグを提案し、混在したタブをトピックごとに分割します。Free と Plus は週 5 回の AI リクエストを含み、Pro は上限なしです。",
   "whatsNewBrowsersTitle": "マルチブラウザ対応（ベータ）",

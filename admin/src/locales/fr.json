@@ -231,8 +231,6 @@
   "whatsNewLede": "La version 4.0 change le mode de paiement de Tab Space et ajoute l'organisation par IA et la prise en charge de plusieurs navigateurs.",
   "whatsNewPlusTitle": "Plus permanent, en un seul achat",
   "whatsNewPlusDetail": "Tab Space est gratuit, avec toutes les fonctions essentielles et jusqu'à 5 sessions enregistrées. Un seul achat supprime définitivement cette limite, sans abonnement ni compte.",
-  "whatsNewSessionsTitle": "Vos sessions restent en place",
-  "whatsNewSessionsDetail": "Rien n'est supprimé ni masqué lorsque la limite Free est atteinte.",
   "whatsNewAiTitle": "Organisation par IA, en option",
   "whatsNewAiDetail": "L'IA peut nommer une session, proposer des tags et répartir des onglets mélangés par thème. Free et Plus incluent 5 requêtes IA par semaine ; Pro supprime la limite.",
   "whatsNewBrowsersTitle": "Prise en charge multi-navigateurs (bêta)",
