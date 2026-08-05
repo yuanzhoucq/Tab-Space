@@ -181,6 +181,8 @@
   "aiErrorNetwork": "Problema de red. Comprueba tu conexión e inténtalo de nuevo.",
   "aiErrorUnauthorized": "Abre la app de Tab Space para iniciar sesión de nuevo.",
   "splitNoTopics": "Esta sesión ya se centra en un solo tema.",
+  "aiErrorTooMany": "Esta sesión tiene demasiadas pestañas para la IA. No se pueden procesar sesiones con más de {limit} pestañas.",
+  "aiErrorTooManyNoLimit": "Esta sesión es demasiado grande para la IA. Divídela en sesiones más pequeñas primero.",
   "aiSection": "IA",
   "suggestedTags": "Etiquetas sugeridas",
   "suggestedTagsHint": "Etiquetas separadas por comas que la IA preferirá usar",

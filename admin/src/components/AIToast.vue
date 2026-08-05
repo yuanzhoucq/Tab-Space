@@ -28,7 +28,16 @@ export default {
     ...mapState(['lang', 'bridge', 'aiToast']),
     message() {
       if (!this.aiToast) return ''
-      return this.lang[this.aiToast.messageKey] || this.aiToast.messageKey
+      const template = this.lang[this.aiToast.messageKey] || this.aiToast.messageKey
+      // "up to N tabs" copy needs the cap the worker reported; when the limit
+      // is unknown (e.g. a body-size rejection) fall back to the generic copy.
+      if (this.aiToast.messageKey === 'aiErrorTooMany') {
+        const fallback = this.lang.aiErrorTooManyNoLimit || template
+        return this.aiToast.limit != null
+          ? template.replace('{limit}', this.aiToast.limit)
+          : fallback
+      }
+      return template
     }
   },
   watch: {

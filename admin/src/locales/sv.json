@@ -181,6 +181,8 @@
   "aiErrorNetwork": "Nätverksproblem. Kontrollera anslutningen och försök igen.",
   "aiErrorUnauthorized": "Öppna Tab Space-appen för att logga in igen.",
   "splitNoTopics": "Den här sessionen fokuserar redan på ett ämne.",
+  "aiErrorTooMany": "Den här sessionen har för många flikar för AI. Sessioner med fler än {limit} flikar kan inte bearbetas.",
+  "aiErrorTooManyNoLimit": "Den här sessionen är för stor för AI. Dela upp den i mindre sessioner först.",
   "aiSection": "AI",
   "suggestedTags": "Föreslagna taggar",
   "suggestedTagsHint": "Kommaseparerade taggar som AI föredrar att använda",

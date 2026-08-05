@@ -181,6 +181,8 @@
   "aiErrorNetwork": "ネットワークの問題です。接続を確認して再試行してください。",
   "aiErrorUnauthorized": "Tab Space アプリを開いて再度サインインしてください。",
   "splitNoTopics": "このセッションはすでに1つのトピックにまとまっています。",
+  "aiErrorTooMany": "このセッションはAI処理にはタブが多すぎます。{limit} を超えるタブのセッションは処理できません。",
+  "aiErrorTooManyNoLimit": "このセッションは大きすぎてAIで処理できません。先に小さなセッションに分割してください。",
   "aiSection": "AI",
   "suggestedTags": "おすすめタグ",
   "suggestedTagsHint": "AIが優先的に使用するカンマ区切りのタグ",

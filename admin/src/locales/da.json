@@ -181,6 +181,8 @@
   "aiErrorNetwork": "Netværksproblem. Tjek din forbindelse, og prøv igen.",
   "aiErrorUnauthorized": "Åbn Tab Space-appen for at logge ind igen.",
   "splitNoTopics": "Denne session fokuserer allerede på ét emne.",
+  "aiErrorTooMany": "Denne session har for mange faner til AI. Sessioner med over {limit} faner kan ikke behandles.",
+  "aiErrorTooManyNoLimit": "Denne session er for stor til AI. Del den op i mindre sessioner først.",
   "aiSection": "AI",
   "suggestedTags": "Foreslåede Tags",
   "suggestedTagsHint": "Kommaseparerede tags som AI'en foretrækker at bruge",

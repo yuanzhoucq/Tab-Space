@@ -181,6 +181,8 @@
   "aiErrorNetwork": "Netzwerkproblem. Prüfe deine Verbindung und versuche es erneut.",
   "aiErrorUnauthorized": "Öffne die Tab Space App, um dich erneut anzumelden.",
   "splitNoTopics": "Diese Sitzung ist bereits auf ein Thema fokussiert.",
+  "aiErrorTooMany": "Diese Sitzung hat zu viele Tabs für KI. Sitzungen mit mehr als {limit} Tabs können nicht verarbeitet werden.",
+  "aiErrorTooManyNoLimit": "Diese Sitzung ist zu groß für KI. Teile sie zuerst in kleinere Sitzungen auf.",
   "aiSection": "KI",
   "suggestedTags": "Vorgeschlagene Tags",
   "suggestedTagsHint": "Kommagetrennte Tags, die die KI bevorzugt verwendet",

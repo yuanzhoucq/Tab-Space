@@ -181,6 +181,8 @@
   "aiErrorNetwork": "Netwerkprobleem. Controleer je verbinding en probeer opnieuw.",
   "aiErrorUnauthorized": "Open de Tab Space-app om opnieuw in te loggen.",
   "splitNoTopics": "Deze sessie is al gericht op één onderwerp.",
+  "aiErrorTooMany": "Deze sessie heeft te veel tabbladen voor AI. Sessies met meer dan {limit} tabbladen kunnen niet worden verwerkt.",
+  "aiErrorTooManyNoLimit": "Deze sessie is te groot voor AI. Splits hem eerst in kleinere sessies.",
   "aiSection": "AI",
   "suggestedTags": "Voorgestelde Tags",
   "suggestedTagsHint": "Door komma's gescheiden tags die AI bij voorkeur gebruikt",

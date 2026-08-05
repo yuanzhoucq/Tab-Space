@@ -181,6 +181,8 @@
   "aiErrorNetwork": "Problème réseau. Vérifiez votre connexion et réessayez.",
   "aiErrorUnauthorized": "Ouvrez l'app Tab Space pour vous reconnecter.",
   "splitNoTopics": "Cette session porte déjà sur un seul sujet.",
+  "aiErrorTooMany": "Cette session a trop d'onglets pour l'IA. Les sessions de plus de {limit} onglets ne peuvent pas être traitées.",
+  "aiErrorTooManyNoLimit": "Cette session est trop volumineuse pour l'IA. Divisez-la d'abord en sessions plus petites.",
   "aiSection": "IA",
   "suggestedTags": "Tags suggérés",
   "suggestedTagsHint": "Tags séparés par des virgules que l'IA préférera utiliser",

@@ -181,6 +181,8 @@
   "aiErrorNetwork": "Проблема з мережею. Перевірте з'єднання та спробуйте ще раз.",
   "aiErrorUnauthorized": "Відкрийте застосунок Tab Space, щоб увійти знову.",
   "splitNoTopics": "Ця сесія вже зосереджена на одній темі.",
+  "aiErrorTooMany": "У цій сесії забагато вкладок для ШІ. Сесії з понад {limit} вкладками обробити неможливо.",
+  "aiErrorTooManyNoLimit": "Ця сесія завелика для ШІ. Спочатку розділіть її на менші сесії.",
   "aiSection": "ШІ",
   "suggestedTags": "Suggested Tags",
   "suggestedTagsHint": "Comma-separated tags the AI will prefer to use",

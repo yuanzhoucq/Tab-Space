@@ -181,6 +181,8 @@
   "aiErrorNetwork": "Ağ sorunu. Bağlantınızı kontrol edip tekrar deneyin.",
   "aiErrorUnauthorized": "Yeniden giriş yapmak için Tab Space uygulamasını açın.",
   "splitNoTopics": "Bu oturum zaten tek bir konuya odaklı.",
+  "aiErrorTooMany": "Bu oturumda AI için çok fazla sekme var. {limit} sekmeden fazla olan oturumlar işlenemez.",
+  "aiErrorTooManyNoLimit": "Bu oturum AI için çok büyük. Önce daha küçük oturumlara bölün.",
   "aiSection": "AI",
   "suggestedTags": "Önerilen Etiketler",
   "suggestedTagsHint": "AI'ın kullanmayı tercih edeceği virgülle ayrılmış etiketler",

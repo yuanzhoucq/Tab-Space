@@ -470,6 +470,17 @@ export default {
         this.$store.commit("setAIToast", {messageKey: "aiErrorUnauthorized", retry: null})
         return
       }
+      if (data.error === "too_many") {
+        // The session outgrew a size limit (or the payload exceeded the body
+        // cap). Retrying sends the same oversized session and fails again, so
+        // surface the cap and leave the retry button off.
+        this.$store.commit("setAIToast", {
+          messageKey: "aiErrorTooMany",
+          limit: typeof data.limit === "number" ? data.limit : null,
+          retry: null
+        })
+        return
+      }
       // network / server / invalid_response / anything else: non-blocking,
       // retryable toast.
       const messageKey = data.error === "network" ? "aiErrorNetwork" : "aiErrorGeneric"

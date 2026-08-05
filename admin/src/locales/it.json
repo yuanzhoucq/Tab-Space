@@ -181,6 +181,8 @@
   "aiErrorNetwork": "Problema di rete. Controlla la connessione e riprova.",
   "aiErrorUnauthorized": "Apri l'app Tab Space per accedere di nuovo.",
   "splitNoTopics": "Questa sessione è già incentrata su un solo argomento.",
+  "aiErrorTooMany": "Questa sessione ha troppe schede per l'IA. Le sessioni con più di {limit} schede non possono essere elaborate.",
+  "aiErrorTooManyNoLimit": "Questa sessione è troppo grande per l'IA. Dividila prima in sessioni più piccole.",
   "aiSection": "IA",
   "suggestedTags": "Tag suggeriti",
   "suggestedTagsHint": "Tag separati da virgola che l'IA preferirà utilizzare",

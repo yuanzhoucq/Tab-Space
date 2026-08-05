@@ -181,6 +181,8 @@
   "aiErrorNetwork": "网络异常，请检查连接后重试。",
   "aiErrorUnauthorized": "请打开 Tab Space 应用重新登录。",
   "splitNoTopics": "该会话已经聚焦于单一主题。",
+  "aiErrorTooMany": "该会话标签页过多，AI 暂不支持处理超过 {limit} 个标签页的会话。",
+  "aiErrorTooManyNoLimit": "该会话过大，AI 暂不支持处理，请先拆分为较小的会话。",
   "aiSection": "AI",
   "suggestedTags": "建议标签",
   "suggestedTagsHint": "AI 优先使用的标签，用逗号分隔",

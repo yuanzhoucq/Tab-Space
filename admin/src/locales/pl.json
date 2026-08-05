@@ -181,6 +181,8 @@
   "aiErrorNetwork": "Problem z siecią. Sprawdź połączenie i spróbuj ponownie.",
   "aiErrorUnauthorized": "Otwórz aplikację Tab Space, aby zalogować się ponownie.",
   "splitNoTopics": "Ta sesja dotyczy już jednego tematu.",
+  "aiErrorTooMany": "Ta sesja ma zbyt wiele kart dla AI. Sesje z ponad {limit} kartami nie mogą być przetworzone.",
+  "aiErrorTooManyNoLimit": "Ta sesja jest zbyt duża dla AI. Najpierw podziel ją na mniejsze sesje.",
   "aiSection": "AI",
   "suggestedTags": "Sugerowane tagi",
   "suggestedTagsHint": "Tagi oddzielone przecinkami, które AI będzie preferować",

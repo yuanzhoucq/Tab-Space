@@ -181,6 +181,8 @@
   "aiErrorNetwork": "네트워크 문제입니다. 연결을 확인하고 다시 시도하세요.",
   "aiErrorUnauthorized": "Tab Space 앱을 열어 다시 로그인하세요.",
   "splitNoTopics": "이 세션은 이미 하나의 주제에 집중되어 있습니다.",
+  "aiErrorTooMany": "이 세션은 AI 처리에 탭이 너무 많습니다. {limit}개가 넘는 탭 세션은 처리할 수 없습니다.",
+  "aiErrorTooManyNoLimit": "이 세션은 AI 처리에 너무 큽니다. 먼저 더 작은 세션으로 나누어 주세요.",
   "aiSection": "AI",
   "suggestedTags": "추천 태그",
   "suggestedTagsHint": "AI가 선호하는 쉼표로 구분된 태그",
