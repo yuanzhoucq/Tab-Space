@@ -78,6 +78,7 @@ async function openDashboard(page, options = {}) {
     preferredLanguage,
     bannerStorageUnavailable,
     ratingBannerReady,
+    whatsNewPending,
     subscriptionStatus,
     entitlementTier,
     plusDisplayPrice,
@@ -91,6 +92,10 @@ async function openDashboard(page, options = {}) {
       localStorage.setItem('tabspace-ios-banner-dismissed', 'true')
       localStorage.setItem('tabspace-rating-banner-first-seen', String(Date.now() - 30 * 24 * 60 * 60 * 1000))
     }
+    // The What's New dialog is a one-time release introduction that would sit
+    // over every other test, so it starts out already seen unless a test is
+    // about the dialog itself.
+    if (!whatsNewPending) localStorage.setItem('tabspace-whats-new-seen-version', '4.0')
     const storedSettings = JSON.parse(localStorage.getItem(settingsKey) || '{}')
     if (preferredLanguage) storedSettings['preferred-language'] = preferredLanguage
     // The AI data-flow disclosure is a one-time first-run step. Tests that are
@@ -361,6 +366,7 @@ async function openDashboard(page, options = {}) {
     preferredLanguage: options.preferredLanguage || '',
     bannerStorageUnavailable: Boolean(options.bannerStorageUnavailable),
     ratingBannerReady: Boolean(options.ratingBannerReady),
+    whatsNewPending: Boolean(options.whatsNewPending),
     subscriptionStatus: options.subscriptionStatus || 'free',
     entitlementTier: options.entitlementTier || '',
     plusDisplayPrice: options.plusDisplayPrice || '',
@@ -505,6 +511,64 @@ test('uses the China App Store link and dismisses without browser storage', asyn
   await expect(page.getByTestId('ios-banner')).toHaveCount(0)
 })
 
+test('introduces 4.0 once to someone who already had sessions', async ({ page }) => {
+  await openDashboard(page, { initialSessions: sessions, whatsNewPending: true })
+
+  const modal = page.getByTestId('whats-new-modal')
+  await expect(modal).toBeVisible()
+  await expect(modal.getByRole('heading', { name: "What's new in Tab Space 4.0" })).toBeVisible()
+  await expect(modal.getByText('Optional AI organizing')).toBeVisible()
+  // Free and Pro never bought the app before 4.0, so the thank-you stays hidden.
+  await expect(page.getByTestId('whats-new-plus-grant')).toHaveCount(0)
+  await expect(modal.getByRole('link', { name: 'See the full changelog' })).toHaveAttribute(
+    'href',
+    'https://mytab.space/changelog.html'
+  )
+
+  await page.getByTestId('whats-new-dismiss').click()
+  await expect(modal).toHaveCount(0)
+  expect(await page.evaluate(() => localStorage.getItem('tabspace-whats-new-seen-version'))).toBe('4.0')
+
+  await page.reload()
+  await expect(page.locator('.session')).toHaveCount(2)
+  await expect(page.getByTestId('whats-new-modal')).toHaveCount(0)
+
+  // Settings is the only way back once the release has been seen.
+  await page.getByTestId('settings-link').click()
+  await page.getByTestId('settings-whats-new').click()
+  await expect(page.getByTestId('whats-new-modal')).toBeVisible()
+  await page.getByTestId('whats-new-dismiss').click()
+  await expect(page.getByTestId('whats-new-modal')).toHaveCount(0)
+})
+
+test('closes the 4.0 introduction with Escape and skips it on a fresh install', async ({ page }) => {
+  await openDashboard(page, { initialSessions: sessions, whatsNewPending: true })
+
+  await expect(page.getByTestId('whats-new-modal')).toBeVisible()
+  await page.keyboard.press('Escape')
+  await expect(page.getByTestId('whats-new-modal')).toHaveCount(0)
+
+  // A first-run user has no release to catch up on: the dialog is marked seen
+  // without ever appearing, so saving a first session does not summon it.
+  await openDashboard(page, { initialSessions: [], whatsNewPending: true })
+  await expect(page.getByTestId('empty-state')).toBeVisible()
+  await expect(page.getByTestId('whats-new-modal')).toHaveCount(0)
+  expect(await page.evaluate(() => localStorage.getItem('tabspace-whats-new-seen-version'))).toBe('4.0')
+})
+
+test('thanks a pre-4.0 buyer for their permanent Plus in the 4.0 introduction', async ({ page }) => {
+  await openDashboard(page, {
+    initialSessions: sessions,
+    whatsNewPending: true,
+    nativeProtocolVersion: '2',
+    entitlementTier: 'plus'
+  })
+
+  await expect(page.getByTestId('whats-new-plus-grant')).toBeVisible()
+  await page.getByTestId('whats-new-close').click()
+  await expect(page.getByTestId('whats-new-modal')).toHaveCount(0)
+})
+
 test('keeps the rating banner out of the way of the iOS banner', async ({ page }) => {
   await openDashboard(page, { initialSessions: sessions })
 
@@ -585,6 +649,8 @@ async function openAppExtensionDashboard(page, initialSessions) {
   await page.addInitScript(testSessions => {
     const clone = value => JSON.parse(JSON.stringify(value))
     const bridgeEvent = name => `tabspace:app-extension:${name}`
+    // These bridge tests are not about the one-time release introduction.
+    localStorage.setItem('tabspace-whats-new-seen-version', '4.0')
     window.__tabspaceBridgeCommands = []
 
     const emit = (name, message = {}) => {
@@ -621,6 +687,8 @@ async function openWebExtensionDashboard(page, capabilities) {
   await page.addInitScript(({ testSessions, bridgeCapabilities }) => {
     const clone = value => JSON.parse(JSON.stringify(value))
     const channel = 'tabspace-webextension-v2'
+    // These bridge tests are not about the one-time release introduction.
+    localStorage.setItem('tabspace-whats-new-seen-version', '4.0')
     window.__tabspaceBridgeCommands = []
 
     const post = (type, payload = {}) => {

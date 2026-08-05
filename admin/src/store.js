@@ -104,6 +104,9 @@ const store = new Vuex.Store({
         showAIConsentModal: false,
         // Request to re-send once consent is granted: a bridge payload | null.
         aiConsentPendingRetry: null,
+        // Set when the release introduction is reopened from Settings, which
+        // ignores the once-per-release rule the automatic showing follows.
+        whatsNewRequested: false,
         tabSpaceSettings: {
             ...defaultTabSpaceSettings
         }
@@ -272,6 +275,9 @@ const store = new Vuex.Store({
         },
         setAIToast(state, toast) {
             state.aiToast = toast
+        },
+        setWhatsNewRequested(state, requested) {
+            state.whatsNewRequested = requested
         },
         setAIConsentPrompt(state, { show, retry = null }) {
             state.showAIConsentModal = show
