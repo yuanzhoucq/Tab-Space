@@ -41,7 +41,7 @@
           </li>
         </ul>
 
-        <p v-if="hasPermanentPlus" class="plus-grant" data-testid="whats-new-plus-grant">
+        <p v-if="ownsPermanentPlus" class="plus-grant" data-testid="whats-new-plus-grant">
           {{ lang.whatsNewPlusGrant }}
         </p>
 
@@ -50,11 +50,18 @@
              href="https://mytab.space/changelog.html"
              target="_blank"
              rel="noopener noreferrer">{{ lang.whatsNewChangelog }}</a>
-          <button type="button" class="primary-action" ref="dismissButton"
-                  data-testid="whats-new-dismiss"
-                  @click="dismiss">
-            {{ lang.whatsNewDismiss }}
-          </button>
+          <div class="action-buttons">
+            <button type="button" class="secondary-action"
+                    data-testid="whats-new-view-plans"
+                    @click="viewPlans">
+              {{ lang.viewPlans || 'View plans' }}
+            </button>
+            <button type="button" class="primary-action" ref="dismissButton"
+                    data-testid="whats-new-dismiss"
+                    @click="dismiss">
+              {{ lang.whatsNewDismiss }}
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -99,7 +106,7 @@ export default {
       'splitPreview',
       'whatsNewRequested'
     ]),
-    ...mapGetters(['hasPermanentPlus', 'savedSessionCount']),
+    ...mapGetters(['ownsPermanentPlus', 'savedSessionCount']),
     ready() {
       return this.nativeDetected && this.initialRefresh
     },
@@ -152,6 +159,12 @@ export default {
       this.resolved = true
       if (this.whatsNewRequested) this.$store.commit('setWhatsNewRequested', false)
       writeBannerFlag(whatsNewSeenVersionKey, Constants.whatsNewVersion)
+    },
+    // Hand off to the plan comparison: this dialog counts as seen either way,
+    // so closing that one does not bring this one back.
+    viewPlans() {
+      this.dismiss()
+      this.$store.commit('setShowSubscriptionModal', true)
     },
     focusDismiss() {
       this.$nextTick(() => {
@@ -302,13 +315,22 @@ export default {
   color: var(--text-secondary, #718096);
 }
 
-.primary-action {
+.action-buttons {
+  display: flex;
+  gap: 10px;
+}
+
+.primary-action,
+.secondary-action {
   border: 1px solid transparent;
   border-radius: 10px;
   padding: 10px 18px;
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
+}
+
+.primary-action {
   background: #fa8072;
   color: #ffffff;
 }
@@ -317,13 +339,28 @@ export default {
   background: #f4685a;
 }
 
+.secondary-action {
+  background: transparent;
+  color: var(--text-primary, #2d3748);
+  border-color: var(--border-color, #e2e8f0);
+}
+
+.secondary-action:hover {
+  background: var(--hover-bg, #f7fafc);
+}
+
 @media (max-width: 480px) {
   .actions {
     flex-direction: column-reverse;
     align-items: stretch;
   }
 
-  .primary-action {
+  .action-buttons {
+    flex-direction: column-reverse;
+  }
+
+  .primary-action,
+  .secondary-action {
     width: 100%;
   }
 

@@ -83,6 +83,10 @@ const store = new Vuex.Store({
         // False until the native side reports a tier. Native builds that never
         // report one predate the Free limit, so the dashboard must not apply it.
         entitlementResolved: false,
+        // The permanent Plus grant itself, which Pro hides: a subscriber who
+        // bought the Mac app before 4.0 still owns Plus underneath, and the
+        // native side reports the two facts separately.
+        permanentPlusOwned: false,
         plusDisplayPrice: null,      // localized StoreKit price, optional in protocol v2
         aiQuotaRemaining: null,      // Int, -1 = unlimited, null = unknown
         aiQuotaResetAt: null,        // epoch seconds
@@ -124,6 +128,9 @@ const store = new Vuex.Store({
                     && state.nativeCapabilities.includes("dashboard.ai.v1"))),
         isPremium: state => state.entitlementTier === "pro",
         hasPermanentPlus: state => state.entitlementTier === "plus",
+        // Whether the permanent Plus grant was ever made, regardless of whether
+        // a Pro subscription now sits on top of it.
+        ownsPermanentPlus: state => state.permanentPlusOwned,
         // The native side counts every stored session, including the ones in
         // Trash, so this count must not filter by tag.
         savedSessionCount: state => state.sessions.filter(session => !isUnsavedSession(session)).length,
@@ -237,7 +244,7 @@ const store = new Vuex.Store({
         setShowSuggestionReport(state, show) {
             state.showSuggestionReport = show
         },
-        setEntitlementStatus(state, { status, tier, plusDisplayPrice }) {
+        setEntitlementStatus(state, { status, tier, hasPermanentPlus, plusDisplayPrice }) {
             const normalizedStatus = status === "active" ? "active" : "free"
             const normalizedTier = ["free", "plus", "pro"].includes(tier)
                 ? tier
@@ -247,6 +254,11 @@ const store = new Vuex.Store({
             state.subscriptionStatus = normalizedStatus
             state.entitlementTier = normalizedTier
             state.entitlementResolved = true
+            // Native builds that predate the separate flag only express the
+            // grant through the Plus tier.
+            state.permanentPlusOwned = hasPermanentPlus === undefined
+                ? normalizedTier === "plus"
+                : Boolean(hasPermanentPlus)
             if (typeof plusDisplayPrice === "string" && plusDisplayPrice.trim()) {
                 state.plusDisplayPrice = plusDisplayPrice.trim()
             }

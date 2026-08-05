@@ -547,6 +547,7 @@ export default {
       this.$store.commit("setEntitlementStatus", {
         status: data.status,
         tier: data.tier,
+        hasPermanentPlus: data.hasPermanentPlus,
         plusDisplayPrice: data.plusDisplayPrice
       })
       this.applyQuota(data)
