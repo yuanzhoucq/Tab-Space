@@ -59,6 +59,12 @@ const store = new Vuex.Store({
         sessionViewMode: getInitialSessionViewMode(),
         activeTag: "",
         editingSessionUuid: "",
+        // Bumped to re-open the iOS banner after it was dismissed. The banner
+        // carries the install QR code, and on a Mac that code is the only
+        // working way to reach the iOS app — the App Store listing reports the
+        // iPhone app as incompatible and cannot sell it. So the navbar entry
+        // brings the banner back instead of opening that dead end.
+        iosBannerRequestCount: 0,
         // --- AI (protocol v2) ---
         // Native bridge protocol version (0 until reported). AI UI is gated on
         // this being >= Constants.aiMinProtocolVersion so the dashboard stays
@@ -178,6 +184,9 @@ const store = new Vuex.Store({
         },
         setBridge(state, bridge) {
             state.bridge = bridge
+        },
+        requestIosBanner(state) {
+            state.iosBannerRequestCount += 1
         },
         setNativeDetected(state, detected) {
             state.nativeDetected = detected

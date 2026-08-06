@@ -115,6 +115,7 @@
   "trashBin": "回收站",
   "iosBannerText": "iPhone / iPad 版现已上线，支持 iCloud 同步",
   "iosBannerCta": "获取移动版",
+  "iosBannerScanHint": "用 iPhone 相机扫码安装",
   "iosAppNav": "iOS 版",
   "iosBannerDismiss": "关闭",
   "ratingBannerText": "用 Tab Space 还顺手吗？",

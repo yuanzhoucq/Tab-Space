@@ -16,6 +16,7 @@
     "core-js": "^3.6.4",
     "lodash": "^4.17.15",
     "mdurl": "^1.0.1",
+    "qrcode.vue": "1.7.0",
     "velocity-animate": "^1.5.2",
     "vue": "^2.6.11",
     "vue-icon": "https://github.com/yuanzhoucq/vue-icon.git",

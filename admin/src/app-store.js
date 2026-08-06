@@ -5,8 +5,33 @@ const MAC_APP_STORE_REVIEW_LINK_CN = 'https://apps.apple.com/cn/app/tab-space/id
 
 export const supportEmail = 'support@mytab.space'
 
-export function mobileAppStoreUrl(language = '') {
-  return language.toLowerCase() === 'zh-cn' ? APP_STORE_LINK_CN : APP_STORE_LINK_US
+// App Analytics tokens for links handed out by this dashboard.
+//
+// Most of the dashboard's audience is on a Mac, where the iOS listing cannot be
+// bought at all — those people end up searching the App Store on their phone
+// instead, which reports as organic search and is indistinguishable from a
+// stranger finding the app. Tagging our own links is the only way to tell the
+// two apart.
+//
+// Both tokens come from the campaign link generated in App Store Connect
+// (Acquisition → Campaigns); Apple attributes a download to the campaign only
+// when the link carries the provider token together with a matching campaign
+// token.
+const PROVIDER_TOKEN = '120285779'
+const CAMPAIGN_TOKEN = 'mac-dashboard'
+
+/// Appends the provider and campaign tokens without disturbing the parameters
+/// Apple's own link builder already put on these URLs.
+function withCampaign(url, campaign) {
+  if (!campaign) return url
+  const tokens = [`ct=${encodeURIComponent(campaign)}`]
+  if (PROVIDER_TOKEN) tokens.unshift(`pt=${encodeURIComponent(PROVIDER_TOKEN)}`)
+  return `${url}${url.includes('?') ? '&' : '?'}${tokens.join('&')}`
+}
+
+export function mobileAppStoreUrl(language = '', campaign = CAMPAIGN_TOKEN) {
+  const base = language.toLowerCase() === 'zh-cn' ? APP_STORE_LINK_CN : APP_STORE_LINK_US
+  return withCampaign(base, campaign)
 }
 
 // The dashboard ships inside the Mac app, so ratings belong to the Mac App Store listing.
