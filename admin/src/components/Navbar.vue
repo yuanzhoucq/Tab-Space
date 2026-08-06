@@ -35,11 +35,17 @@
       </router-link>
     </div>
     <div>
+      <!-- The href stays real so the entry is still a link (middle-click, copy
+           address, screen readers). But on a Mac, following it lands on a
+           listing that reports the iPhone app as incompatible and cannot sell
+           it, so the click is intercepted and the install QR banner is opened
+           instead. On a phone the link is the better answer and runs as usual. -->
       <a class="link ios-app-link"
          data-testid="ios-app-link"
          :href="appStoreUrl"
          target="_blank"
-         rel="noopener noreferrer">
+         rel="noopener noreferrer"
+         @click="openIosApp">
         <v-icon name="smartphone" aria-hidden="true"></v-icon>
         <span>{{lang.iosAppNav}}</span>
       </a>
@@ -53,6 +59,7 @@
 <script>
 import { mapState, mapGetters } from "vuex"
 import { mobileAppStoreUrl } from "../app-store"
+import { isHandheld } from "../device"
 import Constants from "../constants"
 import ExportDropdown from "./ExportDropdown"
 import ImportDropdown from "./ImportDropdown"
@@ -94,6 +101,16 @@ export default {
         !(session.tags || []).some(tag => tag && tag.name === "@Trash")
       ))
     }
+  },
+  methods: {
+    openIosApp(event) {
+      // Phones and iPads can install straight from the link, and a QR code
+      // aimed at the device already holding it would be absurd.
+      if (this.isHandheld()) return
+      event.preventDefault()
+      this.$store.commit("requestIosBanner")
+    },
+    isHandheld
   },
   components: {
     ExportDropdown,

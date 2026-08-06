@@ -460,10 +460,20 @@ test('shows the iOS launch banner at card width and persists dismissal', async (
 
   const banner = page.getByTestId('ios-banner')
   await expect(banner).toBeVisible()
-  await expect(banner.getByRole('link', { name: 'Get the mobile app' })).toHaveAttribute(
-    'href',
+  // A desktop browser gets the QR code, not a link: the Mac App Store reports
+  // the iPhone app as incompatible and cannot sell it, so only the phone can
+  // act on this. The encoded destination is mirrored onto data-url because the
+  // code itself renders to a canvas.
+  await expect(banner.getByTestId('ios-banner-qr')).toHaveAttribute(
+    'data-url',
     /apps\.apple\.com\/us\/app\/tab-space-tab-saver\/id6790127383/
   )
+  await expect(banner.getByTestId('ios-banner-cta')).toHaveCount(0)
+  // Links handed out by the dashboard carry a campaign token, so downloads
+  // they produce can be told apart from organic App Store search.
+  await expect(banner.getByTestId('ios-banner-qr')).toHaveAttribute('data-url', /ct=mac-dashboard/)
+  // ...and the provider token that App Analytics needs alongside it.
+  await expect(banner.getByTestId('ios-banner-qr')).toHaveAttribute('data-url', /pt=120285779/)
   await expect(page.getByTestId('ios-app-link')).toHaveAttribute(
     'href',
     /apps\.apple\.com\/us\/app\/tab-space-tab-saver\/id6790127383/
@@ -485,6 +495,13 @@ test('shows the iOS launch banner at card width and persists dismissal', async (
   await page.reload()
   await expect(page.getByTestId('ios-banner')).toHaveCount(0)
   await expect(page.getByTestId('ios-app-link')).toBeVisible()
+
+  // Once dismissed, the navbar entry is the only remaining path — and on a Mac
+  // it must reopen the banner rather than navigate to a listing that cannot be
+  // bought.
+  await page.getByTestId('ios-app-link').click()
+  await expect(page.getByTestId('ios-banner')).toBeVisible()
+  await expect(page.getByTestId('ios-banner-qr')).toBeVisible()
 })
 
 test('uses the China App Store link and dismisses without browser storage', async ({ page }) => {
@@ -495,8 +512,8 @@ test('uses the China App Store link and dismisses without browser storage', asyn
   })
 
   const banner = page.getByTestId('ios-banner')
-  await expect(banner.getByRole('link', { name: '获取移动版' })).toHaveAttribute(
-    'href',
+  await expect(banner.getByTestId('ios-banner-qr')).toHaveAttribute(
+    'data-url',
     /apps\.apple\.com\/cn\/app\//
   )
   await expect(page.getByTestId('ios-app-link')).toHaveAttribute(

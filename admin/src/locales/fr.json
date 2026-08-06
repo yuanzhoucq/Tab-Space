@@ -115,6 +115,7 @@
   "trashBin": "Corbeille",
   "iosBannerText": "Maintenant sur iPhone et iPad avec la synchronisation iCloud",
   "iosBannerCta": "Obtenir l'app mobile",
+  "iosBannerScanHint": "Scannez avec l’appareil photo de votre iPhone pour installer",
   "iosAppNav": "App iOS",
   "iosBannerDismiss": "Fermer",
   "ratingBannerText": "Tab Space vous plaît ?",

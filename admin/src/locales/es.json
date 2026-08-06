@@ -115,6 +115,7 @@
   "trashBin": "Papelera",
   "iosBannerText": "Ya disponible en iPhone y iPad con sincronización de iCloud",
   "iosBannerCta": "Obtener la app móvil",
+  "iosBannerScanHint": "Escanea con la cámara del iPhone para instalar",
   "iosAppNav": "App para iOS",
   "iosBannerDismiss": "Cerrar",
   "ratingBannerText": "¿Te gusta Tab Space?",

@@ -115,6 +115,7 @@
   "trashBin": "Kosz",
   "iosBannerText": "Teraz na iPhonie i iPadzie z synchronizacją iCloud",
   "iosBannerCta": "Pobierz aplikację mobilną",
+  "iosBannerScanHint": "Zeskanuj aparatem iPhone’a, aby zainstalować",
   "iosAppNav": "Aplikacja iOS",
   "iosBannerDismiss": "Zamknij",
   "ratingBannerText": "Podoba Ci się Tab Space?",
