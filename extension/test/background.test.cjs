@@ -60,6 +60,62 @@ test('advertises dashboard AI only when both the helper and this extension suppo
   )
 })
 
+test('lists all browser windows for the switcher and activates the selected tab', async () => {
+  const calls = []
+  const browserApi = {
+    queryTabs: async query => {
+      calls.push(['query', query])
+      return [
+        { id: 4, windowId: 1, title: 'One', url: 'https://one.example', active: true },
+        { id: 8, windowId: 2, title: 'Two', url: 'https://two.example' },
+        { id: 9, windowId: 2, title: 'Settings', url: 'chrome://settings' }
+      ]
+    },
+    updateTab: async (id, properties) => calls.push(['update', id, properties]),
+    focusWindow: async id => calls.push(['focus', id])
+  }
+  const controller = background.createController({ browserApi, client: {} })
+
+  assert.deepEqual((await controller.listSwitcherTabs()).map(tab => tab.id), [4, 8])
+  await controller.activateSwitcherTab(8, 2)
+  assert.deepEqual(calls.slice(-2), [
+    ['update', 8, { active: true }],
+    ['focus', 2]
+  ])
+})
+
+test('answers helper switcher events through the authenticated bridge', async () => {
+  const requests = []
+  const controller = {
+    listSwitcherTabs: async () => [{ id: 7, windowId: 3, title: 'Docs', url: 'https://docs.example' }],
+    activateSwitcherTab: async (tabID, windowID) => {
+      assert.equal(tabID, 7)
+      assert.equal(windowID, 3)
+    }
+  }
+  const client = {
+    request: async (method, params) => requests.push([method, params])
+  }
+
+  await background.handleSwitcherEvent(
+    { event: 'switcher.tabs.request', requestID: 'tabs-request' },
+    controller,
+    client
+  )
+  await background.handleSwitcherEvent(
+    { event: 'switcher.tab.activate', requestID: 'activate-request', tabID: 7, windowID: 3 },
+    controller,
+    client
+  )
+  assert.deepEqual(requests, [
+    ['switcher.tabs.publish', {
+      requestID: 'tabs-request',
+      tabs: [{ id: 7, windowId: 3, title: 'Docs', url: 'https://docs.example' }]
+    }],
+    ['switcher.tab.activated', { requestID: 'activate-request', activated: true }]
+  ])
+})
+
 test('maps every dashboard data command onto protocol v2 methods', () => {
   assert.equal(background.dashboardCommandToOperation({ cmd: 'CheckBookmarks' }).method, 'sessions.list')
   assert.equal(background.dashboardCommandToOperation({ cmd: 'AppendSessions', bookmarks: '[]' }).method, 'sessions.append')
@@ -403,7 +459,7 @@ test('builds valid browser-specific Manifest V3 packages', () => {
     assert.equal(manifest.permissions.includes('storage'), true)
   }
   for (const target of ['chrome', 'edge', 'firefox']) {
-    assert.equal(existsSync(join(extensionRoot, `dist/packages/tab-space-1.1.0-${target}.zip`)), true)
+    assert.equal(existsSync(join(extensionRoot, `dist/packages/tab-space-1.2.0-${target}.zip`)), true)
     for (const size of [16, 32, 48, 128]) {
       assert.deepEqual(
         readFileSync(join(extensionRoot, `dist/${target}/toolbar-${size}.png`)),
@@ -505,4 +561,85 @@ test('treats a Pro-only refusal as terminal instead of re-pairing', () => {
   assert.equal(popup.includes('strings.proRequired'), true)
   assert.equal(popup.includes('proRequired: "Multi-browser support is included with Tab Space Pro.'), true)
   assert.equal(popup.includes('proRequired: "多浏览器支持包含在 Tab Space Pro 中。'), true)
+})
+
+class FakeReconnectWebSocket {
+  static instances = []
+
+  constructor(url) {
+    this.url = url
+    this.readyState = 0
+    this.sent = []
+    FakeReconnectWebSocket.instances.push(this)
+  }
+
+  send(data) {
+    this.sent.push(data)
+  }
+
+  close() {
+    this.readyState = 3
+  }
+
+  open() {
+    this.readyState = 1
+    if (this.onopen) this.onopen()
+  }
+
+  receive(data) {
+    if (this.onmessage) this.onmessage({ data })
+  }
+}
+
+function answerHello(socket, token) {
+  for (const raw of socket.sent) {
+    const message = JSON.parse(raw)
+    if (message.method !== 'hello') continue
+    socket.receive(JSON.stringify({
+      version: 2,
+      id: message.id,
+      result: { authenticated: true, protocolVersion: 2, capabilities: [], token }
+    }))
+    return true
+  }
+  return false
+}
+
+test('reconnects automatically when the helper drops the socket', async () => {
+  FakeReconnectWebSocket.instances = []
+  const storage = {
+    get: async () => ({}),
+    set: async () => {},
+    remove: async () => {}
+  }
+  const client = new background.LocalBridgeClient({
+    WebSocket: FakeReconnectWebSocket,
+    storage,
+    client: { browser: 'chrome' },
+    reconnectDelays: [10, 10]
+  })
+
+  const firstConnection = client.connect()
+  await new Promise(resolve => setImmediate(resolve))
+  const firstSocket = FakeReconnectWebSocket.instances[0]
+  firstSocket.open()
+  await new Promise(resolve => setImmediate(resolve))
+  assert.ok(answerHello(firstSocket, 'token-1'))
+  assert.equal((await firstConnection).authenticated, true)
+
+  // Simulate the helper restarting (rebuild/reinstall): the browser side of
+  // the socket closes without any user interaction.
+  firstSocket.onclose()
+  await new Promise(resolve => setTimeout(resolve, 15))
+  await new Promise(resolve => setImmediate(resolve))
+
+  assert.equal(FakeReconnectWebSocket.instances.length, 2)
+  const secondSocket = FakeReconnectWebSocket.instances[1]
+  secondSocket.open()
+  await new Promise(resolve => setImmediate(resolve))
+  assert.ok(answerHello(secondSocket, 'token-2'))
+  await new Promise(resolve => setImmediate(resolve))
+  await new Promise(resolve => setImmediate(resolve))
+  assert.equal(client.socket, secondSocket)
+  assert.equal(client.reconnectAttempts, 0)
 })

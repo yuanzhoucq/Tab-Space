@@ -12,6 +12,8 @@
   const INITIAL_PORT = 53791
   const PORT_STEP = 17
   const PORT_ATTEMPTS = 10
+  const SWITCHER_CAPABILITY = "switcher.tabs.v1"
+  const RECONNECT_ALARM_NAME = "tabspace-bridge-reconnect"
   // build.mjs rewrites these two lines for development builds. The first entry
   // is the origin the extension opens; the suffixes cover Cloudflare Pages
   // preview deployments, which get a new hostname per branch.
@@ -314,6 +316,7 @@
       queryTabs(query) { return call(extensionApi.tabs, "query", query) },
       createTab(properties) { return call(extensionApi.tabs, "create", properties) },
       updateTab(id, properties) { return call(extensionApi.tabs, "update", id, properties) },
+      focusWindow(id) { return call(extensionApi.windows, "update", id, { focused: true }) },
       removeTabs(ids) { return call(extensionApi.tabs, "remove", ids) },
       getStorage(keys) { return call(extensionApi.storage.local, "get", keys) },
       setStorage(values) { return call(extensionApi.storage.local, "set", values) },
@@ -331,11 +334,14 @@
       this.storage = options.storage
       this.client = options.client
       this.connectTimeout = options.connectTimeout || 650
+      this.reconnectDelays = options.reconnectDelays || [500, 1000, 2000, 4000, 8000, 15000]
       this.socket = null
       this.handshake = null
       this.pending = new Map()
       this.connectPromise = null
       this.listeners = new Set()
+      this.reconnectTimer = null
+      this.reconnectAttempts = 0
     }
 
     addEventListener(listener) {
@@ -354,6 +360,7 @@
     }
 
     async connect(pairingCode) {
+      this.cancelReconnect()
       if (this.socket && this.socket.readyState === 1) return this.handshake || {}
       if (this.connectPromise) return this.connectPromise
       this.connectPromise = this.connectAcrossPorts(pairingCode).finally(() => {
@@ -382,6 +389,7 @@
             await this.storage.set({ [STORAGE_KEYS.authToken]: result.token })
           }
           this.handshake = result
+          this.resetReconnect()
           return result
         } catch (error) {
           lastError = error
@@ -437,8 +445,56 @@
       socket.onclose = () => {
         if (this.socket === socket) this.socket = null
         this.rejectPending(new BridgeError("connection_closed", "The Tab Space connection closed."))
+        // The helper restarts whenever Tab Space is rebuilt or updated, which
+        // drops every browser's socket. Reconnect on our own instead of waiting
+        // for the user to open the popup again.
+        this.scheduleReconnect()
       }
       socket.onerror = () => {}
+    }
+
+    scheduleReconnect() {
+      if (this.reconnectTimer) return
+      const delay = this.reconnectDelays[
+        Math.min(this.reconnectAttempts, this.reconnectDelays.length - 1)
+      ]
+      this.reconnectAttempts += 1
+      this.reconnectTimer = setTimeout(() => {
+        this.reconnectTimer = null
+        this.connect().catch(() => this.scheduleReconnect())
+      }, delay)
+      this.ensureReconnectAlarm()
+    }
+
+    cancelReconnect() {
+      if (this.reconnectTimer) {
+        clearTimeout(this.reconnectTimer)
+        this.reconnectTimer = null
+      }
+    }
+
+    resetReconnect() {
+      this.cancelReconnect()
+      this.reconnectAttempts = 0
+      this.clearReconnectAlarm()
+    }
+
+    ensureReconnectAlarm() {
+      // A suspended MV3 service worker loses setTimeout. The alarm is the
+      // durable wake-up that keeps retrying across worker suspensions.
+      if (!this.alarmApi || this.reconnectAlarmArmed) return
+      this.reconnectAlarmArmed = true
+      try {
+        this.alarmApi.create(RECONNECT_ALARM_NAME, { periodInMinutes: 1 })
+      } catch (_) {}
+    }
+
+    clearReconnectAlarm() {
+      if (!this.alarmApi || !this.reconnectAlarmArmed) return
+      this.reconnectAlarmArmed = false
+      try {
+        this.alarmApi.clear(RECONNECT_ALARM_NAME)
+      } catch (_) {}
     }
 
     handleMessage(rawMessage) {
@@ -530,6 +586,19 @@
       ])
       const activeId = activeTabs && activeTabs[0] && activeTabs[0].id
       return normalizeTabs(tabs).map(tab => ({ ...tab, isCurrent: tab.id === activeId }))
+    }
+
+    async function listSwitcherTabs() {
+      return normalizeTabs(await browserApi.queryTabs({}))
+    }
+
+    async function activateSwitcherTab(tabId, windowId) {
+      if (!Number.isInteger(tabId)) {
+        throw new BridgeError("invalid_tab", "The requested browser tab is invalid.")
+      }
+      await browserApi.updateTab(tabId, { active: true })
+      if (Number.isInteger(windowId)) await browserApi.focusWindow(windowId)
+      return { activated: true }
     }
 
     async function settingEnabled(name) {
@@ -657,12 +726,14 @@
 
     return {
       listPopupTabs,
+      listSwitcherTabs,
       listPopupSessions,
       saveTabIds,
       saveCurrentTab,
       restoreSessions,
       openDashboard,
       handleDashboard,
+      activateSwitcherTab,
       closeTabs(tabIds) { return browserApi.removeTabs(tabIds) },
       pair(code) { return client.pair(code) },
       connect() {
@@ -673,6 +744,31 @@
         }))
       }
     }
+  }
+
+  function handleSwitcherEvent(event, controller, client) {
+    if (!event || typeof event.requestID !== "string" || event.requestID.length === 0) {
+      return null
+    }
+    if (event.event === "switcher.tabs.request") {
+      return controller.listSwitcherTabs().then(tabs => client.request("switcher.tabs.publish", {
+        requestID: event.requestID,
+        tabs
+      }))
+    }
+    if (event.event === "switcher.tab.activate") {
+      return controller.activateSwitcherTab(event.tabID, event.windowID).then(
+        () => client.request("switcher.tab.activated", {
+          requestID: event.requestID,
+          activated: true
+        }),
+        () => client.request("switcher.tab.activated", {
+          requestID: event.requestID,
+          activated: false
+        })
+      )
+    }
+    return null
   }
 
   function serializeError(error) {
@@ -690,6 +786,7 @@
     const manifest = api.manifest()
     const client = new LocalBridgeClient({
       WebSocket: root.WebSocket,
+      alarmApi: extensionApi.alarms,
       storage: {
         get: keys => api.getStorage(keys),
         set: values => api.setStorage(values),
@@ -698,7 +795,8 @@
       client: {
         browser: browserFamily(root.navigator && root.navigator.userAgent),
         extensionVersion: manifest.version,
-        protocolVersion: PROTOCOL_VERSION
+        protocolVersion: PROTOCOL_VERSION,
+        capabilities: [SWITCHER_CAPABILITY]
       }
     })
     const controller = createController({ browserApi: api, client })
@@ -723,12 +821,26 @@
     }
 
     client.addEventListener(event => {
+      const switcherAction = handleSwitcherEvent(event, controller, client)
+      if (switcherAction) {
+        switcherAction.catch(() => {})
+        return
+      }
       const message = dashboardMessageForEvent(event)
       if (!message) return
       for (const port of dashboardPorts) {
         try { port.postMessage({ type: "native-message", message }) } catch (_) {}
       }
     })
+
+    // Durable reconnect driver: an MV3 service worker can be suspended between
+    // helper restarts, so the alarm (not a timer) owns the long tail of retries.
+    if (extensionApi.alarms && extensionApi.alarms.onAlarm) {
+      extensionApi.alarms.onAlarm.addListener(alarm => {
+        if (alarm.name !== RECONNECT_ALARM_NAME) return
+        client.connect().catch(() => {})
+      })
+    }
 
     extensionApi.runtime.onConnect.addListener(port => {
       if (port.name !== "tabspace-dashboard") return
@@ -793,12 +905,17 @@
     }
 
     ensureThemeObserver().catch(() => {})
+    // A paired extension must be ready before its popup or dashboard is opened,
+    // otherwise the global switcher cannot discover this browser. The helper's
+    // keepalive events keep an authenticated MV3 service worker connection alive.
+    client.connect().catch(() => {})
   }
 
   return {
     BridgeError,
     LocalBridgeClient,
     PROTOCOL_VERSION,
+    SWITCHER_CAPABILITY,
     dashboardCommandToOperation,
     dashboardCapabilities,
     dashboardMessageForEvent,
@@ -806,6 +923,7 @@
     browserFamily,
     toolbarIconPaths,
     createController,
+    handleSwitcherEvent,
     isDashboardOrigin,
     isDashboardUrl,
     isSavableTab,
