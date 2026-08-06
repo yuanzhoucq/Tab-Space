@@ -14,6 +14,7 @@
   const PORT_ATTEMPTS = 10
   const SWITCHER_CAPABILITY = "switcher.tabs.v1"
   const RECONNECT_ALARM_NAME = "tabspace-bridge-reconnect"
+  const KEEPALIVE_STORAGE_KEY = "tabspace-bridge-heartbeat"
   // build.mjs rewrites these two lines for development builds. The first entry
   // is the origin the extension opens; the suffixes cover Cloudflare Pages
   // preview deployments, which get a new hostname per branch.
@@ -322,6 +323,14 @@
       setStorage(values) { return call(extensionApi.storage.local, "set", values) },
       removeStorage(keys) { return call(extensionApi.storage.local, "remove", keys) },
       setActionIcon(details) { return call(extensionApi.action, "setIcon", details) },
+      // Deliberately a write to session storage rather than a no-op: the write
+      // fires storage.onChanged, and a dispatched WebExtension event is what
+      // resets Firefox's background idle timer. See the keepalive handler.
+      touchSessionStorage(value) {
+        const session = extensionApi.storage && extensionApi.storage.session
+        if (!session) return Promise.resolve()
+        return call(session, "set", { [KEEPALIVE_STORAGE_KEY]: value })
+      },
       manifest() { return extensionApi.runtime.getManifest() },
       dashboardUrl() { return `${DASHBOARD_ORIGIN}/` },
       raw: extensionApi
@@ -331,6 +340,7 @@
   class LocalBridgeClient {
     constructor(options) {
       this.WebSocket = options.WebSocket
+      this.alarmApi = options.alarmApi || null
       this.storage = options.storage
       this.client = options.client
       this.connectTimeout = options.connectTimeout || 650
@@ -342,6 +352,7 @@
       this.listeners = new Set()
       this.reconnectTimer = null
       this.reconnectAttempts = 0
+      this.reconnectAlarmArmed = false
     }
 
     addEventListener(listener) {
@@ -476,24 +487,22 @@
     resetReconnect() {
       this.cancelReconnect()
       this.reconnectAttempts = 0
-      this.clearReconnectAlarm()
     }
 
+    // The durable wake-up. A suspended background context loses setTimeout, and
+    // it is only revived by an event it holds a listener for, so the alarm is
+    // the floor under every other recovery path.
+    //
+    // It stays armed for the life of the extension instead of only while a
+    // retry is pending, because the context is normally suspended *while
+    // connected* — the socket dies with it and there is no pending retry left
+    // to carry an alarm. Re-creating it on each wake-up is harmless: a context
+    // that stays suspended keeps the alarm it was started by.
     ensureReconnectAlarm() {
-      // A suspended MV3 service worker loses setTimeout. The alarm is the
-      // durable wake-up that keeps retrying across worker suspensions.
       if (!this.alarmApi || this.reconnectAlarmArmed) return
       this.reconnectAlarmArmed = true
       try {
         this.alarmApi.create(RECONNECT_ALARM_NAME, { periodInMinutes: 1 })
-      } catch (_) {}
-    }
-
-    clearReconnectAlarm() {
-      if (!this.alarmApi || !this.reconnectAlarmArmed) return
-      this.reconnectAlarmArmed = false
-      try {
-        this.alarmApi.clear(RECONNECT_ALARM_NAME)
       } catch (_) {}
     }
 
@@ -821,6 +830,16 @@
     }
 
     client.addEventListener(event => {
+      if (event.event === "bridge.keepalive") {
+        // Chrome and Edge treat WebSocket traffic as service worker activity,
+        // so their keepalive needs no help. Firefox does not: it terminates an
+        // idle event page after ~30s and only counts WebExtension API events,
+        // which would drop this browser off the switcher a few seconds after
+        // every wake-up. Turning the keepalive into a storage write that the
+        // listener below observes is the event Firefox does count.
+        Promise.resolve(api.touchSessionStorage(Date.now())).catch(() => {})
+        return
+      }
       const switcherAction = handleSwitcherEvent(event, controller, client)
       if (switcherAction) {
         switcherAction.catch(() => {})
@@ -833,13 +852,34 @@
       }
     })
 
-    // Durable reconnect driver: an MV3 service worker can be suspended between
-    // helper restarts, so the alarm (not a timer) owns the long tail of retries.
+    function wakeBridge() {
+      client.connect().catch(() => {})
+    }
+
+    // Wake-ups. A suspended background context is revived only by an event it
+    // registered a listener for, and the extension's other listeners all need
+    // the user to act: closing a browser's last window suspends the context,
+    // and opening a new one woke nothing, so that browser stayed off the
+    // switcher until its toolbar button was clicked. Reproduced on Edge.
+    //
+    // onFocusChanged is included because it also fires when the browser loses
+    // focus, which is the moment right before the global hot key is pressed.
     if (extensionApi.alarms && extensionApi.alarms.onAlarm) {
       extensionApi.alarms.onAlarm.addListener(alarm => {
         if (alarm.name !== RECONNECT_ALARM_NAME) return
-        client.connect().catch(() => {})
+        wakeBridge()
       })
+    }
+    if (extensionApi.runtime.onStartup) extensionApi.runtime.onStartup.addListener(wakeBridge)
+    if (extensionApi.runtime.onInstalled) extensionApi.runtime.onInstalled.addListener(wakeBridge)
+    if (extensionApi.windows) {
+      if (extensionApi.windows.onCreated) extensionApi.windows.onCreated.addListener(wakeBridge)
+      if (extensionApi.windows.onFocusChanged) extensionApi.windows.onFocusChanged.addListener(wakeBridge)
+    }
+    // Registered so the keepalive write above dispatches an event at all; the
+    // dispatch is the whole point, so the listener itself has nothing to do.
+    if (extensionApi.storage && extensionApi.storage.onChanged) {
+      extensionApi.storage.onChanged.addListener(() => {})
     }
 
     extensionApi.runtime.onConnect.addListener(port => {
@@ -905,9 +945,10 @@
     }
 
     ensureThemeObserver().catch(() => {})
+    client.ensureReconnectAlarm()
     // A paired extension must be ready before its popup or dashboard is opened,
-    // otherwise the global switcher cannot discover this browser. The helper's
-    // keepalive events keep an authenticated MV3 service worker connection alive.
+    // otherwise the global switcher cannot discover this browser. Every wake-up
+    // re-runs this file, so this is also the reconnect for all of them.
     client.connect().catch(() => {})
   }
 

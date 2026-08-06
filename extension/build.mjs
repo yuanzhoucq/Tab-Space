@@ -64,7 +64,10 @@ const baseManifest = {
   name: development ? "Tab Space (Dev)" : "Tab Space",
   version: extensionVersion,
   description: "Save, organize, and restore tabs with the Tab Space app.",
-  permissions: ["tabs", "storage"],
+  // "alarms" is what makes the bridge self-heal: it is the only wake-up that
+  // survives a suspended background context with no window open. It adds no
+  // user-visible permission warning on either store.
+  permissions: ["tabs", "storage", "alarms"],
   host_permissions: [],
   action: {
     default_title: "Tab Space",
