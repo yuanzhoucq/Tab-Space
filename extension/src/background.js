@@ -316,7 +316,7 @@
       queryTabs(query) { return call(extensionApi.tabs, "query", query) },
       createTab(properties) { return call(extensionApi.tabs, "create", properties) },
       updateTab(id, properties) { return call(extensionApi.tabs, "update", id, properties) },
-      focusWindow(id) { return call(extensionApi.windows, "update", id, { focused: true }) },
+      updateWindow(id, properties) { return call(extensionApi.windows, "update", id, properties) },
       removeTabs(ids) { return call(extensionApi.tabs, "remove", ids) },
       getStorage(keys) { return call(extensionApi.storage.local, "get", keys) },
       setStorage(values) { return call(extensionApi.storage.local, "set", values) },
@@ -596,8 +596,13 @@
       if (!Number.isInteger(tabId)) {
         throw new BridgeError("invalid_tab", "The requested browser tab is invalid.")
       }
+      if (Number.isInteger(windowId)) {
+        // Firefox only switches the focused tab within a window; bringing the
+        // target window forward first makes cross-window activation work there.
+        // Restoring minimized windows requires the explicit normal state.
+        await browserApi.updateWindow(windowId, { state: "normal", focused: true })
+      }
       await browserApi.updateTab(tabId, { active: true })
-      if (Number.isInteger(windowId)) await browserApi.focusWindow(windowId)
       return { activated: true }
     }
 

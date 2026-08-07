@@ -72,15 +72,15 @@ test('lists all browser windows for the switcher and activates the selected tab'
       ]
     },
     updateTab: async (id, properties) => calls.push(['update', id, properties]),
-    focusWindow: async id => calls.push(['focus', id])
+    updateWindow: async (id, properties) => calls.push(['window', id, properties])
   }
   const controller = background.createController({ browserApi, client: {} })
 
   assert.deepEqual((await controller.listSwitcherTabs()).map(tab => tab.id), [4, 8])
   await controller.activateSwitcherTab(8, 2)
   assert.deepEqual(calls.slice(-2), [
-    ['update', 8, { active: true }],
-    ['focus', 2]
+    ['window', 2, { state: 'normal', focused: true }],
+    ['update', 8, { active: true }]
   ])
 })
 
