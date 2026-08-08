@@ -34,7 +34,16 @@ const constants = {
     newSessionUuidPrefix: "new-",
     // The release the What's New dialog introduces. Bumping this shows it once
     // more; the copy in the whatsNew* locale keys has to be updated with it.
-    whatsNewVersion: "4.0",
+    whatsNewVersion: "4.1",
+    // The tab switcher's factory shortcut. The real one is a native default the
+    // user can rebind, and no bridge message reports it back, so this is what
+    // the dashboard shows — always alongside the note that it can be changed.
+    switcherShortcut: "⌥Tab",
+    // Advertised by the local bridge from 4.1 on. Companion browsers only reach
+    // the switcher through that helper, so its absence means the installed app
+    // predates the feature. Safari talks over the direct bridge, which carries
+    // no capability list, and is assumed to have it.
+    switcherCapability: "switcher.tabs.v1",
     defaultSuggestedTags: {
         "en-us": "Shopping, Development, Social, News, Video, Finance, Research, Entertainment, Work, Travel, Learning",
         "zh-cn": "购物, 开发, 社交, 新闻, 视频, 金融, 研究, 娱乐, 工作, 旅行, 学习"

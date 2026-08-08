@@ -10,26 +10,30 @@
       </button>
 
       <div class="modal-header">
-        <span class="version-pill" aria-hidden="true">4.0</span>
-        <h2 id="whats-new-title">{{ lang.whatsNewTitle }}</h2>
+        <span class="version-pill" aria-hidden="true">{{ version }}</span>
+        <h2 id="whats-new-title">{{ title }}</h2>
       </div>
 
       <div class="modal-content">
-        <p class="lede">{{ lang.whatsNewLede }}</p>
+        <p class="lede">{{ lede }}</p>
+
+        <img class="whats-new-shot"
+             :src="switcherShot"
+             :alt="lang.switcherTitle">
 
         <ul class="highlights">
           <li>
-            <v-icon name="award" class="highlight-icon"></v-icon>
+            <v-icon name="search" class="highlight-icon"></v-icon>
             <div>
-              <p class="highlight-title">{{ lang.whatsNewPlusTitle }}</p>
-              <p class="highlight-detail">{{ lang.whatsNewPlusDetail }}</p>
+              <p class="highlight-title">{{ switcherTitle }}</p>
+              <p class="highlight-detail">{{ lang.whatsNewSwitcherDetail }}</p>
             </div>
           </li>
           <li>
-            <v-icon name="zap" class="highlight-icon"></v-icon>
+            <v-icon name="clock" class="highlight-icon"></v-icon>
             <div>
-              <p class="highlight-title">{{ lang.whatsNewAiTitle }}</p>
-              <p class="highlight-detail">{{ lang.whatsNewAiDetail }}</p>
+              <p class="highlight-title">{{ lang.whatsNewSavedTitle }}</p>
+              <p class="highlight-detail">{{ lang.whatsNewSavedDetail }}</p>
             </div>
           </li>
           <li>
@@ -41,9 +45,7 @@
           </li>
         </ul>
 
-        <p v-if="ownsPermanentPlus" class="plus-grant" data-testid="whats-new-plus-grant">
-          {{ lang.whatsNewPlusGrant }}
-        </p>
+        <p class="settings-note">{{ lang.switcherSettingsNote }}</p>
 
         <div class="actions">
           <a class="changelog-link"
@@ -70,7 +72,7 @@
 
 <script>
 /**
- * One-time introduction to Tab Space 4.0.
+ * One-time introduction to the current release — 4.1, the browser tab switcher.
  *
  * It appears once per browser for people who already had sessions before the
  * release, then never again: the accepted version is written to local storage,
@@ -80,19 +82,26 @@
  * silently instead — otherwise the first thing a first-run user sees is a
  * summary of changes they never experienced.
  *
+ * 4.1 is a macOS feature, so a reader who cannot have it (a phone, or a
+ * companion browser still on a helper that predates the switcher) is left
+ * alone — and, unlike the first-run case, the release is *not* marked seen, so
+ * the introduction still arrives once the app catches up.
+ *
  * Settings can reopen it at any time (whatsNewRequested), which is the only way
  * back once the release has been seen.
  */
 import { mapGetters, mapState } from 'vuex'
 import Constants from '../constants'
 import { whatsNewSeenVersionKey, readBannerFlag, writeBannerFlag } from '../banners'
+import switcherShot from '../assets/switcher-panel.png'
 
 export default {
   name: 'WhatsNewModal',
   data() {
     return {
       armed: false,
-      resolved: false
+      resolved: false,
+      switcherShot
     }
   },
   computed: {
@@ -106,7 +115,20 @@ export default {
       'splitPreview',
       'whatsNewRequested'
     ]),
-    ...mapGetters(['ownsPermanentPlus', 'savedSessionCount']),
+    ...mapGetters(['savedSessionCount', 'switcherAvailable']),
+    version() {
+      return Constants.whatsNewVersion
+    },
+    title() {
+      return this.withVersion(this.lang.whatsNewTitle, "What's new in Tab Space {version}")
+    },
+    lede() {
+      return this.withVersion(this.lang.whatsNewLede, 'Version {version} adds a browser tab switcher.')
+    },
+    switcherTitle() {
+      const template = this.lang.whatsNewSwitcherTitle || 'Press {shortcut} anywhere'
+      return template.replace('{shortcut}', Constants.switcherShortcut)
+    },
     ready() {
       return this.nativeDetected && this.initialRefresh
     },
@@ -124,6 +146,11 @@ export default {
   },
   watch: {
     ready() {
+      this.evaluate()
+    },
+    // The capability handshake can land after the first refresh, so a companion
+    // browser only becomes eligible partway through the session.
+    switcherAvailable() {
       this.evaluate()
     },
     visible: {
@@ -152,6 +179,9 @@ export default {
         writeBannerFlag(whatsNewSeenVersionKey, Constants.whatsNewVersion)
         return
       }
+      // Nothing to announce yet, and nothing to record either: this reader gets
+      // the introduction when the switcher actually reaches them.
+      if (!this.switcherAvailable) return
       this.armed = true
     },
     dismiss() {
@@ -165,6 +195,9 @@ export default {
     viewPlans() {
       this.dismiss()
       this.$store.commit('setShowSubscriptionModal', true)
+    },
+    withVersion(template, fallback) {
+      return (template || fallback).replace('{version}', Constants.whatsNewVersion)
     },
     focusDismiss() {
       this.$nextTick(() => {
@@ -256,6 +289,15 @@ export default {
   line-height: 1.55;
 }
 
+/* The switcher panel shot, straight from the App Store artwork set. */
+.whats-new-shot {
+  display: block;
+  width: 100%;
+  margin: 0 0 18px;
+  border: 1px solid var(--border-color, #e2e8f0);
+  border-radius: 10px;
+}
+
 .highlights {
   list-style: none;
   margin: 0 0 16px;
@@ -294,12 +336,14 @@ export default {
   color: var(--text-secondary, #718096);
 }
 
-.plus-grant {
+/* The shortcut is rebindable and the menu bar icon optional, but both live in
+   the native app — the dashboard can only say where to look. */
+.settings-note {
   margin: 0 0 16px;
   padding: 10px 12px;
   border-radius: 10px;
   background: rgba(250, 128, 114, 0.12);
-  font-size: 13px;
+  font-size: 12.5px;
   line-height: 1.5;
 }
 

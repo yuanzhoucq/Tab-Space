@@ -2,7 +2,7 @@
   <div>
     <div id="main">
       <navbar v-if="nativeDetected && initialRefresh"></navbar>
-      <div id="title" :class="{'title-centered': !nativeDetected || !initialRefresh}">
+      <div id="title" :class="{'title-centered': !nativeDetected || !initialRefresh, 'with-hint': switcherAvailable}">
         <h1>
           Tab Space
           <span v-if="isPremium"
@@ -11,9 +11,13 @@
                 :title="lang.planPremium"
                 :aria-label="lang.planPremium">Pro</span>
         </h1>
-        <input v-if="nativeDetected && initialRefresh"
-               type="text" name="keyword" id="keyword" v-model="keyword"
-               :placeholder="lang.searchPlaceholder">
+        <div v-if="nativeDetected && initialRefresh" class="search-area">
+          <div class="search-field" :class="{ 'with-hint': switcherAvailable }">
+            <input type="text" name="keyword" id="keyword" v-model="keyword"
+                   :placeholder="lang.searchPlaceholder">
+            <switcher-hint></switcher-hint>
+          </div>
+        </div>
       </div>
       <div v-if="showLoadingState" class="connection-state">
         <vue-loading type="bars" color="#eb5205" :size="{ width: '50px', height: '50px' }"></vue-loading>
@@ -85,6 +89,7 @@
   import SessionSidebar from '../components/SessionSidebar'
   import SessionHub from '../components/SessionHub'
   import Sessions from '../components/Sessions'
+  import SwitcherHint from '../components/SwitcherHint'
 
   export default {
     components: {
@@ -95,6 +100,7 @@
       SessionSidebar,
       SessionHub,
       Sessions,
+      SwitcherHint,
     },
     data() {
       return {
@@ -110,7 +116,7 @@
         "sessions",
         "initialRefresh"
       ]),
-      ...mapGetters(["isPremium"]),
+      ...mapGetters(["isPremium", "switcherAvailable"]),
       showLoadingState() {
         return (!this.nativeDetected && !this.connectionTimedOut)
           || (this.nativeDetected && !this.initialRefresh)
@@ -243,6 +249,12 @@
   #title:not(.title-centered) h1 {
     margin-left: var(--dashboard-sidebar-column);
     transform: translateY(-12px);
+  }
+
+  /* The switcher hint extends the search column downward, so the wordmark
+     rides a little higher to hold the same optical balance. */
+  #title.with-hint:not(.title-centered) h1 {
+    transform: translateY(-24px);
   }
 
   #title.title-centered {
@@ -408,8 +420,41 @@
     font-size: 14px;
   }
 
-  #keyword {
+  /* The search field and the tab-switcher hint under it move as one block, so
+     the hint keeps the field's right edge instead of drifting into the hub
+     column. */
+  .search-area {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
     margin: 10px 0;
+    margin-left: auto;
+    /* align right edge with the session cards (hub column = 15px gap + 30px button) */
+    margin-right: var(--dashboard-hub-column);
+  }
+
+  /* The field and the hint below it flush-stack into one block. */
+  .search-field {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* One salmon leading bar runs the whole height of the pair, so the field
+     and the hint below it read as a single element. A little transparency
+     keeps it from shouting next to the coral wash of the hint. */
+  .search-field.with-hint {
+    border-left: 3px solid rgba(250, 128, 114, 0.6);
+  }
+
+  /* The hint sits flush under the field, so the seam stays clean: the field's
+     bottom corners step aside and the hint's top corners meet them square.
+     The left edge of the pair stays a straight line — no rounding there. */
+  .search-field.with-hint #keyword {
+    border-radius: 0 4px 0 0;
+  }
+
+  #keyword {
     outline: none;
     border-radius: 4px;
     border-width: 0;
@@ -419,9 +464,6 @@
     width: 200px;
     max-width: 100%;
     padding-left: 10px;
-    margin-left: auto;
-    /* align right edge with the session cards (hub column = 15px gap + 30px button) */
-    margin-right: var(--dashboard-hub-column);
   }
 
   @media (max-width: 700px) {
@@ -430,7 +472,7 @@
       transform: none;
     }
 
-    #keyword {
+    .search-area {
       margin-right: 0;
     }
   }

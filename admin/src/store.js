@@ -2,6 +2,7 @@ import Vue from 'vue'
 import Vuex from 'vuex'
 import LangData from './locales'
 import Constants from './constants'
+import { isHandheld } from './device'
 import { sessionMatchesQuery } from './search'
 
 Vue.use(Vuex);
@@ -132,6 +133,16 @@ const store = new Vuex.Store({
                     && Array.isArray(state.nativeCapabilities)
                     && state.nativeCapabilities.includes("ai.v1")
                     && state.nativeCapabilities.includes("dashboard.ai.v1"))),
+        // Whether the tab switcher is worth mentioning to this reader. It is a
+        // macOS-only surface of the desktop app, so a phone or iPad never
+        // qualifies. A companion browser reaches it through the local helper
+        // and says so with a capability; Safari's direct bridge advertises
+        // none, so the mention rides on the app being there at all.
+        switcherAvailable: state => !!state.bridge
+            && !isHandheld()
+            && (state.bridge.mode === "direct"
+                || (Array.isArray(state.nativeCapabilities)
+                    && state.nativeCapabilities.includes(Constants.switcherCapability))),
         isPremium: state => state.entitlementTier === "pro",
         hasPermanentPlus: state => state.entitlementTier === "plus",
         // Whether the permanent Plus grant was ever made, regardless of whether

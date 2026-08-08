@@ -51,6 +51,9 @@ export default {
     rows() {
       const unlimited = this.lang.planTableUnlimited || 'Unlimited'
       const weekly = this.lang.planTableWeeklyFive || '5 / week'
+      // Safari is a product name, spelled the same in every locale we ship.
+      const safariOnly = 'Safari'
+      const everyBrowser = this.lang.planTableEveryBrowser || 'All browsers'
       return [
         {
           id: 'core',
@@ -66,6 +69,13 @@ export default {
           id: 'ai',
           title: this.lang.planTableAI || 'AI organizing',
           values: [weekly, weekly, unlimited]
+        },
+        // The switcher itself is in every tier — what Pro widens is the set of
+        // browsers whose open tabs it can list.
+        {
+          id: 'switcher',
+          title: this.lang.planTableSwitcher || 'Tab switcher',
+          values: [safariOnly, safariOnly, everyBrowser]
         },
         {
           id: 'browsers',

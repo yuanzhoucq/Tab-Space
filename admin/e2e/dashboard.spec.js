@@ -95,7 +95,7 @@ async function openDashboard(page, options = {}) {
     // The What's New dialog is a one-time release introduction that would sit
     // over every other test, so it starts out already seen unless a test is
     // about the dialog itself.
-    if (!whatsNewPending) localStorage.setItem('tabspace-whats-new-seen-version', '4.0')
+    if (!whatsNewPending) localStorage.setItem('tabspace-whats-new-seen-version', '4.1')
     const storedSettings = JSON.parse(localStorage.getItem(settingsKey) || '{}')
     if (preferredLanguage) storedSettings['preferred-language'] = preferredLanguage
     // The AI data-flow disclosure is a one-time first-run step. Tests that are
@@ -528,15 +528,14 @@ test('uses the China App Store link and dismisses without browser storage', asyn
   await expect(page.getByTestId('ios-banner')).toHaveCount(0)
 })
 
-test('introduces 4.0 once to someone who already had sessions', async ({ page }) => {
+test('introduces 4.1 once to someone who already had sessions', async ({ page }) => {
   await openDashboard(page, { initialSessions: sessions, whatsNewPending: true })
 
   const modal = page.getByTestId('whats-new-modal')
   await expect(modal).toBeVisible()
-  await expect(modal.getByRole('heading', { name: "What's new in Tab Space 4.0" })).toBeVisible()
-  await expect(modal.getByText('Optional AI organizing')).toBeVisible()
-  // Free and Pro never bought the app before 4.0, so the thank-you stays hidden.
-  await expect(page.getByTestId('whats-new-plus-grant')).toHaveCount(0)
+  await expect(modal.getByRole('heading', { name: "What's new in Tab Space 4.1" })).toBeVisible()
+  await expect(modal.getByText('Press ⌥Tab anywhere')).toBeVisible()
+  await expect(modal.getByText('Chrome, Edge, and Firefox with Pro')).toBeVisible()
   await expect(modal.getByRole('link', { name: 'See the full changelog' })).toHaveAttribute(
     'href',
     'https://mytab.space/changelog.html'
@@ -544,7 +543,7 @@ test('introduces 4.0 once to someone who already had sessions', async ({ page })
 
   await page.getByTestId('whats-new-dismiss').click()
   await expect(modal).toHaveCount(0)
-  expect(await page.evaluate(() => localStorage.getItem('tabspace-whats-new-seen-version'))).toBe('4.0')
+  expect(await page.evaluate(() => localStorage.getItem('tabspace-whats-new-seen-version'))).toBe('4.1')
 
   await page.reload()
   await expect(page.locator('.session')).toHaveCount(2)
@@ -558,7 +557,7 @@ test('introduces 4.0 once to someone who already had sessions', async ({ page })
   await expect(page.getByTestId('whats-new-modal')).toHaveCount(0)
 })
 
-test('closes the 4.0 introduction with Escape and skips it on a fresh install', async ({ page }) => {
+test('closes the 4.1 introduction with Escape and skips it on a fresh install', async ({ page }) => {
   await openDashboard(page, { initialSessions: sessions, whatsNewPending: true })
 
   await expect(page.getByTestId('whats-new-modal')).toBeVisible()
@@ -570,20 +569,31 @@ test('closes the 4.0 introduction with Escape and skips it on a fresh install', 
   await openDashboard(page, { initialSessions: [], whatsNewPending: true })
   await expect(page.getByTestId('empty-state')).toBeVisible()
   await expect(page.getByTestId('whats-new-modal')).toHaveCount(0)
-  expect(await page.evaluate(() => localStorage.getItem('tabspace-whats-new-seen-version'))).toBe('4.0')
+  expect(await page.evaluate(() => localStorage.getItem('tabspace-whats-new-seen-version'))).toBe('4.1')
 })
 
-test('thanks a pre-4.0 buyer for their permanent Plus in the 4.0 introduction', async ({ page }) => {
-  await openDashboard(page, {
-    initialSessions: sessions,
-    whatsNewPending: true,
-    nativeProtocolVersion: '2',
-    entitlementTier: 'plus'
-  })
+test('keeps the tab switcher hint by the search field', async ({ page }) => {
+  await openDashboard(page, { initialSessions: sessions })
 
-  await expect(page.getByTestId('whats-new-plus-grant')).toBeVisible()
-  await page.getByTestId('whats-new-close').click()
-  await expect(page.getByTestId('whats-new-modal')).toHaveCount(0)
+  const chip = page.getByTestId('switcher-hint-chip')
+  await expect(chip).toBeVisible()
+  await expect(chip).toContainText('⌥Tab')
+  await expect(page.getByTestId('switcher-hint-popover')).toHaveCount(0)
+
+  await chip.click()
+  const popover = page.getByTestId('switcher-hint-popover')
+  await expect(popover).toBeVisible()
+  await expect(popover).toContainText('every tab you have ever saved')
+  // Free and Plus reach Safari and their own archive; only the other browsers
+  // are behind Pro.
+  await expect(popover).toContainText('Tabs from Chrome, Microsoft Edge, and Firefox need Pro.')
+
+  await page.keyboard.press('Escape')
+  await expect(popover).toHaveCount(0)
+
+  // The hint outlives the one-time dialog: it is still there after a reload.
+  await page.reload()
+  await expect(page.getByTestId('switcher-hint-chip')).toBeVisible()
 })
 
 test('keeps the rating banner out of the way of the iOS banner', async ({ page }) => {
@@ -667,7 +677,7 @@ async function openAppExtensionDashboard(page, initialSessions) {
     const clone = value => JSON.parse(JSON.stringify(value))
     const bridgeEvent = name => `tabspace:app-extension:${name}`
     // These bridge tests are not about the one-time release introduction.
-    localStorage.setItem('tabspace-whats-new-seen-version', '4.0')
+    localStorage.setItem('tabspace-whats-new-seen-version', '4.1')
     window.__tabspaceBridgeCommands = []
 
     const emit = (name, message = {}) => {
@@ -705,7 +715,7 @@ async function openWebExtensionDashboard(page, capabilities) {
     const clone = value => JSON.parse(JSON.stringify(value))
     const channel = 'tabspace-webextension-v2'
     // These bridge tests are not about the one-time release introduction.
-    localStorage.setItem('tabspace-whats-new-seen-version', '4.0')
+    localStorage.setItem('tabspace-whats-new-seen-version', '4.1')
     window.__tabspaceBridgeCommands = []
 
     const post = (type, payload = {}) => {
@@ -1397,12 +1407,15 @@ test('enables AI and subscription UI through a capable companion WebExtension', 
     'ai.v1',
     'suggestions.v1',
     'subscription.v1',
-    'dashboard.ai.v1'
+    'dashboard.ai.v1',
+    'switcher.tabs.v1'
   ])
 
   await expect(page.locator('.session')).toHaveCount(2)
   await expect(page.getByTestId('ai-enhance-session').first()).toBeVisible()
   await expect.poll(() => bridgeCommandCount(page, 'PrepareAI')).toBe(1)
+  // The helper reports the switcher, so the hint is worth showing here too.
+  await expect(page.getByTestId('switcher-hint-chip')).toBeVisible()
   await page.getByRole('link', { name: 'Settings' }).click()
   await expect(page.getByTestId('subscription-card')).toBeVisible()
   await expect.poll(() => bridgeCommandCount(page, 'CheckSubscriptionStatus')).toBeGreaterThan(0)
@@ -1414,6 +1427,9 @@ test('keeps AI hidden when an older WebExtension only forwards the native capabi
   await expect(page.locator('.session')).toHaveCount(2)
   await expect(page.getByTestId('ai-enhance-session')).toHaveCount(0)
   await expect.poll(() => bridgeCommandCount(page, 'PrepareAI')).toBe(0)
+  // A helper that predates the switcher cannot reach it, so nothing advertises
+  // a shortcut this install does not answer.
+  await expect(page.getByTestId('switcher-hint')).toHaveCount(0)
   await page.getByRole('link', { name: 'Settings' }).click()
   await expect(page.getByTestId('subscription-card')).toHaveCount(0)
 })
