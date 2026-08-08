@@ -457,9 +457,12 @@ test('builds valid browser-specific Manifest V3 packages', () => {
     assert.deepEqual(manifest.content_scripts[0].matches, ['https://app.mytab.space/*'])
     assert.equal(manifest.permissions.includes('tabs'), true)
     assert.equal(manifest.permissions.includes('storage'), true)
+    // Without this the alarms API is undefined and the bridge cannot recover
+    // from a suspended background context.
+    assert.equal(manifest.permissions.includes('alarms'), true)
   }
   for (const target of ['chrome', 'edge', 'firefox']) {
-    assert.equal(existsSync(join(extensionRoot, `dist/packages/tab-space-1.2.0-${target}.zip`)), true)
+    assert.equal(existsSync(join(extensionRoot, `dist/packages/tab-space-1.2.1-${target}.zip`)), true)
     for (const size of [16, 32, 48, 128]) {
       assert.deepEqual(
         readFileSync(join(extensionRoot, `dist/${target}/toolbar-${size}.png`)),
@@ -642,4 +645,105 @@ test('reconnects automatically when the helper drops the socket', async () => {
   await new Promise(resolve => setImmediate(resolve))
   assert.equal(client.socket, secondSocket)
   assert.equal(client.reconnectAttempts, 0)
+})
+
+test('keeps the wake-up alarm armed across a successful connection', () => {
+  const alarmCalls = []
+  const client = new background.LocalBridgeClient({
+    WebSocket: FakeReconnectWebSocket,
+    alarmApi: {
+      create: (name, options) => alarmCalls.push(['create', name, options]),
+      clear: name => alarmCalls.push(['clear', name])
+    },
+    storage: { get: async () => ({}), set: async () => {}, remove: async () => {} },
+    client: { browser: 'edge' }
+  })
+
+  client.ensureReconnectAlarm()
+  client.ensureReconnectAlarm()
+  assert.deepEqual(alarmCalls, [['create', 'tabspace-bridge-reconnect', { periodInMinutes: 1 }]])
+
+  // A connection that succeeds must not clear the alarm. The background context
+  // is normally suspended while connected, so clearing it here would leave a
+  // browser with no way back onto the switcher.
+  client.resetReconnect()
+  assert.deepEqual(alarmCalls, [['create', 'tabspace-bridge-reconnect', { periodInMinutes: 1 }]])
+})
+
+class FakeFailingWebSocket {
+  constructor(url) {
+    this.url = url
+    this.readyState = 0
+    setTimeout(() => { if (this.onerror) this.onerror() }, 0)
+  }
+
+  send() {}
+  close() { this.readyState = 3 }
+}
+
+function fakeEvent(name, registered) {
+  return { addListener: () => registered.push(name) }
+}
+
+test('registers the wake-ups a suspended background context can be revived by', async () => {
+  const registered = []
+  const savedBrowser = globalThis.browser
+  const savedChrome = globalThis.chrome
+  const savedWebSocket = globalThis.WebSocket
+  const alarmCalls = []
+  const storageWrites = []
+
+  globalThis.WebSocket = FakeFailingWebSocket
+  globalThis.chrome = undefined
+  globalThis.browser = {
+    runtime: {
+      getManifest: () => ({ version: '1.2.1' }),
+      getURL: path => `moz-extension://test/${path}`,
+      onMessage: fakeEvent('runtime.onMessage', registered),
+      onConnect: fakeEvent('runtime.onConnect', registered),
+      onStartup: fakeEvent('runtime.onStartup', registered),
+      onInstalled: fakeEvent('runtime.onInstalled', registered)
+    },
+    alarms: {
+      create: (name, options) => alarmCalls.push([name, options]),
+      clear: () => {},
+      onAlarm: fakeEvent('alarms.onAlarm', registered)
+    },
+    windows: {
+      onCreated: fakeEvent('windows.onCreated', registered),
+      onFocusChanged: fakeEvent('windows.onFocusChanged', registered),
+      update: async () => {}
+    },
+    tabs: { query: async () => [], update: async () => {}, create: async () => {}, remove: async () => {} },
+    action: { setIcon: async () => {} },
+    storage: {
+      local: { get: async () => ({}), set: async () => {}, remove: async () => {} },
+      session: { set: async values => storageWrites.push(values) },
+      onChanged: fakeEvent('storage.onChanged', registered)
+    },
+    commands: { onCommand: fakeEvent('commands.onCommand', registered) }
+  }
+
+  try {
+    background.install()
+    // Let the connection attempt fail across every candidate port so no timer
+    // outlives the test.
+    await new Promise(resolve => setTimeout(resolve, 50))
+
+    for (const name of [
+      'runtime.onStartup',
+      'runtime.onInstalled',
+      'windows.onCreated',
+      'windows.onFocusChanged',
+      'alarms.onAlarm',
+      'storage.onChanged'
+    ]) {
+      assert.equal(registered.includes(name), true, `${name} must be registered at the top level`)
+    }
+    assert.deepEqual(alarmCalls, [['tabspace-bridge-reconnect', { periodInMinutes: 1 }]])
+  } finally {
+    globalThis.browser = savedBrowser
+    globalThis.chrome = savedChrome
+    globalThis.WebSocket = savedWebSocket
+  }
 })
