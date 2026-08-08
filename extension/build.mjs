@@ -45,7 +45,11 @@ const dashboardOrigins = development
   : [productionDashboardOrigin]
 const dashboardOriginSuffixes = development ? developmentDashboardSuffixes : []
 const outputName = target => development ? `${target}-dev` : target
-const packageName = target => `tab-space-${extensionVersion}-${target}${development ? "-dev" : ""}.zip`
+// Deliberately version-less: a stable filename means a rebuilt development
+// package lands on top of the previous one, so reloading is re-selecting the
+// same file instead of hunting for the newest version. The version still
+// travels in the manifest, which is what the stores read.
+const packageName = target => `tab-space-${target}${development ? "-dev" : ""}.zip`
 
 // Firefox rejects explicit ports in match patterns, so its loopback pattern is
 // widened to the host. content-script.js still enforces the exact development
