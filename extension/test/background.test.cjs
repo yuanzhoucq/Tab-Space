@@ -116,6 +116,53 @@ test('answers helper switcher events through the authenticated bridge', async ()
   ])
 })
 
+test('closes switcher tabs one at a time when the batch is rejected, and counts what really closed', async () => {
+  let living = [4, 8, 12]
+  const browserApi = {
+    queryTabs: async () => living.map(id => ({ id, windowId: 1, title: 'T', url: 'https://a.example' })),
+    removeTabs: async ids => {
+      // Mirrors the engines that reject the whole call when one id is stale.
+      if (ids.length > 1) throw new Error('No tab with id: 99')
+      if (!living.includes(ids[0])) throw new Error('No tab with id: ' + ids[0])
+      living = living.filter(id => id !== ids[0])
+    }
+  }
+  const controller = background.createController({ browserApi, client: {} })
+
+  // 99 was already gone; 12 is left open and must not be counted as closed.
+  assert.deepEqual(await controller.closeSwitcherTabs([4, 8, 99]), { closed: 3 })
+  assert.deepEqual(living, [12])
+
+  assert.deepEqual(await controller.closeSwitcherTabs([]), { closed: 0 })
+  assert.deepEqual(await controller.closeSwitcherTabs(['nope', null]), { closed: 0 })
+})
+
+test('answers a switcher close event even when closing fails outright', async () => {
+  const requests = []
+  const client = { request: async (method, params) => requests.push([method, params]) }
+
+  await background.handleSwitcherEvent(
+    { event: 'switcher.tabs.close', requestID: 'close-ok', tabIDs: [1, 2] },
+    { closeSwitcherTabs: async () => ({ closed: 2 }) },
+    client
+  )
+  await background.handleSwitcherEvent(
+    { event: 'switcher.tabs.close', requestID: 'close-bad', tabIDs: [1] },
+    { closeSwitcherTabs: async () => { throw new Error('boom') } },
+    client
+  )
+
+  assert.deepEqual(requests, [
+    ['switcher.tabs.closed', { requestID: 'close-ok', closed: 2 }],
+    ['switcher.tabs.closed', { requestID: 'close-bad', closed: 0 }]
+  ])
+})
+
+test('advertises the close capability alongside tab listing', () => {
+  assert.equal(background.SWITCHER_CAPABILITY, 'switcher.tabs.v1')
+  assert.equal(background.SWITCHER_CLOSE_CAPABILITY, 'switcher.tabs.close.v1')
+})
+
 test('maps every dashboard data command onto protocol v2 methods', () => {
   assert.equal(background.dashboardCommandToOperation({ cmd: 'CheckBookmarks' }).method, 'sessions.list')
   assert.equal(background.dashboardCommandToOperation({ cmd: 'AppendSessions', bookmarks: '[]' }).method, 'sessions.append')

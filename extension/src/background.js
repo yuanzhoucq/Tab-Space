@@ -13,6 +13,10 @@
   const PORT_STEP = 17
   const PORT_ATTEMPTS = 10
   const SWITCHER_CAPABILITY = "switcher.tabs.v1"
+  // Advertised separately from listing so an app build that predates
+  // save-and-close still gets tabs from this extension, and a newer app knows
+  // not to ask an older extension to close anything it cannot.
+  const SWITCHER_CLOSE_CAPABILITY = "switcher.tabs.close.v1"
   const RECONNECT_ALARM_NAME = "tabspace-bridge-reconnect"
   const KEEPALIVE_STORAGE_KEY = "tabspace-bridge-heartbeat"
   // build.mjs rewrites these two lines for development builds. The first entry
@@ -615,6 +619,32 @@
       return { activated: true }
     }
 
+    // The app only sends this after the store has confirmed the save, so these
+    // ids always name tabs that are already archived.
+    async function closeSwitcherTabs(tabIds) {
+      const ids = Array.isArray(tabIds) ? tabIds.filter(Number.isInteger) : []
+      if (ids.length === 0) return { closed: 0 }
+
+      try {
+        await browserApi.removeTabs(ids)
+      } catch (error) {
+        // A single id the user closed in the meantime rejects the whole batch,
+        // so retry one at a time before giving up on the rest.
+        for (const id of ids) {
+          try {
+            await browserApi.removeTabs([id])
+          } catch (singleError) {
+            // Counted below, not here.
+          }
+        }
+      }
+
+      // Measured rather than assumed: the app turns this into "saved, but N
+      // tabs stayed open", so a tab that survived must not be counted as closed.
+      const remaining = new Set((await browserApi.queryTabs({})).map(tab => tab.id))
+      return { closed: ids.filter(id => !remaining.has(id)).length }
+    }
+
     async function settingEnabled(name) {
       const result = await client.request("settings.get", { name })
       return result && result.value === "true"
@@ -748,6 +778,7 @@
       openDashboard,
       handleDashboard,
       activateSwitcherTab,
+      closeSwitcherTabs,
       closeTabs(tabIds) { return browserApi.removeTabs(tabIds) },
       pair(code) { return client.pair(code) },
       connect() {
@@ -782,6 +813,21 @@
         })
       )
     }
+    if (event.event === "switcher.tabs.close") {
+      // Always answer, even on failure. The app waits on this reply to decide
+      // whether to tell the user their tabs are saved but still open; staying
+      // silent would leave it waiting for the 3 s timeout to say the same thing.
+      return controller.closeSwitcherTabs(event.tabIDs).then(
+        result => client.request("switcher.tabs.closed", {
+          requestID: event.requestID,
+          closed: result.closed
+        }),
+        () => client.request("switcher.tabs.closed", {
+          requestID: event.requestID,
+          closed: 0
+        })
+      )
+    }
     return null
   }
 
@@ -810,7 +856,7 @@
         browser: browserFamily(root.navigator && root.navigator.userAgent),
         extensionVersion: manifest.version,
         protocolVersion: PROTOCOL_VERSION,
-        capabilities: [SWITCHER_CAPABILITY]
+        capabilities: [SWITCHER_CAPABILITY, SWITCHER_CLOSE_CAPABILITY]
       }
     })
     const controller = createController({ browserApi: api, client })
@@ -962,6 +1008,7 @@
     LocalBridgeClient,
     PROTOCOL_VERSION,
     SWITCHER_CAPABILITY,
+    SWITCHER_CLOSE_CAPABILITY,
     dashboardCommandToOperation,
     dashboardCapabilities,
     dashboardMessageForEvent,
