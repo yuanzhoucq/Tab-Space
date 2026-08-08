@@ -84,6 +84,15 @@ after the macOS app acknowledges that it has persisted the session. The popup
 can remember whether to open the Dashboard or close the saved tabs afterward;
 tab closing still runs only after that acknowledgement.
 
+The macOS tab switcher reaches this extension over the same bridge, through two
+capabilities advertised separately at handshake: `switcher.tabs.v1` lists the
+open tabs, and `switcher.tabs.close.v1` closes the ones the app has already
+saved. They are separate so an app build that predates save-and-close still gets
+tab listing, and a newer app knows not to ask an older extension to close
+anything. The close reply reports how many tabs actually went away — measured
+after the fact, not assumed — so the app can tell the user when tabs were saved
+but stayed open.
+
 AI requests, quota status, and subscription actions use that same authenticated
 local bridge. StoreKit transactions and AI authentication material remain in
 the Mac app/helper; the WebExtension only translates Dashboard commands and
