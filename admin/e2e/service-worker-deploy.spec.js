@@ -158,6 +158,79 @@ test('warms the initial shell assets so the next restart works offline', async (
   }
 })
 
+test('removes redirect metadata before caching the app shell', async ({ page }) => {
+  let server
+  const indexHtml = [
+    '<!DOCTYPE html><html><body><div id="app">Redirect-safe shell</div>',
+    '<script src="/app.js"></script></body></html>'
+  ].join('')
+  const serviceWorkerSource = fs.readFileSync(path.join(__dirname, '..', 'public', 'service-worker.js'))
+
+  server = http.createServer((request, response) => {
+    const pathname = new URL(request.url, 'http://127.0.0.1').pathname
+    if (pathname === '/index.html') {
+      response.writeHead(308, { Location: '/' })
+      response.end()
+      return
+    }
+    if (pathname === '/') {
+      response.writeHead(200, { 'Content-Type': 'text/html' })
+      response.end(indexHtml)
+      return
+    }
+    if (pathname === '/app.js') {
+      response.writeHead(200, { 'Content-Type': 'application/javascript' })
+      response.end('window.__redirectSafeShellLoaded = true')
+      return
+    }
+    if (pathname === '/service-worker.js') {
+      response.writeHead(200, { 'Content-Type': 'application/javascript', 'Cache-Control': 'no-store' })
+      response.end(serviceWorkerSource)
+      return
+    }
+    response.writeHead(404)
+    response.end()
+  })
+
+  await new Promise((resolve, reject) => {
+    server.once('error', reject)
+    server.listen(0, '127.0.0.1', () => {
+      server.removeListener('error', reject)
+      resolve()
+    })
+  })
+  const origin = `http://127.0.0.1:${server.address().port}`
+
+  try {
+    await page.goto(origin)
+    await page.evaluate(async () => {
+      await navigator.serviceWorker.register('/service-worker.js')
+      await navigator.serviceWorker.ready
+    })
+
+    await expect.poll(() => page.evaluate(async () => {
+      const shellKey = (await caches.keys()).find(key => key.endsWith('-shell'))
+      if (!shellKey) return null
+      const response = await (await caches.open(shellKey)).match('/index.html')
+      if (!response) return null
+      return {
+        redirected: response.redirected,
+        status: response.status,
+        text: await response.text()
+      }
+    })).toEqual({
+      redirected: false,
+      status: 200,
+      text: indexHtml
+    })
+
+    await page.reload()
+    await expect.poll(() => page.evaluate(() => window.__redirectSafeShellLoaded)).toBe(true)
+  } finally {
+    if (server) await new Promise(resolve => server.close(resolve))
+  }
+})
+
 test('falls back to the network when Cache Storage cannot be opened', async ({ page }) => {
   let server
 

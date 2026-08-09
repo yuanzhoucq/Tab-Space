@@ -163,9 +163,24 @@ async function fetchAndCacheAppShell(request) {
 
 async function cacheAppShellResponse(request, response) {
   const cache = await caches.open(APP_SHELL_CACHE)
-  if (request) await cache.put(request, response.clone())
-  await cache.put(INDEX_URL, response.clone())
-  await cache.put("./", response.clone())
+  const cacheableResponse = await responseWithoutRedirectMetadata(response)
+  if (request) await cache.put(request, cacheableResponse.clone())
+  await cache.put(INDEX_URL, cacheableResponse.clone())
+  await cache.put("./", cacheableResponse.clone())
+}
+
+// Cloudflare Pages redirects /index.html to /. A followed fetch keeps that
+// redirect history on Response.redirected, and WebKit refuses such a response
+// when a service worker later returns it for a top-level navigation. Rebuilding
+// the response preserves the body, status, and headers while removing only the
+// redirect metadata that is invalid for an app-shell cache entry.
+async function responseWithoutRedirectMetadata(response) {
+  if (!response.redirected) return response.clone()
+  return new Response(await response.clone().arrayBuffer(), {
+    status: response.status,
+    statusText: response.statusText,
+    headers: response.headers
+  })
 }
 
 // Warm the assets referenced by a new shell and report whether every one of
