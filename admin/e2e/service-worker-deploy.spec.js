@@ -131,3 +131,93 @@ test('keeps the previous shell until the new deployment assets are reachable', a
     fs.rmSync(dir, { recursive: true, force: true })
   }
 })
+
+test('warms the initial shell assets so the next restart works offline', async ({ page, context }) => {
+  await page.goto('/')
+  await page.evaluate(async () => {
+    await navigator.serviceWorker.register('/service-worker.js')
+    await navigator.serviceWorker.ready
+  })
+  await page.reload()
+  await expect.poll(() => page.evaluate(() => Boolean(navigator.serviceWorker.controller))).toBe(true)
+  await expect.poll(() => page.evaluate(async () => {
+    const keys = await caches.keys()
+    const assetKey = keys.find(key => key.endsWith('-assets'))
+    if (!assetKey) return 0
+    const cache = await caches.open(assetKey)
+    return (await cache.keys()).filter(request => /\.(?:js|css)$/.test(new URL(request.url).pathname)).length
+  })).toBeGreaterThan(0)
+
+  await context.setOffline(true)
+  try {
+    await page.reload()
+    // Vue 2 replaces the #app mount node with the rendered component root.
+    await expect(page.getByRole('heading', { name: 'Tab Space', exact: true })).toBeVisible()
+  } finally {
+    await context.setOffline(false)
+  }
+})
+
+test('falls back to the network when Cache Storage cannot be opened', async ({ page }) => {
+  let server
+
+  const indexHtml = [
+    '<!DOCTYPE html><html><body><div id="app">Cache fallback loaded</div>',
+    '<script src="/app.js"></script></body></html>'
+  ].join('')
+  const serviceWorkerSource = fs
+    .readFileSync(path.join(__dirname, '..', 'public', 'service-worker.js'), 'utf8')
+    .replace(/\bcaches\./g, 'testCaches.')
+  const failingCacheStorage = [
+    'const nativeCaches = self.caches;',
+    'const testCaches = {',
+    '  open() { return Promise.reject(new Error("forced Cache Storage failure")); },',
+    '  keys() { return nativeCaches.keys(); },',
+    '  delete(key) { return nativeCaches.delete(key); }',
+    '};'
+  ].join('\n')
+
+  server = http.createServer((request, response) => {
+    const pathname = new URL(request.url, 'http://127.0.0.1').pathname
+    if (pathname === '/' || pathname === '/index.html') {
+      response.writeHead(200, { 'Content-Type': 'text/html' })
+      response.end(indexHtml)
+      return
+    }
+    if (pathname === '/app.js') {
+      response.writeHead(200, { 'Content-Type': 'application/javascript' })
+      response.end('window.__cacheFallbackLoaded = true')
+      return
+    }
+    if (pathname === '/service-worker.js') {
+      response.writeHead(200, { 'Content-Type': 'application/javascript', 'Cache-Control': 'no-store' })
+      response.end(`${failingCacheStorage}\n${serviceWorkerSource}`)
+      return
+    }
+    response.writeHead(404)
+    response.end()
+  })
+
+  await new Promise((resolve, reject) => {
+    server.once('error', reject)
+    server.listen(0, '127.0.0.1', () => {
+      server.removeListener('error', reject)
+      resolve()
+    })
+  })
+  const origin = `http://127.0.0.1:${server.address().port}`
+
+  try {
+    await page.goto(origin)
+    await page.evaluate(async () => {
+      await navigator.serviceWorker.register('/service-worker.js')
+      await navigator.serviceWorker.ready
+    })
+    await page.reload()
+    await expect.poll(() => page.evaluate(() => Boolean(navigator.serviceWorker.controller))).toBe(true)
+    await expect.poll(() => page.evaluate(() => window.__cacheFallbackLoaded)).toBe(true)
+    await expect(page.locator('#app')).toHaveText('Cache fallback loaded')
+  } finally {
+    if (server) await new Promise(resolve => server.close(resolve))
+  }
+})

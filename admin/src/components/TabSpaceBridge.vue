@@ -15,6 +15,7 @@
 import { mapState } from 'vuex'
 import Constants from '../constants'
 import config from '../config'
+import { markAfterPaint, markPerf, perfDebugEnabled } from '../perf-debug'
 
 const appExtensionEvent = name => `tabspace:app-extension:${name}`
 const legacyBridgeUrl = `${config.staticResourceEndpoint}/storage.html?method=get`
@@ -149,6 +150,7 @@ export default {
       this.setupAppExtensionBridge()
     },
     handleAppExtensionMessage(event) {
+      const parseStartedAt = performance.now()
       let payload
       try {
         payload = JSON.parse(event.detail || "{}")
@@ -156,6 +158,12 @@ export default {
         return
       }
       if (!payload || typeof payload.name !== "string") return
+      if (payload.name === "ReturnBookmarks") {
+        markPerf("app-extension-envelope-parsed", {
+          parseMs: Math.round((performance.now() - parseStartedAt) * 10) / 10,
+          payloadChars: (event.detail || "").length
+        })
+      }
       const message = payload.message || {}
       this.handleNativeMessage(payload.name, {
         ...message,
@@ -335,6 +343,9 @@ export default {
 
       switch (cmd) {
         case "ReturnBookmarks":
+          markPerf("bookmarks-message-received", {
+            serialized: typeof data.bookmarks === "string"
+          })
           console.log("Received checked bookmarks from Tab Space.app.")
           this.syncBookmarks(data)
           break
@@ -737,8 +748,41 @@ export default {
     syncBookmarks(data) {
       if (this.bridgeReady) {
         try {
+          const debugEnabled = perfDebugEnabled()
+          const receivedAt = performance.now()
+          const payloadChars = typeof data.bookmarks === "string" ? data.bookmarks.length : 0
           const bookmarks = typeof data.bookmarks === "string" ? JSON.parse(data.bookmarks) : data.bookmarks
+          const parsedAt = performance.now()
+          const sessionCount = Array.isArray(bookmarks) ? bookmarks.length : 0
+          const tabCount = Array.isArray(bookmarks)
+            ? bookmarks.reduce((count, session) => count + (Array.isArray(session.sites) ? session.sites.length : 0), 0)
+            : 0
+          if (debugEnabled) {
+            markPerf("bookmarks-parsed", {
+              parseMs: Math.round((parsedAt - receivedAt) * 10) / 10,
+              payloadChars,
+              sessions: sessionCount,
+              tabs: tabCount
+            })
+          }
           this.sessions = bookmarks
+          const committedAt = performance.now()
+          if (debugEnabled) {
+            markPerf("sessions-committed", {
+              commitMs: Math.round((committedAt - parsedAt) * 10) / 10,
+              viewMode: this.$store.state.sessionViewMode
+            })
+            this.$nextTick(() => {
+              markAfterPaint("sessions-painted", () => ({
+                renderMs: Math.round((performance.now() - committedAt) * 10) / 10,
+                totalMs: Math.round((performance.now() - receivedAt) * 10) / 10,
+                domNodes: document.getElementsByTagName("*").length,
+                sessions: sessionCount,
+                tabs: tabCount,
+                viewMode: this.$store.state.sessionViewMode
+              }))
+            })
+          }
           this.clearInitialDataTimer()
           this.$store.commit("setConnectionTimedOut", false)
           this.clearBookmarkRefreshTimer()

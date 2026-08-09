@@ -75,6 +75,8 @@ async function openDashboard(page, options = {}) {
     malformedBookmarks,
     bundledDashboard,
     collapseSessions,
+    preferredViewMode,
+    serializedBookmarks,
     preferredLanguage,
     bannerStorageUnavailable,
     ratingBannerReady,
@@ -88,6 +90,7 @@ async function openDashboard(page, options = {}) {
     const clone = value => JSON.parse(JSON.stringify(value))
     const settingsKey = 'tabspace-e2e-settings'
     if (collapseSessions) localStorage.setItem('tabspace-session-cards-collapsed', 'true')
+    if (preferredViewMode) localStorage.setItem('tabspace-session-cards-view-mode', preferredViewMode)
     if (ratingBannerReady) {
       localStorage.setItem('tabspace-ios-banner-dismissed', 'true')
       localStorage.setItem('tabspace-rating-banner-first-seen', String(Date.now() - 30 * 24 * 60 * 60 * 1000))
@@ -121,7 +124,9 @@ async function openDashboard(page, options = {}) {
 
     const returnBookmarks = () => {
       emit('ReturnBookmarks', {
-        value: malformedBookmarks ? '{invalid-json' : currentSessions
+        value: malformedBookmarks
+          ? '{invalid-json'
+          : (serializedBookmarks ? JSON.stringify(currentSessions) : currentSessions)
       })
     }
 
@@ -363,6 +368,8 @@ async function openDashboard(page, options = {}) {
     malformedBookmarks: Boolean(options.malformedBookmarks),
     bundledDashboard: Boolean(options.bundledDashboard),
     collapseSessions: Boolean(options.collapseSessions),
+    preferredViewMode: options.preferredViewMode || '',
+    serializedBookmarks: Boolean(options.serializedBookmarks),
     preferredLanguage: options.preferredLanguage || '',
     bannerStorageUnavailable: Boolean(options.bannerStorageUnavailable),
     ratingBannerReady: Boolean(options.ratingBannerReady),
@@ -375,7 +382,7 @@ async function openDashboard(page, options = {}) {
   })
 
   await page.route('**/favicon.ico', route => route.fulfill({ status: 204, body: '' }))
-  await page.goto('/')
+  await page.goto(options.path || '/')
 
   if (expectedSessionCount !== null) {
     await expect(page.locator('.session')).toHaveCount(expectedSessionCount)
@@ -1776,6 +1783,73 @@ test('cycles through expanded, titles-only and compact session views', async ({ 
   await expect(page.getByTestId('session-session-research').getByTestId('visible-site')).toHaveCount(2)
   await expect(page.getByTestId('session-session-research').getByTestId('site-list'))
     .toHaveAttribute('data-site-drag-enabled', 'true')
+})
+
+test('defaults a large library to compact while preserving an explicit expanded preference', async ({ page }) => {
+  const largeLibrary = Array.from({ length: 11 }, (_, sessionIndex) => ({
+    uuid: `large-${sessionIndex}`,
+    title: `Large ${sessionIndex}`,
+    timestamp: 1767225600000 + sessionIndex,
+    comment: '',
+    tags: [],
+    sites: Array.from({ length: 100 }, (_, siteIndex) => ({
+      title: `Tab ${sessionIndex}-${siteIndex}`,
+      url: `https://example.com/${sessionIndex}/${siteIndex}`
+    }))
+  }))
+
+  await openDashboard(page, { initialSessions: largeLibrary })
+
+  const toggle = page.getByTestId('toggle-collapse')
+  await expect(toggle).toHaveAttribute('data-view-mode', 'compact')
+  await expect(page.getByTestId('collapsed-site-icon')).toHaveCount(110)
+  await expect.poll(() => page.evaluate(() => localStorage.getItem('tabspace-session-cards-view-mode'))).toBeNull()
+
+  // Compact is only the adaptive first-run default. Once the user chooses a
+  // mode, their choice wins even while the same large library is reloaded.
+  await toggle.click()
+  await expect(toggle).toHaveAttribute('data-view-mode', 'expanded')
+  await page.reload()
+  await expect(toggle).toHaveAttribute('data-view-mode', 'expanded')
+  await expect(page.getByTestId('visible-site')).toHaveCount(1100)
+})
+
+test('reports opt-in parse and render timings for a serialized large library', async ({ page }) => {
+  const largeLibrary = Array.from({ length: 20 }, (_, sessionIndex) => ({
+    uuid: `perf-${sessionIndex}`,
+    title: `Performance ${sessionIndex}`,
+    timestamp: 1767225600000 + sessionIndex,
+    comment: '',
+    tags: [],
+    sites: Array.from({ length: 60 }, (_, siteIndex) => ({
+      title: `Tab ${sessionIndex}-${siteIndex}`,
+      url: `https://example.com/${sessionIndex}/${siteIndex}`
+    }))
+  }))
+
+  await openDashboard(page, {
+    initialSessions: largeLibrary,
+    serializedBookmarks: true,
+    path: '/?perf=1'
+  })
+
+  await expect(page.locator('#tabspace-perf-debug')).toBeVisible()
+  await expect.poll(() => page.evaluate(() => {
+    const entry = window.__tabspacePerf.entries.find(item => item.name === 'sessions-painted')
+    return entry ? entry.detail : null
+  })).toMatchObject({
+    sessions: 20,
+    tabs: 1200,
+    viewMode: 'compact'
+  })
+  const entries = await page.evaluate(() => window.__tabspacePerf.snapshot())
+  expect(entries.map(entry => entry.name)).toEqual(expect.arrayContaining([
+    'bookmarks-message-received',
+    'bookmarks-parsed',
+    'sessions-committed',
+    'sessions-painted'
+  ]))
+  expect(entries.find(entry => entry.name === 'bookmarks-parsed').detail.payloadChars).toBeGreaterThan(1000)
 })
 
 test('creates a session and appends it through the native bridge', async ({ page }) => {

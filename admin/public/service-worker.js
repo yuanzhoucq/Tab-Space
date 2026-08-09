@@ -23,15 +23,8 @@ self.addEventListener("install", event => {
 
 self.addEventListener("activate", event => {
   event.waitUntil(
-    caches.keys()
-      .then(keys => Promise.all(
-        keys
-          .filter(key => (
-            (key.startsWith("tab-space-admin-") && !key.startsWith(CACHE_VERSION))
-            || (key.startsWith(FAVICON_CACHE_PREFIX) && key !== FAVICON_CACHE)
-          ))
-          .map(key => caches.delete(key))
-      ))
+    cleanOldCaches()
+      .catch(() => {})
       .then(() => self.clients.claim())
   )
 })
@@ -105,9 +98,15 @@ async function fetchAndCacheFavicon(request, cache) {
 }
 
 async function appShellFirst(request) {
-  const cache = await caches.open(APP_SHELL_CACHE)
-  const cached = await cache.match(request) || await cache.match("./") || await cache.match(INDEX_URL)
-  if (cached) return cached
+  try {
+    const cache = await caches.open(APP_SHELL_CACHE)
+    const cached = await cache.match(request) || await cache.match("./") || await cache.match(INDEX_URL)
+    if (cached) return cached
+  } catch (error) {
+    // Edge private windows and storage pressure can make Cache Storage fail
+    // transiently. The dashboard is still online, so do not turn that storage
+    // failure into a browser-level navigation error.
+  }
 
   return fetchAndCacheAppShell(request)
 }
@@ -123,18 +122,20 @@ async function revalidateAppShell(request) {
       ? await extractAppVersionSignature(await previous.clone().text())
       : ""
     const nextSignature = await extractAppVersionSignature(await response.clone().text())
+    const assetsReady = nextSignature ? await warmAppAssets(response.clone()) : !previous
+
+    if (nextSignature && !assetsReady) {
+      // This covers both deploy propagation and a browser that evicted only
+      // part of the asset cache. Keep the last complete shell and retry later.
+      deferAppShellPromotion(request.url)
+      return
+    }
 
     if (previous && previousSignature && nextSignature && previousSignature !== nextSignature) {
-      const assetsReady = await warmAppAssets(response.clone())
-      if (assetsReady) {
-        await cacheAppShellResponse(request, response)
-        await pruneOrphanedAssets(response.clone())
-        await notifyClients({ type: "TABSPACE_APP_UPDATE_READY" })
-        clearPromotionRetry()
-      } else {
-        // Keep serving the previous shell; retry once the assets are live.
-        deferAppShellPromotion(request.url)
-      }
+      await cacheAppShellResponse(request, response)
+      await pruneOrphanedAssets(response.clone())
+      await notifyClients({ type: "TABSPACE_APP_UPDATE_READY" })
+      clearPromotionRetry()
       return
     }
 
@@ -149,9 +150,14 @@ async function revalidateAppShell(request) {
 }
 
 async function fetchAndCacheAppShell(request) {
-  const cache = await caches.open(APP_SHELL_CACHE)
   const response = await fetch(request, { cache: "no-cache" })
-  if (response.ok) await cacheAppShellResponse(request, response)
+  if (response.ok) {
+    try {
+      await cacheAppShellResponse(request, response)
+    } catch (error) {
+      // A successful network navigation must not depend on writable storage.
+    }
+  }
   return response
 }
 
@@ -212,7 +218,10 @@ async function prepareAppShellForInstall() {
     if (!nextSignature && previous) return
 
     const changed = Boolean(previousSignature && nextSignature && previousSignature !== nextSignature)
-    const assetsReady = changed ? await warmAppAssets(response.clone()) : true
+    // First installs need their assets warmed too. Otherwise the shell can be
+    // available offline while its hashed JS/CSS only ever lived in the HTTP
+    // cache, leaving the first offline restart as a blank/error page.
+    const assetsReady = nextSignature ? await warmAppAssets(response.clone()) : !previous
     if (assetsReady) {
       await cacheAppShellResponse(null, response)
       await pruneOrphanedAssets(response.clone())
@@ -273,19 +282,43 @@ async function pruneOrphanedAssets(response) {
 }
 
 async function cacheFirst(request) {
-  const cache = await caches.open(ASSET_CACHE)
-  const cached = await cache.match(request)
-  if (cached) return cached
+  let cache = null
+  try {
+    cache = await caches.open(ASSET_CACHE)
+    const cached = await cache.match(request)
+    if (cached) return cached
+  } catch (error) {
+    // Cache Storage is an optimization. Keep the network path usable when a
+    // browser temporarily denies or cannot open it.
+  }
 
   // cache: "no-cache" skips the browser HTTP cache, which may hold a poisoned
   // immutable copy from a past outage that curl/network checks would never see.
   try {
     const response = await fetch(request, { cache: "no-cache" })
-    if (isCacheableAsset(response)) await cache.put(request, response.clone())
+    if (cache && isCacheableAsset(response)) {
+      try {
+        await cache.put(request, response.clone())
+      } catch (error) {
+        // Rendering from the network is still a valid success.
+      }
+    }
     return response
   } catch (error) {
     return Response.error()
   }
+}
+
+async function cleanOldCaches() {
+  const keys = await caches.keys()
+  await Promise.all(
+    keys
+      .filter(key => (
+        (key.startsWith("tab-space-admin-") && !key.startsWith(CACHE_VERSION))
+        || (key.startsWith(FAVICON_CACHE_PREFIX) && key !== FAVICON_CACHE)
+      ))
+      .map(key => caches.delete(key))
+  )
 }
 
 // A missing hashed asset rewritten to index.html by an SPA fallback must never

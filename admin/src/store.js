@@ -13,15 +13,29 @@ const defaultTabSpaceSettings = {
 const sessionViewModeStorageKey = "tabspace-session-cards-view-mode"
 const legacySessionCollapseStorageKey = "tabspace-session-cards-collapsed"
 const sessionViewModes = ["expanded", "titles", "compact"]
+const largeLibraryTabThreshold = 1000
 
-function getInitialSessionViewMode() {
+function getInitialSessionViewPreference() {
     try {
         const storedMode = localStorage.getItem(sessionViewModeStorageKey)
-        if (sessionViewModes.includes(storedMode)) return storedMode
-        return localStorage.getItem(legacySessionCollapseStorageKey) === "true" ? "compact" : "expanded"
+        if (sessionViewModes.includes(storedMode)) return { mode: storedMode, explicit: true }
+        const legacyMode = localStorage.getItem(legacySessionCollapseStorageKey)
+        if (legacyMode !== null) {
+            return { mode: legacyMode === "true" ? "compact" : "expanded", explicit: true }
+        }
     } catch {
-        return "expanded"
+        // Browser storage is optional; the in-memory adaptive default still works.
     }
+    return { mode: "expanded", explicit: false }
+}
+
+function shouldUseCompactView(sessions) {
+    let tabCount = 0
+    for (const session of sessions || []) {
+        tabCount += Array.isArray(session.sites) ? session.sites.length : 0
+        if (tabCount >= largeLibraryTabThreshold) return true
+    }
+    return false
 }
 
 function persistSessionViewMode(mode) {
@@ -33,6 +47,8 @@ function persistSessionViewMode(mode) {
         // Keep the in-memory state usable when browser storage is unavailable.
     }
 }
+
+const initialSessionViewPreference = getInitialSessionViewPreference()
 
 // A card that only exists in the dashboard: it keeps its placeholder uuid
 // until the native side accepts it and echoes back a stored session.
@@ -57,7 +73,8 @@ const store = new Vuex.Store({
         initialRefresh: false,
         sessions: [],
         keyword: "",
-        sessionViewMode: getInitialSessionViewMode(),
+        sessionViewMode: initialSessionViewPreference.mode,
+        sessionViewModeExplicit: initialSessionViewPreference.explicit,
         activeTag: "",
         editingSessionUuid: "",
         // Bumped to re-open the iOS banner after it was dismissed. The banner
@@ -207,6 +224,9 @@ const store = new Vuex.Store({
         },
         setSessions(state, newSessions) {
             state.sessions = newSessions
+            if (!state.sessionViewModeExplicit) {
+                state.sessionViewMode = shouldUseCompactView(newSessions) ? "compact" : "expanded"
+            }
             state.initialRefresh = true
         },
         spliceSessions(state, payload) {
@@ -226,11 +246,13 @@ const store = new Vuex.Store({
         toggleCollapse(state) {
             const currentIndex = sessionViewModes.indexOf(state.sessionViewMode)
             state.sessionViewMode = sessionViewModes[(currentIndex + 1) % sessionViewModes.length]
+            state.sessionViewModeExplicit = true
             persistSessionViewMode(state.sessionViewMode)
         },
         setSessionViewMode(state, mode) {
             if (!sessionViewModes.includes(mode)) return
             state.sessionViewMode = mode
+            state.sessionViewModeExplicit = true
             persistSessionViewMode(mode)
         },
         setActiveTag(state, newTag) {

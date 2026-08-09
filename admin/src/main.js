@@ -9,7 +9,10 @@ import feather from 'vue-icon'
 import store from './store'
 import buildInfo from './build-info'
 import { installAIWorkerWarmup } from './ai-warmup'
+import { markPerf } from './perf-debug'
 Vue.config.productionTip = false
+
+markPerf('main-evaluated')
 
 Vue.use(VueRouter)
 Vue.use(feather, 'v-icon')
@@ -32,6 +35,10 @@ new Vue({
   router,
   render: h => h(App),
 }).$mount('#app')
+
+markPerf('vue-mounted', {
+  domNodes: document.getElementsByTagName('*').length
+})
 
 if (window.__tabspace_bridge && typeof window.__tabspace_bridge.markReady === 'function') {
   window.__tabspace_bridge.markReady()
@@ -56,8 +63,15 @@ if ('serviceWorker' in navigator && window.location.protocol === 'https:') {
   })
 
   window.addEventListener('load', () => {
+    markPerf('window-loaded', {
+      controlled: Boolean(navigator.serviceWorker.controller)
+    })
     navigator.serviceWorker.register(`${process.env.BASE_URL}service-worker.js`)
       .then(registration => {
+        markPerf('service-worker-registered', {
+          controlled: Boolean(navigator.serviceWorker.controller),
+          active: registration.active ? registration.active.state : 'none'
+        })
         // The service worker itself announces TABSPACE_APP_UPDATE_READY only
         // after it has verified that the new shell's assets are reachable.
         registration.update().catch(() => {})
