@@ -174,6 +174,7 @@ const store = new Vuex.Store({
         canCreateSession: (state, getters) => !state.entitlementResolved
             || state.entitlementTier !== "free"
             || getters.savedSessionCount < Constants.freeSessionLimit,
+        largeLibrary: state => shouldUseCompactView(state.sessions),
         topSuggestion: state => state.suggestions[0] || null,
         tags: state => {
             let tags = new Set()

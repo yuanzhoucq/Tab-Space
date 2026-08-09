@@ -427,7 +427,7 @@
     },
     computed: {
       ...mapState(["lang", "bridge", "keyword", "sessionViewMode", "sessions", "activeTag", "editingSessionUuid", "tabSpaceSettings", "enhancingSessionId", "splittingSessionId", "enhancedFlash"]),
-      ...mapGetters(["tags", "aiEnabled", "canCreateSession"]),
+      ...mapGetters(["tags", "aiEnabled", "canCreateSession", "largeLibrary"]),
       hasSearch() {
         return Boolean(this.keyword && this.keyword.trim())
       },
@@ -439,6 +439,7 @@
       },
       shouldDeferExpandedContent() {
         return !this.embedded
+          && this.largeLibrary
           && this.sessionViewMode === "expanded"
           && !this.hasSearch
           && !this.isEditingSession(this.session)
@@ -614,11 +615,6 @@
         this.$nextTick(() => {
           if (!this.shouldDeferExpandedContent || this.deferredContentMounted || !this.$el) return
           const preloadMargin = 1200
-          const bounds = this.$el.getBoundingClientRect()
-          if (bounds.bottom >= -preloadMargin && bounds.top <= window.innerHeight + preloadMargin) {
-            this.mountDeferredContent()
-            return
-          }
           if (!("IntersectionObserver" in window)) {
             this.mountDeferredContent()
             return
