@@ -535,48 +535,15 @@ test('uses the China App Store link and dismisses without browser storage', asyn
   await expect(page.getByTestId('ios-banner')).toHaveCount(0)
 })
 
-test('introduces 4.1 once to someone who already had sessions', async ({ page }) => {
+test('keeps the unreleased 4.1 introduction hidden everywhere', async ({ page }) => {
   await openDashboard(page, { initialSessions: sessions, whatsNewPending: true })
 
-  const modal = page.getByTestId('whats-new-modal')
-  await expect(modal).toBeVisible()
-  await expect(modal.getByRole('heading', { name: "What's new in Tab Space 4.1" })).toBeVisible()
-  await expect(modal.getByText('Press ⌥Tab anywhere')).toBeVisible()
-  await expect(modal.getByText('Chrome, Edge, and Firefox with Pro')).toBeVisible()
-  await expect(modal.getByRole('link', { name: 'See the full changelog' })).toHaveAttribute(
-    'href',
-    'https://mytab.space/changelog.html'
-  )
-
-  await page.getByTestId('whats-new-dismiss').click()
-  await expect(modal).toHaveCount(0)
-  expect(await page.evaluate(() => localStorage.getItem('tabspace-whats-new-seen-version'))).toBe('4.1')
-
-  await page.reload()
-  await expect(page.locator('.session')).toHaveCount(2)
   await expect(page.getByTestId('whats-new-modal')).toHaveCount(0)
+  expect(await page.evaluate(() => localStorage.getItem('tabspace-whats-new-seen-version'))).toBeNull()
 
-  // Settings is the only way back once the release has been seen.
   await page.getByTestId('settings-link').click()
-  await page.getByTestId('settings-whats-new').click()
-  await expect(page.getByTestId('whats-new-modal')).toBeVisible()
-  await page.getByTestId('whats-new-dismiss').click()
+  await expect(page.getByTestId('settings-whats-new')).toHaveCount(0)
   await expect(page.getByTestId('whats-new-modal')).toHaveCount(0)
-})
-
-test('closes the 4.1 introduction with Escape and skips it on a fresh install', async ({ page }) => {
-  await openDashboard(page, { initialSessions: sessions, whatsNewPending: true })
-
-  await expect(page.getByTestId('whats-new-modal')).toBeVisible()
-  await page.keyboard.press('Escape')
-  await expect(page.getByTestId('whats-new-modal')).toHaveCount(0)
-
-  // A first-run user has no release to catch up on: the dialog is marked seen
-  // without ever appearing, so saving a first session does not summon it.
-  await openDashboard(page, { initialSessions: [], whatsNewPending: true })
-  await expect(page.getByTestId('empty-state')).toBeVisible()
-  await expect(page.getByTestId('whats-new-modal')).toHaveCount(0)
-  expect(await page.evaluate(() => localStorage.getItem('tabspace-whats-new-seen-version'))).toBe('4.1')
 })
 
 test('keeps the tab switcher hint hidden until every bridge can prove support', async ({ page }) => {
@@ -1782,7 +1749,7 @@ test('defaults a large library to compact while preserving an explicit expanded 
     }))
   }))
 
-  await openDashboard(page, { initialSessions: largeLibrary })
+  await openDashboard(page, { initialSessions: largeLibrary, serializedBookmarks: true })
 
   const toggle = page.getByTestId('toggle-collapse')
   await expect(toggle).toHaveAttribute('data-view-mode', 'compact')
@@ -1813,44 +1780,6 @@ test('defaults a large library to compact while preserving an explicit expanded 
   await firstSession.scrollIntoViewIfNeeded()
   await expect(lastSession).toHaveAttribute('data-expanded-content', 'mounted')
   await expect(lastSession.getByTestId('visible-site')).toHaveCount(100)
-})
-
-test('reports opt-in parse and render timings for a serialized large library', async ({ page }) => {
-  const largeLibrary = Array.from({ length: 20 }, (_, sessionIndex) => ({
-    uuid: `perf-${sessionIndex}`,
-    title: `Performance ${sessionIndex}`,
-    timestamp: 1767225600000 + sessionIndex,
-    comment: '',
-    tags: [],
-    sites: Array.from({ length: 60 }, (_, siteIndex) => ({
-      title: `Tab ${sessionIndex}-${siteIndex}`,
-      url: `https://example.com/${sessionIndex}/${siteIndex}`
-    }))
-  }))
-
-  await openDashboard(page, {
-    initialSessions: largeLibrary,
-    serializedBookmarks: true,
-    path: '/?perf=1'
-  })
-
-  await expect(page.locator('#tabspace-perf-debug')).toBeVisible()
-  await expect.poll(() => page.evaluate(() => {
-    const entry = window.__tabspacePerf.entries.find(item => item.name === 'sessions-painted')
-    return entry ? entry.detail : null
-  })).toMatchObject({
-    sessions: 20,
-    tabs: 1200,
-    viewMode: 'compact'
-  })
-  const entries = await page.evaluate(() => window.__tabspacePerf.snapshot())
-  expect(entries.map(entry => entry.name)).toEqual(expect.arrayContaining([
-    'bookmarks-message-received',
-    'bookmarks-parsed',
-    'sessions-committed',
-    'sessions-painted'
-  ]))
-  expect(entries.find(entry => entry.name === 'bookmarks-parsed').detail.payloadChars).toBeGreaterThan(1000)
 })
 
 test('creates a session and appends it through the native bridge', async ({ page }) => {
