@@ -143,16 +143,33 @@ test('warms the initial shell assets so the next restart works offline', async (
   await expect.poll(() => page.evaluate(async () => {
     const keys = await caches.keys()
     const assetKey = keys.find(key => key.endsWith('-assets'))
-    if (!assetKey) return 0
+    if (!assetKey) return null
     const cache = await caches.open(assetKey)
-    return (await cache.keys()).filter(request => /\.(?:js|css)$/.test(new URL(request.url).pathname)).length
-  })).toBeGreaterThan(0)
+    const metadata = document.querySelector('meta[name="tab-space-offline-assets"]')
+    if (!metadata) return null
+    const urls = metadata.content.split(/\s+/).filter(Boolean)
+    return {
+      allCached: urls.length > 0 && (await Promise.all(urls.map(url => cache.match(url)))).every(Boolean),
+      hasLazyChunk: urls.some(url => /\/export-html\.[\da-f]+\.js$/.test(url)),
+      hasLargeScreenshot: urls.some(url => url.includes('/switcher-panel.'))
+    }
+  })).toEqual({
+    allCached: true,
+    hasLazyChunk: true,
+    hasLargeScreenshot: false
+  })
 
   await context.setOffline(true)
   try {
-    await page.reload()
+    await page.goto('/#/settings')
     // Vue 2 replaces the #app mount node with the rendered component root.
-    await expect(page.getByRole('heading', { name: 'Tab Space', exact: true })).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Tab Space Settings', exact: true })).toBeVisible()
+    await expect.poll(() => page.evaluate(async () => {
+      const metadata = document.querySelector('meta[name="tab-space-offline-assets"]')
+      const lazyChunk = metadata.content.split(/\s+/).find(url => url.includes('/export-html.'))
+      const response = await fetch(lazyChunk)
+      return { ok: response.ok, isJavaScript: /javascript/i.test(response.headers.get('content-type') || '') }
+    })).toEqual({ ok: true, isJavaScript: true })
   } finally {
     await context.setOffline(false)
   }

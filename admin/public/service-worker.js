@@ -183,9 +183,10 @@ async function responseWithoutRedirectMetadata(response) {
   })
 }
 
-// Warm the assets referenced by a new shell and report whether every one of
-// them is available. Failed fetches leave the asset uncached so a later
-// retry can pick it up.
+// Warm the assets referenced by a new shell, including lazy chunks and small
+// UI assets injected into the production HTML at build time. Large screenshots
+// stay runtime-cached so offline readiness does not require an expensive
+// download for an interface the user may never open.
 async function warmAppAssets(response) {
   try {
     const cache = await caches.open(APP_SHELL_CACHE)
@@ -279,7 +280,9 @@ function clearPromotionRetry() {
 }
 
 // Old hashed JS/CSS entries linger in the asset cache when the shell version
-// stays stable, so drop anything the current shell no longer references.
+// stays stable, so drop anything the current shell no longer references. The
+// build-time list includes lazy chunks, preventing them from being mistaken
+// for orphaned files on the next navigation.
 async function pruneOrphanedAssets(response) {
   try {
     const html = await response.clone().text()
@@ -360,7 +363,30 @@ function extractAppAssetUrls(html) {
     }
   }
 
+  const metaPattern = /<meta\b[^>]*>/gi
+  while ((match = metaPattern.exec(html))) {
+    const tag = match[0]
+    const name = extractQuotedAttribute(tag, "name")
+    if (name !== "tab-space-offline-assets") continue
+
+    const content = extractQuotedAttribute(tag, "content")
+    content.split(/\s+/).filter(Boolean).forEach(assetPath => {
+      try {
+        const assetUrl = new URL(assetPath, self.location.origin)
+        if (assetUrl.origin === self.location.origin) urls.push(assetUrl.href)
+      } catch (error) {
+        // Ignore malformed build metadata and retain the direct shell assets.
+      }
+    })
+  }
+
   return Array.from(new Set(urls))
+}
+
+function extractQuotedAttribute(tag, attribute) {
+  const pattern = new RegExp(`\\b${attribute}\\s*=\\s*(["'])(.*?)\\1`, "i")
+  const match = pattern.exec(tag)
+  return match ? match[2] : ""
 }
 
 async function notifyClients(message) {
