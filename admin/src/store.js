@@ -160,6 +160,8 @@ const store = new Vuex.Store({
             && (state.bridge.mode === "direct"
                 || (Array.isArray(state.nativeCapabilities)
                     && state.nativeCapabilities.includes(Constants.switcherCapability))),
+        switcherHintAvailable: (state, getters) => Constants.switcherHintEnabled
+            && getters.switcherAvailable,
         isPremium: state => state.entitlementTier === "pro",
         hasPermanentPlus: state => state.entitlementTier === "plus",
         // Whether the permanent Plus grant was ever made, regardless of whether

@@ -14,7 +14,7 @@
   message for either. This tells; the native app does.
 -->
 <template>
-  <div v-if="switcherAvailable" class="switcher-hint" data-testid="switcher-hint">
+  <div v-if="switcherHintAvailable" class="switcher-hint" data-testid="switcher-hint">
     <button type="button"
             class="switcher-chip"
             data-testid="switcher-hint-chip"
@@ -50,7 +50,7 @@ export default {
   },
   computed: {
     ...mapState(['lang']),
-    ...mapGetters(['switcherAvailable']),
+    ...mapGetters(['switcherHintAvailable']),
     shortcut() {
       return Constants.switcherShortcut
     },

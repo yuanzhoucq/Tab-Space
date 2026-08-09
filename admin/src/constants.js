@@ -44,6 +44,10 @@ const constants = {
     // predates the feature. Safari talks over the direct bridge, which carries
     // no capability list, and is assumed to have it.
     switcherCapability: "switcher.tabs.v1",
+    // The Safari bridge cannot distinguish app 4.0 from 4.1 yet: both report
+    // protocol v2 and no capability list. Keep the standing dashboard hint off
+    // everywhere until every bridge can prove the switcher is available.
+    switcherHintEnabled: false,
     defaultSuggestedTags: {
         "en-us": "Shopping, Development, Social, News, Video, Finance, Research, Entertainment, Work, Travel, Learning",
         "zh-cn": "购物, 开发, 社交, 新闻, 视频, 金融, 研究, 娱乐, 工作, 旅行, 学习"

@@ -2,7 +2,7 @@
   <div>
     <div id="main">
       <navbar v-if="nativeDetected && initialRefresh"></navbar>
-      <div id="title" :class="{'title-centered': !nativeDetected || !initialRefresh, 'with-hint': switcherAvailable}">
+      <div id="title" :class="{'title-centered': !nativeDetected || !initialRefresh, 'with-hint': switcherHintAvailable}">
         <h1>
           Tab Space
           <span v-if="isPremium"
@@ -12,7 +12,7 @@
                 :aria-label="lang.planPremium">Pro</span>
         </h1>
         <div v-if="nativeDetected && initialRefresh" class="search-area">
-          <div class="search-field" :class="{ 'with-hint': switcherAvailable }">
+          <div class="search-field" :class="{ 'with-hint': switcherHintAvailable }">
             <input type="text" name="keyword" id="keyword" v-model="keyword"
                    :placeholder="lang.searchPlaceholder">
             <switcher-hint></switcher-hint>
@@ -116,7 +116,7 @@
         "sessions",
         "initialRefresh"
       ]),
-      ...mapGetters(["isPremium", "switcherAvailable"]),
+      ...mapGetters(["isPremium", "switcherHintAvailable"]),
       showLoadingState() {
         return (!this.nativeDetected && !this.connectionTimedOut)
           || (this.nativeDetected && !this.initialRefresh)

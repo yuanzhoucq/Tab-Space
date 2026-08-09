@@ -579,28 +579,12 @@ test('closes the 4.1 introduction with Escape and skips it on a fresh install', 
   expect(await page.evaluate(() => localStorage.getItem('tabspace-whats-new-seen-version'))).toBe('4.1')
 })
 
-test('keeps the tab switcher hint by the search field', async ({ page }) => {
+test('keeps the tab switcher hint hidden until every bridge can prove support', async ({ page }) => {
   await openDashboard(page, { initialSessions: sessions })
 
-  const chip = page.getByTestId('switcher-hint-chip')
-  await expect(chip).toBeVisible()
-  await expect(chip).toContainText('⌥Tab')
+  await expect(page.getByTestId('switcher-hint')).toHaveCount(0)
+  await expect(page.getByTestId('switcher-hint-chip')).toHaveCount(0)
   await expect(page.getByTestId('switcher-hint-popover')).toHaveCount(0)
-
-  await chip.click()
-  const popover = page.getByTestId('switcher-hint-popover')
-  await expect(popover).toBeVisible()
-  await expect(popover).toContainText('every tab you have ever saved')
-  // Free and Plus reach Safari and their own archive; only the other browsers
-  // are behind Pro.
-  await expect(popover).toContainText('Tabs from Chrome, Microsoft Edge, and Firefox need Pro.')
-
-  await page.keyboard.press('Escape')
-  await expect(popover).toHaveCount(0)
-
-  // The hint outlives the one-time dialog: it is still there after a reload.
-  await page.reload()
-  await expect(page.getByTestId('switcher-hint-chip')).toBeVisible()
 })
 
 test('keeps the rating banner out of the way of the iOS banner', async ({ page }) => {
@@ -1421,8 +1405,8 @@ test('enables AI and subscription UI through a capable companion WebExtension', 
   await expect(page.locator('.session')).toHaveCount(2)
   await expect(page.getByTestId('ai-enhance-session').first()).toBeVisible()
   await expect.poll(() => bridgeCommandCount(page, 'PrepareAI')).toBe(1)
-  // The helper reports the switcher, so the hint is worth showing here too.
-  await expect(page.getByTestId('switcher-hint-chip')).toBeVisible()
+  // Even a capable helper stays quiet until Safari can report the same proof.
+  await expect(page.getByTestId('switcher-hint-chip')).toHaveCount(0)
   await page.getByRole('link', { name: 'Settings' }).click()
   await expect(page.getByTestId('subscription-card')).toBeVisible()
   await expect.poll(() => bridgeCommandCount(page, 'CheckSubscriptionStatus')).toBeGreaterThan(0)
