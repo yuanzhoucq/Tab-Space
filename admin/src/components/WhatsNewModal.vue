@@ -119,6 +119,9 @@ export default {
     version() {
       return Constants.whatsNewVersion
     },
+    enabled() {
+      return Constants.whatsNewEnabled
+    },
     title() {
       return this.withVersion(this.lang.whatsNewTitle, "What's new in Tab Space {version}")
     },
@@ -141,7 +144,9 @@ export default {
         || Boolean(this.splitPreview)
     },
     visible() {
-      return (this.armed || this.whatsNewRequested) && !this.otherModalOpen
+      return this.enabled
+        && (this.armed || this.whatsNewRequested)
+        && !this.otherModalOpen
     }
   },
   watch: {
@@ -169,7 +174,7 @@ export default {
   },
   methods: {
     evaluate() {
-      if (this.resolved || !this.ready) return
+      if (!this.enabled || this.resolved || !this.ready) return
       if (readBannerFlag(whatsNewSeenVersionKey) === Constants.whatsNewVersion) {
         this.resolved = true
         return

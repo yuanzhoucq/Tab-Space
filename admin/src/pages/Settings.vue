@@ -313,10 +313,12 @@
         <a class="footer-link" href="https://mytab.space/#faq" target="_blank" rel="noopener">FAQ</a>
         <span class="footer-sep">·</span>
         <a class="footer-link" href="https://mytab.space/privacy.html" target="_blank" rel="noopener">{{lang.privacy}}</a>
-        <span class="footer-sep">·</span>
-        <button type="button" class="footer-link footer-button"
-                data-testid="settings-whats-new"
-                @click="openWhatsNew">{{lang.whatsNewOpen}}</button>
+        <template v-if="whatsNewEnabled">
+          <span class="footer-sep">·</span>
+          <button type="button" class="footer-link footer-button"
+                  data-testid="settings-whats-new"
+                  @click="openWhatsNew">{{lang.whatsNewOpen}}</button>
+        </template>
         <p class="build-info">
           <a v-if="buildInfo.commitUrl" :href="buildInfo.commitUrl" target="_blank" rel="noopener">Build {{buildInfo.shortSha}}{{buildInfo.time ? ` · ${buildInfo.time}` : ''}}</a>
           <span v-else>Build {{buildInfo.shortSha}}</span>
@@ -425,6 +427,7 @@ export default {
     },
     // The release introduction shows itself once; this is the way back to it.
     openWhatsNew() {
+      if (!this.whatsNewEnabled) return
       this.$store.commit("setWhatsNewRequested", true)
     },
     // Management, like purchasing, is owned by the host app: the native side

@@ -35,6 +35,9 @@ const constants = {
     // The release the What's New dialog introduces. Bumping this shows it once
     // more; the copy in the whatsNew* locale keys has to be updated with it.
     whatsNewVersion: "4.1",
+    // Keep the unreleased 4.1 introduction out of both the automatic modal and
+    // its Settings entry. Re-enable this only when the release is actually live.
+    whatsNewEnabled: false,
     // The tab switcher's factory shortcut. The real one is a native default the
     // user can rebind, and no bridge message reports it back, so this is what
     // the dashboard shows — always alongside the note that it can be changed.
