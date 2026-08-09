@@ -1811,7 +1811,24 @@ test('defaults a large library to compact while preserving an explicit expanded 
   await expect(toggle).toHaveAttribute('data-view-mode', 'expanded')
   await page.reload()
   await expect(toggle).toHaveAttribute('data-view-mode', 'expanded')
-  await expect(page.getByTestId('visible-site')).toHaveCount(1100)
+
+  const firstSession = page.getByTestId('session-large-0')
+  const lastSession = page.getByTestId('session-large-10')
+  await expect(firstSession).toHaveAttribute('data-expanded-content', 'mounted')
+  await expect(firstSession.getByTestId('visible-site')).toHaveCount(100)
+  await expect(lastSession).toHaveAttribute('data-expanded-content', 'deferred')
+  await expect(page.getByTestId('visible-site')).not.toHaveCount(1100)
+  await expect.poll(() => page.evaluate(() => document.getElementsByTagName('*').length)).toBeLessThan(5000)
+
+  // The card shells preserve the full scroll range, then mount their real tab
+  // rows shortly before they enter the viewport. Once mounted they stay live,
+  // so scrolling away cannot discard editing or drag state.
+  await lastSession.scrollIntoViewIfNeeded()
+  await expect(lastSession).toHaveAttribute('data-expanded-content', 'mounted')
+  await expect(lastSession.getByTestId('visible-site')).toHaveCount(100)
+  await firstSession.scrollIntoViewIfNeeded()
+  await expect(lastSession).toHaveAttribute('data-expanded-content', 'mounted')
+  await expect(lastSession.getByTestId('visible-site')).toHaveCount(100)
 })
 
 test('reports opt-in parse and render timings for a serialized large library', async ({ page }) => {

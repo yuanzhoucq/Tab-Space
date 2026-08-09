@@ -2,6 +2,7 @@
   <div :class="[embedded ? 'embedded-session' : 'session', {'session-editing': isEditingSession(session)}]"
       :id="embedded ? null : session.uuid"
       :data-testid="embedded ? 'embedded-session-content' : `session-${session.uuid}`"
+      :data-expanded-content="renderDeferredContent ? 'mounted' : 'deferred'"
       @click="handleCardClick"
       @keydown="handleSessionEditKeydown($event, session)">
     <div v-if="!embedded" class="session-header">
@@ -110,7 +111,8 @@
         </div>
       </div>
     </div>
-    <ul
+    <template v-if="renderDeferredContent">
+      <ul
         :class="['session-sites', {'collapsed-sites': compactView, 'editing-sites': isEditingSession(session)}]"
         data-testid="site-list"
         :data-site-drag-enabled="canDragSites ? 'true' : 'false'"
@@ -251,8 +253,8 @@
           </button>
         </li>
       </draggable>
-    </ul>
-    <div v-if="bulkSelectionMode" class="bulk-move-bar" data-testid="bulk-move-bar">
+      </ul>
+      <div v-if="bulkSelectionMode" class="bulk-move-bar" data-testid="bulk-move-bar">
       <div class="bulk-selection-copy">
         <div class="bulk-selection-summary">
           <button type="button" class="bulk-text-button" data-testid="toggle-select-all" @click="toggleSelectAllSites">
@@ -287,8 +289,8 @@
           {{ allSitesSelected ? lang.mergeSelectedSession : lang.moveSelectedTabs }}
         </button>
       </div>
-    </div>
-    <div v-if="!bulkSelectionMode" class="session-tags">
+      </div>
+      <div v-if="!bulkSelectionMode" class="session-tags">
       <div
           class="tag"
           :class="{'search-tag': hasSearch || isEditingSession(session)}"
@@ -370,6 +372,14 @@
           <v-icon name="git-merge" :stroke-width="1.8"></v-icon>
         </button>
       </div>
+      </div>
+    </template>
+    <div
+        v-else
+        class="session-content-placeholder"
+        data-testid="deferred-session-content"
+        :style="{ height: `${estimatedDeferredContentHeight}px` }"
+        aria-hidden="true">
     </div>
   </div>
 </template>
@@ -410,7 +420,9 @@
         typewriterText: "",
         typewriterTimer: null,
         aiFlash: false,
-        flashTimer: null
+        flashTimer: null,
+        deferredContentMounted: false,
+        deferredContentObserver: null
       }
     },
     computed: {
@@ -424,6 +436,26 @@
           && !this.hasSearch
           && !this.temporarilyExpanded
           && !this.isEditingSession(this.session)
+      },
+      shouldDeferExpandedContent() {
+        return !this.embedded
+          && this.sessionViewMode === "expanded"
+          && !this.hasSearch
+          && !this.isEditingSession(this.session)
+          && !this.bulkSelectionMode
+          && !this.temporarilyExpanded
+          && !isUnsavedSession(this.session)
+      },
+      renderDeferredContent() {
+        return !this.shouldDeferExpandedContent || this.deferredContentMounted
+      },
+      estimatedDeferredContentHeight() {
+        // Expanded tab rows are a stable single line. This estimate keeps the
+        // document height and scrollbar close to their final positions before
+        // the real rows are mounted near the viewport.
+        const siteRowsHeight = Math.max(1, this.session.sites.length) * 24
+        const tagRowsHeight = Math.max(1, Math.ceil((this.session.tags.length + 1) / 6)) * 28
+        return siteRowsHeight + tagRowsHeight
       },
       canDragSites() {
         // Cross-session dragging requires every session list to be visible as
@@ -551,13 +583,52 @@
         if (flash && flash.uuid === this.session.uuid) {
           this.runEnhanceAnimation(flash.title)
         }
+      },
+      shouldDeferExpandedContent() {
+        this.refreshDeferredContentObserver()
       }
+    },
+    mounted() {
+      this.refreshDeferredContentObserver()
     },
     beforeDestroy() {
       if (this.typewriterTimer) clearInterval(this.typewriterTimer)
       if (this.flashTimer) clearTimeout(this.flashTimer)
+      this.disconnectDeferredContentObserver()
     },
     methods: {
+      disconnectDeferredContentObserver() {
+        if (!this.deferredContentObserver) return
+        this.deferredContentObserver.disconnect()
+        this.deferredContentObserver = null
+      },
+      mountDeferredContent() {
+        if (this.deferredContentMounted) return
+        this.deferredContentMounted = true
+        this.disconnectDeferredContentObserver()
+      },
+      refreshDeferredContentObserver() {
+        this.disconnectDeferredContentObserver()
+        if (!this.shouldDeferExpandedContent || this.deferredContentMounted) return
+
+        this.$nextTick(() => {
+          if (!this.shouldDeferExpandedContent || this.deferredContentMounted || !this.$el) return
+          const preloadMargin = 1200
+          const bounds = this.$el.getBoundingClientRect()
+          if (bounds.bottom >= -preloadMargin && bounds.top <= window.innerHeight + preloadMargin) {
+            this.mountDeferredContent()
+            return
+          }
+          if (!("IntersectionObserver" in window)) {
+            this.mountDeferredContent()
+            return
+          }
+          this.deferredContentObserver = new IntersectionObserver(entries => {
+            if (entries.some(entry => entry.isIntersecting)) this.mountDeferredContent()
+          }, { rootMargin: `${preloadMargin}px 0px` })
+          this.deferredContentObserver.observe(this.$el)
+        })
+      },
       prepareSessionEdit(session) {
         if (this.embedded || this.editSnapshot) return
         this.editSnapshot = {
@@ -1020,6 +1091,13 @@
     box-shadow: var(--shadow-sm, 0 1px 2px 0 rgba(0, 0, 0, 0.05));
     transition: transform 0.2s ease, box-shadow 0.2s ease;
     position: relative;
+  }
+
+  .session-content-placeholder {
+    width: 100%;
+    min-height: 52px;
+    contain: strict;
+    pointer-events: none;
   }
 
   .session:hover {
