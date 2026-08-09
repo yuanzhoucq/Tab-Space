@@ -322,6 +322,8 @@
           <span v-else>Build {{buildInfo.shortSha}}</span>
           <span class="build-sep">·</span>
           <a href="https://joyuer.cn/" target="_blank" rel="noopener">{{lang.madeBy}}</a>
+          <span class="build-sep">·</span>
+          <a href="https://x.com/joyuer" target="_blank" rel="noopener">@joyuer</a>
         </p>
       </footer>
     </div>
