@@ -11,36 +11,34 @@
   <meta property="og:title" content="Shared session · Tab Space">
   <meta property="og:description" content="An unlisted tab session shared from Tab Space.">
   <meta property="og:type" content="website">
-  <link rel="icon" href="/icon.png">
+  <link rel="icon" href="/share/app-icon.png">
   <link rel="stylesheet" href="/share/share.css">
   <script src="/share/share.js" defer></script>
 </head>
 <body>
   <header class="page-header">
     <a class="brand" href="/" aria-label="Tab Space home">
-      <img class="brand-logo" src="/icon.png" width="48" height="48" alt="">
+      <img class="brand-logo" src="/share/app-icon.png" width="48" height="48" alt="">
       <span class="brand-copy">
         <span class="brand-name">Tab Space</span>
-        <span class="brand-tagline" id="brand-tagline">Save and manage your Safari tabs with Tab Space.</span>
+        <span class="brand-tagline" id="brand-tagline">Save and manage tabs in Safari, Chrome, Edge, and Firefox.</span>
       </span>
       <span class="brand-cta" id="brand-cta">Get Tab Space →</span>
     </a>
-    <input class="search" id="search" type="search" placeholder="Search tabs" aria-label="Search tabs" disabled>
   </header>
 
   <main class="sessions-container">
-    <aside class="session-sidebar" aria-label="Shared session details">
-      <div class="share-status">
-        <span class="status-dot" aria-hidden="true"></span>
-        <span id="unlisted-label">Unlisted public link</span>
-      </div>
+    <!-- Stays out of the document until the snapshot loads, so the page never
+         states a tab count or expiry it cannot back. -->
+    <div class="session-meta" id="meta" aria-label="Shared session details" hidden>
       <div class="stats">
-        <div class="stat-item"><strong>1</strong> <span id="session-count-label">session</span></div>
-        <div class="stat-item"><strong id="tab-count">—</strong> <span id="tab-count-label">tabs</span></div>
-        <div class="stat-item stat-expiry" id="session-expiry"></div>
+        <span class="stat-item"><span id="session-count">1</span> <span id="session-count-label">session</span></span>
+        <span class="stat-item"><span id="tab-count">0</span> <span id="tab-count-label">tabs</span></span>
+        <span class="stat-item" id="session-expiry"></span>
       </div>
-      <button class="copy-button" id="copy-all" type="button" disabled>Copy all links</button>
-    </aside>
+      <button class="meta-button" id="open-all" type="button">Open all</button>
+      <button class="meta-button primary-button" id="copy-all" type="button">Copy all links</button>
+    </div>
 
     <section class="sessions-list">
       <section id="loading" class="state-card" aria-live="polite">
@@ -52,7 +50,7 @@
         <div class="state-icon" aria-hidden="true">↗</div>
         <h1 id="error-title">This shared session is unavailable</h1>
         <p id="error-description">The link may have expired, been revoked, or been copied incorrectly.</p>
-        <a id="error-home" class="home-button" href="/">Visit Tab Space</a>
+        <a id="error-home" class="meta-button primary-button" href="/">Visit Tab Space</a>
       </section>
 
       <article id="session" class="session" hidden>
@@ -60,10 +58,9 @@
           <h1 class="session-title" id="session-title"></h1>
         </div>
         <ul class="session-sites" id="sites"></ul>
-        <div class="empty-state" id="no-results" hidden>No matching tabs</div>
         <div class="session-tags" id="tags" aria-label="Tags"></div>
         <p class="privacy-note" id="privacy-note">
-          Anyone with this hard-to-guess link can view this snapshot. It is not encrypted or listed publicly.
+          Anyone with this hard-to-guess link can view this snapshot.
         </p>
       </article>
     </section>

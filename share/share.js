@@ -5,52 +5,47 @@
   const FAVICON_API = "https://t2.gstatic.com/faviconV2";
   const match = location.pathname.match(/^\/s\/([A-Za-z0-9_-]{32})\/?$/);
   const zh = (navigator.language || "").toLowerCase().startsWith("zh");
-  const search = document.getElementById("search");
+  const openButton = document.getElementById("open-all");
   const copyButton = document.getElementById("copy-all");
   const sitesList = document.getElementById("sites");
-  const noResults = document.getElementById("no-results");
-  let currentSites = [];
 
   const words = zh ? {
-    tagline: "用 Tab Space 保存和管理你的 Safari 标签页。",
+    tagline: "保存和管理 Safari、Chrome、Edge、Firefox 标签页。",
     get: "获取 Tab Space →",
-    unlisted: "未列出的公开链接",
     loading: "正在载入分享会话…",
     unavailable: "这个分享会话不可用",
     unavailableDescription: "链接可能已过期、已被撤销，或复制不完整。",
     home: "了解 Tab Space",
     shared: "由 Tab Space 分享",
-    search: "搜索标签页",
+    open: "打开全部",
+    blocked: "请允许弹出窗口",
     copy: "复制全部链接",
     copied: "已复制",
     session: "个会话",
     tabs: "个标签页",
     expires: date => `到期：${date}`,
-    noResults: "没有匹配的标签页",
-    note: "任何拿到这条高强度随机链接的人都能查看此快照。内容未加密，也不会被公开列出。",
+    note: "任何拿到这条高强度随机链接的人都能查看此快照。",
   } : {
-    tagline: "Save and manage your Safari tabs with Tab Space.",
+    tagline: "Save and manage tabs in Safari, Chrome, Edge, and Firefox.",
     get: "Get Tab Space →",
-    unlisted: "Unlisted public link",
     loading: "Loading shared session…",
     unavailable: "This shared session is unavailable",
     unavailableDescription: "The link may have expired, been revoked, or been copied incorrectly.",
     home: "Visit Tab Space",
     shared: "Shared from Tab Space",
-    search: "Search tabs",
+    open: "Open all",
+    blocked: "Allow pop-ups",
     copy: "Copy all links",
     copied: "Copied",
     session: "session",
     tabs: "tabs",
-    expires: date => `Expires ${date}`,
-    noResults: "No matching tabs",
-    note: "Anyone with this hard-to-guess link can view this snapshot. It is not encrypted or listed publicly.",
+    expires: date => `expires ${date}`,
+    note: "Anyone with this hard-to-guess link can view this snapshot.",
   };
 
   document.documentElement.lang = zh ? "zh-Hans" : "en";
   document.getElementById("brand-tagline").textContent = words.tagline;
   document.getElementById("brand-cta").textContent = words.get;
-  document.getElementById("unlisted-label").textContent = words.unlisted;
   document.getElementById("loading-text").textContent = words.loading;
   document.getElementById("error-title").textContent = words.unavailable;
   document.getElementById("error-description").textContent = words.unavailableDescription;
@@ -58,18 +53,17 @@
   document.getElementById("shared-label").textContent = words.shared;
   document.getElementById("session-count-label").textContent = words.session;
   document.getElementById("tab-count-label").textContent = words.tabs;
-  noResults.textContent = words.noResults;
   document.getElementById("privacy-note").textContent = words.note;
-  search.placeholder = words.search;
-  search.setAttribute("aria-label", words.search);
+  openButton.textContent = words.open;
   copyButton.textContent = words.copy;
 
   function showError() {
     document.getElementById("loading").hidden = true;
     document.getElementById("session").hidden = true;
     document.getElementById("error").hidden = false;
-    search.disabled = true;
-    copyButton.disabled = true;
+    // Nothing loaded, so the meta row would describe and act on content that
+    // is not there.
+    document.getElementById("meta").hidden = true;
   }
 
   function safeWebURL(value) {
@@ -124,20 +118,18 @@
     link.title = url.href;
     link.textContent = label;
     title.appendChild(link);
-    item.dataset.searchText = `${label} ${url.href}`.toLowerCase();
+    item.dataset.url = url.href;
     item.append(icon, title);
     return item;
   }
 
-  function updateSearch() {
-    const query = search.value.trim().toLowerCase();
-    let visible = 0;
-    for (const item of sitesList.children) {
-      item.hidden = Boolean(query) && !item.dataset.searchText.includes(query);
-      if (!item.hidden) visible += 1;
-    }
-    document.getElementById("tab-count").textContent = visible;
-    noResults.hidden = visible !== 0;
+  function allURLs() {
+    return Array.from(sitesList.children).map(item => item.dataset.url);
+  }
+
+  function flash(button, message, restore) {
+    button.textContent = message;
+    setTimeout(() => { button.textContent = restore; }, 1600);
   }
 
   function render(data) {
@@ -145,7 +137,7 @@
       showError();
       return;
     }
-    currentSites = data.sites.filter(site => site && safeWebURL(site.url));
+    const currentSites = data.sites.filter(site => site && safeWebURL(site.url));
     if (currentSites.length === 0) {
       showError();
       return;
@@ -171,13 +163,25 @@
 
     document.getElementById("loading").hidden = true;
     document.getElementById("session").hidden = false;
-    search.disabled = false;
-    copyButton.disabled = false;
+    document.getElementById("meta").hidden = false;
   }
 
-  search.addEventListener("input", updateSearch);
+  openButton.addEventListener("click", () => {
+    let blocked = 0;
+    for (const url of allURLs()) {
+      // Opened without the "noopener" feature so the return value stays
+      // meaningful; the handle is severed right after instead.
+      const opened = window.open(url, "_blank");
+      if (opened) opened.opener = null;
+      else blocked += 1;
+    }
+    // Most browsers allow only the first window per gesture unless the user
+    // has permitted pop-ups, so say so rather than silently opening one tab.
+    if (blocked > 0) flash(openButton, words.blocked, words.open);
+  });
+
   copyButton.addEventListener("click", async () => {
-    const text = currentSites.map(site => safeWebURL(site.url).href).join("\n");
+    const text = allURLs().join("\n");
     try {
       await navigator.clipboard.writeText(text);
     } catch (_) {
@@ -189,8 +193,7 @@
       document.execCommand("copy");
       textarea.remove();
     }
-    copyButton.textContent = words.copied;
-    setTimeout(() => { copyButton.textContent = words.copy; }, 1600);
+    flash(copyButton, words.copied, words.copy);
   });
 
   if (!match) {

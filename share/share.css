@@ -39,7 +39,6 @@ button, input { font: inherit; }
 
 .page-header {
   min-height: 118px;
-  padding-left: 146px;
   display: flex;
   align-items: center;
   gap: 18px;
@@ -51,17 +50,21 @@ button, input { font: inherit; }
   display: flex;
   align-items: center;
   gap: 12px;
+  /* Border-box sizing keeps horizontal padding from widening the box, so the
+     content gets breathing room from the hover surface while it still spans
+     exactly the card's width below it and never overhangs. The hover ring is
+     an inset shadow rather than a border for the same reason — it takes up
+     no space. */
   padding: 10px 12px;
   color: var(--text-primary);
-  border: 1px solid transparent;
   border-radius: 12px;
   text-decoration: none;
-  transition: background-color .2s ease, border-color .2s ease, transform .2s ease;
+  transition: background-color .2s ease, box-shadow .2s ease, transform .2s ease;
 }
 
 .brand:hover {
   background: rgba(255, 255, 255, .5);
-  border-color: rgba(250, 128, 114, .22);
+  box-shadow: inset 0 0 0 1px rgba(250, 128, 114, .22);
   transform: translateY(-1px);
 }
 
@@ -76,13 +79,16 @@ button, input { font: inherit; }
 .brand-copy { min-width: 0; flex: 1; }
 .brand-name { display: block; margin: 0; font-size: 22px; font-weight: 700; line-height: 1.2; }
 .brand-tagline {
-  display: block;
+  /* Wraps to a second line rather than eliding: the browser names at the end
+     are the point of the line, so a single nowrap line would cut them off. */
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
   margin-top: 3px;
   overflow: hidden;
   color: var(--text-secondary);
   font-size: 12px;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  line-height: 1.4;
 }
 
 .brand-cta {
@@ -95,63 +101,27 @@ button, input { font: inherit; }
   font-weight: 650;
 }
 
-.search {
-  width: min(210px, 34vw);
-  padding: 8px 12px;
-  color: var(--text-primary);
-  background: var(--card-bg);
-  border: 1px solid var(--border-color);
-  border-radius: 8px;
-  outline: none;
+/* Everything in the meta row hangs off the right edge, above the card. */
+.session-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-bottom: 12px;
 }
 
-.search:focus { border-color: var(--primary-color); box-shadow: 0 0 0 2px rgba(250, 128, 114, .25); }
-.search:disabled { opacity: .6; cursor: wait; }
+.stats { display: flex; flex-wrap: wrap; align-items: center; margin-right: 4px; }
+/* One weight, one size, one colour: counts and expiry read as a single line. */
+.stat-item { color: var(--text-secondary); font-size: 12px; }
+.stat-item + .stat-item::before { content: "·"; margin: 0 8px; }
 
-.sessions-container { display: flex; align-items: flex-start; }
-.session-sidebar {
-  width: 110px;
-  flex: 0 0 110px;
-  margin-right: 20px;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.share-status {
-  display: flex;
-  align-items: flex-start;
-  gap: 6px;
-  padding: 8px 10px;
+.meta-button {
+  display: inline-block;
+  padding: 7px 13px;
   color: var(--text-secondary);
-  background: rgba(250, 128, 114, .08);
-  border-radius: 8px;
-  font-size: 11px;
-  line-height: 1.35;
-}
-
-.status-dot {
-  width: 7px;
-  height: 7px;
-  flex: 0 0 7px;
-  margin-top: 4px;
-  background: var(--primary-color);
-  border-radius: 50%;
-  box-shadow: 0 0 0 3px rgba(250, 128, 114, .14);
-}
-
-.stats { padding: 10px 10px 0; border-top: 1px solid var(--border-color); }
-.stat-item { color: var(--text-secondary); font-size: 12px; line-height: 1.8; }
-.stat-item strong { color: var(--text-primary); font-weight: 650; }
-.stat-expiry { margin-top: 5px; line-height: 1.35; }
-
-.copy-button, .home-button {
-  display: block;
-  width: 100%;
-  padding: 8px 10px;
-  color: white;
-  background: var(--primary-color);
-  border: 0;
+  background: transparent;
+  border: 1px solid var(--border-color);
   border-radius: 8px;
   font-size: 12px;
   font-weight: 650;
@@ -160,10 +130,17 @@ button, input { font: inherit; }
   cursor: pointer;
 }
 
-.copy-button:hover, .home-button:hover { background: var(--primary-color-hover); }
-.copy-button:disabled { opacity: .55; cursor: wait; }
+.meta-button:hover { color: var(--primary-color-hover); border-color: var(--primary-color); }
+.primary-button {
+  color: white;
+  background: var(--primary-color);
+  border-color: var(--primary-color);
+}
 
-.sessions-list { min-width: 0; flex: 1; }
+.primary-button:hover { color: white; background: var(--primary-color-hover); border-color: var(--primary-color-hover); }
+.session-meta[hidden] { display: none; }
+
+.sessions-list { min-width: 0; }
 .session, .state-card {
   position: relative;
   width: 100%;
@@ -181,17 +158,24 @@ button, input { font: inherit; }
 
 .session:hover { z-index: 2; transform: translateY(-2px); box-shadow: var(--shadow-md); }
 .session[hidden], .state-card[hidden] { display: none; }
-.session-header { display: flex; align-items: center; margin-bottom: 10px; }
+/* Not a flex container: the title must stay a real inline box for
+   box-decoration-break to highlight each wrapped line. */
+.session-header { margin-bottom: 10px; }
 .session-title {
-  display: inline-block;
-  max-width: 100%;
-  min-height: 22px;
-  margin: 0 8px 0 0;
+  display: inline;
+  margin: 0;
   overflow-wrap: anywhere;
   font-size: 18px;
   font-weight: 700;
   line-height: 1.35;
-  box-shadow: inset 0 -10px #fadc23;
+  /* box-decoration-break keeps the highlight under every wrapped line
+     instead of only the box's last line (a plain box-shadow can't do this). */
+  background-image: linear-gradient(#fadc23, #fadc23);
+  background-repeat: no-repeat;
+  background-position: 0 100%;
+  background-size: 100% 10px;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
 }
 
 .session-sites { margin: 0 0 0 -45px; padding-left: 40px; }
@@ -269,7 +253,7 @@ button, input { font: inherit; }
 .state-card { min-height: 180px; padding: 44px 32px; color: var(--text-secondary); text-align: center; }
 .state-card h1 { margin: 6px 0 8px; color: var(--text-primary); font-size: 20px; }
 .state-card p { margin: 8px auto 20px; max-width: 420px; }
-.state-card .home-button { width: auto; display: inline-block; padding-right: 16px; padding-left: 16px; }
+.state-card .meta-button { padding-right: 16px; padding-left: 16px; }
 .state-icon { color: var(--primary-color); font-size: 24px; }
 .spinner {
   width: 26px;
@@ -289,26 +273,17 @@ footer a { color: inherit; }
 
 @media (max-width: 700px) {
   .page-header { min-height: 90px; padding: 14px 16px; flex-wrap: wrap; }
-  .brand { width: 100%; flex-basis: 100%; padding: 8px 0; }
-  .brand:hover { background: transparent; border-color: transparent; }
+  .brand { width: 100%; flex-basis: 100%; padding: 8px 12px; }
+  .brand:hover { background: transparent; box-shadow: none; transform: none; }
   .brand-cta { display: none; }
-  .search { width: 100%; max-width: none; margin-bottom: 14px; }
-  .sessions-container { flex-wrap: wrap; }
-  .sessions-list { width: 100%; flex: 1 0 100%; }
-  .session-sidebar { width: 100%; flex: 1 0 100%; flex-direction: row; flex-wrap: wrap; align-items: center; margin: 0 0 12px; gap: 8px; }
-  .share-status { flex: 0 1 auto; }
-  .stats { display: flex; gap: 12px; margin: 0; padding: 0 4px; border: 0; }
-  .stat-expiry { margin: 0; }
-  .copy-button { width: auto; margin-left: auto; }
   .session { padding-left: 18px; }
   .session-sites { margin-left: -35px; }
 }
 
 @media (max-width: 480px) {
-  .share-status { width: 100%; }
-  .stats { flex: 1; flex-wrap: wrap; }
-  .stat-expiry { flex-basis: 100%; }
-  .copy-button { margin-left: 0; }
+  /* Too narrow for one row: the stats take their own line, still right-aligned,
+     with the buttons beneath them. */
+  .stats { flex-basis: 100%; justify-content: flex-end; margin-right: 0; }
 }
 
 @media (prefers-color-scheme: dark) {
@@ -321,7 +296,7 @@ footer a { color: inherit; }
     --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, .4);
   }
   body { background: radial-gradient(1200px 500px at 70% -10%, rgba(250, 128, 114, .08), transparent 70%), linear-gradient(-45deg, #171717, #222); }
-  .session-title { box-shadow: inset 0 -10px #685e02; }
+  .session-title { background-image: linear-gradient(#685e02, #685e02); }
   .tag { color: #ccc; background: #3a3a3a; border-color: #4a4a4a; }
   .session-sites li:hover { background: rgba(255, 255, 255, .08); }
   .brand:hover { background: rgba(255, 255, 255, .04); }
