@@ -51,6 +51,10 @@ jobs:
               exit 1
             fi
           done
+          if ! grep -Eq '^/s/:id[[:space:]]+/share/[[:space:]]+200$' dist/_redirects; then
+            echo "Refusing to deploy: the canonical /s/:id share rewrite is missing" >&2
+            exit 1
+          fi
 
       - name: Deploy to Cloudflare Pages
         uses: cloudflare/wrangler-action@v3

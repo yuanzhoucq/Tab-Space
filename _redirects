@@ -13,7 +13,10 @@
 /redirect.html  /redirect  200
 
 # Unlisted session ids are interpreted by the static, script-safe viewer.
-/s/*  /share/index.html  200
+# Target the canonical directory URL: Pages strips /index.html, and rejects a
+# proxy target containing it as a potential rewrite loop. IDs are Base64URL and
+# therefore always occupy exactly one path segment.
+/s/:id  /share/  200
 
 # storage.html deliberately has no rule. Its only consumer is the legacy iframe
 # relay, which matches the host static.mytab.space, a different origin that is
