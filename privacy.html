@@ -39,7 +39,7 @@
     <article class="policy-document" id="en" lang="en">
       <p class="policy-eyebrow">Privacy Policy</p>
       <h1>How Tab Space handles your data</h1>
-      <p class="policy-updated">Last updated: August 8, 2026</p>
+      <p class="policy-updated">Last updated: August 10, 2026</p>
       <p>
         This policy applies to the Tab Space apps for Mac, iPhone, and iPad; their browser extensions;
         the Tab Space dashboard; and the public website at <a href="https://mytab.space">mytab.space</a>.
@@ -114,6 +114,20 @@
         or delete.
       </p>
 
+      <h2>Optional online session sharing</h2>
+      <p>
+        When you choose Online Share, Tab Space uploads an immutable snapshot containing the session name, custom
+        tags, tab titles, and full tab URLs to Cloudflare. The resulting mytab.space link is public to anyone who has
+        it, but uses a high-entropy random identifier and is not intentionally listed or indexed. The snapshot is not
+        encrypted. Do not share a session whose URLs or titles contain sensitive information.
+      </p>
+      <p>
+        No Tab Space account is required. A separate random management token stays on your device and lets the app
+        revoke the snapshot; the service stores only its cryptographic hash. Snapshots expire after the period you
+        select (1, 7, 30, or 90 days) and are then deleted. Revocation and expired, missing, or invalid links all make
+        the snapshot unavailable. Shared-session pages do not load website icons or Cloudflare Web Analytics.
+      </p>
+
       <h2>Backups, retention, and deletion</h2>
       <p>
         Sessions remain in the app until you delete them. Items in Trash remain there until they are permanently
@@ -154,7 +168,7 @@
 
       <h2>Data the developer does not collect</h2>
       <p>
-        Except for the specific session information you choose to submit to optional AI organizing, the Tab Space
+        Except for the specific session information you choose to submit to optional AI organizing or Online Share, the Tab Space
         apps do not send the developer your saved sessions, browsing history, page contents, iCloud records,
         contacts, location, or advertising identifiers. The apps contain no advertising or developer-run behavioral
         tracking.
@@ -167,7 +181,7 @@
         and country information, page-load timing, and Core Web Vitals. Its analytics beacon does not use cookies or
         local storage, fingerprint visitors, or track individuals across websites. Website analytics is separate from
         the app's limited diagnostics and never includes your saved sessions. We do not combine it with app data
-        or use it for advertising. Learn more in the
+        or use it for advertising. Unlisted shared-session pages do not load the analytics beacon. Learn more in the
         <a href="https://developers.cloudflare.com/web-analytics/about/" target="_blank" rel="noopener">Cloudflare Web Analytics documentation</a>.
       </p>
 
@@ -187,7 +201,7 @@
     <article class="policy-document" id="zh" lang="zh-Hans">
       <p class="policy-eyebrow">隐私政策</p>
       <h1>Tab Space 如何处理你的数据</h1>
-      <p class="policy-updated">最后更新：2026 年 8 月 8 日</p>
+      <p class="policy-updated">最后更新：2026 年 8 月 10 日</p>
       <p>
         本政策适用于 Mac、iPhone 和 iPad 版 Tab Space、相应的浏览器扩展、Tab Space Dashboard，
         以及 <a href="https://mytab.space">mytab.space</a> 官网。
@@ -250,6 +264,18 @@
         请求内容副本，因此没有另一份服务器副本可供开发者读取或删除。
       </p>
 
+      <h2>可选的在线分享会话</h2>
+      <p>
+        当你选择“在线分享”时，Tab Space 会把一份不可修改的快照上传到 Cloudflare，其中包含会话名称、自定义标签、
+        标签页标题和完整 URL。生成的 mytab.space 链接对拿到它的任何人公开，但链接使用高强度随机标识，不会被主动列出或
+        编入索引。快照不加密，请勿分享 URL 或标题中包含敏感信息的会话。
+      </p>
+      <p>
+        此功能不要求 Tab Space 账号。另一枚随机管理令牌只保存在你的设备上，App 可用它撤销快照；服务端仅保存其密码学
+        哈希。快照会在你选择的 1、7、30 或 90 天后到期并删除。撤销后以及链接过期、不存在或无效时，快照都会显示为不可用。
+        分享会话页面不会请求网站图标，也不会加载 Cloudflare Web Analytics。
+      </p>
+
       <h2>备份、保留与删除</h2>
       <p>
         会话会一直保留到你将其删除；废纸篓中的项目会保留到被永久删除。自动备份保存在 App 的本地容器中，
@@ -283,7 +309,7 @@
 
       <h2>开发者不收集的数据</h2>
       <p>
-        除你主动提交给可选 AI 整理功能的特定会话信息外，Tab Space App 不会向开发者发送你保存的会话、
+        除你主动提交给可选 AI 整理或在线分享功能的特定会话信息外，Tab Space App 不会向开发者发送你保存的会话、
         浏览历史、网页内容、iCloud 记录、通讯录、位置或广告标识符。App 不包含广告，也不进行由开发者运营的行为追踪。
       </p>
 
@@ -292,7 +318,7 @@
         mytab.space 的公开营销页面使用 Cloudflare Web Analytics 了解整体访问情况和页面性能。它会报告页面访问、来源、
         浏览器、设备、操作系统和国家或地区等一般信息，以及页面加载时间和 Core Web Vitals。其分析信标不使用 Cookie
         或本地存储，不对访客进行指纹识别，也不跨网站追踪个人。网站分析与 App 的少量诊断信息相互独立，
-        绝不包含你保存的会话。我们不会把网站分析与 App 数据结合，也不会将其用于广告。详情请参阅
+        绝不包含你保存的会话。我们不会把网站分析与 App 数据结合，也不会将其用于广告；未列出的分享会话页面不会加载分析信标。详情请参阅
         <a href="https://developers.cloudflare.com/web-analytics/about/" target="_blank" rel="noopener">Cloudflare Web Analytics 文档</a>。
       </p>
 

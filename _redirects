@@ -12,6 +12,9 @@
 # native hand-off breaks with no other symptom.
 /redirect.html  /redirect  200
 
+# Unlisted session ids are interpreted by the static, script-safe viewer.
+/s/*  /share/index.html  200
+
 # storage.html deliberately has no rule. Its only consumer is the legacy iframe
 # relay, which matches the host static.mytab.space, a different origin that is
 # not served by this Pages project and does not strip the suffix.

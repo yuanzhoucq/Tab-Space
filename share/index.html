@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow, noarchive">
+  <meta name="referrer" content="no-referrer">
+  <title>Shared session · Tab Space</title>
+  <meta name="description" content="An unlisted tab session shared from Tab Space.">
+  <meta property="og:title" content="Shared session · Tab Space">
+  <meta property="og:description" content="An unlisted tab session shared from Tab Space.">
+  <meta property="og:type" content="website">
+  <link rel="icon" href="/icon.png">
+  <link rel="stylesheet" href="/share/share.css">
+  <script src="/share/share.js" defer></script>
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="/" aria-label="Tab Space home">
+      <img src="/icon.png" width="30" height="30" alt="">
+      <span>Tab Space</span>
+    </a>
+    <span class="unlisted" id="unlisted-label">Unlisted public link</span>
+  </header>
+
+  <main>
+    <section id="loading" class="state-card" aria-live="polite">
+      <div class="spinner" aria-hidden="true"></div>
+      <p id="loading-text">Loading shared session…</p>
+    </section>
+
+    <section id="error" class="state-card" hidden aria-live="polite">
+      <div class="state-icon" aria-hidden="true">↗</div>
+      <h1 id="error-title">This shared session is unavailable</h1>
+      <p id="error-description">The link may have expired, been revoked, or been copied incorrectly.</p>
+      <a id="error-home" class="button" href="/">Visit Tab Space</a>
+    </section>
+
+    <article id="session" hidden>
+      <div class="session-heading">
+        <div>
+          <p class="eyebrow" id="shared-label">Shared session</p>
+          <h1 id="session-title"></h1>
+          <p class="metadata" id="session-metadata"></p>
+        </div>
+        <button class="button" id="copy-all" type="button">Copy all links</button>
+      </div>
+      <div id="tags" class="tags" aria-label="Tags"></div>
+      <ol id="sites" class="sites"></ol>
+      <p class="privacy-note" id="privacy-note">
+        Anyone with this hard-to-guess link can view this snapshot. It is not encrypted or listed publicly.
+      </p>
+    </article>
+  </main>
+
+  <footer>
+    <a href="/">Tab Space</a>
+    <span aria-hidden="true">·</span>
+    <a href="/privacy">Privacy</a>
+  </footer>
+</body>
+</html>

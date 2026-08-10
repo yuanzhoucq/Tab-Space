@@ -5,6 +5,7 @@ on:
     paths:
       - '*.html'
       - 'assets/**'
+      - 'share/**'
       - 'icon.png'
       - '_headers'
       - '_redirects'
@@ -33,6 +34,7 @@ jobs:
           mkdir -p dist
           cp ./*.html icon.png _headers _redirects dist/
           cp -R assets dist/assets
+          cp -R share dist/share
           find dist -name '.DS_Store' -delete
 
       - name: Verify the deploy contains only site files
@@ -43,7 +45,7 @@ jobs:
               exit 1
             fi
           done
-          for required in index.html index-zh.html switcher.html privacy.html changelog.html redirect.html storage.html 404.html _headers _redirects assets/css/main.css assets/css/switcher.css assets/img/switcher-4-1.webp; do
+          for required in index.html index-zh.html switcher.html privacy.html changelog.html redirect.html storage.html 404.html _headers _redirects assets/css/main.css assets/css/switcher.css assets/img/switcher-4-1.webp share/index.html share/share.css share/share.js; do
             if [ ! -e "dist/$required" ]; then
               echo "Refusing to deploy: dist/$required is missing" >&2
               exit 1

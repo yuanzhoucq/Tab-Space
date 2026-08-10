@@ -23,3 +23,11 @@
 
 /assets/*.mp4
   Cache-Control: public, max-age=604800, must-revalidate
+
+/s/*
+  Cache-Control: private, no-store, no-transform
+  Content-Security-Policy: default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self'; connect-src https://tabspace-worker.mytab.space; base-uri 'none'; form-action 'none'; frame-ancestors 'none'
+  Referrer-Policy: no-referrer
+  X-Content-Type-Options: nosniff
+  X-Frame-Options: DENY
+  X-Robots-Tag: noindex, nofollow, noarchive
