@@ -3,6 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
   <meta name="robots" content="noindex, nofollow, noarchive">
   <meta name="referrer" content="no-referrer">
   <title>Shared session · Tab Space</title>
@@ -15,46 +16,61 @@
   <script src="/share/share.js" defer></script>
 </head>
 <body>
-  <header class="site-header">
+  <header class="page-header">
     <a class="brand" href="/" aria-label="Tab Space home">
-      <img src="/icon.png" width="30" height="30" alt="">
-      <span>Tab Space</span>
+      <img class="brand-logo" src="/icon.png" width="48" height="48" alt="">
+      <span class="brand-copy">
+        <span class="brand-name">Tab Space</span>
+        <span class="brand-tagline" id="brand-tagline">Save and manage your Safari tabs with Tab Space.</span>
+      </span>
+      <span class="brand-cta" id="brand-cta">Get Tab Space →</span>
     </a>
-    <span class="unlisted" id="unlisted-label">Unlisted public link</span>
+    <input class="search" id="search" type="search" placeholder="Search tabs" aria-label="Search tabs" disabled>
   </header>
 
-  <main>
-    <section id="loading" class="state-card" aria-live="polite">
-      <div class="spinner" aria-hidden="true"></div>
-      <p id="loading-text">Loading shared session…</p>
-    </section>
-
-    <section id="error" class="state-card" hidden aria-live="polite">
-      <div class="state-icon" aria-hidden="true">↗</div>
-      <h1 id="error-title">This shared session is unavailable</h1>
-      <p id="error-description">The link may have expired, been revoked, or been copied incorrectly.</p>
-      <a id="error-home" class="button" href="/">Visit Tab Space</a>
-    </section>
-
-    <article id="session" hidden>
-      <div class="session-heading">
-        <div>
-          <p class="eyebrow" id="shared-label">Shared session</p>
-          <h1 id="session-title"></h1>
-          <p class="metadata" id="session-metadata"></p>
-        </div>
-        <button class="button" id="copy-all" type="button">Copy all links</button>
+  <main class="sessions-container">
+    <aside class="session-sidebar" aria-label="Shared session details">
+      <div class="share-status">
+        <span class="status-dot" aria-hidden="true"></span>
+        <span id="unlisted-label">Unlisted public link</span>
       </div>
-      <div id="tags" class="tags" aria-label="Tags"></div>
-      <ol id="sites" class="sites"></ol>
-      <p class="privacy-note" id="privacy-note">
-        Anyone with this hard-to-guess link can view this snapshot. It is not encrypted or listed publicly.
-      </p>
-    </article>
+      <div class="stats">
+        <div class="stat-item"><strong>1</strong> <span id="session-count-label">session</span></div>
+        <div class="stat-item"><strong id="tab-count">—</strong> <span id="tab-count-label">tabs</span></div>
+        <div class="stat-item stat-expiry" id="session-expiry"></div>
+      </div>
+      <button class="copy-button" id="copy-all" type="button" disabled>Copy all links</button>
+    </aside>
+
+    <section class="sessions-list">
+      <section id="loading" class="state-card" aria-live="polite">
+        <div class="spinner" aria-hidden="true"></div>
+        <p id="loading-text">Loading shared session…</p>
+      </section>
+
+      <section id="error" class="state-card" hidden aria-live="polite">
+        <div class="state-icon" aria-hidden="true">↗</div>
+        <h1 id="error-title">This shared session is unavailable</h1>
+        <p id="error-description">The link may have expired, been revoked, or been copied incorrectly.</p>
+        <a id="error-home" class="home-button" href="/">Visit Tab Space</a>
+      </section>
+
+      <article id="session" class="session" hidden>
+        <div class="session-header">
+          <h1 class="session-title" id="session-title"></h1>
+        </div>
+        <ul class="session-sites" id="sites"></ul>
+        <div class="empty-state" id="no-results" hidden>No matching tabs</div>
+        <div class="session-tags" id="tags" aria-label="Tags"></div>
+        <p class="privacy-note" id="privacy-note">
+          Anyone with this hard-to-guess link can view this snapshot. It is not encrypted or listed publicly.
+        </p>
+      </article>
+    </section>
   </main>
 
   <footer>
-    <a href="/">Tab Space</a>
+    <span id="shared-label">Shared from Tab Space</span>
     <span aria-hidden="true">·</span>
     <a href="/privacy">Privacy</a>
   </footer>

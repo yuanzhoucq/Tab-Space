@@ -55,6 +55,10 @@ jobs:
             echo "Refusing to deploy: the canonical /s/:id share rewrite is missing" >&2
             exit 1
           fi
+          if ! grep -Fq "img-src 'self' https://t2.gstatic.com" dist/_headers; then
+            echo "Refusing to deploy: the share viewer favicon CSP is missing" >&2
+            exit 1
+          fi
 
       - name: Deploy to Cloudflare Pages
         uses: cloudflare/wrangler-action@v3
