@@ -193,6 +193,7 @@
   "planPremium": "Pro",
   "planPlus": "Plus · Permanent",
   "plusOwnedSummary": "Unlimited sessions and all core features are yours permanently. You also receive 5 AI requests each week; Pro makes AI unlimited.",
+  "freeSessionAllowanceUsed": "Session saved. Your Free session allowance is now used; upgrade to save another.",
   "annualTrial": "7-day free trial",
   "proOnlyInfo": "Free and Plus include 5 AI requests each week. Pro removes the weekly limit.",
   "quotaResetsAt": "Resets {date}",

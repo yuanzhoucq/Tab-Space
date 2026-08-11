@@ -869,7 +869,7 @@
             // The native side would refuse this session; drop the card here so
             // the dashboard never shows a session that was not stored.
             this.$store.commit("discardUnsavedSessions")
-            this.$store.commit("setShowSubscriptionModal", true)
+            this.$store.commit("setShowSubscriptionModal", {show: true, reason: "limitReached"})
             return
           }
           this.bridge.send({ cmd: isNewSession ? 'AppendSessions' : 'UpdateSession', bookmarks: [session] })

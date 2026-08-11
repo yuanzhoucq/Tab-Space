@@ -115,9 +115,12 @@ const store = new Vuex.Store({
         // native side reports the two facts separately.
         permanentPlusOwned: false,
         plusDisplayPrice: null,      // localized StoreKit price, optional in protocol v2
+        freeSessionLimit: Constants.freeSessionLimit,
+        enforcesSessionLimit: false,
         aiQuotaRemaining: null,      // Int, -1 = unlimited, null = unknown
         aiQuotaResetAt: null,        // epoch seconds
         showSubscriptionModal: false,
+        subscriptionModalReason: null,
         purchaseRedirecting: false,  // set once the native side confirms a redirect
         // Stays true from the redirect until the native side reports a higher
         // tier. Closing the dialog clears purchaseRedirecting, but the purchase
@@ -177,12 +180,13 @@ const store = new Vuex.Store({
         // The native side counts every stored session, including the ones in
         // Trash, so this count must not filter by tag.
         savedSessionCount: state => state.sessions.filter(session => !isUnsavedSession(session)).length,
-        // Free stops at Constants.freeSessionLimit stored sessions. The native
-        // side enforces the same rule; this only keeps the dashboard from
-        // showing a card that was never stored.
+        // Free stops at the limit reported by the current native build. The
+        // native side remains authoritative; this only avoids an editor that
+        // cannot be stored.
         canCreateSession: (state, getters) => !state.entitlementResolved
+            || !state.enforcesSessionLimit
             || state.entitlementTier !== "free"
-            || getters.savedSessionCount < Constants.freeSessionLimit,
+            || getters.savedSessionCount < state.freeSessionLimit,
         largeLibrary: state => shouldUseCompactView(state.sessions),
         topSuggestion: state => state.suggestions[0] || null,
         tags: state => {
@@ -301,7 +305,14 @@ const store = new Vuex.Store({
         setShowSuggestionReport(state, show) {
             state.showSuggestionReport = show
         },
-        setEntitlementStatus(state, { status, tier, hasPermanentPlus, plusDisplayPrice }) {
+        setEntitlementStatus(state, {
+            status,
+            tier,
+            hasPermanentPlus,
+            plusDisplayPrice,
+            freeSessionLimit,
+            enforcesSessionLimit
+        }) {
             const normalizedStatus = status === "active" ? "active" : "free"
             const normalizedTier = ["free", "plus", "pro"].includes(tier)
                 ? tier
@@ -319,6 +330,13 @@ const store = new Vuex.Store({
             if (typeof plusDisplayPrice === "string" && plusDisplayPrice.trim()) {
                 state.plusDisplayPrice = plusDisplayPrice.trim()
             }
+            const reportedLimit = Number(freeSessionLimit)
+            if (Number.isInteger(reportedLimit) && reportedLimit > 0) {
+                state.freeSessionLimit = reportedLimit
+            }
+            if (typeof enforcesSessionLimit === "boolean") {
+                state.enforcesSessionLimit = enforcesSessionLimit
+            }
         },
         setAIQuota(state, { remaining, resetAt }) {
             if (remaining !== undefined && remaining !== null) state.aiQuotaRemaining = Number(remaining)
@@ -328,8 +346,17 @@ const store = new Vuex.Store({
             state.aiQuotaRemaining = null
             state.aiQuotaResetAt = null
         },
-        setShowSubscriptionModal(state, show) {
+        setFreeSessionLimit(state, limit) {
+            const normalized = Number(limit)
+            if (Number.isInteger(normalized) && normalized > 0) {
+                state.freeSessionLimit = normalized
+            }
+        },
+        setShowSubscriptionModal(state, payload) {
+            const structured = payload && typeof payload === "object"
+            const show = structured ? Boolean(payload.show) : Boolean(payload)
             state.showSubscriptionModal = show
+            state.subscriptionModalReason = show && structured ? (payload.reason || null) : null
             if (!show) state.purchaseRedirecting = false
         },
         setPurchaseRedirecting(state, redirecting) {

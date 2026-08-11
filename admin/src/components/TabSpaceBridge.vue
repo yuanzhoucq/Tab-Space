@@ -372,7 +372,16 @@ export default {
           // Nothing was stored, so drop the local cards before offering the
           // upgrade — otherwise the refused session stays on screen.
           this.$store.commit("discardUnsavedSessions")
-          this.$store.commit("setShowSubscriptionModal", true)
+          this.$store.commit("setFreeSessionLimit", data.limit)
+          this.$store.commit("setShowSubscriptionModal", {show: true, reason: "limitReached"})
+          break
+        case "SessionUpgradeSuggested":
+          this.$store.commit("setFreeSessionLimit", data.limit)
+          this.$store.commit("setShowSubscriptionModal", {show: true, reason: "suggested"})
+          break
+        case "SessionQuotaExhausted":
+          this.$store.commit("setFreeSessionLimit", data.limit)
+          this.$store.commit("setShowSubscriptionModal", {show: true, reason: "allowanceExhausted"})
           break
       }
     },
@@ -562,7 +571,9 @@ export default {
         status: data.status,
         tier: data.tier,
         hasPermanentPlus: data.hasPermanentPlus,
-        plusDisplayPrice: data.plusDisplayPrice
+        plusDisplayPrice: data.plusDisplayPrice,
+        freeSessionLimit: data.freeSessionLimit,
+        enforcesSessionLimit: data.enforcesSessionLimit
       })
       this.applyQuota(data)
       // RestorePurchases / PurchaseSubscription both hand off to the host app.

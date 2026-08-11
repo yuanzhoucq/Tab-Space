@@ -40,7 +40,7 @@ import { mapState } from 'vuex'
 export default {
   name: 'PlanComparison',
   computed: {
-    ...mapState(['lang', 'entitlementTier']),
+    ...mapState(['lang', 'entitlementTier', 'freeSessionLimit']),
     columns() {
       return [
         { id: 'free', title: this.lang.planFree || 'Free', current: this.entitlementTier === 'free' },
@@ -63,7 +63,7 @@ export default {
         {
           id: 'sessions',
           title: this.lang.planTableSessions || 'Saved sessions',
-          values: ['5', unlimited, unlimited]
+          values: [String(this.freeSessionLimit), unlimited, unlimited]
         },
         {
           id: 'ai',

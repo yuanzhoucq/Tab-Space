@@ -127,7 +127,7 @@ export default {
             // Free is capped, and the native side would refuse the save anyway:
             // offer the upgrade instead of an editor that cannot be stored.
             if (!this.canCreateSession) {
-                this.$store.commit("setShowSubscriptionModal", true)
+                this.$store.commit("setShowSubscriptionModal", {show: true, reason: "limitReached"})
                 return
             }
             if (this.sessionViewMode === "titles") this.$store.commit("setSessionViewMode", "expanded")

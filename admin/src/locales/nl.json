@@ -193,6 +193,7 @@
   "planPremium": "Pro",
   "planPlus": "Plus · Permanent",
   "plusOwnedSummary": "Onbeperkte sessies en alle kernfuncties blijven permanent van jou. Je krijgt ook 5 AI-verzoeken per week; Pro maakt AI onbeperkt.",
+  "freeSessionAllowanceUsed": "Sessie opgeslagen. Je Free-limiet is bereikt; upgrade om er nog een op te slaan.",
   "annualTrial": "7 dagen gratis proberen",
   "proOnlyInfo": "Free en Plus bevatten 5 AI-verzoeken per week. Pro heft de weeklimiet op.",
   "quotaResetsAt": "Reset op {date}",

@@ -29,6 +29,13 @@
           </div>
         </div>
 
+        <div v-else-if="subscriptionModalReason === 'allowanceExhausted'"
+             class="status-note"
+             data-testid="session-allowance-exhausted-message">
+          <v-icon name="check-circle" class="status-icon"></v-icon>
+          <p>{{ lang.freeSessionAllowanceUsed || 'Session saved. Your Free session allowance is now used; upgrade to save another.' }}</p>
+        </div>
+
         <plan-comparison></plan-comparison>
 
         <template v-if="!isPremium">
@@ -97,7 +104,7 @@ export default {
     }
   },
   computed: {
-    ...mapState(['lang', 'bridge', 'showSubscriptionModal', 'plusDisplayPrice', 'purchaseRedirecting']),
+    ...mapState(['lang', 'bridge', 'showSubscriptionModal', 'subscriptionModalReason', 'plusDisplayPrice', 'purchaseRedirecting']),
     ...mapGetters(['isPremium', 'hasPermanentPlus'])
   },
   watch: {

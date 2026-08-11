@@ -193,6 +193,7 @@
   "planPremium": "Pro",
   "planPlus": "Plus · Permanente",
   "plusOwnedSummary": "Sessioni illimitate e tutte le funzioni principali restano tue per sempre. Ricevi anche 5 richieste IA a settimana; Pro rende l’IA illimitata.",
+  "freeSessionAllowanceUsed": "Sessione salvata. Hai esaurito il limite Free; effettua l’upgrade per salvarne un’altra.",
   "annualTrial": "Prova gratuita di 7 giorni",
   "proOnlyInfo": "Free e Plus includono 5 richieste IA a settimana. Pro elimina il limite settimanale.",
   "quotaResetsAt": "Si azzera il {date}",

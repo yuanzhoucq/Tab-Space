@@ -193,6 +193,7 @@
   "planPremium": "Pro",
   "planPlus": "Plus · Bezterminowo",
   "plusOwnedSummary": "Nielimitowane sesje i wszystkie podstawowe funkcje pozostają Twoje bezterminowo. Otrzymujesz też 5 żądań AI tygodniowo; Pro zapewnia AI bez limitu.",
+  "freeSessionAllowanceUsed": "Sesja została zapisana. Limit Free został wykorzystany; przejdź na wyższy plan, aby zapisać kolejną.",
   "annualTrial": "7 dni bezpłatnie",
   "proOnlyInfo": "Free i Plus obejmują 5 żądań AI tygodniowo. Pro usuwa limit tygodniowy.",
   "quotaResetsAt": "Reset {date}",

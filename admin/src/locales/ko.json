@@ -193,6 +193,7 @@
   "planPremium": "Pro",
   "planPlus": "Plus · 영구",
   "plusOwnedSummary": "무제한 세션과 모든 핵심 기능을 영구적으로 이용할 수 있습니다. 매주 AI 요청 5회도 제공되며 Pro에서는 AI가 무제한입니다.",
+  "freeSessionAllowanceUsed": "세션이 저장되었습니다. Free 세션 한도를 모두 사용했습니다. 업그레이드하면 더 저장할 수 있습니다.",
   "annualTrial": "7일 무료 체험",
   "proOnlyInfo": "Free와 Plus는 매주 AI 요청 5회를 제공합니다. Pro는 주간 한도가 없습니다.",
   "quotaResetsAt": "{date}에 초기화",

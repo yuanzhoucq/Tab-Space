@@ -193,6 +193,7 @@
   "planPremium": "Pro",
   "planPlus": "Plus · Permanent",
   "plusOwnedSummary": "Obegränsade sessioner och alla kärnfunktioner är dina permanent. Du får också 5 AI-förfrågningar per vecka; Pro gör AI obegränsat.",
+  "freeSessionAllowanceUsed": "Sessionen har sparats. Din Free-kvot är slut; uppgradera för att spara en till.",
   "annualTrial": "7 dagars gratis provperiod",
   "proOnlyInfo": "Free och Plus innehåller 5 AI-förfrågningar per vecka. Pro tar bort veckogränsen.",
   "quotaResetsAt": "Återställs {date}",

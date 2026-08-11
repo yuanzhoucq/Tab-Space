@@ -84,6 +84,8 @@ async function openDashboard(page, options = {}) {
     subscriptionStatus,
     entitlementTier,
     plusDisplayPrice,
+    freeSessionLimit,
+    enforcesSessionLimit,
     quotaRemaining,
     aiConsentAccepted,
     switcherHelperStatus
@@ -111,6 +113,8 @@ async function openDashboard(page, options = {}) {
     // tier while the dashboard is in the background, exactly as StoreKit does.
     let currentTier = entitlementTier || (subscriptionStatus === 'active' ? 'pro' : 'free')
     let currentStatus = subscriptionStatus
+    let currentFreeSessionLimit = freeSessionLimit
+    let currentEnforcesSessionLimit = enforcesSessionLimit
     let currentSwitcherHelperStatus = switcherHelperStatus
 
     window.__tabspaceBridgeCommands = []
@@ -190,6 +194,8 @@ async function openDashboard(page, options = {}) {
               ? {
                   tier: currentTier,
                   hasPermanentPlus: currentTier === 'plus',
+                  freeSessionLimit: currentFreeSessionLimit,
+                  enforcesSessionLimit: currentEnforcesSessionLimit,
                   ...(plusDisplayPrice ? { plusDisplayPrice } : {})
                 }
               : {}),
@@ -293,23 +299,33 @@ async function openDashboard(page, options = {}) {
         }
 
         if (name === 'AppendSessions') {
-          // Mirrors CommercializationConfig.canCreateSessions: Free stores at
-          // most five sessions and the native side saves none of a batch that
+          // Mirrors CommercializationConfig.canCreateSessions: Free stores up
+          // to the reported limit and the native side saves none of a batch that
           // would cross the line. Only protocol v2 reports a tier, and only
           // those builds enforce the limit.
           const requested = (payload.bookmarks || []).length
           const tier = currentTier
           if (Number(nativeProtocolVersion) >= 2 && tier === 'free'
-            && currentSessions.length + requested > 5) {
-            emit('SessionLimitReached', { limit: 5 })
+            && currentEnforcesSessionLimit
+            && currentSessions.length + requested > currentFreeSessionLimit) {
+            emit('SessionLimitReached', { limit: currentFreeSessionLimit })
             return
           }
+          const previousCount = currentSessions.length
           for (const [index, appendedSession] of (payload.bookmarks || []).entries()) {
             const normalizedSession = clone(appendedSession)
             normalizedSession.uuid ||= `imported-${Date.now()}-${index}`
             currentSessions.unshift(normalizedSession)
           }
           returnBookmarks()
+          if (Number(nativeProtocolVersion) >= 2 && tier === 'free' && currentEnforcesSessionLimit) {
+            if (previousCount < currentFreeSessionLimit
+              && currentSessions.length >= currentFreeSessionLimit) {
+              emit('SessionQuotaExhausted', { limit: currentFreeSessionLimit })
+            } else if (previousCount === 0 && currentSessions.length === 1) {
+              emit('SessionUpgradeSuggested', { limit: currentFreeSessionLimit })
+            }
+          }
           return
         }
 
@@ -391,6 +407,8 @@ async function openDashboard(page, options = {}) {
     subscriptionStatus: options.subscriptionStatus || 'free',
     entitlementTier: options.entitlementTier || '',
     plusDisplayPrice: options.plusDisplayPrice || '',
+    freeSessionLimit: options.freeSessionLimit || 5,
+    enforcesSessionLimit: options.enforcesSessionLimit !== false,
     quotaRemaining: options.quotaRemaining,
     aiConsentAccepted: options.aiConsentAccepted !== false,
     switcherHelperStatus: options.switcherHelperStatus || ''
@@ -1844,8 +1862,8 @@ test('creates a session and appends it through the native bridge', async ({ page
   await expect(page.locator('.session').first()).toContainText('New tab')
 })
 
-test('offers an upgrade instead of a sixth session on Free', async ({ page }) => {
-  const fullLibrary = Array.from({ length: 5 }, (_, index) => ({
+test('offers an upgrade instead of a third session on Free', async ({ page }) => {
+  const fullLibrary = Array.from({ length: 2 }, (_, index) => ({
     ...sessions[0],
     uuid: `session-${index}`,
     title: `Session ${index}`,
@@ -1854,7 +1872,8 @@ test('offers an upgrade instead of a sixth session on Free', async ({ page }) =>
   await openDashboard(page, {
     initialSessions: fullLibrary,
     nativeProtocolVersion: '2',
-    entitlementTier: 'free'
+    entitlementTier: 'free',
+    freeSessionLimit: 2
   })
   const appendCount = await bridgeCommandCount(page, 'AppendSessions')
 
@@ -1863,7 +1882,7 @@ test('offers an upgrade instead of a sixth session on Free', async ({ page }) =>
   // The native side would refuse the save, so no card is offered for editing
   // and nothing is sent: a refused session must never look stored.
   await expect(page.getByTestId('plan-comparison')).toBeVisible()
-  await expect(page.locator('.session')).toHaveCount(5)
+  await expect(page.locator('.session')).toHaveCount(2)
   await expect(page.locator('.session-editing')).toHaveCount(0)
   expect(await bridgeCommandCount(page, 'AppendSessions')).toBe(appendCount)
 })
@@ -1881,11 +1900,45 @@ test('drops the new session card when the native side reports the Free limit', a
   await newCard.locator('.tab-edit').nth(1).fill('New tab')
   // The native side owns the verdict: reply as it does when the library filled
   // up elsewhere between opening the editor and saving.
-  await page.evaluate(() => window.__tabspaceTest.emit('SessionLimitReached', { limit: 5 }))
+  await page.evaluate(() => window.__tabspaceTest.emit('SessionLimitReached', { limit: 2 }))
 
   await expect(page.getByTestId('plan-comparison')).toBeVisible()
   await expect(page.locator('.session')).toHaveCount(2)
   await expect(page.locator('.session').first()).not.toContainText('New tab')
+})
+
+test('opens a soft upgrade after the first successful session without claiming the allowance is used', async ({ page }) => {
+  await openDashboard(page, {
+    initialSessions: [],
+    nativeProtocolVersion: '2',
+    entitlementTier: 'free',
+    freeSessionLimit: 2
+  })
+
+  await page.evaluate(() => window.__tabspaceTest.emit('SessionUpgradeSuggested', { limit: 2 }))
+
+  await expect(page.getByTestId('plan-comparison')).toBeVisible()
+  await expect(page.getByTestId('session-allowance-exhausted-message')).toHaveCount(0)
+  await expect(page.getByTestId('plan-comparison').locator('.row').nth(2)).toContainText('2')
+})
+
+test('saves the second Free session before reporting that the allowance is used', async ({ page }) => {
+  await openDashboard(page, {
+    initialSessions: [sessions[0]],
+    nativeProtocolVersion: '2',
+    entitlementTier: 'free',
+    freeSessionLimit: 2
+  })
+
+  await page.getByTestId('add-session').click()
+  const newCard = page.locator('.session').first()
+  await newCard.locator('.tab-edit').nth(0).fill('https://example.com/second')
+  await newCard.locator('.tab-edit').nth(1).fill('Second session')
+  await newCard.getByTestId('save-session').click()
+
+  await expect(page.locator('.session')).toHaveCount(2)
+  await expect(page.locator('.session').first()).toContainText('Second session')
+  await expect(page.getByTestId('session-allowance-exhausted-message')).toBeVisible()
 })
 
 test('edits a complete session with modern controls and can cancel or save', async ({ page }) => {

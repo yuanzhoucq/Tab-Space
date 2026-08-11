@@ -193,6 +193,7 @@
   "planPremium": "Pro",
   "planPlus": "Plus · Permanent",
   "plusOwnedSummary": "Les sessions illimitées et toutes les fonctions essentielles vous appartiennent définitivement. Vous recevez aussi 5 requêtes d’IA par semaine ; Pro rend l’IA illimitée.",
+  "freeSessionAllowanceUsed": "Session enregistrée. Votre quota Free est épuisé ; passez à une offre supérieure pour en enregistrer une autre.",
   "annualTrial": "Essai gratuit de 7 jours",
   "proOnlyInfo": "Free et Plus incluent 5 requêtes d’IA par semaine. Pro supprime la limite hebdomadaire.",
   "quotaResetsAt": "Réinitialisation le {date}",

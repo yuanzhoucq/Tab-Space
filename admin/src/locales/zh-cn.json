@@ -193,6 +193,7 @@
   "planPremium": "Pro",
   "planPlus": "Plus · 永久",
   "plusOwnedSummary": "无限会话及全部基础功能永久属于你；每周另含 5 次 AI 请求，Pro 则不限次数。",
+  "freeSessionAllowanceUsed": "会话已保存。Free 会话额度已用完；升级后可继续保存。",
   "annualTrial": "免费试用 7 天",
   "proOnlyInfo": "Free 和 Plus 每周包含 5 次 AI 请求；Pro 不受每周额度限制。",
   "quotaResetsAt": "{date} 重置",

@@ -193,6 +193,7 @@
   "planPremium": "Pro",
   "planPlus": "Plus · Kalıcı",
   "plusOwnedSummary": "Sınırsız oturum ve tüm temel özellikler kalıcı olarak sizindir. Ayrıca haftada 5 AI isteği alırsınız; Pro AI kullanımını sınırsız yapar.",
+  "freeSessionAllowanceUsed": "Oturum kaydedildi. Free oturum kotanız doldu; bir tane daha kaydetmek için yükseltin.",
   "annualTrial": "7 günlük ücretsiz deneme",
   "proOnlyInfo": "Free ve Plus haftada 5 AI isteği içerir. Pro haftalık sınırı kaldırır.",
   "quotaResetsAt": "{date} tarihinde sıfırlanır",
