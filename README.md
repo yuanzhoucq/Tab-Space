@@ -1,7 +1,7 @@
-Tab Space saves, organizes, and restores browser tabs. Version 4.0 (currently
-in RC) adds Chrome, Microsoft Edge, and Firefox support through a companion
-extension while Safari stays built in, and the session database remains in the
-native Mac app.
+Tab Space saves, organizes, and restores browser tabs. Version 4.1 adds a
+systemwide Mac switcher for open and saved tabs. Safari stays built in, while
+Chrome, Microsoft Edge, and Firefox connect through companion extensions; the
+session database remains in the native Mac app.
 
 This repository is public so the web-facing code can be audited: the marketing
 site, the Admin dashboard, and the shared Chrome/Edge/Firefox WebExtension. It

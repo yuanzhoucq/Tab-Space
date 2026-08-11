@@ -366,7 +366,7 @@ header {
     letter-spacing: 0.02em;
 }
 
-/* Version 4.0 launch stories */
+/* Release launch stories */
 .release-experience {
     display: grid;
     gap: 28px;
@@ -390,6 +390,37 @@ header {
     border-radius: 50%;
     filter: blur(1px);
     pointer-events: none;
+}
+
+.release-story-switcher {
+    padding: 68px 68px 0;
+    background:
+        radial-gradient(circle at 84% 12%, rgba(119, 172, 255, 0.32), transparent 30%),
+        radial-gradient(circle at 10% 92%, rgba(250, 128, 114, 0.2), transparent 34%),
+        linear-gradient(145deg, #172138 0%, #182f5b 52%, #2457a5 100%);
+}
+
+.release-story-switcher::before {
+    width: 520px;
+    height: 520px;
+    top: -360px;
+    right: -80px;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+}
+
+.release-story-switcher .story-link {
+    margin-top: 26px;
+}
+
+.release-story-switcher .switcher-media {
+    overflow: visible;
+    border: 0;
+    border-radius: 22px 22px 0 0;
+    background: transparent;
+}
+
+.release-story-switcher .switcher-media img {
+    border-radius: 22px 22px 0 0;
 }
 
 .release-story-ai {
@@ -1282,6 +1313,7 @@ footer .divider {
 
 /* Responsive */
 @media (max-width: 900px) {
+    .release-story-switcher,
     .release-story-ai,
     .release-story-browsers {
         padding: 48px 40px 0;
@@ -1334,6 +1366,7 @@ footer .divider {
         border-radius: 24px;
     }
 
+    .release-story-switcher,
     .release-story-ai,
     .release-story-browsers {
         padding: 36px 22px 0;
