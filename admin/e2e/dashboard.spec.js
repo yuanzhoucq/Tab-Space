@@ -1267,11 +1267,11 @@ test('offers multi-browser setup from Settings and gates it behind Pro', async (
   await expect(card.getByTestId('multi-browser-guide'))
     .toHaveAttribute('href', 'https://mytab.space/multi-browser.html')
 
-  // Subscription, AI, then multi-browser lead the page: the paid features stay
+  // Subscription, multi-browser, then AI lead the page: the paid features stay
   // above the general preferences.
   await expect(page.locator('.settings-content > .card').nth(0)).toHaveAttribute('data-testid', 'subscription-card')
-  await expect(page.locator('.settings-content > .card').nth(1)).toContainText('AI')
-  await expect(page.locator('.settings-content > .card').nth(2)).toHaveAttribute('data-testid', 'multi-browser-card')
+  await expect(page.locator('.settings-content > .card').nth(1)).toHaveAttribute('data-testid', 'multi-browser-card')
+  await expect(page.locator('.settings-content > .card').nth(2)).toContainText('AI')
 
   await card.getByTestId('multi-browser-upgrade').click()
   await expect(page.getByTestId('plan-comparison')).toBeVisible()

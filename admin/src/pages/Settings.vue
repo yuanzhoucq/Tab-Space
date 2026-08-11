@@ -80,6 +80,46 @@
           </p>
         </div>
 
+        <!-- Multi-browser (Pro). Gated on protocol v2 for the same reason as
+             the blocks around it: the pairing flow only exists in the 4.0 app. -->
+        <div class="card" v-if="aiEnabled" data-testid="multi-browser-card">
+          <h2 class="section-title">{{lang.multiBrowser || 'Multi-browser'}}</h2>
+
+          <div class="feature-lede">
+            <v-icon name="globe" class="feature-lede-icon"></v-icon>
+            <div class="feature-lede-text">
+              <p class="feature-title">{{lang.featureMultiBrowserTitle || 'Multi-browser support'}}</p>
+              <p class="help-text feature-desc">{{lang.featureMultiBrowserDesc || 'Use the same sessions in Safari, Chrome, Microsoft Edge, and Firefox.'}}</p>
+            </div>
+            <span class="plan-pill" :class="{ unlocked: isPremium }" data-testid="multi-browser-pill">
+              {{lang.planPremium || 'Pro'}}
+            </span>
+          </div>
+
+          <p v-if="isWebExtension" class="connected-note" data-testid="multi-browser-connected">
+            <v-icon name="check-circle" class="connected-icon"></v-icon>
+            <span>{{lang.multiBrowserConnected || 'This browser is connected to Tab Space.'}}</span>
+          </p>
+
+          <ol class="steps" data-testid="multi-browser-steps">
+            <li>{{lang.multiBrowserStep1 || 'Open Tab Space on your Mac, choose Multi-Browser Support, then Show Pairing Code.'}}</li>
+            <li>{{lang.multiBrowserStep2 || 'Install the Tab Space extension in Chrome, Microsoft Edge, or Firefox 121 or later.'}}</li>
+            <li>{{lang.multiBrowserStep3 || 'Enter the six-digit code in the extension to connect it.'}}</li>
+          </ol>
+
+          <div v-if="!isPremium" class="subscription-actions">
+            <button type="button" class="primary-action"
+                    data-testid="multi-browser-upgrade" @click="openSubscription">
+              {{lang.upgrade || 'Upgrade'}}
+            </button>
+          </div>
+          <p v-if="!isPremium" class="help-text">{{lang.multiBrowserProNote || 'Multi-browser support is included with Pro.'}}</p>
+          <p class="help-text">
+            <a href="https://mytab.space/multi-browser.html" target="_blank" rel="noopener"
+               data-testid="multi-browser-guide">{{lang.multiBrowserGuide || 'Multi-browser setup guide'}}</a>
+          </p>
+        </div>
+
         <!-- AI (only when the native extension speaks protocol v2) -->
         <div class="card" v-if="aiEnabled">
           <h2 class="section-title">{{lang.aiSection || 'AI'}}</h2>
@@ -119,46 +159,6 @@
             ></textarea>
             <p class="help-text">{{lang.suggestedTagsHint || 'Comma-separated tags the AI will prefer to use'}}</p>
           </div>
-        </div>
-
-        <!-- Multi-browser (Pro). Gated on protocol v2 for the same reason as
-             the blocks above: the pairing flow only exists in the 4.0 app. -->
-        <div class="card" v-if="aiEnabled" data-testid="multi-browser-card">
-          <h2 class="section-title">{{lang.multiBrowser || 'Multi-browser'}}</h2>
-
-          <div class="feature-lede">
-            <v-icon name="globe" class="feature-lede-icon"></v-icon>
-            <div class="feature-lede-text">
-              <p class="feature-title">{{lang.featureMultiBrowserTitle || 'Multi-browser support'}}</p>
-              <p class="help-text feature-desc">{{lang.featureMultiBrowserDesc || 'Use the same sessions in Safari, Chrome, Microsoft Edge, and Firefox.'}}</p>
-            </div>
-            <span class="plan-pill" :class="{ unlocked: isPremium }" data-testid="multi-browser-pill">
-              {{lang.planPremium || 'Pro'}}
-            </span>
-          </div>
-
-          <p v-if="isWebExtension" class="connected-note" data-testid="multi-browser-connected">
-            <v-icon name="check-circle" class="connected-icon"></v-icon>
-            <span>{{lang.multiBrowserConnected || 'This browser is connected to Tab Space.'}}</span>
-          </p>
-
-          <ol class="steps" data-testid="multi-browser-steps">
-            <li>{{lang.multiBrowserStep1 || 'Open Tab Space on your Mac, choose Multi-Browser Support, then Show Pairing Code.'}}</li>
-            <li>{{lang.multiBrowserStep2 || 'Install the Tab Space extension in Chrome, Microsoft Edge, or Firefox 121 or later.'}}</li>
-            <li>{{lang.multiBrowserStep3 || 'Enter the six-digit code in the extension to connect it.'}}</li>
-          </ol>
-
-          <div v-if="!isPremium" class="subscription-actions">
-            <button type="button" class="primary-action"
-                    data-testid="multi-browser-upgrade" @click="openSubscription">
-              {{lang.upgrade || 'Upgrade'}}
-            </button>
-          </div>
-          <p v-if="!isPremium" class="help-text">{{lang.multiBrowserProNote || 'Multi-browser support is included with Pro.'}}</p>
-          <p class="help-text">
-            <a href="https://mytab.space/multi-browser.html" target="_blank" rel="noopener"
-               data-testid="multi-browser-guide">{{lang.multiBrowserGuide || 'Multi-browser setup guide'}}</a>
-          </p>
         </div>
 
         <!-- General Preferences -->
