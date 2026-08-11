@@ -10,18 +10,19 @@
   The look is the old sidebar tips note (the .tips block removed with the
   static tips feed): a soft coral note with a salmon left bar and italic text.
 
-  The dashboard cannot open the switcher or its settings: there is no bridge
-  message for either. This tells; the native app does.
+  The dashboard cannot open the switcher or its settings. It can open the
+  containing app when a newly updated helper still needs its first launch.
 -->
 <template>
   <div v-if="switcherHintAvailable" class="switcher-hint" data-testid="switcher-hint">
     <button type="button"
             class="switcher-chip"
+            :class="{ 'needs-app-launch': switcherNeedsAppLaunch }"
             data-testid="switcher-hint-chip"
             :aria-expanded="open ? 'true' : 'false'"
             @click="toggle">
-      <kbd class="switcher-key">{{ shortcut }}</kbd>
-      <span class="switcher-chip-text">{{ lang.switcherHintChip }}</span>
+      <kbd v-if="!switcherNeedsAppLaunch" class="switcher-key">{{ shortcut }}</kbd>
+      <span class="switcher-chip-text">{{ switcherNeedsAppLaunch ? lang.switcherActivationChip : lang.switcherHintChip }}</span>
     </button>
 
     <div v-if="open"
@@ -29,10 +30,20 @@
          role="dialog"
          :aria-label="lang.switcherTitle"
          data-testid="switcher-hint-popover">
-      <p class="switcher-popover-title">{{ lang.switcherTitle }}</p>
-      <p class="switcher-popover-body">{{ intro }}</p>
-      <p class="switcher-popover-body">{{ lang.switcherPlans }}</p>
-      <p class="switcher-popover-note">{{ lang.switcherSettingsNote }}</p>
+      <template v-if="switcherNeedsAppLaunch">
+        <p class="switcher-popover-title">{{ lang.switcherTitle }}</p>
+        <p class="switcher-popover-body">{{ activationBody }}</p>
+        <button type="button"
+                class="switcher-open-app"
+                data-testid="switcher-open-app"
+                @click="openApp">{{ lang.switcherActivationAction }}</button>
+      </template>
+      <template v-else>
+        <p class="switcher-popover-title">{{ lang.switcherTitle }}</p>
+        <p class="switcher-popover-body">{{ intro }}</p>
+        <p class="switcher-popover-body">{{ lang.switcherPlans }}</p>
+        <p class="switcher-popover-note">{{ lang.switcherSettingsNote }}</p>
+      </template>
     </div>
   </div>
 </template>
@@ -45,17 +56,22 @@ export default {
   name: 'SwitcherHint',
   data() {
     return {
-      open: false
+      open: false,
+      statusCheckTimers: []
     }
   },
   computed: {
-    ...mapState(['lang']),
-    ...mapGetters(['switcherHintAvailable']),
+    ...mapState(['lang', 'bridge']),
+    ...mapGetters(['switcherHintAvailable', 'switcherNeedsAppLaunch']),
     shortcut() {
       return Constants.switcherShortcut
     },
     intro() {
       const template = this.lang.switcherIntro || 'Press {shortcut} anywhere on your Mac.'
+      return template.replace('{shortcut}', this.shortcut)
+    },
+    activationBody() {
+      const template = this.lang.switcherActivationBody || 'After updating, open Tab Space once to enable {shortcut} and the menu bar switcher.'
       return template.replace('{shortcut}', this.shortcut)
     }
   },
@@ -66,10 +82,24 @@ export default {
   beforeDestroy() {
     document.removeEventListener('keydown', this.onKeydown)
     document.removeEventListener('click', this.onDocumentClick)
+    this.statusCheckTimers.forEach(clearTimeout)
+    this.statusCheckTimers = []
   },
   methods: {
     toggle() {
       this.open = !this.open
+    },
+    openApp() {
+      if (!this.bridge) return
+      this.bridge.send({ cmd: 'OpenTabSpaceApp' })
+      // The host app repairs and relaunches the helper asynchronously. Recheck
+      // while Safari stays in front as well as when it regains focus.
+      this.statusCheckTimers.forEach(clearTimeout)
+      this.statusCheckTimers = [750, 1500, 3000, 5000].map(delay =>
+        setTimeout(() => {
+          if (this.bridge) this.bridge.send({ cmd: 'CheckSwitcherHelperStatus' })
+        }, delay)
+      )
     },
     onKeydown(event) {
       if (event.key === 'Escape' && this.open) this.open = false
@@ -116,6 +146,11 @@ export default {
 
 .switcher-chip:hover {
   background-color: rgba(250, 128, 114, 0.14);
+}
+
+.switcher-chip.needs-app-launch {
+  background-color: rgba(235, 82, 5, 0.14);
+  color: var(--text-primary);
 }
 
 /* The shortcut stays upright so it reads as a key, not as part of the italic
@@ -181,6 +216,23 @@ export default {
   line-height: 1.45;
   color: var(--text-secondary);
   opacity: 0.85;
+}
+
+.switcher-open-app {
+  margin-top: 4px;
+  padding: 7px 12px;
+  border: 0;
+  border-radius: 7px;
+  background: var(--primary-color);
+  color: #fff;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.switcher-open-app:hover {
+  background: var(--primary-color-hover);
 }
 
 @media (prefers-color-scheme: dark) {

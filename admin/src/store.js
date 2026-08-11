@@ -92,6 +92,9 @@ const store = new Vuex.Store({
         // (Safari direct/legacy bridges). WebExtensions provide an explicit
         // list so older local helpers can keep unsupported AI hidden.
         nativeCapabilities: null,
+        // Safari's direct bridge reports whether the current app build's menu
+        // bar helper is alive. `unknown` keeps older native builds quiet.
+        switcherHelperStatus: "unknown", // "unknown" | "ready" | "needsAppLaunch"
         enhancingSessionId: "",
         splittingSessionId: "",
         splitPreview: null,          // { clusters, totalTabs, originalUuid }
@@ -154,14 +157,18 @@ const store = new Vuex.Store({
         // macOS-only surface of the desktop app, so a phone or iPad never
         // qualifies. A companion browser reaches it through the local helper
         // and says so with a capability; Safari's direct bridge advertises
-        // none, so the mention rides on the app being there at all.
+        // none, so its dedicated helper-status reply is the proof instead.
         switcherAvailable: state => !!state.bridge
             && !isHandheld()
-            && (state.bridge.mode === "direct"
+            && ((state.bridge.mode === "direct" && state.switcherHelperStatus === "ready")
                 || (Array.isArray(state.nativeCapabilities)
                     && state.nativeCapabilities.includes(Constants.switcherCapability))),
+        switcherNeedsAppLaunch: state => !!state.bridge
+            && !isHandheld()
+            && state.bridge.mode === "direct"
+            && state.switcherHelperStatus === "needsAppLaunch",
         switcherHintAvailable: (state, getters) => Constants.switcherHintEnabled
-            && getters.switcherAvailable,
+            && (getters.switcherAvailable || getters.switcherNeedsAppLaunch),
         isPremium: state => state.entitlementTier === "pro",
         hasPermanentPlus: state => state.entitlementTier === "plus",
         // Whether the permanent Plus grant was ever made, regardless of whether
@@ -270,6 +277,11 @@ const store = new Vuex.Store({
         },
         setNativeCapabilities(state, capabilities) {
             state.nativeCapabilities = Array.isArray(capabilities) ? capabilities : null
+        },
+        setSwitcherHelperStatus(state, status) {
+            state.switcherHelperStatus = ["ready", "needsAppLaunch"].includes(status)
+                ? status
+                : "unknown"
         },
         setEnhancingSessionId(state, newId) {
             state.enhancingSessionId = newId

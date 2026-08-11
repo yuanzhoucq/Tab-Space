@@ -85,7 +85,8 @@ async function openDashboard(page, options = {}) {
     entitlementTier,
     plusDisplayPrice,
     quotaRemaining,
-    aiConsentAccepted
+    aiConsentAccepted,
+    switcherHelperStatus
   }) => {
     const clone = value => JSON.parse(JSON.stringify(value))
     const settingsKey = 'tabspace-e2e-settings'
@@ -110,6 +111,7 @@ async function openDashboard(page, options = {}) {
     // tier while the dashboard is in the background, exactly as StoreKit does.
     let currentTier = entitlementTier || (subscriptionStatus === 'active' ? 'pro' : 'free')
     let currentStatus = subscriptionStatus
+    let currentSwitcherHelperStatus = switcherHelperStatus
 
     window.__tabspaceBridgeCommands = []
     window.__tabspaceRestoredSessions = []
@@ -161,6 +163,18 @@ async function openDashboard(page, options = {}) {
               ? nativeProtocolVersion
               : (storedSettings[payload.name] || '')
           })
+          return
+        }
+
+        if (name === 'CheckSwitcherHelperStatus') {
+          if (currentSwitcherHelperStatus) {
+            emit('ReturnSwitcherHelperStatus', { status: currentSwitcherHelperStatus })
+          }
+          return
+        }
+
+        if (name === 'OpenTabSpaceApp') {
+          currentSwitcherHelperStatus = 'ready'
           return
         }
 
@@ -378,7 +392,8 @@ async function openDashboard(page, options = {}) {
     entitlementTier: options.entitlementTier || '',
     plusDisplayPrice: options.plusDisplayPrice || '',
     quotaRemaining: options.quotaRemaining,
-    aiConsentAccepted: options.aiConsentAccepted !== false
+    aiConsentAccepted: options.aiConsentAccepted !== false,
+    switcherHelperStatus: options.switcherHelperStatus || ''
   })
 
   await page.route('**/favicon.ico', route => route.fulfill({ status: 204, body: '' }))
@@ -546,12 +561,40 @@ test('keeps the unreleased 4.1 introduction hidden everywhere', async ({ page })
   await expect(page.getByTestId('whats-new-modal')).toHaveCount(0)
 })
 
-test('keeps the tab switcher hint hidden until every bridge can prove support', async ({ page }) => {
+test('keeps the tab switcher hint hidden when an older bridge cannot prove support', async ({ page }) => {
   await openDashboard(page, { initialSessions: sessions })
 
   await expect(page.getByTestId('switcher-hint')).toHaveCount(0)
   await expect(page.getByTestId('switcher-hint-chip')).toHaveCount(0)
   await expect(page.getByTestId('switcher-hint-popover')).toHaveCount(0)
+})
+
+test('guides an updated Safari user to launch the helper, then reveals the switcher', async ({ page }) => {
+  await openDashboard(page, {
+    initialSessions: sessions,
+    switcherHelperStatus: 'needsAppLaunch'
+  })
+
+  const hint = page.getByTestId('switcher-hint')
+  await expect(hint).toBeVisible()
+  await expect(page.getByTestId('switcher-hint-chip')).toContainText('open Tab Space to finish setup')
+  await page.getByTestId('switcher-hint-chip').click()
+  await expect(page.getByTestId('switcher-open-app')).toBeVisible()
+  await page.getByTestId('switcher-open-app').click()
+  await expect.poll(() => bridgeCommandCount(page, 'OpenTabSpaceApp')).toBe(1)
+  await expect(page.getByTestId('switcher-hint-chip')).toContainText('search your open tabs')
+})
+
+test('shows the switcher shortcut when Safari reports a current live helper', async ({ page }) => {
+  await openDashboard(page, {
+    initialSessions: sessions,
+    switcherHelperStatus: 'ready'
+  })
+
+  await expect(page.getByTestId('switcher-hint-chip')).toContainText('search your open tabs')
+  await page.getByTestId('switcher-hint-chip').click()
+  await expect(page.getByTestId('switcher-hint-popover')).toContainText('Press ⌥Tab anywhere on your Mac')
+  await expect(page.getByTestId('switcher-open-app')).toHaveCount(0)
 })
 
 test('keeps the rating banner out of the way of the iOS banner', async ({ page }) => {
@@ -1372,8 +1415,7 @@ test('enables AI and subscription UI through a capable companion WebExtension', 
   await expect(page.locator('.session')).toHaveCount(2)
   await expect(page.getByTestId('ai-enhance-session').first()).toBeVisible()
   await expect.poll(() => bridgeCommandCount(page, 'PrepareAI')).toBe(1)
-  // Even a capable helper stays quiet until Safari can report the same proof.
-  await expect(page.getByTestId('switcher-hint-chip')).toHaveCount(0)
+  await expect(page.getByTestId('switcher-hint-chip')).toContainText('search your open tabs')
   await page.getByRole('link', { name: 'Settings' }).click()
   await expect(page.getByTestId('subscription-card')).toBeVisible()
   await expect.poll(() => bridgeCommandCount(page, 'CheckSubscriptionStatus')).toBeGreaterThan(0)

@@ -347,6 +347,9 @@ export default {
           console.log("Sessions changed remotely; refreshing bookmarks.")
           if (this.bridge) this.bridge.send({cmd: "CheckBookmarks"})
           break
+        case "ReturnSwitcherHelperStatus":
+          this.$store.commit("setSwitcherHelperStatus", data.status)
+          break
         // --- AI (protocol v2) replies ---
         case "ReturnEnhancedSession":
           this.handleEnhancedSession(data)
@@ -634,11 +637,16 @@ export default {
       this.handleWindowFocus()
     },
     handleWindowFocus() {
+      this.refreshSwitcherHelperStatus()
       // Only worth a round trip while a purchase/restore is still unconfirmed.
       // Not gated on purchaseRedirecting: closing the dialog clears that flag
       // even though the purchase is still running in the host app.
       if (!this.$store.state.purchaseAwaitingActivation) return
       this.startSubscriptionPolling()
+    },
+    refreshSwitcherHelperStatus(bridge = this.bridge) {
+      if (!bridge || bridge.mode !== "direct") return
+      bridge.send({cmd: "CheckSwitcherHelperStatus"})
     },
     markDashboardReady() {
       if (window.__tabspace_bridge && typeof window.__tabspace_bridge.markReady === "function") {
@@ -648,6 +656,7 @@ export default {
     },
     requestInitialData(bridge = this.bridge) {
       if (bridge && this.directMode) {
+        this.refreshSwitcherHelperStatus(bridge)
         this.startBookmarkRefresh(bridge)
         return
       }
