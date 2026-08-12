@@ -6,23 +6,27 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
 
-  <title>Option-Tab: One Switcher for the Web — Tab Space 4.1</title>
-  <meta name="description"
-    content="Tab Space 4.1 brings every open and saved browser tab into one systemwide Mac switcher. Press Option-Tab to search Safari, Chrome, Edge, Firefox, and your private tab archive.">
+  <title>Option-Tab Switches the Web — Tab Space</title>
+  <meta name="description" content="Search every browser tab you have open and every session you saved with Option-Tab. Tab Space brings Safari, Chrome, Edge, Firefox, and your private archive into one Mac switcher.">
   <link rel="canonical" href="https://mytab.space/switcher">
 
   <meta name="twitter:site" content="@joyuer">
   <meta name="twitter:card" content="summary_large_image">
-  <meta property="og:title" content="Option-Tab: One Switcher for the Web">
-  <meta property="og:description"
-    content="Everything open and everything saved, in one search. New in Tab Space 4.1 for Mac.">
+  <meta name="twitter:title" content="Option-Tab switches the web — Tab Space">
+  <meta name="twitter:description" content="Every tab you have open and every session you saved, in one private Mac switcher.">
+  <meta name="twitter:image" content="https://mytab.space/assets/img/tab-space-social.webp">
+  <meta property="og:title" content="Option-Tab switches the web — Tab Space">
+  <meta property="og:description" content="Every tab you have open and every session you saved, in one private Mac switcher.">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://mytab.space/switcher">
-  <meta property="og:image" content="https://mytab.space/assets/img/switcher-4-1.webp">
+  <meta property="og:image" content="https://mytab.space/assets/img/tab-space-social.webp">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
 
   <link rel="icon" type="image/png" href="icon.png">
   <link rel="apple-touch-icon" href="icon.png">
   <link rel="stylesheet" href="assets/css/main.css">
+  <link rel="stylesheet" href="assets/css/home-v2.css">
   <link rel="stylesheet" href="assets/css/switcher.css">
 
   <script type="application/ld+json">
@@ -35,122 +39,122 @@
     "url": "https://mytab.space/switcher",
     "downloadUrl": "https://apps.apple.com/app/tab-space/id1473726602?mt=12",
     "softwareVersion": "4.1",
-    "description": "A systemwide Mac switcher for every browser tab that is open now or was saved before.",
+    "description": "A private, systemwide Mac switcher for every browser tab that is open now or was saved before.",
     "author": { "@type": "Person", "name": "Joyuer", "url": "https://joyuer.cn/" }
   }
   </script>
 </head>
 
-<body class="switcher-page">
-  <header>
-    <a class="nav-brand" href="index.html">
-      <img src="icon.png" width="28" height="28" alt="">
-      <span>Tab Space</span>
-    </a>
-    <nav class="nav-links" aria-label="Main navigation">
-      <a class="nav-hide-mobile" href="#how-it-works">How it works</a>
-      <a class="nav-hide-mobile" href="#privacy">Privacy</a>
-      <a href="index.html">All features</a>
-      <a class="nav-cta" href="https://apps.apple.com/app/tab-space/id1473726602?mt=12"
-        target="_blank" rel="noopener">Download</a>
-    </nav>
+<body class="home-v2 switcher-page">
+  <header class="site-header">
+    <div class="nav-shell">
+      <a class="nav-brand" href="index.html" aria-label="Tab Space home">
+        <img src="icon.png" width="30" height="30" alt="">
+        <span>Tab Space</span>
+      </a>
+      <nav class="nav-links" aria-label="Primary navigation">
+        <a class="nav-item" href="#how-it-works">How it works</a>
+        <a class="nav-item nav-item-optional" href="#browsers">Browsers</a>
+        <a class="nav-item nav-item-optional" href="#privacy">Privacy</a>
+        <a class="nav-item" href="index.html#pricing">Pricing</a>
+        <a href="index-zh.html" lang="zh-Hans">中文</a>
+        <a class="nav-download" href="https://apps.apple.com/app/tab-space/id1473726602?mt=12" target="_blank" rel="noopener">Get the app</a>
+      </nav>
+    </div>
   </header>
 
-  <main>
+  <main id="top">
     <section class="switcher-hero">
       <div class="switcher-shell switcher-hero-copy">
-        <p class="switcher-eyebrow">New in Tab Space 4.1 · macOS</p>
-        <h1><span>Command-Tab switches apps.</span><br>Option-Tab switches the web.</h1>
+        <span class="switcher-eyebrow-pill"><i aria-hidden="true"></i>Browser Tab Switcher for Mac</span>
+        <h1>Option-Tab<br><span>switches the web.</span></h1>
         <p class="switcher-lede">
-          One search for every tab open now and every tab you saved before. Press <kbd>⌥</kbd><kbd>Tab</kbd>
+          Search every tab you have open and every session you saved. Press <kbd>⌥</kbd><kbd>Tab</kbd>
           from anywhere on your Mac, type what you remember, and jump straight back in.
         </p>
         <div class="switcher-actions">
-          <a class="switcher-button switcher-button-primary"
-            href="https://apps.apple.com/app/tab-space/id1473726602?mt=12" target="_blank" rel="noopener">
-            Get Tab Space for Mac
-          </a>
-          <a class="switcher-button switcher-button-secondary" href="#how-it-works">See how it works</a>
+          <a class="switcher-button switcher-button-primary" href="https://apps.apple.com/app/tab-space/id1473726602?mt=12" target="_blank" rel="noopener">Download free for Mac</a>
+          <a class="switcher-button switcher-button-secondary" href="#demo">Watch the demo</a>
         </div>
+        <p class="switcher-hero-note">macOS 11+ · No account required · Your sessions stay in your iCloud</p>
       </div>
 
-      <div class="switcher-shell switcher-hero-media">
-        <div class="switcher-glow" aria-hidden="true"></div>
-        <img src="assets/img/switcher-4-1.webp" width="1280" height="764"
-          alt="Tab Space Browser Tab Switcher showing one search across open Safari tabs and a previously saved session">
-      </div>
+      <figure class="switcher-shell switcher-demo" id="demo">
+        <div class="switcher-demo-topbar" aria-hidden="true">
+          <span class="switcher-traffic-lights"><i></i><i></i><i></i></span>
+          <span>Tab Space · Browser Tab Switcher</span>
+          <span></span>
+        </div>
+        <video autoplay muted loop playsinline controls preload="metadata" poster="assets/img/switcher-demo-poster.webp" aria-label="Tab Space saves a browser session and searches open and saved tabs across browsers">
+          <source src="assets/tab-space-switcher-film.mp4" type="video/mp4">
+        </video>
+        <figcaption><span><strong>One shortcut, every browser.</strong> Open and saved tabs share one search.</span><span>Real product · No mockup</span></figcaption>
+      </figure>
     </section>
 
     <section class="switcher-intro" id="how-it-works">
       <div class="switcher-shell">
-        <p class="switcher-eyebrow">Browsing has a before and an after</p>
-        <h2>Open and saved belong in the same place.</h2>
+        <p class="switcher-eyebrow">Open and saved, together</p>
+        <h2>Stop hunting for tabs.<br>Start returning to ideas.</h2>
         <p class="switcher-section-lede">
-          Browsers are good at showing what is open. Tab Space also remembers what you chose to close. Version 4.1
-          brings both into a single, keyboard-first view, so yesterday’s research is as reachable as the tab beside
-          this one.
+          Browsers show what is open. Tab Space also remembers what you chose to close. The switcher brings both
+          into one keyboard-first view, so yesterday’s research is as reachable as the tab beside this one.
         </p>
 
         <div class="switcher-feature-grid">
           <article class="switcher-feature-card">
             <span class="switcher-card-number">01</span>
-            <h3>Switch, don’t hunt</h3>
-            <p>Search titles and addresses, use the arrow keys to choose, then press Return. The right browser and
-              tab come forward for you.</p>
+            <h3>Search what you remember</h3>
+            <p>Type a title, address, or the fragment still in your head. Search covers open tabs and your saved session library.</p>
           </article>
           <article class="switcher-feature-card">
             <span class="switcher-card-number">02</span>
-            <h3>Save without leaving</h3>
-            <p><kbd>⌘S</kbd> saves and closes the selected tab. <kbd>⇧⌘S</kbd> saves and closes every open window.
-              Hold Option when you want to save without closing.</p>
+            <h3>Jump to the exact tab</h3>
+            <p>Use the arrow keys and press Return. Tab Space brings the right browser, window, and tab forward—not merely the browser app.</p>
           </article>
           <article class="switcher-feature-card">
             <span class="switcher-card-number">03</span>
-            <h3>Find what you closed</h3>
-            <p>Search every saved session locally on your Mac. Archive search is included on every plan, because
-              your own memory should never sit behind another gate.</p>
+            <h3>Save the whole context</h3>
+            <p>Turn a browser window into a named session, close the tabs, and come back later without rebuilding your train of thought.</p>
           </article>
         </div>
       </div>
     </section>
 
-    <section class="switcher-browsers">
+    <section class="switcher-browsers" id="browsers">
       <div class="switcher-shell switcher-split">
         <div>
-          <p class="switcher-eyebrow">One browsing context</p>
+          <p class="switcher-eyebrow">One workspace for the whole web</p>
           <h2>Four browsers.<br>One reflex.</h2>
           <p>
-            Safari is included for everyone. With Pro, the same Option-Tab search also reaches tabs in Chrome,
-            Microsoft Edge, and Firefox. The browser becomes a destination, not a boundary.
+            Safari is part of the core app. With Pro, the same Option-Tab search also reaches open tabs in Chrome,
+            Microsoft Edge, and Firefox 121 or later. Multi-browser support is currently in beta.
           </p>
           <a class="switcher-text-link" href="multi-browser.html">How multi-browser support works →</a>
         </div>
         <ul class="switcher-browser-list" aria-label="Supported browsers">
-          <li><span class="browser-orb browser-orb-safari">S</span><strong>Safari</strong><em>Included</em></li>
-          <li><span class="browser-orb browser-orb-chrome">C</span><strong>Chrome</strong><em>Pro</em></li>
-          <li><span class="browser-orb browser-orb-edge">E</span><strong>Microsoft Edge</strong><em>Pro</em></li>
-          <li><span class="browser-orb browser-orb-firefox">F</span><strong>Firefox</strong><em>Pro</em></li>
+          <li><img src="assets/img/browser-safari.png" alt="" aria-hidden="true"><strong>Safari</strong><em>Core app</em></li>
+          <li><img src="assets/img/browser-chrome.png" alt="" aria-hidden="true"><strong>Chrome</strong><em>Pro beta</em></li>
+          <li><img src="assets/img/browser-edge.png" alt="" aria-hidden="true"><strong>Microsoft Edge</strong><em>Pro beta</em></li>
+          <li><img src="assets/img/browser-firefox.png" alt="" aria-hidden="true"><strong>Firefox</strong><em>Pro beta</em></li>
         </ul>
       </div>
     </section>
 
     <section class="switcher-ai" id="privacy">
       <div class="switcher-shell switcher-split">
-        <div class="switcher-ai-mark" aria-hidden="true">
-          <span>AI</span>
-          <i>Optional</i>
-        </div>
+        <div class="switcher-ai-mark" aria-hidden="true"><span>AI</span><i>Optional</i></div>
         <div>
-          <p class="switcher-eyebrow">AI with a narrow job</p>
-          <h2>It organizes what you keep. It never decides what you browse.</h2>
+          <p class="switcher-eyebrow">Private by default</p>
+          <h2>AI helps organize what you save. It never watches what you browse.</h2>
           <p>
             AI is off by default. After a clear disclosure and your consent, it can name a saved session, suggest
             tags, or split mixed tabs by topic. Only page titles and URLs are sent—never page contents—and content
             logging is off. No developer-operated copy is retained after the request is answered.
           </p>
           <p>
-            Your sessions remain in the native Mac database, sync through your own iCloud, and can be exported as
-            Text, Markdown, HTML, or a complete backup.
+            Your sessions remain in a native database on your device, sync through your own iCloud, and can be
+            exported as Text, Markdown, HTML, or a complete backup. No Tab Space account is required.
           </p>
           <a class="switcher-text-link" href="privacy.html">Read the complete privacy policy →</a>
         </div>
@@ -159,48 +163,59 @@
 
     <section class="switcher-proof">
       <div class="switcher-shell">
-        <p class="switcher-eyebrow">Built for the long context</p>
-        <h2>Seven years of making tabs easier to leave—and easier to find again.</h2>
-        <div class="switcher-stats">
-          <div><strong>2019</strong><span>First released on the Mac App Store</span></div>
-          <div><strong>4.0</strong><span>Average from 236 ratings worldwide</span></div>
-          <div><strong>15</strong><span>Languages supported</span></div>
-          <div><strong>4+</strong><span>App Store editorial collections</span></div>
+        <div class="switcher-apple-proof">
+          <img src="assets/img/app-store-icon.png" width="78" height="78" alt="" aria-hidden="true">
+          <div>
+            <p class="switcher-eyebrow">Apple-curated App Store collection</p>
+            <h2>Included in Safari Essentials.<br>Built independently since 2019.</h2>
+            <p>Tab Space has appeared in Apple-curated App Store collections, including Safari Essentials and guides for people setting up a new Mac.</p>
+          </div>
         </div>
-        <p class="switcher-proof-note">
-          Previously included in at least four App Store editorial collections, including Essential Safari
-          Extensions.
-        </p>
+        <div class="switcher-stats" aria-label="Tab Space product facts">
+          <div><strong>2019</strong><span>First released on the Mac App Store</span></div>
+          <div><strong>iCloud</strong><span>Syncs through your own Apple account</span></div>
+          <div><strong>4</strong><span>Browsers on one Mac</span></div>
+          <div><strong>3</strong><span>Mac, iPhone, and iPad</span></div>
+        </div>
       </div>
     </section>
 
     <section class="switcher-final">
       <div class="switcher-shell">
-        <p class="switcher-eyebrow">Tab Space 4.1 for Mac</p>
+        <p class="switcher-eyebrow">Your web, one shortcut away</p>
         <h2>Press Option-Tab.<br>Find any tab.</h2>
-        <p>Everything open and everything saved, in one search.</p>
-        <a class="switcher-button switcher-button-primary"
-          href="https://apps.apple.com/app/tab-space/id1473726602?mt=12" target="_blank" rel="noopener">
-          Download on the Mac App Store
-        </a>
+        <p>Everything open and everything saved, in one private search.</p>
+        <a class="switcher-button switcher-button-primary" href="https://apps.apple.com/app/tab-space/id1473726602?mt=12" target="_blank" rel="noopener">Download free for Mac</a>
       </div>
     </section>
   </main>
 
-  <footer>
-    <div class="container">
-      <div class="inner">
-        <p class="author">
-          Developed by <a href="https://joyuer.cn/" target="_blank" rel="noopener">Joyuer</a>
-          <span class="divider">•</span>
-          <a href="mailto:support@mytab.space">Contact</a>
-          <span class="divider">•</span>
-          <a href="privacy.html">Privacy</a>
-          <span class="divider">•</span>
-          <a href="changelog.html">Changelog</a>
-        </p>
+  <footer class="site-footer">
+    <div class="footer-grid">
+      <div class="footer-brand">
+        <a class="nav-brand" href="index.html"><img src="icon.png" width="30" height="30" alt=""><span>Tab Space</span></a>
+        <p>A private, Mac-native home for the tabs you have open now and the work you want to find again.</p>
+      </div>
+      <div class="footer-col">
+        <strong>Product</strong>
+        <a href="#top">Browser Tab Switcher</a>
+        <a href="multi-browser.html">Multi-browser setup</a>
+        <a href="changelog.html">Changelog</a>
+      </div>
+      <div class="footer-col">
+        <strong>Compare</strong>
+        <a href="tab-space-vs-onetab.html">Tab Space vs OneTab</a>
+        <a href="tab-space-vs-safari-tab-groups.html">vs Safari Tab Groups</a>
+        <a href="storage.html">Storage &amp; backup</a>
+      </div>
+      <div class="footer-col">
+        <strong>Support</strong>
+        <a href="privacy.html">Privacy</a>
+        <a href="mailto:support@mytab.space">Email support</a>
+        <a href="index-zh.html" lang="zh-Hans">简体中文</a>
       </div>
     </div>
+    <div class="footer-bottom"><span>© 2019–2026 Tab Space. Built independently for the Mac.</span><span>Safari, Mac, iPhone, and iPad are trademarks of Apple Inc.</span></div>
   </footer>
 </body>
 

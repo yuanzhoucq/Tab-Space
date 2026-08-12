@@ -5,31 +5,29 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <title>Tab Space — Save, Organize, and Switch Browser Tabs on Mac</title>
+  <meta name="description" content="A private browser workspace for Mac. Save windows as sessions, organize and sync them through iCloud, then jump to any open or saved tab across browsers.">
+  <meta name="keywords" content="browser tab switcher, tab manager for Mac, Safari tab manager, Chrome tab manager, OneTab alternative, browser session manager, Tab Space">
+  <link rel="canonical" href="https://mytab.space/">
 
-  <!-- SEO -->
-  <title>Tab Space 4.1 - Option-Tab Browser Tab Switcher for Mac</title>
-  <meta name="description"
-    content="Tab Space 4.1 lets you press Option-Tab anywhere on your Mac to search every open browser tab and every tab you saved before, then jump straight to it.">
-  <meta name="keywords" content="Tab Space, Safari extension, Chrome extension, Firefox extension, tab manager, bookmark manager, macOS, iPhone, iPad, iOS, onetab alternative">
-
-  <!-- Social -->
   <meta name="twitter:site" content="@joyuer">
   <meta name="twitter:card" content="summary_large_image">
-  <meta property="og:title" content="Tab Space 4.1 - Option-Tab Switches the Web">
-  <meta property="og:description"
-    content="Everything open and everything saved, in one systemwide Mac search. New in Tab Space 4.1.">
+  <meta name="twitter:title" content="Tab Space — One space for every tab, open or saved">
+  <meta name="twitter:description" content="A private browser workspace for Mac: save windows, organize sessions, sync with iCloud, and find any tab with one shortcut.">
+  <meta name="twitter:image" content="https://mytab.space/assets/img/tab-space-social.webp">
+  <meta property="og:title" content="Tab Space — One space for every tab, open or saved">
+  <meta property="og:description" content="A private browser workspace for Mac: save windows, organize sessions, sync with iCloud, and find any tab with one shortcut.">
   <meta property="og:type" content="website">
-  <meta property="og:url" content="https://mytab.space">
-  <meta property="og:image" content="https://mytab.space/icon.png">
+  <meta property="og:url" content="https://mytab.space/">
+  <meta property="og:image" content="https://mytab.space/assets/img/tab-space-social.webp">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
 
-  <!-- Icons -->
   <link rel="icon" type="image/png" href="icon.png">
   <link rel="apple-touch-icon" href="icon.png">
-
-  <!-- Styles -->
   <link rel="stylesheet" href="assets/css/main.css">
+  <link rel="stylesheet" href="assets/css/home-v2.css">
 
-  <!-- Structured data -->
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
@@ -37,13 +35,13 @@
     "name": "Tab Space",
     "operatingSystem": "macOS 11 or later, iOS 16 or later, iPadOS 16 or later",
     "applicationCategory": "UtilitiesApplication",
-    "url": "https://mytab.space",
+    "url": "https://mytab.space/",
     "downloadUrl": [
       "https://apps.apple.com/app/tab-space/id1473726602?mt=12",
-      "https://apps.apple.com/us/app/tab-space-tab-saver/id6790127383?itscg=30200&itsct=apps_box_link&mttnsubad=6790127383"
+      "https://apps.apple.com/us/app/tab-space-tab-saver/id6790127383"
     ],
     "softwareVersion": "4.1",
-    "description": "Tab Space 4.1 adds a systemwide Mac switcher for every browser tab that is open now or was saved before.",
+    "description": "A systemwide Mac switcher and private workspace for every browser tab that is open now or was saved before.",
     "author": { "@type": "Person", "name": "Joyuer", "url": "https://joyuer.cn/" }
   }
   </script>
@@ -54,522 +52,434 @@
     "mainEntity": [
       {
         "@type": "Question",
-        "name": "What happens to people who bought the Mac app before version 4.0?",
-        "acceptedAnswer": {
-          "@type": "Answer",
-          "text": "They automatically receive permanent Plus at no charge. No action or subscription is required, and they permanently keep unlimited sessions and every feature that existed before 4.0."
-        }
-      },
-      {
-        "@type": "Question",
-        "name": "What is the Free plan limit?",
-        "acceptedAnswer": {
-          "@type": "Answer",
-          "text": "Free includes all core features, up to 2 saved sessions, and 5 AI requests each week. At the session limit, Tab Space only blocks creating another session; it never deletes or hides existing sessions."
-        }
-      },
-      {
-        "@type": "Question",
-        "name": "What is the difference between Plus and Pro?",
-        "acceptedAnswer": {
-          "@type": "Answer",
-          "text": "Free and Plus each include 5 AI requests per week. Plus is a one-time purchase for unlimited sessions and all core features. Pro includes Plus, makes AI organizing unlimited, adds multi-browser support in beta for Safari, Chrome, Microsoft Edge, and Firefox, and includes future Pro features."
-        }
-      },
-      {
-        "@type": "Question",
-        "name": "Will my membership work on iPhone and iPad?",
-        "acceptedAnswer": {
-          "@type": "Answer",
-          "text": "The iOS app remains a separate paid app for now. Memberships will arrive in a future iOS version; Pro will then work across platforms, and existing iOS purchasers will automatically receive Plus."
-        }
-      },
-      {
-        "@type": "Question",
-        "name": "Does Tab Space sync between Mac, iPhone, and iPad?",
-        "acceptedAnswer": {
-          "@type": "Answer",
-          "text": "Yes. Sessions sync across your Macs, iPhones, and iPads through your own iCloud, with no account required. The Tab Space app for iPhone and iPad is available on the App Store."
-        }
+        "name": "Which browsers does Tab Space support?",
+        "acceptedAnswer": { "@type": "Answer", "text": "Tab Space works with Safari, Chrome, Microsoft Edge, and Firefox 121 or later on Mac. Multi-browser support is currently a Pro beta feature." }
       },
       {
         "@type": "Question",
         "name": "Where is my data stored?",
-        "acceptedAnswer": {
-          "@type": "Answer",
-          "text": "Sessions live in a native app database on your device, outside the browser, and sync through your own iCloud. AI only receives the session information you choose to process."
-        }
+        "acceptedAnswer": { "@type": "Answer", "text": "Sessions live in a native app database on your device and sync through your own iCloud. No Tab Space account is required." }
       },
       {
         "@type": "Question",
-        "name": "Which browsers does Tab Space support?",
-        "acceptedAnswer": {
-          "@type": "Answer",
-          "text": "Multi-browser support is available now as a beta feature of Tab Space Pro 4.0. It supports Safari, Chrome, Microsoft Edge, and Firefox 121 or later on Mac."
-        }
+        "name": "What is included for free?",
+        "acceptedAnswer": { "@type": "Answer", "text": "Free includes all core features, up to two saved sessions, and five AI requests each week. Reaching the limit never deletes or hides an existing session." }
       },
       {
         "@type": "Question",
-        "name": "Which macOS and iOS versions are supported?",
-        "acceptedAnswer": {
-          "@type": "Answer",
-          "text": "Tab Space requires macOS 11 or later on Mac, and iOS or iPadOS 16 or later on iPhone and iPad."
-        }
-      },
-      {
-        "@type": "Question",
-        "name": "Can I import my OneTab data into Tab Space?",
-        "acceptedAnswer": {
-          "@type": "Answer",
-          "text": "Yes. Export your list from OneTab and use Tab Space's Import from OneTab feature. Your saved tab groups become Tab Space sessions."
-        }
-      },
-      {
-        "@type": "Question",
-        "name": "Can I export my saved tabs?",
-        "acceptedAnswer": {
-          "@type": "Answer",
-          "text": "Yes. Sessions can be exported to Text, Markdown, HTML, or JSON at any time, and automatic backups keep hourly, daily, weekly, and monthly copies."
-        }
+        "name": "Can I import OneTab data?",
+        "acceptedAnswer": { "@type": "Answer", "text": "Yes. Export your OneTab list and import it into Tab Space. You can also export Tab Space sessions as Text, Markdown, HTML, or JSON." }
       }
     ]
   }
   </script>
 </head>
 
-<body>
-  <!-- Header -->
-  <header>
-    <a class="nav-brand" href="#">
-      <img src="icon.png" width="28" height="28" alt="">
-      <span>Tab Space</span>
-    </a>
-    <nav class="nav-links">
-      <a class="nav-hide-mobile" href="#features">Features</a>
-      <a class="nav-hide-mobile" href="#pricing">Pricing</a>
-      <a class="nav-hide-mobile" href="#faq">FAQ</a>
-      <a href="index-zh.html">中文</a>
-      <a class="nav-cta" href="#downloads">Download</a>
-    </nav>
+<body class="home-v2">
+  <header class="site-header">
+    <div class="nav-shell">
+      <a class="nav-brand" href="#top" aria-label="Tab Space home">
+        <img src="icon.png" width="30" height="30" alt="">
+        <span>Tab Space</span>
+      </a>
+      <nav class="nav-links" aria-label="Primary navigation">
+        <a class="nav-item" href="#how-it-works">How it works</a>
+        <a class="nav-item nav-item-optional" href="#features">Features</a>
+        <a class="nav-item" href="#pricing">Pricing</a>
+        <a class="nav-item nav-item-optional" href="#faq">FAQ</a>
+        <a href="index-zh.html" lang="zh-Hans">中文</a>
+        <a class="nav-download" href="https://apps.apple.com/app/tab-space/id1473726602?mt=12" target="_blank" rel="noopener">Get the app</a>
+      </nav>
+    </div>
   </header>
 
-  <!-- Hero Section -->
-  <section id="app" class="app-main">
-    <div class="container">
-      <article class="app-article">
-        <div class="inner">
-          <span class="release-badge">Version 4.1 · Available now</span>
-          <h1>Command-Tab switches apps.<br><span class="brand-text">Option-Tab switches the web.</span></h1>
-          <p class="description">
-            <strong>Tab Space 4.1</strong> puts every tab open now and every tab you saved before into one search.
-            Press Option-Tab anywhere on your Mac, type what you remember, and jump straight back in.
-          </p>
-
-          <!-- Download -->
-          <div class="app-buttons" id="downloads">
-            <a href="https://apps.apple.com/us/app/tab-space-tab-saver/id6790127383?itscg=30200&amp;itsct=apps_box_link&amp;mttnsubad=6790127383" target="_blank" rel="noopener">
-              <img src="assets/img/Download_on_the_App_Store_Badge.svg"
-                alt="Download on the App Store">
-            </a>
-            <a href="https://apps.apple.com/app/tab-space/id1473726602?mt=12" target="_blank" rel="noopener">
-              <img src="assets/img/Download_on_the_Mac_App_Store_Badge_US-UK_RGB_blk_092917.svg"
-                alt="Download on the Mac App Store">
-            </a>
+  <main id="top">
+    <section class="hero">
+      <div class="section-shell">
+        <div class="hero-copy">
+          <span class="eyebrow"><i class="eyebrow-dot" aria-hidden="true"></i>Option-Tab switches the web.</span>
+          <h1>One space for every tab,<br><span>open or saved.</span></h1>
+          <p class="hero-lede">A private browser workspace for Mac. Save entire windows as sessions, organize years of research, sync through iCloud, and jump to any open or saved tab across Safari, Chrome, Edge, and Firefox.</p>
+          <div class="hero-actions" id="downloads">
+            <a class="button-primary" href="https://apps.apple.com/app/tab-space/id1473726602?mt=12" target="_blank" rel="noopener">Download free for Mac</a>
+            <a class="button-secondary" href="#demo">Watch the demo</a>
           </div>
-
-          <div class="app-buttons-sub">
-            <a href="changelog.html" class="changelog-link">
-              What’s new in 4.1
-            </a>
-          </div>
-
-          <p class="subtitle">Version 4.1 for Mac · macOS 11+ · Free to download<br>
-            <span class="subtitle-note">Safari, Chrome, Edge &amp; Firefox 121+ on Mac · iPhone &amp; iPad apps available</span></p>
+          <p class="hero-note">macOS 11+ · No account required · Your sessions stay in your iCloud</p>
         </div>
-      </article>
 
-      <!-- Release stories built around clean, unframed product captures -->
-      <div class="release-experience" aria-label="Highlights from Tab Space for Mac">
-        <article class="release-story release-story-switcher">
-          <div class="release-story-copy">
-            <span class="story-eyebrow">New in 4.1 · Browser Tab Switcher</span>
-            <h2>Everything open.<br>Everything saved.</h2>
-            <p>Search open tabs and saved sessions together, then bring the right browser and tab forward. Save and
-              close the selected tab—or clear every open window—without leaving the switcher.</p>
-            <ul class="story-pills" aria-label="Browser Tab Switcher shortcuts">
-              <li>Option-Tab · Search</li>
-              <li>⌘S · Save &amp; Close</li>
-              <li>⇧⌘S · Save All</li>
-            </ul>
-            <a class="story-link" href="switcher.html">Explore the Browser Tab Switcher →</a>
+        <figure class="demo-stage" id="demo">
+          <div class="demo-topbar" aria-hidden="true">
+            <span class="traffic-lights"><i></i><i></i><i></i></span>
+            <span class="demo-label">Tab Space · Browser Tab Switcher</span>
+            <span></span>
           </div>
-          <div class="release-story-media switcher-media">
-            <img src="assets/img/switcher-4-1.webp" width="1280" height="764"
-              alt="Tab Space Browser Tab Switcher searching open Safari tabs and a previously saved Kyoto session">
+          <video autoplay muted loop playsinline controls preload="metadata" poster="assets/img/switcher-demo-poster.webp" aria-label="Tab Space saves a browser session and finds tabs across multiple browsers">
+            <source src="assets/tab-space-switcher-film.mp4" type="video/mp4">
+          </video>
+          <figcaption class="demo-caption">
+            <span><strong>One shortcut, every browser.</strong> Search what is open now and what you saved before.</span>
+            <span>Real product · No mockup</span>
+          </figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <aside class="proof-strip" aria-label="Tab Space product facts">
+      <div class="proof-item"><strong>Included in Apple-curated collections</strong><span>Including Safari Essentials</span></div>
+      <div class="proof-item"><strong>Mac, iPhone, and iPad</strong><span>Sessions sync through your iCloud</span></div>
+      <div class="proof-item"><strong>Built independently</strong><span>Continuously refined since 2019</span></div>
+      <div class="proof-item"><strong>Private by design</strong><span>Native storage and your own iCloud</span></div>
+    </aside>
+
+    <section class="apple-featured-section" aria-labelledby="apple-featured-title">
+      <div class="section-shell">
+        <div class="apple-featured-mark" aria-hidden="true"><img src="assets/img/app-store-icon.png" alt=""></div>
+        <div class="apple-featured-copy">
+          <span class="section-eyebrow">Apple-curated App Store collection</span>
+          <h2 id="apple-featured-title">Included in Apple’s Safari Essentials collection.</h2>
+          <p>Tab Space has appeared in Apple-curated App Store collections, including Safari Essentials and guides for people setting up a new Mac.</p>
+        </div>
+        <a class="apple-featured-link" href="https://apps.apple.com/app/tab-space/id1473726602?mt=12" target="_blank" rel="noopener">View on the Mac App Store</a>
+      </div>
+    </section>
+
+    <section class="section-block workflow-section" id="how-it-works">
+      <div class="section-shell">
+        <div class="section-head">
+          <span class="section-eyebrow">The browser loop, completed</span>
+          <h2>Open. Find. Save. Return.</h2>
+          <p>Tabs are not clutter. They are unfinished work. Tab Space gives that work a fast way back—whether the page is still open or was saved weeks ago.</p>
+        </div>
+        <div class="workflow-grid">
+          <article class="workflow-step" data-step="1">
+            <span class="step-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="5.5"></circle><path d="m15 15 4.5 4.5"></path></svg></span>
+            <h3>Find it from anywhere</h3>
+            <p>Press Option-Tab in any app. Search the title, URL, or the fragment you still remember.</p>
+          </article>
+          <article class="workflow-step" data-step="2">
+            <span class="step-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 19 19 5"></path><path d="M10 5h9v9"></path><path d="M5 8v11h11"></path></svg></span>
+            <h3>Jump to the exact tab</h3>
+            <p>Tab Space brings the right browser, window, and tab to the front—not merely the browser app.</p>
+          </article>
+          <article class="workflow-step" data-step="3">
+            <span class="step-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4.5 5.5A2.5 2.5 0 0 1 7 3h8l4.5 4.5V19A2 2 0 0 1 17.5 21h-11a2 2 0 0 1-2-2Z"></path><path d="M8 3v6h7V3.5"></path><path d="M8 16h8"></path></svg></span>
+            <h3>Save the context</h3>
+            <p>Turn a window into a named session, close the tabs, and return without rebuilding your train of thought.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="workspace-section">
+      <div class="section-shell">
+        <article class="workspace-card">
+          <div class="workspace-copy">
+            <span class="section-eyebrow">One workspace for the whole web</span>
+            <h2>No sidebar to manage. No browser to live inside.</h2>
+            <p>Keep using the browsers you already chose. Tab Space connects their open tabs to one searchable, durable session library on your Mac.</p>
+            <ul class="browser-pills" aria-label="Supported browsers">
+              <li><img class="browser-icon" src="assets/img/browser-safari.png" alt="" aria-hidden="true">Safari</li>
+              <li><img class="browser-icon" src="assets/img/browser-chrome.png" alt="" aria-hidden="true">Chrome</li>
+              <li><img class="browser-icon" src="assets/img/browser-edge.png" alt="" aria-hidden="true">Microsoft Edge</li>
+              <li><img class="browser-icon" src="assets/img/browser-firefox.png" alt="" aria-hidden="true">Firefox</li>
+            </ul>
+          </div>
+          <div class="workspace-shot">
+            <img src="assets/img/multi-browser-workspace.webp" width="1920" height="1298" loading="lazy" alt="Tab Space searching a Kyoto session across Safari, Chrome, and Firefox on one Mac desktop">
           </div>
         </article>
+      </div>
+    </section>
 
-        <article class="release-story release-story-ai">
-          <div class="release-story-copy">
-            <span class="story-eyebrow">Optional AI · New in 4.0</span>
-            <h2>From thirty open tabs<br>to one clear idea.</h2>
-            <p>Tab Space can name a session, suggest useful tags, or split mixed tabs by topic. Your Kyoto plans,
-              course notes, and research stay easy to recognize without a round of manual filing.</p>
-            <ul class="story-pills" aria-label="AI organizing features">
-              <li>Name</li>
-              <li>Tag</li>
-              <li>Split by topic</li>
-            </ul>
-          </div>
-          <div class="release-story-media">
-            <div class="window-chrome" aria-hidden="true">
-              <span class="window-dots"><i></i><i></i><i></i></span>
-              <span>Tab Space · Kyoto in Autumn</span>
+    <section class="section-block feature-section" id="features">
+      <div class="section-shell">
+        <div class="section-head centered">
+          <span class="section-eyebrow">More than a tab switcher</span>
+          <h2>A memory for your browser.</h2>
+          <p>Switcher is the front door. Behind it is a Mac-native library built to keep years of browser context findable, portable, and safe.</p>
+        </div>
+
+        <div class="bento-grid">
+          <article class="bento-card large switcher-card">
+            <span class="card-kicker">Systemwide switcher</span>
+            <h3>Everything open and everything saved, in one search.</h3>
+            <p>Navigate results with the keyboard, reopen a saved session, or save and close the current tab without leaving the panel.</p>
+            <a class="text-link" href="switcher.html">Explore the switcher →</a>
+            <div class="switcher-mini-shot"><img src="assets/img/switcher-4-1.webp" width="1280" height="764" loading="lazy" alt="Tab Space Browser Tab Switcher showing open tabs and a saved Kyoto session"></div>
+          </article>
+
+          <article class="bento-card tall">
+            <span class="card-kicker">Session library</span>
+            <h3>Save work, not piles of links.</h3>
+            <p>A session keeps related tabs together with a title, tags, notes, and the context you need when you come back.</p>
+            <div class="library-visual" aria-hidden="true">
+              <div class="library-row"><i class="library-marker"></i><span>Kyoto Travel Planning<small>18 tabs · edited just now</small></span></div>
+              <div class="library-row"><i class="library-marker"></i><span>SwiftUI Research<small>12 tabs · Dev, Learning</small></span></div>
+              <div class="library-row"><i class="library-marker"></i><span>Design References<small>9 tabs · Favorite</small></span></div>
             </div>
-            <img src="assets/img/dashboard-ai-4-en.webp" width="1800" height="918"
-              alt="Tab Space AI-organized sessions for a Kyoto trip, a machine learning study plan, and climate research, with a favicon beside every saved page">
+          </article>
+
+          <article class="bento-card third">
+            <span class="feature-symbol" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M7.5 18.5h10a4 4 0 0 0 .4-8A6 6 0 0 0 6.4 9.1 4.7 4.7 0 0 0 7.5 18.5Z"></path><path d="m9 14 3-3 3 3"></path><path d="M12 11v7"></path></svg></span>
+            <h3>Your iCloud. Your data.</h3>
+            <p>Sessions live in a native database and sync across Mac, iPhone, and iPad through your own iCloud. No Tab Space account required.</p>
+          </article>
+
+          <article class="bento-card third">
+            <span class="feature-symbol" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4.5 8v-4"></path><path d="M4.5 8h4"></path><path d="M5.2 7.2A8 8 0 1 1 4 14"></path><path d="M12 8v5l3 2"></path></svg></span>
+            <h3>Backups with a memory.</h3>
+            <p>Hourly, daily, weekly, and monthly snapshots protect your library. Restore any backup when you need it.</p>
+          </article>
+
+          <article class="bento-card third">
+            <span class="feature-symbol" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 3.5c.8 4.1 2.4 5.7 6.5 6.5-4.1.8-5.7 2.4-6.5 6.5-.8-4.1-2.4-5.7-6.5-6.5 4.1-.8 5.7-2.4 6.5-6.5Z"></path><path d="M18.5 16.5c.3 1.8 1.2 2.7 3 3-1.8.3-2.7 1.2-3 3-.3-1.8-1.2-2.7-3-3 1.8-.3 2.7-1.2 3-3Z"></path></svg></span>
+            <h3>AI that organizes on request.</h3>
+            <p>Name a session, suggest tags, or split mixed tabs by topic. AI is optional and only receives the session you choose.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="section-block">
+      <div class="section-shell">
+        <article class="proof-story">
+          <div>
+            <span class="section-eyebrow">A real independent Mac app</span>
+            <h2>Saving browser context since 2019. Still getting better.</h2>
+            <p>Tab Space was built around one durable idea: your work should outlive a browser window. Years of releases and user feedback have shaped it into a complete workspace for saving, organizing, syncing, and returning.</p>
+            <a class="text-link" href="changelog.html">Read the release history →</a>
+          </div>
+          <div class="proof-numbers" aria-label="Tab Space history and reach">
+            <div class="number-card"><strong>2019</strong><span>First released on the Mac App Store</span></div>
+            <div class="number-card"><strong>iCloud</strong><span>Syncs through your own Apple account</span></div>
+            <div class="number-card"><strong>4</strong><span>Supported Mac browsers</span></div>
+            <div class="number-card"><strong>3</strong><span>Apple platforms with iCloud sync</span></div>
           </div>
         </article>
+      </div>
+    </section>
 
-        <article class="release-story release-story-browsers">
-          <div class="release-story-copy">
-            <span class="story-eyebrow">Pro · Beta in 4.0</span>
-            <h2>Four browsers.<br>One session library.</h2>
-            <p>Save in one browser and reopen in another. Every session still lives in the native Mac app and syncs
-              through your own iCloud.</p>
-            <ul class="browser-strip" aria-label="Supported browsers">
-              <li><span class="browser-mark safari">S</span>Safari</li>
-              <li><span class="browser-mark chrome">C</span>Chrome</li>
-              <li><span class="browser-mark edge">E</span>Edge</li>
-              <li><span class="browser-mark firefox">F</span>Firefox</li>
+    <section class="section-block reviews-section" aria-labelledby="reviews-title">
+      <div class="section-shell">
+        <div class="section-head centered">
+          <span class="section-eyebrow">From five-star App Store reviews</span>
+          <h2 id="reviews-title">Built for people who actually live in their browser.</h2>
+          <p>Real words from Mac users who use Tab Space for research, projects, and keeping hundreds of tabs under control.</p>
+        </div>
+        <div class="review-grid">
+          <figure class="review-card">
+            <div class="review-stars" aria-label="5 out of 5 stars">★★★★★</div>
+            <span class="review-title">GREAT!!!</span>
+            <blockquote>“The app is great and does what it says. Most importantly, the developer is incredibly responsive.”</blockquote>
+            <figcaption><strong>ToMeWarrior</strong><span>United States · App Store review</span></figcaption>
+          </figure>
+          <figure class="review-card">
+            <div class="review-stars" aria-label="5 out of 5 stars">★★★★★</div>
+            <span class="review-title">Tab Space &gt; Tab Group</span>
+            <blockquote>“Tab Space is more flexible and easy to add, remove, and rearrange tabs.”</blockquote>
+            <figcaption><strong>Azwa Kamaruddin</strong><span>Malaysia · App Store review</span></figcaption>
+          </figure>
+          <figure class="review-card featured-review">
+            <div class="review-stars" aria-label="5 out of 5 stars">★★★★★</div>
+            <span class="review-title">Great Safari extension</span>
+            <blockquote>“A must-have for those that tend to have a lot of tabs open when they do research.”</blockquote>
+            <figcaption><strong>__FV</strong><span>United Kingdom · App Store review</span></figcaption>
+          </figure>
+          <figure class="review-card">
+            <div class="review-stars" aria-label="5 out of 5 stars">★★★★★</div>
+            <span class="review-title">One Tab for Safari</span>
+            <blockquote>“This extension is in fact way better than that. It helps you organize your links.”</blockquote>
+            <figcaption><strong>AdityaGoj</strong><span>India · App Store review</span></figcaption>
+          </figure>
+          <figure class="review-card">
+            <div class="review-stars" aria-label="5 out of 5 stars">★★★★★</div>
+            <span class="review-title">Immediately useful and impactful</span>
+            <blockquote>“If you have focus issues, do yourself a favor and buy this. It’s totally worth it.”</blockquote>
+            <figcaption><strong>Dion Hazelbaker</strong><span>United States · App Store review</span></figcaption>
+          </figure>
+          <figure class="review-card">
+            <div class="review-stars" aria-label="5 out of 5 stars">★★★★★</div>
+            <span class="review-title">Safari’s Greatest Missing Feature</span>
+            <blockquote>“It’s so simple but so functional.”</blockquote>
+            <figcaption><strong>Offliner 117</strong><span>United States · App Store review</span></figcaption>
+          </figure>
+          <figure class="review-card">
+            <div class="review-stars" aria-label="5 out of 5 stars">★★★★★</div>
+            <span class="review-title">Amazing! I’ve needed this for years!</span>
+            <blockquote>“It’s perfect—it even has shortcuts I can use to streamline everything.”</blockquote>
+            <figcaption><strong>Cloesavannah</strong><span>United Kingdom · App Store review</span></figcaption>
+          </figure>
+          <figure class="review-card">
+            <div class="review-stars" aria-label="5 out of 5 stars">★★★★★</div>
+            <span class="review-title">Excellent &amp; Useful</span>
+            <blockquote>“Way more useful than Safari’s built-in bookmarks—and the UI is well designed.”</blockquote>
+            <figcaption><strong>Ping Yang Chang</strong><span>Taiwan · App Store review</span></figcaption>
+          </figure>
+          <figure class="review-card">
+            <div class="review-stars" aria-label="5 out of 5 stars">★★★★★</div>
+            <span class="review-title">Life Saver</span>
+            <blockquote>“Now that I am using this extension, my Mac is much faster and runs very smoothly.”</blockquote>
+            <figcaption><strong>VeganCommunist</strong><span>Australia · App Store review</span></figcaption>
+          </figure>
+          <figure class="review-card">
+            <div class="review-stars" aria-label="5 out of 5 stars">★★★★★</div>
+            <span class="review-title">Great Investment!</span>
+            <blockquote>“Greatest app that Safari never made.”</blockquote>
+            <figcaption><strong>Pairs lover</strong><span>United States · App Store review</span></figcaption>
+          </figure>
+        </div>
+        <p class="reviews-note">Excerpts from verified five-star App Store reviews. Minor spelling and punctuation normalized for readability.</p>
+      </div>
+    </section>
+
+    <section class="section-block pricing-section" id="pricing">
+      <div class="section-shell">
+        <div class="section-head centered">
+          <span class="section-eyebrow">Simple Mac pricing</span>
+          <h2>Start free. Keep what works.</h2>
+          <p>Use the core workflow before paying. Upgrade once for an unlimited library, or choose Pro for multi-browser and AI-powered organization.</p>
+        </div>
+        <div class="price-grid">
+          <article class="price-card">
+            <h3>Free</h3>
+            <p class="price">$0</p>
+            <p class="price-period">Free download</p>
+            <ul>
+              <li>All core Tab Space features</li>
+              <li>Up to 2 saved sessions</li>
+              <li>5 AI requests each week</li>
+              <li>Existing sessions are never deleted</li>
             </ul>
-            <a class="story-link" href="multi-browser.html">Set up your browsers →</a>
+            <a class="price-button" href="https://apps.apple.com/app/tab-space/id1473726602?mt=12" target="_blank" rel="noopener">Download free</a>
+          </article>
+          <article class="price-card">
+            <h3>Plus</h3>
+            <p class="price">$9.99</p>
+            <p class="price-period">One-time purchase</p>
+            <ul>
+              <li>Everything in Free</li>
+              <li>Unlimited saved sessions forever</li>
+              <li>5 AI requests each week</li>
+              <li>All core features included</li>
+            </ul>
+            <a class="price-button" href="https://apps.apple.com/app/tab-space/id1473726602?mt=12" target="_blank" rel="noopener">Get Tab Space</a>
+          </article>
+          <article class="price-card featured">
+            <span class="price-badge">Recommended</span>
+            <h3>Pro</h3>
+            <p class="price">$17.99 <small>/ year</small></p>
+            <p class="price-period">Or $1.99/month · Annual includes a 7-day free trial</p>
+            <ul>
+              <li>Everything in Plus</li>
+              <li>Safari, Chrome, Edge, and Firefox beta</li>
+              <li>Unlimited AI organization</li>
+              <li>All future Pro features</li>
+            </ul>
+            <a class="price-button" href="https://apps.apple.com/app/tab-space/id1473726602?mt=12" target="_blank" rel="noopener">Try Pro free</a>
+          </article>
+        </div>
+        <p class="pricing-note">US prices shown; App Store pricing varies by region. People who purchased Tab Space before version 4.0 automatically keep permanent Plus at no charge.</p>
+      </div>
+    </section>
+
+    <section class="section-block">
+      <div class="section-shell">
+        <article class="ios-band">
+          <div class="ios-copy">
+            <span class="section-eyebrow">Your sessions travel with you</span>
+            <h2>Save on Mac. Pick up on iPhone or iPad.</h2>
+            <p>The companion app keeps your session library close through iCloud, and its Safari extension can save all open mobile tabs in one step.</p>
+            <a class="text-link" href="https://apps.apple.com/us/app/tab-space-tab-saver/id6790127383" target="_blank" rel="noopener">Download for iPhone and iPad →</a>
           </div>
-          <div class="release-story-media browser-media">
-            <div class="window-chrome" aria-hidden="true">
-              <span class="window-dots"><i></i><i></i><i></i></span>
-              <span>Tab Space · Multi-browser</span>
-            </div>
-            <img src="assets/img/multi-browser-4-en.webp" width="1800" height="429"
-              alt="Tab Space multi-browser setup for Safari, Chrome, Microsoft Edge, and Firefox">
+          <div class="ios-badges" aria-label="Tab Space Apple platform support">
+            <div class="ios-badge"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="12" rx="2"></rect><path d="M8 20h8"></path><path d="M10 16v4M14 16v4"></path></svg><span><strong>Mac</strong>Switch, save, organize</span></div>
+            <div class="ios-badge"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="7" y="2" width="10" height="20" rx="2.5"></rect><path d="M10.5 5h3"></path><path d="M11.8 18.5h.4"></path></svg><span><strong>iPhone</strong>Carry every session</span></div>
+            <div class="ios-badge"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="2.5" width="16" height="19" rx="2.5"></rect><path d="M11.8 18h.4"></path></svg><span><strong>iPad</strong>Return on a larger screen</span></div>
           </div>
         </article>
       </div>
-    </div>
-  </section>
+    </section>
 
-  <!-- Features Section -->
-  <section class="features" id="features">
-    <div class="container">
-      <h2>Why Tab Space?</h2>
-      <div class="features-grid">
-        <div class="feature-card">
-          <div class="feature-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"
-              stroke-linejoin="round" aria-hidden="true">
-              <path d="M12 3v10" />
-              <path d="m8 9 4 4 4-4" />
-              <path d="M4 15v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3" />
-            </svg>
-          </div>
-          <h3>Save Sessions</h3>
-          <p>One click — or one shortcut — saves every open tab as a named session and clears the window. Return to
-            your work anytime.</p>
+    <section class="section-block faq-section" id="faq">
+      <div class="section-shell">
+        <div class="section-head centered">
+          <span class="section-eyebrow">Questions, answered</span>
+          <h2>Before you press Option-Tab.</h2>
         </div>
-        <div class="feature-card">
-          <div class="feature-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"
-              stroke-linejoin="round" aria-hidden="true">
-              <path d="M17.5 19a4.5 4.5 0 0 0 .42-8.98 6 6 0 0 0-11.7 1.62A4 4 0 0 0 7 19h10.5Z" />
-            </svg>
-          </div>
-          <h3>iCloud Sync</h3>
-          <p>Sessions sync across your Macs, iPhones, and iPads through your own iCloud — no account needed.</p>
-        </div>
-        <div class="feature-card">
-          <div class="feature-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"
-              stroke-linejoin="round" aria-hidden="true">
-              <path d="m3.5 12.5 8-8.8a1.5 1.5 0 0 1 1.1-.5h6.4a1.5 1.5 0 0 1 1.5 1.5v6.4a1.5 1.5 0 0 1-.5 1.1l-8.8 8a1.5 1.5 0 0 1-2.1-.07l-5.53-5.53a1.5 1.5 0 0 1-.07-2.1Z" />
-              <circle cx="16" cy="8" r="1.3" />
-            </svg>
-          </div>
-          <h3>Tags & Search</h3>
-          <p>Tag sessions your way, then find any saved tab in an instant by title, URL, or tag.</p>
-        </div>
-        <div class="feature-card">
-          <div class="feature-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"
-              stroke-linejoin="round" aria-hidden="true">
-              <path d="M12 3 5 6v5c0 4.5 3 8.6 7 10 4-1.4 7-5.5 7-10V6l-7-3Z" />
-              <path d="M12 8v4l2.5 2.5" />
-            </svg>
-          </div>
-          <h3>Automatic Backups</h3>
-          <p>Hourly, daily, weekly, and monthly backups with smart retention keep your saved tabs safe — restore any
-            of them in one click.</p>
-        </div>
-        <div class="feature-card">
-          <div class="feature-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"
-              stroke-linejoin="round" aria-hidden="true">
-              <path d="M8 7h13" />
-              <path d="m17 3 4 4-4 4" />
-              <path d="M16 17H3" />
-              <path d="m7 13-4 4 4 4" />
-            </svg>
-          </div>
-          <h3>Export & Import</h3>
-          <p>Export sessions to Text, Markdown, HTML, or JSON. Switching from OneTab? Your list imports directly.</p>
-        </div>
-        <div class="feature-card">
-          <div class="feature-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"
-              stroke-linejoin="round" aria-hidden="true">
-              <path d="M15 6a3 3 0 1 1 3 3h-3V6Z" />
-              <path d="M9 6a3 3 0 1 0-3 3h3V6Z" />
-              <path d="M15 18a3 3 0 1 0 3-3h-3v3Z" />
-              <path d="M9 18a3 3 0 1 1-3-3h3v3Z" />
-              <path d="M9 9h6v6H9z" />
-            </svg>
-          </div>
-          <h3>Multi-Browser Support <span class="badge-beta">Beta</span></h3>
-          <p>Use the same sessions in Safari, Chrome, Microsoft Edge, and Firefox. A one-time local pairing keeps
-            companion browsers connected to the Mac app. Available now with Pro in version 4.0.
-            <a href="multi-browser.html">See the setup guide →</a></p>
+        <div class="faq-list">
+          <details>
+            <summary>Which browsers does Tab Space support?</summary>
+            <p>Tab Space supports Safari, Chrome, Microsoft Edge, and Firefox 121 or later on Mac. Multi-browser support is currently a Pro beta feature; Safari support remains part of the core app.</p>
+          </details>
+          <details>
+            <summary>Where are my sessions stored?</summary>
+            <p>Sessions live in a native app database on your device, outside the browser, and sync through your own iCloud. You do not need to create a Tab Space account. AI only receives session information you explicitly choose to process.</p>
+          </details>
+          <details>
+            <summary>What happens when Free reaches its 2-session limit?</summary>
+            <p>Tab Space only prevents creating another saved session. It never deletes, hides, or locks the sessions you already have, and you can keep using the rest of the core app.</p>
+          </details>
+          <details>
+            <summary>What do existing customers receive?</summary>
+            <p>Anyone who bought the Mac app before version 4.0 automatically receives permanent Plus at no charge. No subscription or action is required, and every feature that existed before 4.0 remains available.</p>
+          </details>
+          <details>
+            <summary>Can I import from OneTab or export my data?</summary>
+            <p>Yes. Export your OneTab list and import it directly into Tab Space. Your own sessions can be exported at any time as Text, Markdown, HTML, or JSON.</p>
+          </details>
+          <details>
+            <summary>Does it sync with iPhone and iPad?</summary>
+            <p>Yes. Sessions sync through your iCloud between Macs, iPhones, and iPads. The iOS app is currently a separate App Store app; membership support will arrive in a future iOS release.</p>
+          </details>
+          <details>
+            <summary>What versions of macOS and iOS are required?</summary>
+            <p>The Mac app requires macOS 11 or later. The companion app requires iOS or iPadOS 16 or later.</p>
+          </details>
         </div>
       </div>
-    </div>
-  </section>
+    </section>
 
-  <!-- Pricing Section -->
-  <section class="pricing" id="pricing">
-    <div class="container">
-      <h2>Choose what fits your Mac</h2>
-      <p class="pricing-lede">Free and Plus include 5 AI requests each week. Subscribe to Pro for unlimited AI, multi-browser support, and every new Pro feature.</p>
-      <div class="pricing-grid">
-        <article class="pricing-card">
-          <h3>Free</h3>
-          <p class="pricing-price">$0</p>
-          <p class="pricing-period">Free download</p>
-          <ul>
-            <li>All core Tab Space features</li>
-            <li>Up to 2 saved sessions</li>
-            <li>5 AI requests each week</li>
-            <li>Your existing sessions are never deleted if you reach the limit</li>
-          </ul>
-        </article>
-        <article class="pricing-card">
-          <h3>Plus</h3>
-          <p class="pricing-price">$9.99</p>
-          <p class="pricing-period">One-time purchase</p>
-          <ul>
-            <li>Everything in Free</li>
-            <li>Unlimited saved sessions, permanently</li>
-            <li>5 AI requests each week</li>
-          </ul>
-        </article>
-        <article class="pricing-card recommended">
-          <span class="pricing-badge">Recommended</span>
-          <h3>Pro</h3>
-          <p class="pricing-price">$1.99 <small>/ month</small></p>
-          <p class="pricing-period">or $17.99/year with a 7-day free trial</p>
-          <ul>
-            <li>Everything in Plus</li>
-            <li>Unlimited AI-powered organizing</li>
-            <li>Safari, Chrome, Microsoft Edge, and Firefox support (beta)</li>
-            <li>Future Pro features as they arrive</li>
-          </ul>
-        </article>
-      </div>
-      <p class="pricing-footnote">US prices shown; App Store pricing varies by region. Pro memberships will come to iPhone and iPad in a future version, and the same Pro subscription will work there.</p>
-    </div>
-  </section>
-
-  <!-- Showcase Section -->
-  <section class="showcase">
-    <div class="container">
-      <div class="showcase-row">
-        <div class="showcase-media">
-          <img src="assets/img/dashboard-light.webp" width="1200" height="750"
-            alt="Tab Space dashboard with saved sessions, tags, and search" loading="lazy">
-        </div>
-        <div class="showcase-copy">
-          <h2>A tidy home for every browsing session</h2>
-          <p>Research, trip planning, weekend reading — each lives as its own session. Pin favorites, tag
-            everything, and search across titles, URLs, and tags the moment you need something back.</p>
-        </div>
-      </div>
-
-      <div class="showcase-row reverse">
-        <div class="showcase-media">
-          <img src="assets/img/dashboard-dark.webp" width="1200" height="750"
-            alt="Tab Space dashboard in dark mode with saved sessions" loading="lazy">
-        </div>
-        <div class="showcase-copy">
-          <h2>Backed up. Exported. Never lost.</h2>
-          <p>Automatic backups run on a smart hourly-to-monthly schedule, and any session exports to Text,
-            Markdown, HTML, or JSON. Dark mode included — it follows your system, day and night.</p>
-        </div>
-      </div>
-
-      <div class="showcase-row">
-        <div class="showcase-media">
-          <img src="assets/img/dashboard-ai.webp" width="1200" height="612"
-            alt="Tab Space naming a saved session and adding tags automatically" loading="lazy">
-        </div>
-        <div class="showcase-copy">
-          <h2>Let AI do the organizing</h2>
-          <p>Save a pile of tabs and Tab Space can title the session and add the tags that fit, so you can find it
-            later without naming anything yourself. It can also split a mixed session into focused topics. AI is
-            optional and off by default; Free and Plus include 5 requests each week, while Pro removes the limit.</p>
-        </div>
-      </div>
-
-      <div class="showcase-row">
-        <div class="showcase-media">
-          <div class="kbd-panel" aria-label="Tab Space keyboard shortcuts">
-            <div class="kbd-item"><span><kbd>⌃</kbd><kbd>T</kbd></span><em>Open Tab Space</em></div>
-            <div class="kbd-item"><span><kbd>⌃</kbd><kbd>K</kbd></span><em>Close same domain tabs</em></div>
-            <div class="kbd-item"><span><kbd>⌃</kbd><kbd>Q</kbd></span><em>Close all other tabs</em></div>
-            <div class="kbd-item"><span><kbd>⌃</kbd><kbd>D</kbd></span><em>Duplicate tab</em></div>
-            <div class="kbd-item"><span><kbd>⌃</kbd><kbd>M</kbd></span><em>Copy URL as Markdown link</em></div>
+    <section class="section-block">
+      <div class="section-shell">
+        <div class="final-cta">
+          <span class="section-eyebrow">Your web, one shortcut away</span>
+          <h2>Stop hunting for tabs. Start returning to ideas.</h2>
+          <p>Download Tab Space free and give Option-Tab a place in your muscle memory.</p>
+          <div class="final-actions">
+            <a class="button-primary" href="https://apps.apple.com/app/tab-space/id1473726602?mt=12" target="_blank" rel="noopener">Download free for Mac</a>
+            <a class="button-secondary" href="changelog.html">See what is new in 4.1</a>
           </div>
         </div>
-        <div class="showcase-copy">
-          <h2>Safari, with power-user reflexes</h2>
-          <p>Keep your hands on the keyboard. Tab Space adds shortcuts for the tab chores you do every day —
-            open your sessions, prune noisy windows, and grab links as Markdown without touching the mouse.</p>
-        </div>
       </div>
-    </div>
-  </section>
+    </section>
+  </main>
 
-  <!-- iOS Launch Section -->
-  <section class="coming" id="ios">
-    <div class="container">
-      <div class="coming-inner">
-        <span class="badge">Now on iPhone &amp; iPad</span>
-        <h2>Tab Space is now on iPhone and iPad</h2>
-        <p>Save a session at your Mac, pick it up on the couch. The Tab Space app for iOS and iPadOS is here —
-          syncing through your own iCloud, no account needed.</p>
-        <div class="app-buttons coming-buttons">
-          <a href="https://apps.apple.com/us/app/tab-space-tab-saver/id6790127383?itscg=30200&amp;itsct=apps_box_link&amp;mttnsubad=6790127383" target="_blank" rel="noopener">
-            <img src="assets/img/Download_on_the_App_Store_Badge.svg"
-              alt="Download on the App Store">
-          </a>
-        </div>
+  <footer class="site-footer">
+    <div class="footer-grid">
+      <div class="footer-brand">
+        <a class="nav-brand" href="#top"><img src="icon.png" width="30" height="30" alt=""><span>Tab Space</span></a>
+        <p>A private, Mac-native home for the tabs you have open now and the work you want to find again.</p>
+      </div>
+      <div class="footer-col">
+        <strong>Product</strong>
+        <a href="switcher.html">Browser Tab Switcher</a>
+        <a href="multi-browser.html">Multi-browser setup</a>
+        <a href="changelog.html">Changelog</a>
+      </div>
+      <div class="footer-col">
+        <strong>Compare</strong>
+        <a href="tab-space-vs-onetab.html">Tab Space vs OneTab</a>
+        <a href="tab-space-vs-safari-tab-groups.html">vs Safari Tab Groups</a>
+        <a href="storage.html">Storage & backup</a>
+      </div>
+      <div class="footer-col">
+        <strong>Support</strong>
+        <a href="privacy.html">Privacy</a>
+        <a href="mailto:support@mytab.space">Email support</a>
+        <a href="index-zh.html" lang="zh-Hans">简体中文</a>
       </div>
     </div>
-  </section>
-
-  <!-- Compare Section -->
-  <section class="compare">
-    <div class="container">
-      <h2>How does it compare?</h2>
-      <div class="compare-grid">
-        <a class="compare-card" href="tab-space-vs-safari-tab-groups.html">
-          <h3>Tab Space vs Safari Tab Groups</h3>
-          <p>Tab Groups keep tabs open forever. Tab Space saves them so you can close them. See which fits the way
-            you browse — or why many people use both.</p>
-          <span class="card-link">Read the comparison</span>
-        </a>
-        <a class="compare-card" href="tab-space-vs-onetab.html">
-          <h3>Tab Space vs OneTab</h3>
-          <p>The save-and-close workflow OneTab made popular, rebuilt natively for Safari — with iCloud sync, tags,
-            and backups. It even imports your OneTab list.</p>
-          <span class="card-link">Read the comparison</span>
-        </a>
-      </div>
-    </div>
-  </section>
-
-  <!-- Privacy Section -->
-  <section class="privacy">
-    <div class="container">
-      <div class="privacy-inner">
-        <h2>Your tabs are yours.</h2>
-        <p>Tab Space stores sessions in a native app database on your device — outside the browser — and syncs
-          through your own iCloud. AI only receives the session information you choose to process.</p>
-        <a class="privacy-link" href="privacy.html">Read the Privacy Policy →</a>
-      </div>
-    </div>
-  </section>
-
-  <!-- FAQ Section -->
-  <section class="faq" id="faq">
-    <div class="container">
-      <h2>Frequently asked questions</h2>
-      <div class="faq-list">
-        <details>
-          <summary>What happens to people who bought the Mac app before version 4.0?</summary>
-          <p>They automatically receive permanent Plus at no charge. No action or subscription is required, and they permanently keep unlimited sessions and every feature that existed before 4.0.</p>
-        </details>
-        <details>
-          <summary>What is the Free plan limit?</summary>
-          <p>Free includes all core features, up to 2 saved sessions, and 5 AI requests each week. At the session limit, Tab Space only blocks creating another session; it never deletes or hides sessions you already saved.</p>
-        </details>
-        <details>
-          <summary>What is the difference between Plus and Pro?</summary>
-          <p>Free and Plus both include 5 AI requests each week. Plus is a $9.99 one-time purchase for unlimited sessions and all core features. Pro includes Plus, makes AI organizing unlimited, adds multi-browser support (beta) for Safari, Chrome, Microsoft Edge, and Firefox, and includes future Pro features for $1.99 monthly or $17.99 annually. The annual plan includes a 7-day free trial.</p>
-        </details>
-        <details>
-          <summary>Will my membership work on iPhone and iPad?</summary>
-          <p>The iOS app remains a separate paid app for now. Memberships will arrive in a future iOS version; the same Pro subscription will then work across platforms, and existing iOS purchasers will automatically receive Plus.</p>
-        </details>
-        <details>
-          <summary>Does Tab Space sync between Mac, iPhone, and iPad?</summary>
-          <p>Yes. Sessions sync across your Macs, iPhones, and iPads through your own iCloud, with no account
-            required. The Tab Space app for iPhone and iPad is available on the App Store.</p>
-        </details>
-        <details>
-          <summary>Where is my data stored?</summary>
-          <p>Sessions live in a native app database on your device, outside the browser, and sync through your own
-            iCloud. AI only receives the session information you choose to process.</p>
-        </details>
-        <details>
-          <summary>Which browsers does Tab Space support?</summary>
-          <p>Multi-browser support is available now as a beta feature of Tab Space Pro 4.0. It covers Safari, Chrome, Microsoft Edge, and Firefox 121 or later on Mac. Sessions stay in
-            the native Mac app no matter which browser saved them. The extension is published on the
-            <a href="https://chromewebstore.google.com/detail/tab-space/nhheanllfhaincfgjpdiacdnfgkipeep" target="_blank" rel="noopener">Chrome Web Store</a>,
-            and Microsoft Edge installs the same listing. Because the feature is in beta, please send any problem to
-            <a href="mailto:support@mytab.space">support@mytab.space</a>. See the
-            <a href="multi-browser.html">multi-browser setup guide</a>.</p>
-        </details>
-        <details>
-          <summary>Which macOS and iOS versions are supported?</summary>
-          <p>Tab Space requires macOS 11 or later on Mac, and iOS or iPadOS 16 or later on iPhone and iPad.</p>
-        </details>
-        <details>
-          <summary>Can I import my OneTab data into Tab Space?</summary>
-          <p>Yes. Export your list from OneTab and use Tab Space's Import from OneTab feature. Your saved tab groups
-            become Tab Space sessions.</p>
-        </details>
-        <details>
-          <summary>Can I export my saved tabs?</summary>
-          <p>Yes. Sessions can be exported to Text, Markdown, HTML, or JSON at any time, and automatic backups keep
-            hourly, daily, weekly, and monthly copies.</p>
-        </details>
-      </div>
-    </div>
-  </section>
-
-  <!-- Footer -->
-  <footer>
-    <div class="container">
-      <div class="inner">
-        <p class="author">
-          Developed by <a href="https://joyuer.cn/" target="_blank" rel="noopener">Joyuer</a>
-          <span class="divider">•</span>
-          <a href="mailto:support@mytab.space">Contact</a>
-          <span class="divider">•</span>
-          <a href="privacy.html">Privacy</a>
-          <span class="divider">•</span>
-          <a href="https://github.com/yuanzhoucq/Tab-Space" target="_blank" rel="noopener">GitHub</a>
-        </p>
-      </div>
-    </div>
+    <div class="footer-bottom"><span>© 2019–2026 Tab Space. Built independently for the Mac.</span><span>Safari, Mac, iPhone, and iPad are trademarks of Apple Inc.</span></div>
   </footer>
 </body>
-
 </html>

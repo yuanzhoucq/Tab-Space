@@ -45,7 +45,7 @@ jobs:
               exit 1
             fi
           done
-          for required in index.html index-zh.html switcher.html privacy.html changelog.html redirect.html storage.html 404.html _headers _redirects assets/css/main.css assets/css/switcher.css assets/img/switcher-4-1.webp share/index.html share/share.css share/share.js share/app-icon.png; do
+          for required in index.html index-zh.html switcher.html privacy.html changelog.html redirect.html storage.html 404.html _headers _redirects assets/css/main.css assets/css/home-v2.css assets/css/switcher.css assets/tab-space-switcher-film.mp4 assets/img/switcher-demo-poster.webp assets/img/switcher-4-1.webp assets/img/multi-browser-workspace.webp assets/img/tab-space-social.webp share/index.html share/share.css share/share.js share/app-icon.png; do
             if [ ! -e "dist/$required" ]; then
               echo "Refusing to deploy: dist/$required is missing" >&2
               exit 1
