@@ -1,4 +1,4 @@
-import TabSpaceIcon from "!!url-loader?limit=100000!../../icon.png"
+import TabSpaceIcon from "!!url-loader!./assets/export-logo.png"
 import { faviconUrl } from "./favicon"
 
 function escapeHtml(value) {
