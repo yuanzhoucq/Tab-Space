@@ -5,192 +5,149 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
-
-  <!-- SEO -->
-  <title>Tab Space vs Safari Tab Groups — When Tab Groups Aren't Enough</title>
-  <meta name="description"
-    content="Safari Tab Groups keep tabs open forever. Tab Space lets you save a whole window as a session, close it, and reopen it anytime. An honest comparison for tab hoarders.">
+  <title>Safari Tab Groups vs Saved Sessions — When to Use Each</title>
+  <meta name="description" content="Safari Tab Groups keep current work live. Tab Space saves paused work outside the browser with search, backups and multi-browser switching. Learn when to use each.">
   <link rel="canonical" href="https://mytab.space/tab-space-vs-safari-tab-groups.html">
 
-  <!-- Social -->
   <meta name="twitter:site" content="@joyuer">
   <meta name="twitter:card" content="summary_large_image">
-  <meta property="og:title" content="Tab Space vs Safari Tab Groups">
-  <meta property="og:description"
-    content="Tab Groups keep tabs open. Tab Space lets you save, close, and reopen them later. Which model fits how you browse?">
+  <meta name="twitter:title" content="Safari Tab Groups vs saved sessions">
+  <meta name="twitter:description" content="Keep active work in Tab Groups. Save paused context in Tab Space. The two workflows work better together.">
+  <meta name="twitter:image" content="https://mytab.space/assets/img/tab-space-social.webp">
+  <meta property="og:title" content="Safari Tab Groups vs Saved Sessions">
+  <meta property="og:description" content="Keep active work in Tab Groups. Save paused context in Tab Space. The two workflows work better together.">
   <meta property="og:type" content="article">
   <meta property="og:url" content="https://mytab.space/tab-space-vs-safari-tab-groups.html">
-  <meta property="og:image" content="https://mytab.space/icon.png">
+  <meta property="og:image" content="https://mytab.space/assets/img/tab-space-social.webp">
 
-  <!-- Icons -->
   <link rel="icon" type="image/png" href="icon.png">
   <link rel="apple-touch-icon" href="icon.png">
-
-  <!-- Styles -->
   <link rel="stylesheet" href="assets/css/main.css">
-  <style>
-    .compare-page { max-width: 860px; margin: 0 auto; padding: 48px 24px 24px; }
-    .compare-page h1 { font-size: 2rem; line-height: 1.25; margin-bottom: 8px; }
-    .compare-page .lede { font-size: 1.1rem; opacity: 0.85; margin-bottom: 32px; }
-    .compare-page h2 { margin: 40px 0 12px; }
-    .compare-page p, .compare-page li { line-height: 1.65; }
-    .compare-page ul { padding-left: 1.2em; margin: 12px 0; }
-    .compare-table-wrap { overflow-x: auto; margin: 24px 0; }
-    .compare-table { border-collapse: collapse; width: 100%; min-width: 560px; }
-    .compare-table th, .compare-table td { border: 1px solid rgba(128, 128, 128, 0.35); padding: 10px 14px; text-align: left; vertical-align: top; }
-    .compare-table th { background: rgba(128, 128, 128, 0.12); }
-    .compare-cta { margin: 40px 0 8px; text-align: center; }
-    .compare-nav { padding: 20px 24px; max-width: 860px; margin: 0 auto; }
-    .compare-nav a { text-decoration: none; }
-  </style>
-</head>
-
-<body>
-  <nav class="compare-nav">
-    <a href="./">← Tab Space</a>
-  </nav>
-
-  <article class="compare-page">
-    <h1>Tab Space vs Safari Tab Groups</h1>
-    <p class="lede">
-      Safari has built-in Tab Groups, so why would anyone use a tab-saving extension?
-      Because the two solve different problems. Tab Groups keep tabs <em>open</em>;
-      Tab Space lets you <strong>save your tabs, close them, and reopen them later</strong>.
-    </p>
-
-    <h2>Two different mental models</h2>
-    <p>
-      <strong>Safari Tab Groups</strong> are persistent workspaces. Every group stays alive:
-      its tabs remain part of your browser, synced everywhere, always one click away — and always there.
-      If you are the kind of person who keeps a handful of tidy, long-lived groups, they work great.
-    </p>
-    <p>
-      <strong>Tab Space</strong> follows the <em>save &amp; close</em> model (the workflow OneTab made popular).
-      When you finish a research spree with 30 tabs open, you press one shortcut: the whole window is stored
-      as a named, taggable session and the tabs are gone. Safari gets fast and quiet again.
-      Next week — or next year — you reopen the session, all tabs or just one.
-    </p>
-    <p>
-      Many Tab Space users tried Tab Groups first and came back. Not because Tab Groups are bad,
-      but because a pile of one-off browsing sessions doesn't want to live as thirty permanent groups
-      in a sidebar.
-    </p>
-
-    <h2>Side by side</h2>
-    <div class="compare-table-wrap">
-      <table class="compare-table">
-        <tr>
-          <th></th>
-          <th>Safari Tab Groups</th>
-          <th>Tab Space</th>
-        </tr>
-        <tr>
-          <td>Core model</td>
-          <td>Tabs stay open in persistent groups</td>
-          <td>Save a snapshot, close the tabs, reopen anytime</td>
-        </tr>
-        <tr>
-          <td>Best for</td>
-          <td>A few long-lived workspaces</td>
-          <td>Many one-off sessions: research, shopping, trip planning, reading queues</td>
-        </tr>
-        <tr>
-          <td>Capture speed</td>
-          <td>Move tabs into a group manually</td>
-          <td>One click / one shortcut saves the whole window (or all windows)</td>
-        </tr>
-        <tr>
-          <td>Organization</td>
-          <td>Group names</td>
-          <td>Names, tags, favorites, search across titles, URLs and tags</td>
-        </tr>
-        <tr>
-          <td>History of past sessions</td>
-          <td>No — a group is only its current state</td>
-          <td>Yes — every save is kept, with automatic backups and export (Text, Markdown, HTML, JSON)</td>
-        </tr>
-        <tr>
-          <td>Browser weight</td>
-          <td>All grouped tabs remain part of Safari</td>
-          <td>Saved sessions live outside Safari; closed tabs cost nothing</td>
-        </tr>
-        <tr>
-          <td>Sync</td>
-          <td>iCloud</td>
-          <td>iCloud (Mac app + iPhone/iPad app)</td>
-        </tr>
-        <tr>
-          <td>Extras</td>
-          <td>—</td>
-          <td>Safari shortcuts (close duplicates, close same-domain tabs, copy URL as Markdown…), OneTab import, merge sessions</td>
-        </tr>
-        <tr>
-          <td>Price</td>
-          <td>Free, built into Safari</td>
-          <td>Paid, one-time purchase on the Mac App Store</td>
-        </tr>
-      </table>
-    </div>
-
-    <h2>When you should just use Tab Groups</h2>
-    <ul>
-      <li>You keep a small, stable set of workspaces ("Work", "Personal") and rarely archive anything.</li>
-      <li>You want tabs to stay live and loaded, not stored away.</li>
-      <li>You don't need tags, search, exports, or a history of past sessions.</li>
-    </ul>
-
-    <h2>When Tab Space fits better</h2>
-    <ul>
-      <li>You regularly end up with dozens of tabs you're not done with, but don't want open.</li>
-      <li>You think in <em>sessions</em>: "yesterday's bug hunt", "flights to Tokyo", "gift ideas".</li>
-      <li>You want one shortcut that saves everything and clears the window.</li>
-      <li>You want your saved tabs searchable, taggable, exportable — and backed up automatically.</li>
-      <li>You want the same library on your iPhone and iPad.</li>
-    </ul>
-
-    <div class="compare-cta">
-      <div class="app-buttons">
-        <a href="https://apps.apple.com/app/tab-space/id1473726602?mt=12" target="_blank" rel="noopener">
-          <img src="assets/img/Download_on_the_Mac_App_Store_Badge_US-UK_RGB_blk_092917.svg"
-            alt="Download Tab Space on the Mac App Store">
-        </a>
-      </div>
-      <p class="subtitle">Also see: <a href="tab-space-vs-onetab.html">Tab Space vs OneTab</a></p>
-    </div>
-  </article>
+  <link rel="stylesheet" href="assets/css/home-v2.css">
+  <link rel="stylesheet" href="assets/css/compare-v2.css">
 
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
-    "@type": "FAQPage",
-    "mainEntity": [
-      {
-        "@type": "Question",
-        "name": "Is Tab Space a replacement for Safari Tab Groups?",
-        "acceptedAnswer": {
-          "@type": "Answer",
-          "text": "Not exactly — they solve different problems. Tab Groups keep tabs open in persistent workspaces. Tab Space saves your tabs as a session so you can close them and reopen them later. Many people use both: Tab Groups for a few long-lived workspaces, Tab Space for everything they want to save and close."
-        }
-      },
-      {
-        "@type": "Question",
-        "name": "Can I save all my Safari tabs and close them at once?",
-        "acceptedAnswer": {
-          "@type": "Answer",
-          "text": "Yes. Tab Space saves the whole window (or all windows) as a named session with one click or one keyboard shortcut, then closes the tabs. You can reopen the session anytime, individually or all at once."
-        }
-      },
-      {
-        "@type": "Question",
-        "name": "Does Tab Space sync between Mac, iPhone, and iPad?",
-        "acceptedAnswer": {
-          "@type": "Answer",
-          "text": "Yes. Sessions sync via iCloud between Tab Space for Mac and the Tab Space app for iPhone and iPad. No account is required."
-        }
-      }
-    ]
+    "@type": "Article",
+    "headline": "Safari Tab Groups vs Saved Sessions: When to Use Each",
+    "description": "How Safari Tab Groups and Tab Space saved sessions solve different parts of the browser workflow.",
+    "dateModified": "2026-08-15",
+    "mainEntityOfPage": "https://mytab.space/tab-space-vs-safari-tab-groups.html",
+    "author": { "@type": "Person", "name": "Joyuer", "url": "https://joyuer.cn/" },
+    "publisher": { "@type": "Organization", "name": "Tab Space", "url": "https://mytab.space/", "logo": { "@type": "ImageObject", "url": "https://mytab.space/icon.png" } },
+    "image": "https://mytab.space/assets/img/tab-space-social.webp"
   }
   </script>
-</body>
+</head>
 
+<body class="home-v2 compare-v2">
+  <header class="site-header">
+    <div class="nav-shell">
+      <a class="nav-brand" href="./" aria-label="Tab Space home"><img src="icon.png" width="30" height="30" alt=""><span>Tab Space</span></a>
+      <nav class="nav-links" aria-label="Primary navigation">
+        <a class="nav-item nav-item-optional" href="switcher.html">Switcher</a>
+        <a class="nav-item" href="#difference">The difference</a>
+        <a class="nav-item nav-item-optional" href="#together">Use both</a>
+        <a class="nav-download" href="https://apps.apple.com/app/tab-space/id1473726602?mt=12" target="_blank" rel="noopener">Get the app</a>
+      </nav>
+    </div>
+  </header>
+
+  <main id="top">
+    <section class="comparison-hero">
+      <div class="section-shell comparison-hero-copy">
+        <span class="eyebrow"><i class="eyebrow-dot" aria-hidden="true"></i>Live workspace or saved context?</span>
+        <h1>Tab Groups for now.<br><span>Tab Space for later.</span></h1>
+        <p class="comparison-lede">Safari Tab Groups keep current work live. Tab Space lets paused work leave the browser without becoming lost.</p>
+        <p class="comparison-meta">Apple documentation and Tab Space 4.1 checked August 15, 2026</p>
+      </div>
+    </section>
+
+    <article class="article-shell">
+      <section class="article-intro" aria-labelledby="answer">
+        <div>
+          <h2 id="answer">They solve different problems</h2>
+          <p>Use Safari Tab Groups for a small set of active contexts such as Work, Personal or a trip you are planning now. They are built into Safari, sync through iCloud and can be shared with other Apple users.</p>
+          <p>Use Tab Space when a window should be saved and closed, when groups are becoming an archive, or when the work crosses Safari, Chrome, Edge and Firefox.</p>
+        </div>
+        <aside class="quick-answer">
+          <strong>Best workflow</strong>
+          <p>Keep the current working set in Tab Groups. Move paused projects and finished research into Tab Space.</p>
+        </aside>
+      </section>
+
+      <section class="article-section" id="difference" aria-labelledby="difference-title">
+        <h2 id="difference-title">Live groups and saved sessions</h2>
+        <div class="table-scroll">
+          <table class="comparison-table">
+            <thead><tr><th>Need</th><th>Safari Tab Groups</th><th>Tab Space</th></tr></thead>
+            <tbody>
+              <tr><td>Core model</td><td>A persistent set of live Safari tabs</td><td>A saved session outside the browser, plus search across active tabs</td></tr>
+              <tr><td>Best for</td><td>A few current workspaces</td><td>Research, projects and reading queues kept for months or years</td></tr>
+              <tr><td>Organization</td><td>Group names and Safari Profiles</td><td>Names, tags, notes, favorites, search, merge and split</td></tr>
+              <tr><td>Protection</td><td>iCloud keeps current groups in sync</td><td>iCloud sync, automatic hourly through monthly snapshots and exports</td></tr>
+              <tr><td>Browsers</td><td>Safari</td><td>Safari; Chrome, Edge and Firefox 121+ with Pro multi-browser beta</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="article-section" id="together" aria-labelledby="together-title">
+        <h2 id="together-title">Use both without building a graveyard</h2>
+        <div class="verdict-grid">
+          <article class="verdict-card">
+            <span class="card-label">Keep it in Tab Groups</span>
+            <h3>The work is active</h3>
+            <p>You want its tabs to remain a living Safari workspace, appear across Apple devices or be shared for collaboration.</p>
+          </article>
+          <article class="verdict-card recommended">
+            <span class="card-label">Move it to Tab Space</span>
+            <h3>The context matters more than the open tabs</h3>
+            <p>You want to clear the browser, preserve the session, search it later and keep recoverable snapshots outside Safari.</p>
+          </article>
+        </div>
+        <div class="callout">
+          <h3>When a project pauses</h3>
+          <p>Save its window to Tab Space, close the tabs and remove the group. Reopen the whole session—or only one page—when the project becomes active again.</p>
+        </div>
+      </section>
+
+      <section class="article-section" aria-labelledby="across-browsers">
+        <h2 id="across-browsers">When the answer might be in another browser</h2>
+        <p>Tab Groups organize Safari. Tab Space’s Browser Tab Switcher searches open tabs across supported browsers alongside saved sessions. Option-Tab can return directly to the original browser, window and tab without making you remember where the page lives.</p>
+      </section>
+
+      <section class="source-box" aria-labelledby="sources">
+        <h2 id="sources">Fact check</h2>
+        <p>Safari behavior was checked against Apple’s current guides for <a class="inline-link" href="https://support.apple.com/guide/safari/group-tabs-ibrwa2d73908/mac" target="_blank" rel="noopener">Tab Groups</a> and <a class="inline-link" href="https://support.apple.com/en-euro/guide/icloud/mm9b8da4f328/icloud" target="_blank" rel="noopener">Safari iCloud sync</a>.</p>
+      </section>
+
+      <section class="comparison-cta" aria-labelledby="cta-title">
+        <span class="section-eyebrow">Let paused work leave Safari</span>
+        <h2 id="cta-title">Save the context. Close the tabs. Return when it matters.</h2>
+        <p>Download Tab Space free for Mac and keep your first two saved sessions without paying.</p>
+        <div class="hero-actions">
+          <a class="button-primary" href="https://apps.apple.com/app/tab-space/id1473726602?mt=12" target="_blank" rel="noopener">Download free for Mac</a>
+          <a class="button-secondary" href="switcher.html">Explore the switcher</a>
+        </div>
+      </section>
+      <nav class="related-guides" aria-label="Related guides">
+        <a href="manage-tabs-across-browsers-mac.html">Manage tabs across browsers on Mac</a>
+        <a href="tab-space-vs-onetab.html">Moving beyond a saved tab list</a>
+        <a href="storage.html">Storage and backup</a>
+      </nav>
+    </article>
+  </main>
+
+  <footer class="site-footer">
+    <div class="footer-grid">
+      <div class="footer-brand"><a class="nav-brand" href="./"><img src="icon.png" width="30" height="30" alt=""><span>Tab Space</span></a><p>A private, Mac-native home for the tabs you have open now and the work you want to find again.</p></div>
+      <div class="footer-col"><strong>Product</strong><a href="switcher.html">Browser Tab Switcher</a><a href="multi-browser.html">Multi-browser setup</a><a href="changelog.html">Changelog</a></div>
+      <div class="footer-col"><strong>Guides</strong><a href="manage-tabs-across-browsers-mac.html">Cross-browser tabs on Mac</a><a href="storage.html">Storage &amp; backup</a></div>
+      <div class="footer-col"><strong>Support</strong><a href="privacy.html">Privacy</a><a href="mailto:support@mytab.space">Email support</a><a href="index-zh.html" lang="zh-Hans">简体中文</a></div>
+    </div>
+    <div class="footer-bottom"><span>© 2019–2026 Tab Space. Built independently for the Mac.</span><span>Safari, Mac, iPhone, and iPad are trademarks of Apple Inc.</span></div>
+  </footer>
+</body>
 </html>
