@@ -1796,7 +1796,7 @@ test('cycles through expanded, titles-only and compact session views', async ({ 
     .toHaveAttribute('data-site-drag-enabled', 'true')
 })
 
-test('defaults a large library to compact while preserving an explicit expanded preference', async ({ page }) => {
+test('keeps the expanded default for a large library while deferring offscreen content', async ({ page }) => {
   const largeLibrary = Array.from({ length: 11 }, (_, sessionIndex) => ({
     uuid: `large-${sessionIndex}`,
     title: `Large ${sessionIndex}`,
@@ -1812,16 +1812,8 @@ test('defaults a large library to compact while preserving an explicit expanded 
   await openDashboard(page, { initialSessions: largeLibrary, serializedBookmarks: true })
 
   const toggle = page.getByTestId('toggle-collapse')
-  await expect(toggle).toHaveAttribute('data-view-mode', 'compact')
-  await expect(page.getByTestId('collapsed-site-icon')).toHaveCount(110)
+  await expect(toggle).toHaveAttribute('data-view-mode', 'expanded')
   await expect.poll(() => page.evaluate(() => localStorage.getItem('tabspace-session-cards-view-mode'))).toBeNull()
-
-  // Compact is only the adaptive first-run default. Once the user chooses a
-  // mode, their choice wins even while the same large library is reloaded.
-  await toggle.click()
-  await expect(toggle).toHaveAttribute('data-view-mode', 'expanded')
-  await page.reload()
-  await expect(toggle).toHaveAttribute('data-view-mode', 'expanded')
 
   const firstSession = page.getByTestId('session-large-0')
   const lastSession = page.getByTestId('session-large-10')
