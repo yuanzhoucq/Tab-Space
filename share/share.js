@@ -8,6 +8,7 @@
   const openButton = document.getElementById("open-all");
   const copyButton = document.getElementById("copy-all");
   const sitesList = document.getElementById("sites");
+  const reportLink = document.getElementById("report-link");
 
   const words = zh ? {
     tagline: "保存和管理 Safari、Chrome、Edge、Firefox 标签页。",
@@ -25,6 +26,7 @@
     tabs: "个标签页",
     expires: date => `到期：${date}`,
     note: "任何拿到这条高强度随机链接的人都能查看此快照。",
+    report: "举报此页面",
   } : {
     tagline: "Save and manage tabs in Safari, Chrome, Edge, and Firefox.",
     get: "Get Tab Space →",
@@ -41,6 +43,7 @@
     tabs: "tabs",
     expires: date => `expires ${date}`,
     note: "Anyone with this hard-to-guess link can view this snapshot.",
+    report: "Report this page",
   };
 
   document.documentElement.lang = zh ? "zh-Hans" : "en";
@@ -54,6 +57,13 @@
   document.getElementById("session-count-label").textContent = words.session;
   document.getElementById("tab-count-label").textContent = words.tabs;
   document.getElementById("privacy-note").textContent = words.note;
+  reportLink.textContent = words.report;
+  // Snapshots carry no author identity, so the id is the only handle we can
+  // act on. It is already in the reporter's address bar; naming it in the
+  // subject just saves them pasting it.
+  reportLink.href = "mailto:support@mytab.space?subject=" + encodeURIComponent(
+    match ? `Report shared session ${match[1]}` : "Report a shared session"
+  );
   openButton.textContent = words.open;
   copyButton.textContent = words.copy;
 

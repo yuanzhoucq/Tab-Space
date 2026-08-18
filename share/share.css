@@ -267,7 +267,7 @@ button, input { font: inherit; }
 
 @keyframes spin { to { transform: rotate(360deg); } }
 .empty-state { padding: 32px 20px; color: var(--text-secondary); text-align: center; }
-footer { display: flex; justify-content: center; gap: 7px; padding-top: 18px; padding-bottom: 28px; color: var(--text-secondary); font-size: 12px; text-align: center; }
+footer { display: flex; flex-wrap: wrap; justify-content: center; gap: 7px; padding-top: 18px; padding-bottom: 28px; color: var(--text-secondary); font-size: 12px; text-align: center; }
 footer a { color: inherit; }
 .clipboard-fallback { position: fixed; left: -10000px; top: 0; opacity: 0; }
 
