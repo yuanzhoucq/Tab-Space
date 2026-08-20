@@ -1952,7 +1952,8 @@ test('keeps the expanded default for a large library while deferring offscreen c
 })
 
 test('opens an 8666-session library without mounting all session cards', async ({ page }) => {
-  test.setTimeout(60000)
+  const previewMode = process.env.TABSPACE_E2E_PREVIEW === '1'
+  test.setTimeout(previewMode ? 31 * 60 * 1000 : 60000)
   const extremeLibrary = Array.from({ length: 8666 }, (_, sessionIndex) => ({
     uuid: `extreme-${sessionIndex}`,
     title: `Space ${sessionIndex}`,
@@ -1979,6 +1980,18 @@ test('opens an 8666-session library without mounting all session cards', async (
   await expect(page.getByTestId('session-extreme-0')).toBeVisible()
   await expect(page.getByTestId('session-extreme-249')).toBeAttached()
   await expect(page.getByTestId('session-extreme-250')).toHaveCount(0)
+
+  await pagination.getByTestId('pagination-next').click()
+  await expect(pagination.getByTestId('pagination-range')).toHaveText('251–500 / 8666')
+  await expect(page.getByTestId('paginated-session-cards').locator('.session')).toHaveCount(250)
+  await expect(page.getByTestId('session-extreme-0')).toHaveCount(0)
+  await expect(page.getByTestId('session-extreme-250')).toBeVisible()
+  await expect(page.getByTestId('session-extreme-499')).toBeAttached()
+  await expect(page.locator('[data-expanded-content="deferred"]')).toHaveCount(0)
+
+  // Keep the real test page available for manual visual and performance
+  // inspection without enabling Playwright's much slower debug instrumentation.
+  if (previewMode) await page.waitForTimeout(30 * 60 * 1000)
 })
 
 test('paginates a large library before rendering cards in every view and search', async ({ page }) => {

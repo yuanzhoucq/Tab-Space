@@ -133,7 +133,11 @@
          entries. Large libraries therefore keep all card actions but omit
          session reordering until a cross-page ordering interaction exists. -->
     <div v-else-if="paginationEnabled" class="paginated-session-cards" data-testid="paginated-session-cards">
+      <!-- Pagination already bounds the expensive content. Deferring it again
+           creates one IntersectionObserver per card, and replacing a page then
+           spends seconds tearing down and recreating hundreds of observers. -->
       <session-card v-for="session in renderedSessions" :key="session.uuid" :session="session"
+        :defer-expanded-content="false"
         :session-reorder-enabled="false"
         :showTagBtns="hoverId===session.uuid" @mouseenter.native="setHoverId(session.uuid)" @mouseleave.native="() => hoverId=null"
       ></session-card>

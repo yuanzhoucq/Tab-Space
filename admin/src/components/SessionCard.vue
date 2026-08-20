@@ -400,7 +400,7 @@
       Draggable,
       ExportDropdown
     },
-    props: ["session", "showTagBtns", "embedded", "sessionReorderEnabled"],
+    props: ["session", "showTagBtns", "embedded", "sessionReorderEnabled", "deferExpandedContent"],
     data() {
       return {
         collapsedVisibleLimit: 10,
@@ -439,6 +439,7 @@
       },
       shouldDeferExpandedContent() {
         return !this.embedded
+          && this.deferExpandedContent !== false
           && this.largeLibrary
           && this.sessionViewMode === "expanded"
           && !this.hasSearch
