@@ -1493,6 +1493,50 @@ test('waits before repeating an unanswered CheckBookmarks, but still repeats it'
   expect(gap).toBeGreaterThan(500)
 })
 
+test('defers card content for a library that is heavy in sessions but light in tabs', async ({ page }) => {
+  await page.addInitScript(() => {
+    const bridgeEvent = name => `tabspace:app-extension:${name}`
+    localStorage.setItem('tabspace-whats-new-seen-version', '4.1')
+
+    // 250 sessions holding one tab each: far past the point where rendering
+    // every card's content hurts, but nowhere near the 1000-tab threshold that
+    // used to be the only thing that switched deferring on.
+    const library = []
+    for (let s = 0; s < 250; s++) {
+      library.push({
+        uuid: `session-${s}`,
+        title: `Space ${s}`,
+        timestamp: 1767225600000 + s,
+        comment: '',
+        sites: [{ title: 'Example', url: `https://example.com/${s}` }],
+        tags: []
+      })
+    }
+
+    document.addEventListener(bridgeEvent('probe'), () => {
+      document.dispatchEvent(new CustomEvent(bridgeEvent('ready'), {
+        detail: JSON.stringify({ protocolVersion: 1 })
+      }))
+    })
+    document.addEventListener(bridgeEvent('command'), event => {
+      const command = JSON.parse(event.detail)
+      if (command.name !== 'CheckBookmarks') return
+      document.dispatchEvent(new CustomEvent(bridgeEvent('bookmarks'), {
+        detail: JSON.stringify(library)
+      }))
+    })
+  })
+
+  await page.route('**/favicon.ico', route => route.fulfill({ status: 204, body: '' }))
+  await page.goto('http://localhost:47317/')
+
+  await expect(page.locator('.session')).toHaveCount(250)
+  // Only the cards near the viewport carry their content; the rest wait.
+  await expect.poll(
+    () => page.locator('[data-expanded-content="deferred"]').count()
+  ).toBeGreaterThan(200)
+})
+
 test('enables AI and subscription UI through a capable companion WebExtension', async ({ page }) => {
   await openWebExtensionDashboard(page, [
     'sessions.read',

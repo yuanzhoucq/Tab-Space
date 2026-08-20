@@ -14,6 +14,11 @@ const sessionViewModeStorageKey = "tabspace-session-cards-view-mode"
 const legacySessionCollapseStorageKey = "tabspace-session-cards-collapsed"
 const sessionViewModes = ["expanded", "titles", "compact"]
 const largeLibraryTabThreshold = 1000
+// Cards cost far more than the tabs inside them. Deferring a card's tab rows
+// makes tab count nearly free, but every session still costs a component
+// instance whatever it holds, so a library can be heavy in cards and light in
+// tabs — and the tab count alone was the only thing that switched deferring on.
+const largeLibrarySessionThreshold = 200
 
 function getInitialSessionViewMode() {
     try {
@@ -30,8 +35,10 @@ function getInitialSessionViewMode() {
 }
 
 function isLargeLibrary(sessions) {
+    const list = sessions || []
+    if (list.length >= largeLibrarySessionThreshold) return true
     let tabCount = 0
-    for (const session of sessions || []) {
+    for (const session of list) {
         tabCount += Array.isArray(session.sites) ? session.sites.length : 0
         if (tabCount >= largeLibraryTabThreshold) return true
     }
