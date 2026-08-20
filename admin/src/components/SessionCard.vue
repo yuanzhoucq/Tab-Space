@@ -7,7 +7,7 @@
       @keydown="handleSessionEditKeydown($event, session)">
     <div v-if="!embedded" class="session-header">
       <div class="session-header-left">
-        <div class="tag-btn handle" v-if="showTagBtns && activeTag === '' && !hasSearch && !bulkSelectionMode && !isEditingSession(session)" :title="lang.movePrompt">
+        <div class="tag-btn handle" v-if="sessionReorderEnabled !== false && showTagBtns && activeTag === '' && !hasSearch && !bulkSelectionMode && !isEditingSession(session)" :title="lang.movePrompt">
           <v-icon name="align-justify" :stroke-width="1.8" style="margin-left:1px"></v-icon>
         </div>
         <input
@@ -400,7 +400,7 @@
       Draggable,
       ExportDropdown
     },
-    props: ["session", "showTagBtns", "embedded"],
+    props: ["session", "showTagBtns", "embedded", "sessionReorderEnabled"],
     data() {
       return {
         collapsedVisibleLimit: 10,

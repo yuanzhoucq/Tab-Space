@@ -1,5 +1,37 @@
 <template>
   <div class="sessions-list" :data-session-view-mode="sessionViewMode">
+    <nav
+        v-if="paginationEnabled"
+        class="session-pagination"
+        data-testid="session-pagination"
+        :aria-label="lang.sessions"
+    >
+      <button
+          type="button"
+          class="session-pagination-button"
+          data-testid="pagination-previous"
+          :disabled="currentPage === 1 || paginationLocked"
+          :aria-label="lang.previousPage"
+          :title="lang.previousPage"
+          @click="goToPage(currentPage - 1)"
+      >
+        <span aria-hidden="true">‹</span>
+      </button>
+      <span class="session-pagination-range" data-testid="pagination-range" aria-live="polite">
+        {{ pageStart + 1 }}–{{ pageEnd }} / {{ displaySessions.length }}
+      </span>
+      <button
+          type="button"
+          class="session-pagination-button"
+          data-testid="pagination-next"
+          :disabled="currentPage === pageCount || paginationLocked"
+          :aria-label="lang.nextPage"
+          :title="lang.nextPage"
+          @click="goToPage(currentPage + 1)"
+      >
+        <span aria-hidden="true">›</span>
+      </button>
+    </nav>
     <template v-if="displaySessions.length===0">
       <!-- Only for an empty filter result; the "no sessions at all" case is covered
            by the getting-started empty state in Admin.vue. -->
@@ -8,7 +40,7 @@
     <div v-else-if="titlesOnlyView" class="session titles-only-card" data-testid="titles-only-session-card">
       <transition-group tag="div" name="session">
         <div
-            v-for="session in displaySessions"
+            v-for="session in renderedSessions"
             :key="session.uuid"
             class="titles-only-session"
             :data-testid="`session-${session.uuid}`"
@@ -96,6 +128,16 @@
         </div>
       </transition-group>
     </div>
+    <!-- A sliced DOM cannot safely use the complete session array as a
+         vuedraggable list: page-local indexes would mutate the wrong global
+         entries. Large libraries therefore keep all card actions but omit
+         session reordering until a cross-page ordering interaction exists. -->
+    <div v-else-if="paginationEnabled" class="paginated-session-cards" data-testid="paginated-session-cards">
+      <session-card v-for="session in renderedSessions" :key="session.uuid" :session="session"
+        :session-reorder-enabled="false"
+        :showTagBtns="hoverId===session.uuid" @mouseenter.native="setHoverId(session.uuid)" @mouseleave.native="() => hoverId=null"
+      ></session-card>
+    </div>
     <draggable
         v-else
         handle=".handle"
@@ -127,6 +169,9 @@
 
   import SessionCard from './SessionCard';
 
+  const paginationSessionThreshold = 1000
+  const sessionPageSize = 250
+
   export default {
     name: "Sessions",
     components: {
@@ -139,6 +184,7 @@
         expandedSessionUuid: null,
         editingTitleUuid: null,
         originalSessionTitle: "",
+        currentPage: 1,
       }
     },
     computed: {
@@ -149,12 +195,33 @@
         "activeTag",
         "keyword",
         "sessionViewMode",
+        "editingSessionUuid",
         "enhancingSessionId",
         "splittingSessionId"
       ]),
       ...mapGetters(["displaySessions", "aiEnabled"]),
       hasSearch() {
         return Boolean(this.keyword && this.keyword.trim())
+      },
+      paginationEnabled() {
+        return this.displaySessions.length >= paginationSessionThreshold
+      },
+      pageCount() {
+        if (!this.paginationEnabled) return 1
+        return Math.max(1, Math.ceil(this.displaySessions.length / sessionPageSize))
+      },
+      pageStart() {
+        return (this.currentPage - 1) * sessionPageSize
+      },
+      pageEnd() {
+        return Math.min(this.pageStart + sessionPageSize, this.displaySessions.length)
+      },
+      renderedSessions() {
+        if (!this.paginationEnabled) return this.displaySessions
+        return this.displaySessions.slice(this.pageStart, this.pageEnd)
+      },
+      paginationLocked() {
+        return Boolean(this.editingSessionUuid || this.editingTitleUuid)
       },
       titlesOnlyView() {
         return this.sessionViewMode === "titles" && !this.hasSearch
@@ -163,7 +230,24 @@
     watch: {
       displaySessions(sessions) {
         if (this.activeTag && sessions.length === 0) this.$store.commit("setActiveTag", "")
-        if (!sessions.some(session => session.uuid === this.expandedSessionUuid)) this.expandedSessionUuid = null
+        const nextPageCount = sessions.length >= paginationSessionThreshold
+          ? Math.max(1, Math.ceil(sessions.length / sessionPageSize))
+          : 1
+        if (this.currentPage > nextPageCount) this.currentPage = nextPageCount
+        if (sessions.some(session => typeof session.uuid === "string" && session.uuid.startsWith("new-"))) {
+          this.currentPage = 1
+        }
+        const pageStart = (this.currentPage - 1) * sessionPageSize
+        const visibleSessions = sessions.length >= paginationSessionThreshold
+          ? sessions.slice(pageStart, pageStart + sessionPageSize)
+          : sessions
+        if (!visibleSessions.some(session => session.uuid === this.expandedSessionUuid)) this.expandedSessionUuid = null
+      },
+      keyword() {
+        this.currentPage = 1
+      },
+      activeTag() {
+        this.currentPage = 1
       },
       titlesOnlyView(enabled) {
         if (!enabled) this.expandedSessionUuid = null
@@ -178,6 +262,19 @@
       })
     },
     methods: {
+      goToPage(page) {
+        if (this.paginationLocked) return
+        const nextPage = Math.min(Math.max(1, page), this.pageCount)
+        if (nextPage === this.currentPage) return
+        this.currentPage = nextPage
+        this.hoverId = null
+        this.expandedSessionUuid = null
+        this.$nextTick(() => {
+          if (this.$el && typeof this.$el.scrollIntoView === "function") {
+            this.$el.scrollIntoView({ block: "start" })
+          }
+        })
+      },
       sessionDisplayTitle(session) {
         return session.title || `${this.lang.saveAt} ${(new Date(Number(session.timestamp))).Format('yyyy-MM-dd hh:mm')}`
       },
@@ -275,6 +372,61 @@
     margin-top: 60px;
     color: #555555;
     transition: 0.3s;
+  }
+
+  .session-pagination {
+    position: sticky;
+    z-index: 4;
+    top: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: max-content;
+    max-width: 100%;
+    box-sizing: border-box;
+    margin: 0 auto 12px;
+    padding: 5px 8px;
+    border: 1px solid var(--border-color, #e2e8f0);
+    border-radius: 999px;
+    color: var(--text-secondary, #718096);
+    background: var(--card-bg, rgba(255, 255, 255, 0.96));
+    box-shadow: var(--shadow-sm, 0 1px 2px rgba(0, 0, 0, 0.08));
+  }
+
+  .session-pagination-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    color: inherit;
+    font-size: 24px;
+    line-height: 1;
+    cursor: pointer;
+    background: transparent;
+  }
+
+  .session-pagination-button:hover:not(:disabled),
+  .session-pagination-button:focus-visible {
+    color: var(--text-primary, #2d3748);
+    background: rgba(0, 0, 0, 0.06);
+  }
+
+  .session-pagination-button:disabled {
+    opacity: 0.35;
+    cursor: default;
+  }
+
+  .session-pagination-range {
+    min-width: 120px;
+    padding: 0 8px;
+    text-align: center;
+    font-size: 13px;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
   }
 
   .titles-only-card {
@@ -471,6 +623,18 @@
       color: #d0d0d0;
       border-color: #3a3a3a;
       background-color: var(--card-bg, #2a2a2a);
+    }
+
+    .session-pagination {
+      border-color: #3a3a3a;
+      color: #bdbdbd;
+      background: rgba(42, 42, 42, 0.96);
+    }
+
+    .session-pagination-button:hover:not(:disabled),
+    .session-pagination-button:focus-visible {
+      color: #f7fafc;
+      background: rgba(255, 255, 255, 0.08);
     }
 
     .titles-only-session-btn:hover {

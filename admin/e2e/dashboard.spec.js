@@ -1951,6 +1951,96 @@ test('keeps the expanded default for a large library while deferring offscreen c
   await expect(lastSession.getByTestId('visible-site')).toHaveCount(100)
 })
 
+test('opens an 8666-session library without mounting all session cards', async ({ page }) => {
+  test.setTimeout(60000)
+  const extremeLibrary = Array.from({ length: 8666 }, (_, sessionIndex) => ({
+    uuid: `extreme-${sessionIndex}`,
+    title: `Space ${sessionIndex}`,
+    timestamp: 1767225600000 + sessionIndex,
+    comment: '',
+    tags: [],
+    sites: [{
+      title: `Tab ${sessionIndex}`,
+      url: `https://example.com/${sessionIndex}`
+    }]
+  }))
+
+  await openDashboard(page, {
+    initialSessions: extremeLibrary,
+    expectedSessionCount: 250,
+    preferredViewMode: 'expanded',
+    serializedBookmarks: true
+  })
+
+  const pagination = page.getByTestId('session-pagination')
+  await expect(pagination).toBeVisible()
+  await expect(pagination.getByTestId('pagination-range')).toHaveText('1–250 / 8666')
+  await expect(page.getByTestId('paginated-session-cards').locator('.session')).toHaveCount(250)
+  await expect(page.getByTestId('session-extreme-0')).toBeVisible()
+  await expect(page.getByTestId('session-extreme-249')).toBeAttached()
+  await expect(page.getByTestId('session-extreme-250')).toHaveCount(0)
+})
+
+test('paginates a large library before rendering cards in every view and search', async ({ page }) => {
+  const paginatedLibrary = Array.from({ length: 1001 }, (_, sessionIndex) => ({
+    uuid: `paginated-${sessionIndex}`,
+    title: `Space ${sessionIndex}`,
+    timestamp: 1767225600000 + sessionIndex,
+    comment: '',
+    tags: [],
+    sites: [{
+      title: `Tab ${sessionIndex}`,
+      url: `https://example.com/${sessionIndex}`
+    }]
+  }))
+
+  await openDashboard(page, {
+    initialSessions: paginatedLibrary,
+    expectedSessionCount: 250,
+    preferredViewMode: 'expanded',
+    serializedBookmarks: true
+  })
+
+  const pagination = page.getByTestId('session-pagination')
+  await expect(pagination).toBeVisible()
+  await expect(pagination.getByTestId('pagination-range')).toHaveText('1–250 / 1001')
+
+  // The paginated branch deliberately does not expose session reordering:
+  // page-local DOM indexes do not map directly onto the complete session list.
+  await page.getByTestId('session-paginated-0').hover()
+  await expect(page.getByTestId('session-paginated-0').locator('.handle')).toHaveCount(0)
+
+  await pagination.getByTestId('pagination-next').click()
+  await expect(pagination.getByTestId('pagination-range')).toHaveText('251–500 / 1001')
+  await expect(page.getByTestId('session-paginated-0')).toHaveCount(0)
+  await expect(page.getByTestId('session-paginated-250')).toBeVisible()
+  await expect(page.getByTestId('paginated-session-cards').locator('.session')).toHaveCount(250)
+
+  // Titles-only uses the same bounded result page instead of creating all
+  // lightweight rows at once.
+  await page.getByTestId('view-mode-menu').hover()
+  await page.getByTestId('view-mode-titles').click()
+  await expect(page.getByTestId('titles-only-session-card').locator('.titles-only-session')).toHaveCount(250)
+  await expect(pagination.getByTestId('pagination-range')).toHaveText('251–500 / 1001')
+
+  // Search normally leaves titles-only and returns to SessionCard. A broad
+  // match must still reset to page one and stay capped at 250 components.
+  await page.locator('#keyword').fill('Space')
+  await expect(pagination.getByTestId('pagination-range')).toHaveText('1–250 / 1001')
+  await expect(page.getByTestId('paginated-session-cards').locator('.session')).toHaveCount(250)
+
+  await pagination.getByTestId('pagination-next').click()
+  await expect(pagination.getByTestId('pagination-range')).toHaveText('251–500 / 1001')
+  await page.getByTestId('add-session').click()
+  await expect(pagination.getByTestId('pagination-range')).toHaveText('1–250 / 1002')
+  await expect(page.locator('.session').first()).toHaveClass(/session-editing/)
+  await expect(page.locator('.session').first().getByTestId('session-title-input')).toBeFocused()
+  await expect(pagination.getByTestId('pagination-next')).toBeDisabled()
+  await page.locator('.session').first().getByTestId('cancel-session-edit').click()
+  await expect(pagination.getByTestId('pagination-range')).toHaveText('1–250 / 1001')
+  await expect(pagination.getByTestId('pagination-next')).toBeEnabled()
+})
+
 test('creates a session and appends it through the native bridge', async ({ page }) => {
   await openDashboard(page, { initialSessions: sessions })
 
