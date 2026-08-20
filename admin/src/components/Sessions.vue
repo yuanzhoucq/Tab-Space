@@ -380,7 +380,9 @@
 
   .session-pagination {
     position: sticky;
-    z-index: 4;
+    /* SessionCard rises to z-index 50 on hover. Keep the sticky controls above
+       it so a card scrolling underneath cannot cover the paging hit targets. */
+    z-index: 60;
     top: 8px;
     display: flex;
     align-items: center;

@@ -2020,8 +2020,25 @@ test('paginates a large library before rendering cards in every view and search'
 
   // The paginated branch deliberately does not expose session reordering:
   // page-local DOM indexes do not map directly onto the complete session list.
-  await page.getByTestId('session-paginated-0').hover()
-  await expect(page.getByTestId('session-paginated-0').locator('.handle')).toHaveCount(0)
+  const firstPaginatedSession = page.getByTestId('session-paginated-0')
+  await firstPaginatedSession.hover()
+  await expect(firstPaginatedSession.locator('.handle')).toHaveCount(0)
+  const stackingLayers = await page.evaluate(() => ({
+    pagination: Number.parseInt(getComputedStyle(document.querySelector('[data-testid="session-pagination"]')).zIndex, 10),
+    hoveredCard: Number.parseInt(getComputedStyle(document.querySelector('[data-testid="session-paginated-0"]')).zIndex, 10)
+  }))
+  expect(stackingLayers.pagination).toBeGreaterThan(stackingLayers.hoveredCard)
+  await firstPaginatedSession.evaluate(card => {
+    const pagination = document.querySelector('[data-testid="session-pagination"]')
+    window.scrollBy(0, card.getBoundingClientRect().top - pagination.getBoundingClientRect().top)
+  })
+  await firstPaginatedSession.hover({ position: { x: 10, y: 100 } })
+  const paginationOwnsOverlap = await pagination.evaluate(element => {
+    const rect = element.getBoundingClientRect()
+    const topElement = document.elementFromPoint(rect.left + rect.width / 2, rect.top + rect.height / 2)
+    return element.contains(topElement)
+  })
+  expect(paginationOwnsOverlap).toBe(true)
 
   await pagination.getByTestId('pagination-next').click()
   await expect(pagination.getByTestId('pagination-range')).toHaveText('251–500 / 1001')
