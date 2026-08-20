@@ -1420,6 +1420,79 @@ test('connects localhost through the Safari App Extension DOM bridge', async ({ 
   await expect(page.locator('#bridgeStorage')).toHaveCount(0)
 })
 
+test('takes the library as one raw payload and reports the last mile back', async ({ page }) => {
+  await page.addInitScript(testSessions => {
+    const clone = value => JSON.parse(JSON.stringify(value))
+    const bridgeEvent = name => `tabspace:app-extension:${name}`
+    localStorage.setItem('tabspace-whats-new-seen-version', '4.1')
+    window.__tabspaceBridgeCommands = []
+    window.__tabspaceRawDelivery = false
+
+    let acceptsRaw = false
+    document.addEventListener(bridgeEvent('accepts-raw-bookmarks'), () => { acceptsRaw = true })
+    document.addEventListener(bridgeEvent('probe'), () => {
+      document.dispatchEvent(new CustomEvent(bridgeEvent('ready'), {
+        detail: JSON.stringify({ protocolVersion: 1 })
+      }))
+    })
+    document.addEventListener(bridgeEvent('command'), event => {
+      const command = JSON.parse(event.detail)
+      window.__tabspaceBridgeCommands.push(clone(command))
+      if (command.name !== 'CheckBookmarks') return
+      window.__tabspaceRawDelivery = acceptsRaw
+      // The library exactly as the native side serialized it: one string, on
+      // its own event, instead of that string nested inside another document.
+      document.dispatchEvent(new CustomEvent(bridgeEvent('bookmarks'), {
+        detail: JSON.stringify(testSessions)
+      }))
+    })
+  }, sessions)
+
+  await page.route('**/favicon.ico', route => route.fulfill({ status: 204, body: '' }))
+  await page.goto('http://localhost:47317/')
+
+  await expect(page.locator('.session')).toHaveCount(2)
+  expect(await page.evaluate(() => window.__tabspaceRawDelivery)).toBe(true)
+  await expect.poll(() => bridgeCommandCount(page, 'ReportDashboardTiming')).toBe(1)
+})
+
+test('waits before repeating an unanswered CheckBookmarks, but still repeats it', async ({ page }) => {
+  await page.addInitScript(() => {
+    const clone = value => JSON.parse(JSON.stringify(value))
+    const bridgeEvent = name => `tabspace:app-extension:${name}`
+    localStorage.setItem('tabspace-whats-new-seen-version', '4.1')
+    window.__tabspaceBridgeCommands = []
+    window.__tabspaceCheckBookmarksAt = []
+
+    document.addEventListener(bridgeEvent('probe'), () => {
+      document.dispatchEvent(new CustomEvent(bridgeEvent('ready'), {
+        detail: JSON.stringify({ protocolVersion: 1 })
+      }))
+    })
+    // Deliberately never answers: a native side still serializing a large
+    // library, or one on a cold Core Data start, looks exactly like this.
+    document.addEventListener(bridgeEvent('command'), event => {
+      const command = clone(JSON.parse(event.detail))
+      window.__tabspaceBridgeCommands.push(command)
+      if (command.name === 'CheckBookmarks') window.__tabspaceCheckBookmarksAt.push(Date.now())
+    })
+  })
+
+  await page.route('**/favicon.ico', route => route.fulfill({ status: 204, body: '' }))
+  await page.goto('http://localhost:47317/')
+
+  // It still recovers from a request that never landed — an unanswered first
+  // attempt has to be repeated — but not at the old 250ms cadence, where every
+  // repeat cost the native side another full context save, fetch and
+  // serialization of the entire library.
+  await expect.poll(() => bridgeCommandCount(page, 'CheckBookmarks')).toBe(2)
+  const gap = await page.evaluate(() => {
+    const times = window.__tabspaceCheckBookmarksAt
+    return times[1] - times[0]
+  })
+  expect(gap).toBeGreaterThan(500)
+})
+
 test('enables AI and subscription UI through a capable companion WebExtension', async ({ page }) => {
   await openWebExtensionDashboard(page, [
     'sessions.read',

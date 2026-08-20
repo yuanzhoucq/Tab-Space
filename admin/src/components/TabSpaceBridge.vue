@@ -47,6 +47,11 @@ export default {
       initialDataTimer: null,
       bookmarkRefreshTimer: null,
       bookmarkRefreshAttempt: 0,
+      // When the payload arrived, so the time spent turning it into UI can be
+      // reported back. The native side stops measuring at the point it hands
+      // the payload to Safari, which is before any of this happens.
+      bookmarkPayloadReceivedAt: 0,
+      dashboardTimingReported: false,
       defaultsRequested: false,
       webExtensionRequestId: 0,
       aiInitialized: false,
@@ -79,6 +84,7 @@ export default {
     window.addEventListener("tabspace:prepare-ai", this.prepareAI)
     document.addEventListener(appExtensionEvent("ready"), this.handleAppExtensionBridgeReady)
     document.addEventListener(appExtensionEvent("message"), this.handleAppExtensionMessage)
+    document.addEventListener(appExtensionEvent("bookmarks"), this.handleAppExtensionBookmarks)
     document.addEventListener("visibilitychange", this.handleVisibilityChange)
     // Switching to the host app leaves the dashboard tab "visible", so
     // visibilitychange alone never fires for the desktop purchase round trip.
@@ -99,6 +105,7 @@ export default {
     window.removeEventListener("tabspace:prepare-ai", this.prepareAI)
     document.removeEventListener(appExtensionEvent("ready"), this.handleAppExtensionBridgeReady)
     document.removeEventListener(appExtensionEvent("message"), this.handleAppExtensionMessage)
+    document.removeEventListener(appExtensionEvent("bookmarks"), this.handleAppExtensionBookmarks)
     document.removeEventListener("visibilitychange", this.handleVisibilityChange)
     window.removeEventListener("focus", this.handleWindowFocus)
     window.removeEventListener("pageshow", this.handleWindowFocus)
@@ -148,6 +155,14 @@ export default {
       }
       this.setupAppExtensionBridge()
     },
+    // The whole library, exactly as the native side serialized it: one string,
+    // parsed once, instead of a nested document parsed twice.
+    handleAppExtensionBookmarks(event) {
+      this.handleNativeMessage("ReturnBookmarks", {
+        cmd: "ReturnBookmarks",
+        bookmarks: event.detail
+      })
+    },
     handleAppExtensionMessage(event) {
       let payload
       try {
@@ -170,6 +185,10 @@ export default {
     setupAppExtensionBridge() {
       if (this.bridgeReady && this.directMode) return
       this.clearBookmarkRefreshTimer()
+      // Ask for the library as the raw JSON the native side already produced,
+      // instead of that string nested inside another JSON document. An older
+      // extension ignores this and keeps sending the nested form.
+      document.dispatchEvent(new CustomEvent(appExtensionEvent("accepts-raw-bookmarks")))
       this.directMode = true
       this.bridgeModeResolved = true
       this.$store.commit("setNativeCapabilities", null)
@@ -743,7 +762,16 @@ export default {
         return
       }
       bridge.send({cmd: "CheckBookmarks"})
-      const delay = Math.min(250 * Math.pow(1.5, this.bookmarkRefreshAttempt), 2000)
+      // Only an unanswered request is worth repeating, and not quickly. Each
+      // one costs the native side a full context save, a full fetch and a full
+      // serialization of the entire library, so asking again every 250ms while
+      // a large payload is still on its way multiplies exactly the work that
+      // was already too slow — and a cold Core Data or CloudKit start answers
+      // late rather than not at all, which the old cadence made worse by
+      // queueing more full fetches behind the first. The reply cancels this
+      // timer. 750ms still recovers a genuinely lost first request four times
+      // over before startInitialDataTimeout gives up at 8s.
+      const delay = Math.min(750 * Math.pow(1.5, this.bookmarkRefreshAttempt), 8000)
       this.bookmarkRefreshAttempt += 1
       this.clearBookmarkRefreshTimer()
       this.bookmarkRefreshTimer = setTimeout(() => this.sendBookmarkRefresh(bridge), delay)
@@ -756,12 +784,14 @@ export default {
     },
     syncBookmarks(data) {
       if (this.bridgeReady) {
+        const receivedAt = Date.now()
         try {
           const bookmarks = typeof data.bookmarks === "string" ? JSON.parse(data.bookmarks) : data.bookmarks
           this.sessions = bookmarks
           this.clearInitialDataTimer()
           this.$store.commit("setConnectionTimedOut", false)
           this.clearBookmarkRefreshTimer()
+          this.reportDashboardTiming(receivedAt)
           this.requestDefaultsOnce()
           // Keep the local suggestion queue in step with the library once AI is on.
           this.refreshSuggestions()
@@ -771,6 +801,24 @@ export default {
       } else {
         setTimeout(() => this.syncBookmarks(data), 200)
       }
+    },
+    // Report the last mile once per dashboard load: parsing the payload and
+    // committing it to the store, measured after the next paint so the cost of
+    // actually showing the library is included. The extension pairs this with
+    // its own delivery measurement.
+    reportDashboardTiming(receivedAt) {
+      if (this.dashboardTimingReported) return
+      if (!this.bridge || !this.directMode) return
+      this.dashboardTimingReported = true
+      this.bookmarkPayloadReceivedAt = receivedAt
+      this.$nextTick(() => {
+        window.requestAnimationFrame(() => {
+          this.bridge.send({
+            cmd: "ReportDashboardTiming",
+            dashboardRenderMs: Math.max(0, Date.now() - this.bookmarkPayloadReceivedAt)
+          })
+        })
+      })
     }
   }
 }
