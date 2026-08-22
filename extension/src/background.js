@@ -348,6 +348,8 @@
       this.storage = options.storage
       this.client = options.client
       this.connectTimeout = options.connectTimeout || 650
+      this.requestTimeout = options.requestTimeout || 10000
+      this.aiRequestTimeout = options.aiRequestTimeout || 90000
       this.reconnectDelays = options.reconnectDelays || [500, 1000, 2000, 4000, 8000, 15000]
       this.socket = null
       this.handshake = null
@@ -542,6 +544,19 @@
       this.pending.clear()
     }
 
+    // Ten seconds is the right budget for what Tab Space answers locally — a
+    // database read, a settings write. It is the wrong one for the ai.* methods:
+    // those go out to the Tab Space worker and then to a model, and a large
+    // split is allowed up to 60 s there (AIClient.swift) before it gives up and
+    // reports WHY. Timing out first threw that answer away and left the
+    // dashboard waiting on a reply that would never come — a user with a
+    // 449-tab group saw a spinner that never stopped, for a request the worker
+    // had in fact refused in two milliseconds. The AI budget is deliberately
+    // longer than the app's own, so the typed error always wins the race.
+    timeoutFor(method) {
+      return String(method).indexOf("ai.") === 0 ? this.aiRequestTimeout : this.requestTimeout
+    }
+
     requestOnOpenSocket(method, params) {
       if (!this.socket || this.socket.readyState !== 1) {
         return Promise.reject(new BridgeError("not_connected", "Tab Space is not connected."))
@@ -551,7 +566,7 @@
         const timer = setTimeout(() => {
           this.pending.delete(id)
           reject(new BridgeError("request_timeout", `Tab Space did not answer ${method}.`))
-        }, 10000)
+        }, this.timeoutFor(method))
         this.pending.set(id, { resolve, reject, timer })
         this.socket.send(JSON.stringify({ version: PROTOCOL_VERSION, id, method, params: params || {} }))
       })

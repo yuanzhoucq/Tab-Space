@@ -694,6 +694,50 @@ test('reconnects automatically when the helper drops the socket', async () => {
   assert.equal(client.reconnectAttempts, 0)
 })
 
+test('gives the AI methods a bridge budget longer than the app\'s own', () => {
+  const client = new background.LocalBridgeClient({
+    WebSocket: FakeReconnectWebSocket,
+    storage: { get: async () => ({}), set: async () => {}, remove: async () => {} },
+    client: { browser: 'chrome' }
+  })
+
+  assert.equal(client.timeoutFor('sessions.list'), 10000)
+  assert.equal(client.timeoutFor('ai.cluster'), 90000)
+  // Deliberately longer than the 60 s the app allows its own AI call: whatever
+  // that call ends up reporting — a result, or a typed refusal — must reach the
+  // dashboard rather than being replaced here by a generic timeout.
+  assert.ok(client.timeoutFor('ai.cluster') > 60000)
+})
+
+test('does not abandon a slow AI request at the local timeout', async () => {
+  const client = new background.LocalBridgeClient({
+    WebSocket: FakeReconnectWebSocket,
+    storage: { get: async () => ({}), set: async () => {}, remove: async () => {} },
+    client: { browser: 'chrome' },
+    requestTimeout: 5,
+    aiRequestTimeout: 300
+  })
+  client.socket = { readyState: 1, sent: [], send(raw) { this.sent.push(raw) } }
+
+  // A local call still gives up quickly.
+  await assert.rejects(
+    client.requestOnOpenSocket('sessions.list', {}),
+    error => error.code === 'request_timeout'
+  )
+
+  // The AI call is still waiting well past that budget, so the answer the
+  // worker is about to send is still wanted when it arrives.
+  const pending = client.requestOnOpenSocket('ai.cluster', {})
+  await new Promise(resolve => setTimeout(resolve, 40))
+  const sent = JSON.parse(client.socket.sent[1])
+  client.handleMessage(JSON.stringify({
+    version: 2,
+    id: sent.id,
+    result: { clusters: '[]', totalTabs: 449 }
+  }))
+  assert.deepEqual(await pending, { clusters: '[]', totalTabs: 449 })
+})
+
 test('keeps the wake-up alarm armed across a successful connection', () => {
   const alarmCalls = []
   const client = new background.LocalBridgeClient({
