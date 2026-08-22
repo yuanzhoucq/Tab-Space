@@ -321,6 +321,18 @@
 
 .compare-v2 .plain-list li { margin: 9px 0; padding-left: 5px; }
 
+/* Components use top margin to separate themselves from the copy above.
+   Give a following paragraph its own breathing room as well; otherwise it
+   sits flush against cards, tables, callouts, or lists. */
+.compare-v2 .criteria-grid + p,
+.compare-v2 .verdict-grid + p,
+.compare-v2 .product-grid + p,
+.compare-v2 .table-scroll + p,
+.compare-v2 .callout + p,
+.compare-v2 .plain-list + p {
+    margin-top: 24px;
+}
+
 .compare-v2 .source-box {
     margin-top: 76px;
     padding: 28px;
@@ -413,6 +425,12 @@
     .compare-v2 .verdict-grid,
     .compare-v2 .product-grid,
     .compare-v2 .criteria-grid { grid-template-columns: 1fr; }
+    .compare-v2 .criteria-grid + p,
+    .compare-v2 .verdict-grid + p,
+    .compare-v2 .product-grid + p,
+    .compare-v2 .table-scroll + p,
+    .compare-v2 .callout + p,
+    .compare-v2 .plain-list + p { margin-top: 20px; }
     .compare-v2 .comparison-cta { padding: 44px 22px; border-radius: 24px; }
 }
 
