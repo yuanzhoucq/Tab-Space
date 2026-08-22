@@ -298,6 +298,9 @@ export default {
             this.$store.commit("setShowSubscriptionModal", true)
             break
           }
+          // A transport failure resolves nothing: the reply that would have
+          // cleared the spinner is never coming.
+          this.failInFlightAIRequest()
           if (!this.$store.state.nativeDetected) {
             this.$store.commit("setConnectionTimedOut", true)
           }
@@ -517,6 +520,36 @@ export default {
       const messageKey = data.error === "network" ? "aiErrorNetwork" : "aiErrorGeneric"
       const retry = this.retryPayloadFor(data)
       this.$store.commit("setAIToast", {messageKey, retry})
+    },
+    // An AI request died in transport rather than in the worker — the browser
+    // bridge's own per-request timeout, or a socket that dropped mid-flight. No
+    // ReturnEnhancedSession / ReturnSplitPreview will ever arrive, so nothing
+    // else clears the card's spinner and it turns until the page is reloaded.
+    // A user reported exactly that ("it doesn't ever complete") for a session
+    // too large to answer inside the bridge timeout; the request had in fact
+    // been refused, and they never saw the refusal.
+    //
+    // The in-flight id is the only thing identifying which card was waiting:
+    // the failure carries a transport error code, not the request that caused
+    // it. Both are cleared because at most one AI request runs at a time.
+    failInFlightAIRequest() {
+      const splitting = this.$store.state.splittingSessionId
+      const enhancing = this.$store.state.enhancingSessionId
+      if (!splitting && !enhancing) return
+      const uuid = splitting || enhancing
+      const session = this.sessions.find(s => s.uuid === uuid)
+      this.$store.commit("setSplittingSessionId", "")
+      this.$store.commit("setEnhancingSessionId", "")
+      this.$store.commit("setAIToast", {
+        messageKey: "aiErrorGeneric",
+        retry: session
+          ? {
+              cmd: splitting ? "ClusterTabs" : "EnhanceSession",
+              uuid: session.uuid,
+              bookmarks: [session]
+            }
+          : null
+      })
     },
     // Rebuild the request that failed so the toast's Retry button can re-send it.
     retryPayloadFor(data) {
