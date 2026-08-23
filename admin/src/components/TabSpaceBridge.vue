@@ -835,21 +835,28 @@ export default {
         setTimeout(() => this.syncBookmarks(data), 200)
       }
     },
-    // Report the last mile once per dashboard load: parsing the payload and
-    // committing it to the store, measured after the next paint so the cost of
-    // actually showing the library is included. The extension pairs this with
-    // its own delivery measurement.
+    // Report the last mile once per dashboard load: parsing the payload,
+    // committing it to the store, and Vue's DOM update for it. The extension
+    // pairs this with its own delivery measurement.
+    //
+    // Deliberately measured at the DOM update rather than after the next paint,
+    // which is where this used to stop. `requestAnimationFrame` does not run in
+    // a hidden tab, so waiting for a frame reported how long it took the person
+    // to look at the tab: one account sent 32ms and a clamped 60000ms for the
+    // same two-session library, and every figure the metric produced was
+    // suspect because a background open was indistinguishable from a slow one.
+    // The paint is left out on purpose — a number that excludes a known part of
+    // the cost is worth more than one that silently includes the user's
+    // attention.
     reportDashboardTiming(receivedAt) {
       if (this.dashboardTimingReported) return
       if (!this.bridge || !this.directMode) return
       this.dashboardTimingReported = true
       this.bookmarkPayloadReceivedAt = receivedAt
       this.$nextTick(() => {
-        window.requestAnimationFrame(() => {
-          this.bridge.send({
-            cmd: "ReportDashboardTiming",
-            dashboardRenderMs: Math.max(0, Date.now() - this.bookmarkPayloadReceivedAt)
-          })
+        this.bridge.send({
+          cmd: "ReportDashboardTiming",
+          dashboardRenderMs: Math.max(0, Date.now() - this.bookmarkPayloadReceivedAt)
         })
       })
     }

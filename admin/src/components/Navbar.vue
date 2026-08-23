@@ -4,26 +4,39 @@
       <a class="link" data-testid="changelog-link" href="https://mytab.space/changelog.html"
         target="_blank" rel="noopener" style="text-decoration: none; font-style: italic" v-html="lang.whatsNew"></a>
     </div>
-    <div v-if="activeTag !== '@Trash' && hasExportableSessions" class="export" data-testid="export-menu">
+    <!-- Export, import and backup were three top-level menus each. They are
+         occasional housekeeping, and they were crowding out the things people
+         come here to reach, so they share one entry and open as sections of it
+         rather than as nested flyouts — a submenu that has to be hovered
+         through is worse on a trackpad than a slightly taller menu. -->
+    <div class="more" data-testid="more-menu">
       <button type="button" class="link menu-trigger">
-        {{lang.export}}
+        {{lang.more || 'More'}}
         <small>▼</small>
       </button>
-      <export-dropdown></export-dropdown>
+      <div class="more-dropdown">
+        <div v-if="activeTag !== '@Trash' && hasExportableSessions"
+             class="more-group" data-testid="export-menu">
+          <p class="more-group-title">{{lang.export}}</p>
+          <export-dropdown></export-dropdown>
+        </div>
+        <div class="more-group" data-testid="import-menu">
+          <p class="more-group-title">{{lang.import}}</p>
+          <import-dropdown></import-dropdown>
+        </div>
+        <div class="more-group" data-testid="backup-menu">
+          <p class="more-group-title">{{lang.backup || 'Backup'}}</p>
+          <backup-dropdown></backup-dropdown>
+        </div>
+      </div>
     </div>
-    <div class="import" data-testid="import-menu">
-      <button type="button" class="link menu-trigger">
-        {{lang.import}}
-        <small>▼</small>
-      </button>
-      <import-dropdown></import-dropdown>
-    </div>
-    <div class="backup" data-testid="backup-menu">
-      <button type="button" class="link menu-trigger">
-        {{lang.backup || 'Backup'}}
-        <small>▼</small>
-      </button>
-      <backup-dropdown></backup-dropdown>
+    <div>
+      <a class="link icon-link" data-testid="multi-browser-link"
+         href="https://mytab.space/multi-browser.html"
+         target="_blank" rel="noopener noreferrer">
+        <v-icon name="globe" aria-hidden="true"></v-icon>
+        <span>{{lang.multiBrowser || 'Multi-browser'}}</span>
+      </a>
     </div>
     <!-- Remaining-quota readout for Free and Plus. Pro gets the badge on the
          title instead. -->
@@ -157,11 +170,17 @@ export default {
     background-color: rgba(0, 0, 0, 0.06);
   }
 
-  .ios-app-link {
+  .ios-app-link,
+  .icon-link {
     display: inline-flex;
     align-items: center;
     gap: 4px;
     white-space: nowrap;
+  }
+
+  .icon-link ::v-deep .icon {
+    width: 15px;
+    height: 15px;
   }
 
   .ios-app-link .icon {
@@ -187,17 +206,59 @@ export default {
     height: 12px;
   }
 
-  .export, .import, .backup {
+  .more {
     display: inline-block;
+    position: relative;
   }
 
-  .export:hover ::v-deep .export-dropdown,
-  .export:focus-within ::v-deep .export-dropdown,
-  .import:hover ::v-deep .import-dropdown,
-  .import:focus-within ::v-deep .import-dropdown,
-  .backup:hover ::v-deep .backup-dropdown,
-  .backup:focus-within ::v-deep .backup-dropdown {
+  .more-dropdown {
+    display: none;
+    position: absolute;
+    right: 0;
+    padding: 4px;
+    text-align: left;
+    border: 1px solid var(--border-color, gray);
+    border-radius: 6px;
+    background-color: var(--card-bg, #fbfbfb);
+    min-width: 170px;
+    z-index: 100;
+  }
+
+  .more:hover .more-dropdown,
+  .more:focus-within .more-dropdown {
     display: block;
+  }
+
+  .more-group + .more-group {
+    margin-top: 4px;
+    padding-top: 4px;
+    border-top: 1px solid var(--border-color, #e2e8f0);
+  }
+
+  .more-group-title {
+    margin: 0;
+    padding: 2px 8px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    color: var(--text-secondary, #718096);
+  }
+
+  /* Each of these was its own flyout and still carries the positioning for it.
+     Inside More they are plain sections, so that positioning is turned off
+     rather than duplicated into three near-identical components. */
+  .more-dropdown ::v-deep .export-dropdown,
+  .more-dropdown ::v-deep .import-dropdown,
+  .more-dropdown ::v-deep .backup-dropdown {
+    display: block;
+    position: static;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    min-width: 0;
   }
 
   #file-input {

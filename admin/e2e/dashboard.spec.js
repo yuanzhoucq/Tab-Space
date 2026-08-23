@@ -1537,6 +1537,41 @@ test('defers card content for a library that is heavy in sessions but light in t
   ).toBeGreaterThan(200)
 })
 
+test('keeps housekeeping menus behind More and puts multi-browser in the bar', async ({ page }) => {
+  await openAppExtensionDashboard(page, sessions)
+  await expect(page.locator('.session')).toHaveCount(2)
+
+  // The bar itself carries the multi-browser entry the menus made room for.
+  const multiBrowser = page.getByTestId('multi-browser-link')
+  await expect(multiBrowser).toBeVisible()
+  await expect(multiBrowser).toHaveAttribute('href', 'https://mytab.space/multi-browser.html')
+
+  // Export, import and backup are reachable, but only through More.
+  await expect(page.getByTestId('export-menu')).toBeHidden()
+  await page.getByTestId('more-menu').hover()
+  for (const menu of ['export-menu', 'import-menu', 'backup-menu']) {
+    await expect(page.getByTestId(menu)).toBeVisible()
+  }
+  await expect(page.getByTestId('export-menu').getByTestId('export-json')).toBeVisible()
+})
+
+test('reports render timing from a hidden tab, where no frame is ever painted', async ({ page }) => {
+  await page.addInitScript(() => {
+    // A background tab never gets a frame. Waiting for one used to make this
+    // report say how long it took the person to look at the tab: the same
+    // two-session library was reported as both 32ms and a clamped 60000ms.
+    Object.defineProperty(document, 'visibilityState', { get: () => 'hidden' })
+    window.requestAnimationFrame = () => 0
+  })
+  await openAppExtensionDashboard(page, sessions)
+
+  await expect(page.locator('.session')).toHaveCount(2)
+  await expect.poll(() => lastBridgeCommand(page, 'ReportDashboardTiming')).not.toBeNull()
+  const reported = await lastBridgeCommand(page, 'ReportDashboardTiming')
+  expect(reported.data.dashboardRenderMs).toBeGreaterThanOrEqual(0)
+  expect(reported.data.dashboardRenderMs).toBeLessThan(5_000)
+})
+
 test('enables AI and subscription UI through a capable companion WebExtension', async ({ page }) => {
   await openWebExtensionDashboard(page, [
     'sessions.read',
@@ -2473,6 +2508,8 @@ test('persists settings across a reload', async ({ page }) => {
 test('imports OneTab text and exports the resulting backup', async ({ page }) => {
   await openDashboard(page, { initialSessions: sessions })
 
+  await page.getByTestId('more-menu').hover()
+
   await page.getByTestId('import-menu').hover()
   await page.getByTestId('import-onetab').click()
   await expect(page.getByTestId('import-modal')).toBeVisible()
@@ -2496,6 +2533,8 @@ test('imports OneTab text and exports the resulting backup', async ({ page }) =>
   })
   await expect(page.locator('.session')).toHaveCount(3)
 
+  await page.getByTestId('more-menu').hover()
+
   await page.getByTestId('export-menu').hover()
   const downloadPromise = page.waitForEvent('download')
   await page.getByTestId('export-menu').getByTestId('export-json').click()
@@ -2508,6 +2547,8 @@ test('imports OneTab text and exports the resulting backup', async ({ page }) =>
 
 test('exports a self-contained HTML page in the current dashboard style', async ({ page }) => {
   await openDashboard(page, { initialSessions: sessions })
+
+  await page.getByTestId('more-menu').hover()
 
   await page.getByTestId('export-menu').hover()
   const downloadPromise = page.waitForEvent('download')
@@ -2565,12 +2606,16 @@ test('excludes trashed sessions from every export format', async ({ page }) => {
   ]
   await openDashboard(page, { initialSessions: sessionsWithTrash, expectedSessionCount: 1 })
 
+  await page.getByTestId('more-menu').hover()
+
   await page.getByTestId('export-menu').hover()
   let downloadPromise = page.waitForEvent('download')
   await page.getByTestId('export-menu').getByTestId('export-json').click()
   let download = await downloadPromise
   const exportedJson = JSON.parse(await fs.readFile(await download.path(), 'utf8'))
   expect(exportedJson.map(session => session.uuid)).toEqual(['session-reading'])
+
+  await page.getByTestId('more-menu').hover()
 
   await page.getByTestId('export-menu').hover()
   downloadPromise = page.waitForEvent('download')
@@ -2589,8 +2634,10 @@ test('excludes trashed sessions from every export format', async ({ page }) => {
       }
     })
   })
+  await page.getByTestId('more-menu').hover()
   await page.getByTestId('export-menu').hover()
   await page.getByTestId('export-menu').getByTestId('export-text').click()
+  await page.getByTestId('more-menu').hover()
   await page.getByTestId('export-menu').hover()
   await page.getByTestId('export-menu').getByTestId('export-markdown').click()
   const copiedExports = await page.evaluate(() => window.__copiedExports)
@@ -2638,6 +2685,7 @@ test('uses fallback titles and escapes Markdown link text', async ({ page }) => 
       }
     })
   })
+  await page.getByTestId('more-menu').hover()
   await page.getByTestId('export-menu').hover()
   const markdownButton = page.getByTestId('export-menu').getByTestId('export-markdown')
   await expect(markdownButton).toHaveJSProperty('tagName', 'BUTTON')
@@ -2654,6 +2702,8 @@ test('lists, restores and creates backups through the native bridge', async ({ p
   await openDashboard(page, { initialSessions: sessions, backups })
   await expect.poll(() => lastBridgeCommand(page, 'ListBackups')).not.toBeNull()
 
+  await page.getByTestId('more-menu').hover()
+
   await page.getByTestId('backup-menu').hover()
   await page.getByTestId('view-backups').click()
   await expect(page.getByTestId('backup-modal')).toBeVisible()
@@ -2665,6 +2715,8 @@ test('lists, restores and creates backups through the native bridge', async ({ p
   await expect.poll(() => lastBridgeCommand(page, 'RestoreBackup')).toMatchObject({
     payload: { filename: 'backup-2026-07-15.tabspace' }
   })
+
+  await page.getByTestId('more-menu').hover()
 
   await page.getByTestId('backup-menu').hover()
   await page.getByTestId('backup-now').click()
