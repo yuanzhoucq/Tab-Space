@@ -4,32 +4,6 @@
       <a class="link" data-testid="changelog-link" href="https://mytab.space/changelog.html"
         target="_blank" rel="noopener" style="text-decoration: none; font-style: italic" v-html="lang.whatsNew"></a>
     </div>
-    <!-- Export, import and backup were three top-level menus each. They are
-         occasional housekeeping, and they were crowding out the things people
-         come here to reach, so they share one entry and open as sections of it
-         rather than as nested flyouts — a submenu that has to be hovered
-         through is worse on a trackpad than a slightly taller menu. -->
-    <div class="more" data-testid="more-menu">
-      <button type="button" class="link menu-trigger">
-        {{lang.more || 'More'}}
-        <small>▼</small>
-      </button>
-      <div class="more-dropdown">
-        <div v-if="activeTag !== '@Trash' && hasExportableSessions"
-             class="more-group" data-testid="export-menu">
-          <p class="more-group-title">{{lang.export}}</p>
-          <export-dropdown></export-dropdown>
-        </div>
-        <div class="more-group" data-testid="import-menu">
-          <p class="more-group-title">{{lang.import}}</p>
-          <import-dropdown></import-dropdown>
-        </div>
-        <div class="more-group" data-testid="backup-menu">
-          <p class="more-group-title">{{lang.backup || 'Backup'}}</p>
-          <backup-dropdown></backup-dropdown>
-        </div>
-      </div>
-    </div>
     <div>
       <a class="link icon-link" data-testid="multi-browser-link"
          href="https://mytab.space/multi-browser.html"
@@ -62,6 +36,32 @@
         <v-icon name="smartphone" aria-hidden="true"></v-icon>
         <span>{{lang.iosAppNav}}</span>
       </a>
+    </div>
+    <!-- Export, import and backup were three top-level menus each. They are
+         occasional housekeeping, and they were crowding out the things people
+         come here to reach, so they share one entry and open as sections of it
+         rather than as nested flyouts — a submenu that has to be hovered
+         through is worse on a trackpad than a slightly taller menu. -->
+    <div class="more" data-testid="more-menu">
+      <button type="button" class="link menu-trigger">
+        {{lang.more || 'More'}}
+        <small>▼</small>
+      </button>
+      <div class="more-dropdown">
+        <div v-if="activeTag !== '@Trash' && hasExportableSessions"
+             class="more-group" data-testid="export-menu">
+          <p class="more-group-title">{{lang.export}}</p>
+          <export-dropdown></export-dropdown>
+        </div>
+        <div class="more-group" data-testid="import-menu">
+          <p class="more-group-title">{{lang.import}}</p>
+          <import-dropdown></import-dropdown>
+        </div>
+        <div class="more-group" data-testid="backup-menu">
+          <p class="more-group-title">{{lang.backup || 'Backup'}}</p>
+          <backup-dropdown></backup-dropdown>
+        </div>
+      </div>
     </div>
     <div>
       <router-link class="link" data-testid="settings-link" to="/settings">{{lang.settings}}</router-link>
