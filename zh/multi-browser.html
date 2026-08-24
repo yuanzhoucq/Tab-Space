@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+
+  <!-- SEO -->
+  <title>多浏览器支持 — Tab Space for Chrome, Edge &amp; Firefox</title>
+  <meta name="description"
+    content="在任意浏览器中把一窗标签页保存下来，再在需要的浏览器中重新打开。Tab Space 把 Chrome、Microsoft Edge 和 Firefox 连接到 Mac 原生会话库中。">
+  <link rel="canonical" href="https://mytab.space/zh/multi-browser.html">
+  <link rel="alternate" hreflang="zh-Hans" href="https://mytab.space/zh/multi-browser.html">
+  <link rel="alternate" hreflang="en" href="https://mytab.space/multi-browser.html">
+  <link rel="alternate" hreflang="x-default" href="https://mytab.space/multi-browser.html">
+
+  <!-- Social -->
+  <meta name="twitter:site" content="@joyuer">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="在 Safari 里保存，在 Chrome 里打开。">
+  <meta name="twitter:description" content="Mac 上的统一会话库与 Option-Tab 全局搜索，跨 Safari、Chrome、Microsoft Edge 与 Firefox。">
+  <meta name="twitter:image" content="https://mytab.space/assets/img/tab-space-social.webp">
+  <meta property="og:title" content="在 Safari 里保存，在 Chrome 里打开。">
+  <meta property="og:description"
+    content="Mac 上的统一会话库与 Option-Tab 全局搜索，跨 Safari、Chrome、Microsoft Edge 与 Firefox。">
+  <meta property="og:type" content="article">
+  <meta property="og:url" content="https://mytab.space/zh/multi-browser.html">
+  <meta property="og:image" content="https://mytab.space/assets/img/tab-space-social.webp">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+
+  <!-- Icons -->
+  <link rel="icon" type="image/png" href="/icon.png">
+  <link rel="apple-touch-icon" href="/icon.png">
+
+  <!-- Styles -->
+  <link rel="stylesheet" href="/assets/css/main.css">
+  <link rel="stylesheet" href="/assets/css/home-v2.css">
+  <link rel="stylesheet" href="/assets/css/compare-v2.css">
+  <style>
+    .compare-v2 [id] {
+      scroll-margin-top: 96px;
+    }
+
+    /* ---- Rotating headline ---- */
+    .compare-v2 .mb-headline {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+      letter-spacing: -0.02em;
+    }
+
+    .compare-v2 .comparison-hero .mb-headline span {
+      color: #fff;
+      background: none;
+    }
+
+    .compare-v2 .comparison-hero .mb-headline .mb-rotate-item {
+      color: transparent;
+      background: linear-gradient(110deg, #ffb0aa 0%, #ff756c 38%, #b89cff 78%, #85afff 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+    }
+
+    .mb-rotate {
+      position: relative;
+      display: inline-block;
+      text-align: left;
+      vertical-align: baseline;
+      letter-spacing: -0.04em;
+      transition: width 280ms cubic-bezier(0.25, 1, 0.5, 1);
+    }
+
+    .mb-rotate-item {
+      display: inline-block;
+      white-space: nowrap;
+      padding: 0.2em 0.04em 0.25em;
+      margin: -0.2em -0.04em -0.25em;
+      transition: opacity 300ms ease, transform 300ms ease;
+    }
+
+    .mb-rotate-item:not(.is-active) {
+      position: absolute;
+      top: 0;
+      left: 0;
+      opacity: 0;
+      transform: translateY(0.16em);
+      pointer-events: none;
+    }
+
+    .mb-rotate-item.is-active {
+      position: relative;
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .mb-rotate,
+      .mb-rotate-item {
+        transition: none;
+      }
+    }
+
+    /* ---- Store links ---- */
+    .compare-v2 .mb-stores {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+      max-width: 880px;
+      margin: 38px auto 0;
+      text-align: left;
+    }
+
+    .compare-v2 .mb-store {
+      padding: 16px 18px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.13);
+      border-radius: 16px;
+      background: rgba(255, 255, 255, 0.06);
+      transition: transform 180ms ease, background 180ms ease, border-color 180ms ease;
+    }
+
+    .compare-v2 .mb-store:hover {
+      border-color: rgba(255, 255, 255, 0.26);
+      background: rgba(255, 255, 255, 0.1);
+      transform: translateY(-2px);
+    }
+
+    .compare-v2 .mb-store img {
+      width: 30px;
+      height: 30px;
+      flex: 0 0 30px;
+      object-fit: contain;
+    }
+
+    .compare-v2 .mb-store strong {
+      display: block;
+      color: #fff;
+      font-size: 14px;
+      font-weight: 660;
+      line-height: 1.3;
+    }
+
+    .compare-v2 .mb-store em {
+      display: block;
+      margin-top: 2px;
+      color: #97929f;
+      font-size: 12px;
+      font-style: normal;
+    }
+
+    .compare-v2 .mb-stores-note {
+      max-width: 660px;
+      margin: 20px auto 0;
+      color: #8f8b96;
+      font-size: 13px;
+      line-height: 1.6;
+    }
+
+    .compare-v2 .mb-stores-note a {
+      color: #c9c5cf;
+      text-decoration: underline;
+      text-underline-offset: 3px;
+    }
+
+    /* ---- Screenshot ---- */
+    .compare-v2 .mb-shot-section {
+      padding: 76px 0 0;
+    }
+
+    .compare-v2 .mb-shot {
+      width: min(calc(100% - 48px), 1280px);
+      margin: 0 auto;
+    }
+
+    .compare-v2 .mb-shot img {
+      width: 100%;
+      display: block;
+      border-radius: 18px;
+    }
+
+    .compare-v2 .mb-shot figcaption {
+      max-width: 780px;
+      margin: 22px auto 0;
+      color: var(--article-muted);
+      font-size: 15px;
+      line-height: 1.65;
+      text-align: center;
+    }
+
+    /* ---- Guide bits ---- */
+    .compare-v2 .article-section > h3 {
+      margin-top: 42px;
+    }
+
+    .compare-v2 .step-list {
+      max-width: 820px;
+      margin: 18px 0 0;
+      padding-left: 22px;
+    }
+
+    .compare-v2 .step-list li {
+      margin: 9px 0;
+      padding-left: 5px;
+    }
+
+    .compare-v2 .step-list + p,
+    .compare-v2 .browser-cards + p {
+      margin-top: 24px;
+    }
+
+    .compare-v2 .browser-cards {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 16px;
+      margin-top: 22px;
+    }
+
+    .compare-v2 .browser-card {
+      padding: 24px;
+      border: 1px solid var(--article-line);
+      border-radius: 20px;
+      background: var(--article-card);
+    }
+
+    .compare-v2 .browser-card img {
+      width: 34px;
+      height: 34px;
+      display: block;
+      margin-bottom: 14px;
+      object-fit: contain;
+    }
+
+    .compare-v2 .browser-card h3 {
+      margin: 0 0 8px;
+      font-size: 18px;
+    }
+
+    .compare-v2 .browser-card p {
+      margin: 0;
+      font-size: 14px;
+    }
+
+    .compare-v2 code {
+      padding: 2px 6px;
+      border-radius: 5px;
+      background: rgba(27, 25, 30, 0.07);
+      font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 0.9em;
+    }
+
+    @media (max-width: 900px) {
+      .compare-v2 .mb-stores {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 720px) {
+      .compare-v2 .comparison-hero .mb-headline {
+        font-size: clamp(29px, 9.4vw, 48px);
+      }
+
+      .compare-v2 .mb-stores {
+        grid-template-columns: 1fr;
+        margin-top: 30px;
+      }
+
+      .compare-v2 .mb-shot-section {
+        padding-top: 52px;
+      }
+
+      .compare-v2 .mb-shot {
+        width: calc(100% - 28px);
+      }
+
+      .compare-v2 .mb-shot img {
+        border-radius: 12px;
+      }
+
+      .compare-v2 .browser-cards {
+        grid-template-columns: 1fr;
+      }
+
+      .compare-v2 .browser-card {
+        padding: 20px;
+        border-radius: 17px;
+      }
+    }
+  </style>
+</head>
+
+<body class="home-v2 compare-v2">
+  <header class="site-header">
+    <div class="nav-shell">
+      <a class="nav-brand" href="/zh/" aria-label="Tab Space 首页">
+        <img src="/icon.png" width="30" height="30" alt="">
+        <span>Tab Space</span>
+      </a>
+      <nav class="nav-links" aria-label="主导航">
+        <a class="nav-item" href="#what-it-does">功能</a>
+        <a class="nav-item" href="#setup">设置</a>
+        <a href="/multi-browser.html" lang="en">English</a>
+        <a class="nav-download" href="https://apps.apple.com/cn/app/tab-space/id1473726602?mt=12" target="_blank" rel="noopener">获取 App</a>
+      </nav>
+    </div>
+  </header>
+
+  <main id="top">
+    <section class="comparison-hero" id="hero">
+      <div class="section-shell comparison-hero-copy">
+        <span class="eyebrow"><i class="eyebrow-dot" aria-hidden="true"></i>多浏览器支持 · Pro Beta</span>
+        <h1 class="mb-headline" aria-label="在 Safari、Chrome、Microsoft Edge 或 Firefox 里保存，在其中任意另一个里打开。">
+          <span class="mb-headline-line">在 <span class="mb-rotate" data-mb-rotate="0" aria-hidden="true"><span class="mb-rotate-item is-active">Safari</span><span class="mb-rotate-item">Chrome</span><span class="mb-rotate-item">Edge</span><span class="mb-rotate-item">Firefox</span></span> 里保存，</span>
+          <span class="mb-headline-line">在 <span class="mb-rotate" data-mb-rotate="1" aria-hidden="true"><span class="mb-rotate-item">Safari</span><span class="mb-rotate-item is-active">Chrome</span><span class="mb-rotate-item">Edge</span><span class="mb-rotate-item">Firefox</span></span> 里打开。</span>
+        </h1>
+        <p class="comparison-lede">
+          Mac 上只有一个会话库，所有浏览器共用。在你正在工作的浏览器里把一窗标签页保存下来，再在你需要的浏览器里重新打开。
+        </p>
+
+        <div class="mb-stores">
+          <a class="mb-store" href="https://apps.apple.com/cn/app/tab-space/id1473726602?mt=12" target="_blank" rel="noopener">
+            <img src="/assets/img/app-store-icon.png" alt="" aria-hidden="true">
+            <span><strong>Mac App Store</strong><em>Mac App · 含 Safari</em></span>
+          </a>
+          <a class="mb-store" href="https://chromewebstore.google.com/detail/tab-space/nhheanllfhaincfgjpdiacdnfgkipeep" target="_blank" rel="noopener">
+            <img src="/assets/img/browser-chrome.png" alt="" aria-hidden="true">
+            <span><strong>Chrome 应用商店</strong><em>Chrome 扩展</em></span>
+          </a>
+          <a class="mb-store" href="https://microsoftedge.microsoft.com/addons/detail/tab-space/afpnlldgbkigccngpjclblbpjplbffel" target="_blank" rel="noopener">
+            <img src="/assets/img/browser-edge.png" alt="" aria-hidden="true">
+            <span><strong>Edge 加载项</strong><em>Edge 扩展</em></span>
+          </a>
+          <a class="mb-store" href="https://addons.mozilla.org/firefox/addon/tab-space/" target="_blank" rel="noopener">
+            <img src="/assets/img/browser-firefox.png" alt="" aria-hidden="true">
+            <span><strong>Firefox Add-ons</strong><em>Firefox 121 或更新版本</em></span>
+          </a>
+        </div>
+        <p class="mb-stores-note">
+          资料库保存在 Mac App 中，各浏览器扩展用一个六位配对码与它连接。
+          需要 macOS 11 或更新版本 · 多浏览器支持是 <a href="/zh/#pricing">Tab Space Pro</a> 的 Beta 功能。
+        </p>
+      </div>
+    </section>
+
+    <section class="mb-shot-section">
+      <figure class="mb-shot">
+        <img src="/assets/img/multi-browser-popup.webp" width="2320" height="1573" fetchpriority="high"
+          alt="Microsoft Edge 中打开的 Tab Space 扩展弹窗，正准备把 12 个打开的标签页保存为一个会话，背后是列出各浏览器已保存会话的 Tab Space 仪表板">
+        <figcaption>
+          每个浏览器里都是同一个扩展：选好标签页，保存为一个会话，然后交给 Tab Space 关闭它们。
+          背后的仪表板就是那个唯一的资料库——不管会话来自哪个浏览器。
+        </figcaption>
+      </figure>
+    </section>
+
+    <article class="article-shell">
+      <section class="article-section" id="what-it-does">
+        <h2>连接之后，浏览器能做什么</h2>
+        <div class="criteria-grid">
+          <article class="criteria-card">
+            <h3>1. 把一个窗口保存为会话</h3>
+            <p>点按浏览器工具栏中的 Tab Space，打开的标签页就会变成一个带名称的会话。只有在 Mac App 确认会话已写入之后，标签页才会被关闭。</p>
+          </article>
+          <article class="criteria-card">
+            <h3>2. 在任何地方重新打开</h3>
+            <p>会话并不属于保存它的那个浏览器。在 Firefox 中保存的会话，可以在 Chrome、Safari 或 iPhone 上重新打开。</p>
+          </article>
+          <article class="criteria-card">
+            <h3>3. 一次搜索所有浏览器</h3>
+            <p>在 Mac 上的任何界面按 Option-Tab。切换器会把每个已连接浏览器正在打开的标签页与你保存过的会话列在一起，并让准确的那个窗口和标签页来到前台。</p>
+          </article>
+          <article class="criteria-card">
+            <h3>4. 只维护一个长期资料库</h3>
+            <p>标题、标签和备注都随会话一起保存。自动快照、iCloud 同步，以及导出为 Text、Markdown、HTML 或完整备份，对所有浏览器一视同仁。</p>
+          </article>
+        </div>
+        <p><a class="inline-link" href="/zh/switcher.html">了解 Option-Tab 切换器如何工作 →</a></p>
+        <div class="callout">
+          <h3>多浏览器支持是 Tab Space Pro 4.0 的 Beta 功能</h3>
+          <p>由于仍处于 Beta 阶段，如果遇到任何问题，欢迎及时反馈至
+            <a class="inline-link" href="mailto:support@mytab.space">support@mytab.space</a>，反馈会直接到达开发者。</p>
+        </div>
+      </section>
+
+      <section class="article-section" id="setup">
+        <h2>三步完成设置</h2>
+
+        <h3>准备工作</h3>
+        <ul class="plain-list">
+          <li>Mac 版 Tab Space 4.0 或更新版本（macOS 11 或更新版本），并至少启动过一次。</li>
+          <li>Tab Space Pro 订阅。</li>
+          <li>同一台 Mac 上的 Google Chrome、Microsoft Edge 或 Firefox 121 及以上版本。</li>
+        </ul>
+
+        <h3>第一步 — 安装扩展</h3>
+        <div class="browser-cards">
+          <article class="browser-card">
+            <img src="/assets/img/browser-chrome.png" alt="" aria-hidden="true">
+            <h3>Chrome</h3>
+            <p>从 <a class="inline-link" href="https://chromewebstore.google.com/detail/tab-space/nhheanllfhaincfgjpdiacdnfgkipeep" target="_blank" rel="noopener">Chrome 应用商店</a>
+              安装 Tab Space。其他支持 Chrome 应用商店扩展的 Chromium 浏览器，也可以通过同一页面安装。</p>
+          </article>
+          <article class="browser-card">
+            <img src="/assets/img/browser-edge.png" alt="" aria-hidden="true">
+            <h3>Microsoft Edge</h3>
+            <p>从 <a class="inline-link" href="https://microsoftedge.microsoft.com/addons/detail/tab-space/afpnlldgbkigccngpjclblbpjplbffel" target="_blank" rel="noopener">Microsoft Edge 加载项</a>安装 Tab Space。</p>
+          </article>
+          <article class="browser-card">
+            <img src="/assets/img/browser-firefox.png" alt="" aria-hidden="true">
+            <h3>Firefox</h3>
+            <p>从 <a class="inline-link" href="https://addons.mozilla.org/firefox/addon/tab-space/" target="_blank" rel="noopener">Firefox Add-ons</a>
+              安装 Tab Space，需要 Firefox 121 或更新版本。</p>
+          </article>
+        </div>
+
+        <h3>第二步 — 获取配对码</h3>
+        <ol class="step-list">
+          <li>在 Mac 上打开 Tab Space。</li>
+          <li>在主窗口中点按<strong>多浏览器支持…</strong>。</li>
+          <li>点按<strong>显示配对码</strong>，会出现一个六位数字的配对码，<strong>拷贝配对码</strong>可以直接复制到剪贴板。</li>
+        </ol>
+        <p>
+          首次操作时，Tab Space 会把一个后台 Helper 注册为登录项。如果 macOS 请求确认，请在“系统设置”→“通用”→“登录项”中启用
+          <strong>Tab Space Helper</strong>，然后重新显示配对码。配对完成后，Mac App 不需要一直开着，Helper 会在后台继续工作。
+        </p>
+
+        <h3>第三步 — 连接浏览器</h3>
+        <ol class="step-list">
+          <li>点按浏览器工具栏中的 Tab Space 图标。</li>
+          <li>输入六位配对码。</li>
+        </ol>
+        <p>
+          设置到此完成。该浏览器现在可以把打开的标签页保存到 Tab Space，也可以恢复任意已保存的会话。
+          每增加一个浏览器都重复这三步：每个浏览器使用各自的配对码，并且浏览器连接成功后配对码会自动更新。
+        </p>
+      </section>
+
+      <section class="article-section">
+        <h2>连接是如何工作的</h2>
+        <ul class="plain-list">
+          <li><strong>所有数据都留在你的 Mac 上。</strong>浏览器通过本地回环接口（<code>127.0.0.1</code>）与 Tab Space Helper
+            通信，会话内容不会经过开发者的服务器。</li>
+          <li><strong>配对码只能使用一次。</strong>验证通过后，Helper 会签发一个令牌保存在 Mac 钥匙串中，浏览器则把自己的副本保存在扩展的本地存储里。</li>
+          <li><strong>会话不保存在浏览器中。</strong>它们保存在 Mac App 的数据库中并通过 iCloud 同步，即使浏览器配置被重置也不会丢失。</li>
+          <li><strong>保存以 Mac App 的确认为准。</strong>只有在 App 确认会话已写入后，标签页才会被关闭。</li>
+        </ul>
+      </section>
+
+      <section class="article-section">
+        <h2>如果浏览器无法连接</h2>
+        <ul class="plain-list">
+          <li><strong>提示未检测到 Tab Space Helper。</strong>先打开一次 Tab Space，再到“系统设置”→“通用”→“登录项”中确认 Tab Space
+            Helper 已启用。</li>
+          <li><strong>配对码被拒绝。</strong>配对码是一次性的。在 Mac App 中打开“多浏览器支持”，选择<strong>新配对码</strong>，再输入新的配对码。</li>
+          <li><strong>Firefox 重启后扩展消失。</strong>通过 <code>about:debugging</code> 加载的临时附加组件会在 Firefox
+            退出时被移除，请改从 Firefox Add-ons 安装已签名的版本。</li>
+          <li>仍然无法解决？请联系 <a class="inline-link" href="mailto:support@mytab.space">support@mytab.space</a>。</li>
+        </ul>
+      </section>
+
+      <section class="comparison-cta">
+        <span class="section-eyebrow">整个网页世界，一个快捷键之遥</span>
+        <h2>浏览器照旧，资料库共享。</h2>
+        <p>免费下载 Mac 版 Tab Space，无需注册 Tab Space 账户。</p>
+        <div class="hero-actions">
+          <a class="button-primary" href="https://apps.apple.com/cn/app/tab-space/id1473726602?mt=12" target="_blank" rel="noopener">免费下载 Mac 版</a>
+          <a class="button-secondary" href="/zh/switcher.html">了解切换器</a>
+        </div>
+      </section>
+    </article>
+  </main>
+
+  <footer class="site-footer">
+    <div class="footer-grid">
+      <div class="footer-brand">
+        <a class="nav-brand" href="/zh/"><img src="/icon.png" width="30" height="30" alt=""><span>Tab Space</span></a>
+        <p>一个私密的 Mac 原生空间，安放此刻打开的标签页，也保存以后想要找回的工作。</p>
+      </div>
+      <div class="footer-col">
+        <strong>产品</strong>
+        <a href="/zh/switcher.html">浏览器标签页切换器</a>
+        <a href="#top">多浏览器设置</a>
+        <a href="/changelog.html">更新日志（英文）</a>
+      </div>
+      <div class="footer-col">
+        <strong>指南</strong>
+        <a href="/manage-too-many-browser-tabs.html">标签页太多怎么办（英文）</a>
+        <a href="/manage-tabs-across-browsers-mac.html">Mac 跨浏览器标签页管理（英文）</a>
+        <a href="/storage.html">存储与备份（英文）</a>
+      </div>
+      <div class="footer-col">
+        <strong>支持</strong>
+        <a href="/zh/privacy.html">隐私政策</a>
+        <a href="mailto:support@mytab.space">邮件支持</a>
+        <a href="/multi-browser.html" lang="en">English</a>
+      </div>
+    </div>
+    <div class="footer-bottom"><span>© 2019–2026 Tab Space。为 Mac 独立开发。</span><span>Safari、Mac、iPhone 和 iPad 是 Apple Inc. 的商标。</span></div>
+  </footer>
+
+  <script>
+    /* Rotates the browser name in the headline. The two lines share one clock and
+       sit one step apart, so "save" and "open" never name the same browser. */
+    (function () {
+      var rotators = Array.prototype.slice.call(document.querySelectorAll('[data-mb-rotate]'));
+      if (!rotators.length) return;
+
+      var step = 0;
+
+      function itemsOf(rotator) {
+        return Array.prototype.slice.call(rotator.querySelectorAll('.mb-rotate-item'));
+      }
+
+      function render() {
+        rotators.forEach(function (rotator) {
+          var items = itemsOf(rotator);
+          var offset = parseInt(rotator.getAttribute('data-mb-rotate'), 10) || 0;
+          var active = items[(step + offset) % items.length];
+          items.forEach(function (item) {
+            item.classList.toggle('is-active', item === active);
+          });
+          if (active.dataset.width) rotator.style.width = active.dataset.width + 'px';
+        });
+      }
+
+      function measure() {
+        rotators.forEach(function (rotator) {
+          rotator.style.width = '';
+          itemsOf(rotator).forEach(function (item) {
+            item.dataset.width = Math.ceil(item.getBoundingClientRect().width);
+          });
+        });
+        render();
+      }
+
+      measure();
+      if (document.fonts && document.fonts.ready) document.fonts.ready.then(measure);
+
+      var resizeTimer;
+      window.addEventListener('resize', function () {
+        clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(measure, 180);
+      });
+
+      if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+      setInterval(function () {
+        step += 1;
+        render();
+      }, 2600);
+    })();
+  </script>
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "Tab Space 支持从哪些浏览器保存标签页？",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Mac、iPhone 和 iPad 上的 Safari，以及 Mac 上的 Google Chrome、Microsoft Edge 和 Firefox 121 或更高版本。多浏览器支持包含在 Tab Space Pro 中。"
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "在 Chrome 中保存的会话可以在其他浏览器中打开吗？",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "可以。会话保存在 Mac App 中而不是保存它的浏览器中，因此在 Chrome 中保存的会话可以重新在 Safari、Edge、Firefox 或 iPhone/iPad 上打开。"
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "如何把 Chrome、Edge 或 Firefox 连接到 Tab Space？",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "在对应浏览器中安装 Tab Space 扩展，在 Mac 上打开 Tab Space，点按“多浏览器支持”并选择“显示配对码”，在扩展中输入六位数字即可。配对码为单次有效，连接成功后会自动更新。"
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Tab Space Mac App 需要一直保持运行吗？",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "不需要。配对后会在后台运行一个轻量 Helper（作为登录项）。启用后，即使主 App 关闭，保存和恢复标签页也能正常工作。"
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "浏览器保存标签页时数据会发送到哪里？",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "所有数据仅保存在你的 Mac 本地。扩展通过 127.0.0.1 本地回环接口与 Helper 通信，会话存储在本地数据库中并通过你自己的 iCloud 同步，不会发送至开发者服务器。"
+        }
+      }
+    ]
+  }
+  </script>
+</body>
+
+</html>

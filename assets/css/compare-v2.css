@@ -434,6 +434,28 @@
     .compare-v2 .comparison-cta { padding: 44px 22px; border-radius: 24px; }
 }
 
+html[lang="zh-Hans"] .compare-v2 {
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "WenQuanYi Micro Hei", sans-serif;
+}
+
+html[lang="zh-Hans"] .compare-v2 .comparison-hero h1,
+html[lang="zh-Hans"] .compare-v2 .mb-headline {
+    letter-spacing: -0.02em;
+    line-height: 1.15;
+}
+
+html[lang="zh-Hans"] .compare-v2 h2,
+html[lang="zh-Hans"] .compare-v2 .article-section h2,
+html[lang="zh-Hans"] .compare-v2 .comparison-cta h2 {
+    letter-spacing: -0.02em;
+    line-height: 1.22;
+}
+
+html[lang="zh-Hans"] .compare-v2 .section-eyebrow,
+html[lang="zh-Hans"] .compare-v2 .eyebrow {
+    letter-spacing: 0.04em;
+}
+
 @media print {
     .compare-v2 .site-header,
     .compare-v2 .site-footer,

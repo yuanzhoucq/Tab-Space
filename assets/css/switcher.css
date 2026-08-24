@@ -499,7 +499,7 @@
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  justify-content: center;
+  justify-content: flex-start;
   border: 1px solid rgba(42, 35, 29, 0.08);
   border-radius: 22px;
   background: rgba(255, 255, 255, 0.66);
@@ -514,6 +514,7 @@
 }
 
 .switcher-page .switcher-stats span {
+  margin-top: auto;
   color: var(--switcher-muted);
   font-size: 12px;
   line-height: 1.5;
@@ -589,6 +590,29 @@
 
 @media (prefers-reduced-motion: reduce) {
   .switcher-page .switcher-button { transition: none; }
+}
+
+html[lang="zh-Hans"] .switcher-page {
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "WenQuanYi Micro Hei", sans-serif;
+}
+
+html[lang="zh-Hans"] .switcher-page .switcher-hero h1 {
+  line-height: 1.12;
+  letter-spacing: -0.03em;
+}
+
+html[lang="zh-Hans"] .switcher-page h2,
+html[lang="zh-Hans"] .switcher-page .switcher-intro h2,
+html[lang="zh-Hans"] .switcher-page .switcher-browsers h2,
+html[lang="zh-Hans"] .switcher-page .switcher-ai h2,
+html[lang="zh-Hans"] .switcher-page .switcher-proof h2,
+html[lang="zh-Hans"] .switcher-page .switcher-final h2 {
+  line-height: 1.22;
+  letter-spacing: -0.02em;
+}
+
+html[lang="zh-Hans"] .switcher-page .switcher-eyebrow {
+  letter-spacing: 0.04em;
 }
 
 @media print {

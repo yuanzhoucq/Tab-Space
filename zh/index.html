@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <title>Tab Space — 在 Mac 上保存、整理和切换浏览器标签页</title>
+  <meta name="description" content="一个私密的 Mac 浏览器工作空间：把窗口保存为会话，通过 iCloud 整理和同步，再从多个浏览器中跳到任何打开或保存过的标签页。">
+  <meta name="keywords" content="浏览器标签页切换器, Mac 标签页管理, Safari 标签页管理, Chrome 标签页管理, 浏览器会话管理, Tab Space">
+  <link rel="canonical" href="https://mytab.space/zh/">
+  <link rel="alternate" hreflang="zh-Hans" href="https://mytab.space/zh/">
+  <link rel="alternate" hreflang="en" href="https://mytab.space/">
+  <link rel="alternate" hreflang="x-default" href="https://mytab.space/">
+
+  <!-- Social Media Meta Tags -->
+  <meta name="twitter:site" content="@joyuer">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Tab Space — 你保存的和正在浏览的标签页，都在同一个空间">
+  <meta name="twitter:description" content="一个私密的 Mac 浏览器工作空间：保存窗口、整理会话、通过 iCloud 同步，再用一个快捷键找回任何标签页。">
+  <meta name="twitter:image" content="https://mytab.space/assets/img/tab-space-social.webp">
+  <meta property="og:title" content="Tab Space — 你保存的和正在浏览的标签页，都在同一个空间">
+  <meta property="og:description" content="一个私密的 Mac 浏览器工作空间：保存窗口、整理会话、通过 iCloud 同步，再用一个快捷键找回任何标签页。">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://mytab.space/zh/">
+  <meta property="og:image" content="https://mytab.space/assets/img/tab-space-social.webp">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+
+  <!-- Icons -->
+  <link rel="icon" type="image/png" href="/icon.png">
+  <link rel="apple-touch-icon" href="/icon.png">
+
+  <!-- Styles -->
+  <link rel="stylesheet" href="/assets/css/main.css">
+  <link rel="stylesheet" href="/assets/css/home-v2.css">
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "Tab Space",
+    "operatingSystem": "macOS 11 or later, iOS 16 or later, iPadOS 16 or later",
+    "applicationCategory": "UtilitiesApplication",
+    "url": "https://mytab.space/zh/",
+    "downloadUrl": [
+      "https://apps.apple.com/cn/app/tab-space/id1473726602?mt=12",
+      "https://apps.apple.com/cn/app/tab-space-%E6%A0%87%E7%AD%BE%E9%A1%B5%E4%BF%9D%E5%AD%98/id6790127383"
+    ],
+    "softwareVersion": "4.1.2",
+    "description": "一个 Mac 全局浏览器标签页切换器和私密会话库，统一搜索正在打开和曾经保存的标签页。",
+    "author": { "@type": "Person", "name": "Joyuer", "url": "https://joyuer.cn/" }
+  }
+  </script>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "Tab Space 支持哪些浏览器？",
+        "acceptedAnswer": { "@type": "Answer", "text": "Tab Space Mac 版支持 Safari、Chrome、Microsoft Edge 和 Firefox 121 或更新版本。多浏览器支持目前是 Pro Beta 功能。" }
+      },
+      {
+        "@type": "Question",
+        "name": "我的数据存放在哪里？",
+        "acceptedAnswer": { "@type": "Answer", "text": "会话存放在设备上的原生 App 数据库中，并通过你自己的 iCloud 同步，无需注册 Tab Space 账号。" }
+      },
+      {
+        "@type": "Question",
+        "name": "免费版包含什么？",
+        "acceptedAnswer": { "@type": "Answer", "text": "Free 包含全部基础功能、最多两个保存的会话，以及每周五次 AI 请求。达到限制不会删除或隐藏任何已有会话。" }
+      },
+      {
+        "@type": "Question",
+        "name": "可以导入或导出自己的数据吗？",
+        "acceptedAnswer": { "@type": "Answer", "text": "可以。Tab Space 支持导入已保存的标签页列表和原生归档，也可随时把会话导出为文本、Markdown、HTML 或 JSON。" }
+      }
+    ]
+  }
+  </script>
+</head>
+
+<body class="home-v2">
+  <header class="site-header">
+    <div class="nav-shell">
+      <a class="nav-brand" href="#top" aria-label="Tab Space 首页">
+        <img src="/icon.png" width="30" height="30" alt="">
+        <span>Tab Space</span>
+      </a>
+      <nav class="nav-links" aria-label="主导航">
+        <a class="nav-item" href="#how-it-works">工作方式</a>
+        <a class="nav-item nav-item-optional" href="#features">功能</a>
+        <a class="nav-item" href="#pricing">价格</a>
+        <a class="nav-item nav-item-optional" href="#faq">常见问题</a>
+        <a href="/" lang="en">English</a>
+        <a class="nav-download" href="https://apps.apple.com/cn/app/tab-space/id1473726602?mt=12" target="_blank" rel="noopener">获取 App</a>
+      </nav>
+    </div>
+  </header>
+
+  <main id="top">
+    <section class="hero">
+      <div class="section-shell">
+        <div class="hero-copy">
+          <span class="eyebrow"><i class="eyebrow-dot" aria-hidden="true"></i>Option-Tab 切换网页</span>
+          <h1>保存的，和正在浏览的，<br><span>都在同一个空间。</span></h1>
+          <p class="hero-lede">一个私密的 Mac 浏览器工作空间。把整个窗口保存为会话、整理多年的资料、通过 iCloud 同步，再从 Safari、Chrome、Edge 和 Firefox 中直接跳到任何标签页。</p>
+          <div class="hero-actions" id="downloads">
+            <a class="button-primary" href="https://apps.apple.com/cn/app/tab-space/id1473726602?mt=12" target="_blank" rel="noopener">免费下载 Mac 版</a>
+            <a class="button-secondary" href="#demo">观看演示</a>
+          </div>
+          <p class="hero-note">macOS 11+ · 无需账号 · 会话始终保留在你的 iCloud 中</p>
+        </div>
+
+        <figure class="demo-stage" id="demo">
+          <div class="demo-topbar" aria-hidden="true">
+            <span class="traffic-lights"><i></i><i></i><i></i></span>
+            <span class="demo-label">Tab Space · 浏览器标签页切换器</span>
+            <span></span>
+          </div>
+          <video autoplay muted loop playsinline controls preload="metadata" poster="/assets/img/switcher-demo-poster.webp" aria-label="Tab Space 保存浏览器会话，并跨多个浏览器搜索标签页">
+            <source src="/assets/tab-space-switcher-film.mp4" type="video/mp4">
+          </video>
+          <figcaption class="demo-caption">
+            <span><strong>一个快捷键，所有浏览器。</strong> 统一搜索此刻打开的标签页与曾经保存的会话。</span>
+            <span>真实产品 · 非效果图</span>
+          </figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <aside class="proof-strip" aria-label="Tab Space 产品亮点">
+      <div class="proof-item"><strong>Apple 精选专题收录</strong><span>包含 Safari 必备专题</span></div>
+      <div class="proof-item"><strong>Mac、iPhone 与 iPad</strong><span>通过你的 iCloud 同步会话</span></div>
+      <div class="proof-item"><strong>持续独立开发</strong><span>自 2019 年以来不断迭代</span></div>
+      <div class="proof-item"><strong>原生隐私设计</strong><span>本地原生存储与个人 iCloud</span></div>
+    </aside>
+
+    <section class="apple-featured-section" aria-labelledby="apple-featured-title">
+      <div class="section-shell">
+        <div class="apple-featured-mark" aria-hidden="true"><img src="/assets/img/app-store-icon.png" alt=""></div>
+        <div class="apple-featured-copy">
+          <span class="section-eyebrow">Apple 精选专题收录</span>
+          <h2 id="apple-featured-title">入选 Apple 的 Safari 必备专题。</h2>
+          <p>Tab Space 多次入选 Apple 官方 Mac App Store 精选专题，包括「Safari 必备」以及新 Mac 装机指南。</p>
+        </div>
+        <a class="apple-featured-link" href="https://apps.apple.com/cn/app/tab-space/id1473726602?mt=12" target="_blank" rel="noopener">在 Mac App Store 中查看</a>
+      </div>
+    </section>
+
+    <section class="section-block workflow-section" id="how-it-works">
+      <div class="section-shell">
+        <div class="section-head">
+          <span class="section-eyebrow">完整浏览闭环</span>
+          <h2>打开。搜索。保存。回来。</h2>
+          <p>标签页不是杂物，而是尚未完成的工作。Tab Space 让这些工作能被快速找回——无论页面仍在打开，还是数周前保存。</p>
+        </div>
+        <div class="workflow-grid">
+          <article class="workflow-step" data-step="1">
+            <span class="step-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="5.5"></circle><path d="m15 15 4.5 4.5"></path></svg></span>
+            <h3>随时随地搜索</h3>
+            <p>在任意 App 中按 Option-Tab。搜索标题、网址，或者脑海中残存的零散词。</p>
+          </article>
+          <article class="workflow-step" data-step="2">
+            <span class="step-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 19 19 5"></path><path d="M10 5h9v9"></path><path d="M5 8v11h11"></path></svg></span>
+            <h3>直达准确的标签页</h3>
+            <p>Tab Space 将正确的浏览器、窗口和标签页唤至前台，而不仅是切换到浏览器。</p>
+          </article>
+          <article class="workflow-step" data-step="3">
+            <span class="step-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4.5 5.5A2.5 2.5 0 0 1 7 3h8l4.5 4.5V19A2 2 0 0 1 17.5 21h-11a2 2 0 0 1-2-2Z"></path><path d="M8 3v6h7V3.5"></path><path d="M8 16h8"></path></svg></span>
+            <h3>保存完整上下文</h3>
+            <p>把一窗标签页存为命名会话并关闭它们，需要时随时恢复，思路不中断。</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="workspace-section">
+      <div class="section-shell">
+        <article class="workspace-card">
+          <div class="workspace-copy">
+            <span class="section-eyebrow">属于整个网页的工作空间</span>
+            <h2>无需整理侧边栏。无需被困在某一款浏览器中。</h2>
+            <p>继续使用你喜欢的浏览器。Tab Space 把它们打开的标签页连接到 Mac 上一个可搜索、持久保存的会话库。</p>
+            <ul class="browser-pills" aria-label="支持的浏览器">
+              <li><img class="browser-icon" src="/assets/img/browser-safari.png" alt="" aria-hidden="true">Safari</li>
+              <li><img class="browser-icon" src="/assets/img/browser-chrome.png" alt="" aria-hidden="true">Chrome</li>
+              <li><img class="browser-icon" src="/assets/img/browser-edge.png" alt="" aria-hidden="true">Microsoft Edge</li>
+              <li><img class="browser-icon" src="/assets/img/browser-firefox.png" alt="" aria-hidden="true">Firefox</li>
+            </ul>
+          </div>
+          <div class="workspace-shot">
+            <img src="/assets/img/multi-browser-workspace.webp" width="1920" height="1298" loading="lazy" alt="Tab Space 在 Mac 桌面上跨 Safari、Chrome 和 Firefox 搜索会话">
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section class="section-block feature-section" id="features">
+      <div class="section-shell">
+        <div class="section-head centered">
+          <span class="section-eyebrow">不仅是标签页切换器</span>
+          <h2>为浏览器打造的长期记忆。</h2>
+          <p>切换器是入口。其背后是一个专为 Mac 打造的原生资料库，让多年的网页研究可检索、可迁移且安全可靠。</p>
+        </div>
+
+        <div class="bento-grid">
+          <article class="bento-card large switcher-card">
+            <span class="card-kicker">系统级切换器</span>
+            <h3>打开的与保存的，尽在一次搜索中。</h3>
+            <p>键盘操作搜索结果，恢复保存的会话，或者无需离开面板即可保存并关闭当前标签页。支持多选批量操作、关闭无用标签页，以及一键清理重复页面。</p>
+            <a class="text-link" href="/zh/switcher.html">探索切换器 →</a>
+            <div class="switcher-mini-shot"><img src="/assets/img/switcher-4-1.webp" width="1280" height="764" loading="lazy" alt="Tab Space 标签页切换器显示正在打开的标签页和保存的京都旅行会话"></div>
+          </article>
+
+          <article class="bento-card tall">
+            <span class="card-kicker">会话资料库</span>
+            <h3>保存工作流，而不是一堆链接。</h3>
+            <p>会话把相关的标签页以及名称、标签、备注整合在一起，当你重新回到工作时保留完整上下文。</p>
+            <div class="library-visual" aria-hidden="true">
+              <div class="library-row"><i class="library-marker"></i><span>京都旅行规划<small>18 个标签页 · 刚刚编辑</small></span></div>
+              <div class="library-row"><i class="library-marker"></i><span>SwiftUI 研究资料<small>12 个标签页 · 开发, 学习</small></span></div>
+              <div class="library-row"><i class="library-marker"></i><span>设计灵感参考<small>9 个标签页 · 常用收藏</small></span></div>
+            </div>
+          </article>
+
+          <article class="bento-card third">
+            <span class="feature-symbol" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M7.5 18.5h10a4 4 0 0 0 .4-8A6 6 0 0 0 6.4 9.1 4.7 4.7 0 0 0 7.5 18.5Z"></path><path d="m9 14 3-3 3 3"></path><path d="M12 11v7"></path></svg></span>
+            <h3>你的 iCloud。你的数据。</h3>
+            <p>会话保存在原生数据库中，并通过你自己的 iCloud 在 Mac、iPhone 和 iPad 间同步，无需注册 Tab Space 账号。</p>
+          </article>
+
+          <article class="bento-card third">
+            <span class="feature-symbol" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4.5 8v-4"></path><path d="M4.5 8h4"></path><path d="M5.2 7.2A8 8 0 1 1 4 14"></path><path d="M12 8v5l3 2"></path></svg></span>
+            <h3>带记忆的历史快照。</h3>
+            <p>按小时、天、周、月保留的自动快照保护你的资料库，随时可以按需恢复任意备份。</p>
+          </article>
+
+          <article class="bento-card third">
+            <span class="feature-symbol" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 3.5c.8 4.1 2.4 5.7 6.5 6.5-4.1.8-5.7 2.4-6.5 6.5-.8-4.1-2.4-5.7-6.5-6.5 4.1-.8 5.7-2.4 6.5-6.5Z"></path><path d="M18.5 16.5c.3 1.8 1.2 2.7 3 3-1.8.3-2.7 1.2-3 3-.3-1.8-1.2-2.7-3-3 1.8-.3 2.7-1.2 3-3Z"></path></svg></span>
+            <h3>按需触发的 AI 整理助手。</h3>
+            <p>自动为会话命名、建议标签或按主题拆分混合标签页。AI 默认关闭，仅处理你明确选择的会话。</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="section-block">
+      <div class="section-shell">
+        <article class="proof-story">
+          <div>
+            <span class="section-eyebrow">真正的独立 Mac App</span>
+            <h2>自 2019 年以来持续守护浏览器上下文。</h2>
+            <p>Tab Space 诞生于一个朴素的想法：你的工作不应该随浏览器窗口关闭而消失。多年的更新和用户反馈将其打造成一个保存、整理、同步与找回的完整工作空间。</p>
+            <a class="text-link" href="/changelog.html">查看版本更新历史（英文） →</a>
+          </div>
+          <div class="proof-numbers" aria-label="Tab Space 发展历程">
+            <div class="number-card"><strong>2019</strong><span>在 Mac App Store 首次发布</span></div>
+            <div class="number-card"><strong>iCloud</strong><span>通过你自己的 Apple 账户同步</span></div>
+            <div class="number-card"><strong>4 款</strong><span>支持主流 Mac 浏览器</span></div>
+            <div class="number-card"><strong>3 种</strong><span>支持的 Apple 设备平台</span></div>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section class="section-block reviews-section" aria-labelledby="reviews-title">
+      <div class="section-shell">
+        <div class="section-head centered">
+          <span class="section-eyebrow">来自 App Store 五星好评</span>
+          <h2 id="reviews-title">为真正离不开浏览器的人而建。</h2>
+          <p>来自全球 Mac 用户的真实评价，他们使用 Tab Space 进行深度研究、推进项目并管理数百个标签页。</p>
+        </div>
+        <div class="review-grid">
+          <figure class="review-card">
+            <div class="review-stars" aria-label="5 星满分">★★★★★</div>
+            <span class="review-title">太棒了！！！</span>
+            <blockquote>“这个 App 非常出色，功能完全符合宣传。最重要的是，开发者的响应非常迅速。”</blockquote>
+            <figcaption><strong>ToMeWarrior</strong><span>美国 · App Store 评价</span></figcaption>
+          </figure>
+          <figure class="review-card">
+            <div class="review-stars" aria-label="5 星满分">★★★★★</div>
+            <span class="review-title">Tab Space 远胜标签页组</span>
+            <blockquote>“Tab Space 更加灵活，添加、移除和整理标签页都更轻松。”</blockquote>
+            <figcaption><strong>Azwa Kamaruddin</strong><span>马来西亚 · App Store 评价</span></figcaption>
+          </figure>
+          <figure class="review-card featured-review">
+            <div class="review-stars" aria-label="5 星满分">★★★★★</div>
+            <span class="review-title">绝佳的 Safari 扩展</span>
+            <blockquote>“做调研时经常打开大量标签页的人绝对必备。”</blockquote>
+            <figcaption><strong>__FV</strong><span>英国 · App Store 评价</span></figcaption>
+          </figure>
+          <figure class="review-card">
+            <div class="review-stars" aria-label="5 星满分">★★★★★</div>
+            <span class="review-title">立竿见影的效率提升</span>
+            <blockquote>“如果你有注意力难以集中的困扰，强烈推荐购买。物超所值。”</blockquote>
+            <figcaption><strong>Dion Hazelbaker</strong><span>美国 · App Store 评价</span></figcaption>
+          </figure>
+          <figure class="review-card">
+            <div class="review-stars" aria-label="5 星满分">★★★★★</div>
+            <span class="review-title">Safari 缺失已久的杀手级功能</span>
+            <blockquote>“用起来如此简单，功能却如此强大。”</blockquote>
+            <figcaption><strong>Offliner 117</strong><span>美国 · App Store 评价</span></figcaption>
+          </figure>
+          <figure class="review-card">
+            <div class="review-stars" aria-label="5 星满分">★★★★★</div>
+            <span class="review-title">太惊喜了！我需要这个功能很多年了！</span>
+            <blockquote>“非常完美——它甚至有快捷键让我可以流畅操作一切。”</blockquote>
+            <figcaption><strong>Cloesavannah</strong><span>英国 · App Store 评价</span></figcaption>
+          </figure>
+          <figure class="review-card">
+            <div class="review-stars" aria-label="5 星满分">★★★★★</div>
+            <span class="review-title">出色且实用</span>
+            <blockquote>“比 Safari 自带的书签好用得多——界面设计也非常出色。”</blockquote>
+            <figcaption><strong>Ping Yang Chang</strong><span>中国台湾 · App Store 评价</span></figcaption>
+          </figure>
+          <figure class="review-card">
+            <div class="review-stars" aria-label="5 星满分">★★★★★</div>
+            <span class="review-title">拯救工作效率</span>
+            <blockquote>“用上这个扩展后，我的 Mac 变得更快、运行更流畅了。”</blockquote>
+            <figcaption><strong>VeganCommunist</strong><span>澳大利亚 · App Store 评价</span></figcaption>
+          </figure>
+          <figure class="review-card">
+            <div class="review-stars" aria-label="5 星满分">★★★★★</div>
+            <span class="review-title">极具价值的投资！</span>
+            <blockquote>“Safari 从未做过的最棒应用。”</blockquote>
+            <figcaption><strong>Pairs lover</strong><span>美国 · App Store 评价</span></figcaption>
+          </figure>
+        </div>
+        <p class="reviews-note">摘自 App Store 真实五星评价。为提高阅读流畅度已做轻微文字整理。</p>
+      </div>
+    </section>
+
+    <section class="section-block pricing-section" id="pricing">
+      <div class="section-shell">
+        <div class="section-head centered">
+          <span class="section-eyebrow">清晰透明的定价</span>
+          <h2>免费开始。按需升级。</h2>
+          <p>先免费体验核心工作流。一次买断享受无限会话库，或选择 Pro 解锁多浏览器联动与 AI 整理。</p>
+        </div>
+        <div class="price-grid">
+          <article class="price-card">
+            <h3>Free</h3>
+            <p class="price">免费</p>
+            <p class="price-period">免费下载</p>
+            <ul>
+              <li>包含全部基础功能</li>
+              <li>最多保存 2 个会话</li>
+              <li>每周 5 次 AI 请求额度</li>
+              <li>已有会话永久保留不删除</li>
+            </ul>
+            <a class="price-button" href="https://apps.apple.com/cn/app/tab-space/id1473726602?mt=12" target="_blank" rel="noopener">免费下载</a>
+          </article>
+          <article class="price-card">
+            <h3>Plus</h3>
+            <p class="price">¥68</p>
+            <p class="price-period">一次性买断</p>
+            <ul>
+              <li>包含 Free 的全部功能</li>
+              <li><strong>无限制</strong>保存会话</li>
+              <li>每周 5 次 AI 请求额度</li>
+              <li>终身有效，无持续订阅</li>
+            </ul>
+            <a class="price-button" href="https://apps.apple.com/cn/app/tab-space/id1473726602?mt=12" target="_blank" rel="noopener">在 Mac App 中升级</a>
+          </article>
+          <article class="price-card featured">
+            <span class="price-badge">推荐</span>
+            <h3>Pro</h3>
+            <p class="price">¥98 <small>/ 年</small></p>
+            <p class="price-period">或 ¥12/月 · 年付包含 7 天免费试用</p>
+            <ul>
+              <li>包含 Plus 的全部买断权益</li>
+              <li>Chrome、Edge、Firefox 扩展联动</li>
+              <li><strong>无限次</strong> AI 智能会话整理</li>
+              <li>享有所有未来 Pro 新功能</li>
+            </ul>
+            <a class="price-button" href="https://apps.apple.com/cn/app/tab-space/id1473726602?mt=12" target="_blank" rel="noopener">在 Mac App 中体验</a>
+          </article>
+        </div>
+        <p class="pricing-note">显示价格为中国区 App Store 价格；不同国家和地区定价以当地 App Store 为准。在 4.0 版本前购买过 Tab Space 的用户自动永久享有 Plus 权益。</p>
+      </div>
+    </section>
+
+    <section class="section-block">
+      <div class="section-shell">
+        <article class="ios-band">
+          <div class="ios-copy">
+            <span class="section-eyebrow">会话随身随行</span>
+            <h2>在 Mac 上保存。在 iPhone 或 iPad 上继续。</h2>
+            <p>配套 App 通过 iCloud 让你随时随地访问会话资料库，其 Safari 扩展也能一键保存移动端所有打开的标签页。</p>
+            <a class="text-link" href="https://apps.apple.com/cn/app/tab-space-%E6%A0%87%E7%AD%BE%E9%A1%B5%E4%BF%9D%E5%AD%98/id6790127383" target="_blank" rel="noopener">下载 iPhone 与 iPad 版 →</a>
+          </div>
+          <div class="ios-badges" aria-label="Tab Space Apple 设备平台支持">
+            <div class="ios-badge"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="12" rx="2"></rect><path d="M8 20h8"></path><path d="M10 16v4M14 16v4"></path></svg><span><strong>Mac</strong>切换、保存、整理</span></div>
+            <div class="ios-badge"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="7" y="2" width="10" height="20" rx="2.5"></rect><path d="M10.5 5h3"></path><path d="M11.8 18.5h.4"></path></svg><span><strong>iPhone</strong>会话随身带走</span></div>
+            <div class="ios-badge"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="2.5" width="16" height="19" rx="2.5"></rect><path d="M11.8 18h.4"></path></svg><span><strong>iPad</strong>大屏舒适查阅</span></div>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section class="section-block faq-section" id="faq">
+      <div class="section-shell">
+        <div class="section-head centered">
+          <span class="section-eyebrow">常见问题解答</span>
+          <h2>在按下 Option-Tab 之前。</h2>
+        </div>
+        <div class="faq-list">
+          <details>
+            <summary>Tab Space 支持哪些浏览器？</summary>
+            <p>Tab Space Mac 版支持 Safari、Chrome、Microsoft Edge 和 Firefox 121 或更高版本。多浏览器支持目前是 Pro Beta 功能；Safari 支持始终是核心功能的一部分。</p>
+          </details>
+          <details>
+            <summary>我的会话存放在哪里？</summary>
+            <p>会话保存在设备本地的原生 App 数据库中，独立于浏览器，并通过你自己的 iCloud 同步。你无需注册 Tab Space 账号。AI 功能仅处理你明确选择的会话信息。</p>
+          </details>
+          <details>
+            <summary>免费版达到 2 个会话限制后会发生什么？</summary>
+            <p>Tab Space 仅会阻止创建新的已保存会话。它绝不会删除、隐藏或锁定已有会话，你可以继续使用核心 App 的其余全部功能。</p>
+          </details>
+          <details>
+            <summary>老用户享有什么权益？</summary>
+            <p>在 4.0 版本之前购买过 Mac App 的老用户将自动免费永久获赠 Plus 权益。无需额外订阅或操作，4.0 之前的所有功能均可继续使用。</p>
+          </details>
+          <details>
+            <summary>可以导入或导出自己的数据吗？</summary>
+            <p>可以。Tab Space 支持导入已保存的标签页列表和原生归档。你的会话可以随时导出为文本、Markdown、HTML 或 JSON 格式。</p>
+          </details>
+          <details>
+            <summary>支持在 iPhone 和 iPad 间同步吗？</summary>
+            <p>支持。会话通过你的 iCloud 在 Mac、iPhone 和 iPad 之间自动同步。iOS App 目前是独立的 App Store 应用；统一会员权益将在后续 iOS 版本中提供。</p>
+          </details>
+          <details>
+            <summary>需要什么版本的 macOS 和 iOS？</summary>
+            <p>Mac App 需要 macOS 11 或更高版本。配套 App 需要 iOS 或 iPadOS 16 或更高版本。</p>
+          </details>
+        </div>
+      </div>
+    </section>
+
+    <section class="section-block">
+      <div class="section-shell">
+        <div class="final-cta">
+          <span class="section-eyebrow">你的网页，一个快捷键就能回来</span>
+          <h2>不再寻找标签页，直接回到想法。</h2>
+          <p>免费下载 Tab Space，让 Option-Tab 成为新的肌肉记忆。</p>
+          <div class="final-actions">
+            <a class="button-primary" href="https://apps.apple.com/cn/app/tab-space/id1473726602?mt=12" target="_blank" rel="noopener">免费下载 Mac 版</a>
+            <a class="button-secondary" href="/changelog.html">查看 4.1.2 更新内容（英文）</a>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="footer-grid">
+      <div class="footer-brand">
+        <a class="nav-brand" href="#top"><img src="/icon.png" width="30" height="30" alt=""><span>Tab Space</span></a>
+        <p>一个私密的 Mac 原生空间，安放此刻打开的标签页，也保存以后想要找回的工作。</p>
+      </div>
+      <div class="footer-col">
+        <strong>产品</strong>
+        <a href="/zh/switcher.html">浏览器标签页切换器</a>
+        <a href="/zh/multi-browser.html">多浏览器设置</a>
+        <a href="/changelog.html">更新日志（英文）</a>
+      </div>
+      <div class="footer-col">
+        <strong>指南</strong>
+        <a href="/manage-too-many-browser-tabs.html">标签页太多怎么办（英文）</a>
+        <a href="/manage-tabs-across-browsers-mac.html">Mac 跨浏览器标签页管理（英文）</a>
+        <a href="/storage.html">存储与备份（英文）</a>
+      </div>
+      <div class="footer-col">
+        <strong>支持</strong>
+        <a href="/zh/privacy.html">隐私政策</a>
+        <a href="mailto:support@mytab.space">邮件支持</a>
+        <a href="/" lang="en">English</a>
+      </div>
+    </div>
+    <div class="footer-bottom"><span>© 2019–2026 Tab Space。为 Mac 独立开发。</span><span>Safari、Mac、iPhone 和 iPad 是 Apple Inc. 的商标。</span></div>
+  </footer>
+</body>
+</html>

@@ -220,29 +220,33 @@
     background-clip: text;
 }
 
+html[lang="zh-Hans"] .home-v2 {
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "WenQuanYi Micro Hei", sans-serif;
+}
+
 html[lang="zh-Hans"] .home-v2 .hero h1 {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 0.18em;
-    line-height: 1;
+    margin: 0 auto 28px;
+    font-size: clamp(48px, 6.2vw, 76px);
+    font-weight: 730;
+    line-height: 1.15;
+    letter-spacing: -0.025em;
+    text-wrap: balance;
 }
 
-html[lang="zh-Hans"] .home-v2 .hero h1 .hero-title-first {
-    color: #fff;
-    background: none;
-    font-size: 0.72em;
-    line-height: 1.08;
-    letter-spacing: -0.052em;
+html[lang="zh-Hans"] .home-v2 h2,
+html[lang="zh-Hans"] .home-v2 .section-head h2,
+html[lang="zh-Hans"] .home-v2 .apple-featured-copy h2,
+html[lang="zh-Hans"] .home-v2 .workspace-copy h2,
+html[lang="zh-Hans"] .home-v2 .proof-story h2,
+html[lang="zh-Hans"] .home-v2 .ios-copy h2,
+html[lang="zh-Hans"] .home-v2 .final-cta h2 {
+    letter-spacing: -0.02em;
+    line-height: 1.22;
 }
 
-html[lang="zh-Hans"] .home-v2 .hero h1 .hero-title-first b {
-    display: inline-block;
-    font: inherit;
-}
-
-html[lang="zh-Hans"] .home-v2 .hero h1 .hero-title-accent {
-    line-height: 1.02;
+html[lang="zh-Hans"] .home-v2 .section-eyebrow,
+html[lang="zh-Hans"] .home-v2 .card-kicker {
+    letter-spacing: 0.04em;
 }
 
 .home-v2 .hero-lede {
@@ -909,7 +913,7 @@ html[lang="zh-Hans"] .home-v2 .hero h1 .hero-title-accent {
     padding: 24px;
     display: flex;
     flex-direction: column;
-    justify-content: flex-end;
+    justify-content: flex-start;
     border: 1px solid rgba(255,255,255,.1);
     border-radius: 20px;
     background: rgba(255,255,255,.05);
@@ -920,10 +924,11 @@ html[lang="zh-Hans"] .home-v2 .hero h1 .hero-title-accent {
     font-size: 31px;
     line-height: 1;
     letter-spacing: -.04em;
+    margin-bottom: 9px;
 }
 
 .home-v2 .number-card span {
-    margin-top: 9px;
+    margin-top: auto;
     color: #8f8b96;
     font-size: 12px;
     line-height: 1.4;
@@ -1378,8 +1383,7 @@ html[lang="zh-Hans"] .home-v2 .hero h1 .hero-title-accent {
     .home-v2 .hero { min-height: auto; padding: 126px 0 62px; }
     .home-v2 .hero-copy { margin-bottom: 38px; }
     .home-v2 .hero h1 { font-size: clamp(42px, 12.5vw, 60px); line-height: .99; }
-    html[lang="zh-Hans"] .home-v2 .hero h1 { font-size: clamp(38px, 10vw, 48px); gap: 0.22em; }
-    html[lang="zh-Hans"] .home-v2 .hero h1 .hero-title-first { font-size: .76em; line-height: 1.12; }
+    html[lang="zh-Hans"] .home-v2 .hero h1 { font-size: clamp(34px, 9.5vw, 48px); line-height: 1.16; }
     .home-v2 .hero-lede { font-size: 17px; }
     .home-v2 .hero-actions { flex-direction: column; align-items: stretch; }
     .home-v2 .hero-actions a { width: 100%; }

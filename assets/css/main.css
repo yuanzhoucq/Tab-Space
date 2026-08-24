@@ -1093,9 +1093,21 @@ kbd {
     margin-bottom: 12px;
 }
 
+html[lang="zh-Hans"] .policy-document h1 {
+    font-size: clamp(2.2rem, 5.2vw, 3.4rem);
+    letter-spacing: -0.02em;
+    line-height: 1.2;
+    text-wrap: balance;
+}
+
 .policy-document h2 {
     font-size: 1.5rem;
     margin: 40px 0 12px;
+}
+
+html[lang="zh-Hans"] .policy-document h2 {
+    letter-spacing: -0.015em;
+    line-height: 1.28;
 }
 
 .policy-document p {
@@ -1109,6 +1121,10 @@ kbd {
     font-weight: 700;
     letter-spacing: 0.08em;
     text-transform: uppercase;
+}
+
+html[lang="zh-Hans"] .policy-eyebrow {
+    letter-spacing: 0.04em;
 }
 
 .policy-updated {

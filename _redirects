@@ -21,3 +21,7 @@
 # storage.html deliberately has no rule. Its only consumer is the legacy iframe
 # relay, which matches the host static.mytab.space, a different origin that is
 # not served by this Pages project and does not strip the suffix.
+
+# Legacy Chinese homepage redirect to /zh/ directory
+/index-zh.html  /zh/  301
+/index-zh       /zh/  301

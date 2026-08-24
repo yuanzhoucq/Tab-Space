@@ -2,3 +2,7 @@
 .DS_Store
 .claude/
 extension/dist/
+
+# Local review packet for unpublished marketing/SEO work.
+.marketing-authority/
+.wrangler/

@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+
+  <title>隐私政策 — Tab Space</title>
+  <meta name="description"
+    content="Tab Space 如何存储和处理已保存的会话、浏览器标签页信息、可选的 AI 请求、有限的非关联诊断信息、iCloud 同步数据、备份与网站分析。">
+  <link rel="canonical" href="https://mytab.space/zh/privacy.html">
+  <link rel="alternate" hreflang="zh-Hans" href="https://mytab.space/zh/privacy.html">
+  <link rel="alternate" hreflang="en" href="https://mytab.space/privacy.html">
+  <link rel="alternate" hreflang="x-default" href="https://mytab.space/privacy.html">
+
+  <meta property="og:title" content="Tab Space 隐私政策">
+  <meta property="og:description" content="Tab Space 如何处理 App 数据、可选 AI 处理、少量非关联诊断、iCloud 同步、备份与网站分析。">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://mytab.space/zh/privacy.html">
+  <meta property="og:image" content="https://mytab.space/icon.png">
+
+  <link rel="icon" type="image/png" href="/icon.png">
+  <link rel="apple-touch-icon" href="/icon.png">
+  <link rel="stylesheet" href="/assets/css/main.css">
+</head>
+
+<body>
+  <header>
+    <a class="nav-brand" href="/zh/">
+      <img src="/icon.png" width="28" height="28" alt="">
+      <span>Tab Space</span>
+    </a>
+    <nav class="nav-links">
+      <a href="/privacy.html" lang="en">English</a>
+      <a class="nav-cta" href="/zh/">首页</a>
+    </nav>
+  </header>
+
+  <main class="policy-page">
+    <article class="policy-document" id="policy" lang="zh-Hans">
+      <p class="policy-eyebrow">隐私政策</p>
+      <h1>Tab Space 如何处理你的数据</h1>
+      <p class="policy-updated">最后更新：2026 年 8 月 10 日</p>
+      <p>
+        本政策适用于 Mac、iPhone 和 iPad 版 Tab Space、相应的浏览器扩展、Tab Space Dashboard，
+        以及 <a href="https://mytab.space">mytab.space</a> 官网。
+      </p>
+
+      <h2>App 保存的信息</h2>
+      <p>
+        保存的会话可能包含网页标题、URL、标签、时间以及你为会话设置的名称。这些信息保存在设备上的原生 App
+        数据库中。Tab Space 不要求注册由开发者运营的账号。
+      </p>
+      <p>
+        如果你启用 iCloud，Apple CloudKit 会通过设备上登录的 Apple 账户同步会话。开发者不会收到、也无法访问你的
+        iCloud 数据库内容。Apple 对这些数据的处理受
+        <a href="https://www.apple.com/legal/privacy/" target="_blank" rel="noopener">Apple 隐私政策</a>
+        和你的 iCloud 设置约束。
+      </p>
+
+      <h2>浏览器扩展访问权限</h2>
+      <p>
+        Safari 可能提示扩展能够读取网页信息，这是因为 Tab Space 会在你访问的页面上提供快捷键和标签页管理操作。
+        为执行你主动触发的操作，扩展可能在设备上处理网页标题、URL 以及 Safari 标签页或窗口状态；只有在你调用相关功能时，
+        才会处理选中的文字。这些处理在设备本地完成，不会发送给开发者。
+      </p>
+      <p>
+        Chrome、Microsoft Edge 和 Firefox 配套扩展会申请访问已打开标签页和扩展本地存储。只有在你要求
+        Tab Space 保存或恢复标签页时，扩展才会处理标题、URL 以及标签页或窗口状态；它们不会读取网页正文。
+        扩展本地存储只保存随机客户端标识和 App 签发的认证令牌。
+      </p>
+      <p>
+        <a href="https://app.mytab.space">app.mytab.space</a> 上的 Dashboard 会与已安装的浏览器扩展通信，
+        用于显示和编辑会话。在 Mac 上，配套扩展完成一次性配对后，只通过本机回环接口连接 Tab Space 后台 Helper；
+        对应凭据保存在 Mac 钥匙串中。Helper 会保持共享 CloudKit 容器运行，并把 iCloud 会话变化通知给已连接的浏览器。
+        会话内容只在你的设备上用于这些功能，不会上传到开发者运营的服务器。
+      </p>
+
+      <h2>可选的 AI 整理</h2>
+      <p>
+        AI 整理默认关闭，需由你主动开启。在发出第一次 AI 请求之前，Tab Space 会明确告知将要发送的内容、
+        接收方以及对每周额度的影响，并请你确认。未经确认不会发送任何内容；在设置中重新关闭 AI 即可停止发送。
+        保存标签页后自动用 AI 命名会话是一个单独的开关，同样默认关闭。
+      </p>
+      <p>
+        所有档位每周都包含一定次数的 AI 请求额度，订阅 Tab Space Pro 可解除该限制。为完成所选操作，
+        Tab Space 会把所选会话名称、标签页标题和 URL、已有标签及相关标签偏好发送到托管在 Cloudflare 上的
+        Tab Space AI 服务。Tab Space 不会发送网页正文、Cookie、密码或你的完整浏览历史。
+      </p>
+      <p>
+        每次请求都会附带一个随机账号标识，仅用于统计你在每周额度内的使用次数。如果你的设备提供了
+        Apple 签名的交易信息，该服务会进行验证，并为有效的 App Store Pro 订阅解除每周限制；
+        未通过订阅验证的请求仍会在额度范围内正常处理。随后该服务会把完成请求所需的最少内容转发给
+        主要模型提供方 Google Gemini，或在需要时使用 Cloudflare Workers AI 作为备用。相关数据处理受
+        <a href="https://policies.google.com/privacy" target="_blank" rel="noopener">Google 隐私政策</a>
+        和 <a href="https://www.cloudflare.com/privacypolicy/" target="_blank" rel="noopener">Cloudflare 隐私政策</a>
+        约束。
+      </p>
+      <p>
+        开发者不会在 AI 服务中主动保存 AI 请求内容或模型输出，并已关闭内容日志。请求只做临时处理；
+        基础设施提供方可能依其政策保留有限的安全与防滥用记录。返回的标题、标签或分组只有在你接受或应用后才会保存到
+        App 中，并可能通过你的 iCloud 同步。你可以通过编辑或删除相关会话来删除这些结果。由于服务不保留由开发者运营的
+        请求内容副本，因此没有另一份服务器副本可供开发者读取或删除。
+      </p>
+
+      <h2>可选的在线分享会话</h2>
+      <p>
+        当你选择“在线分享”时，Tab Space 会把一份不可修改的快照上传到 Cloudflare，其中包含会话名称、自定义标签、
+        标签页标题和完整 URL。生成的 mytab.space 链接对拿到它的任何人公开，但链接使用高强度随机标识，不会被主动列出或
+        编入索引。快照不加密，请勿分享 URL 或标题中包含敏感信息的会话。
+      </p>
+      <p>
+        此功能不要求 Tab Space 账号。另一枚随机管理令牌只保存在你的设备上，App 可用它撤销快照；服务端仅保存其密码学
+        哈希。快照会在你选择的 1、7、30 或 90 天后到期并删除。撤销后以及链接过期、不存在或无效时，快照都会显示为不可用。
+        分享会话页面不会请求网站图标，也不会加载 Cloudflare Web Analytics。
+      </p>
+
+      <h2>备份、保留与删除</h2>
+      <p>
+        会话会一直保留到你将其删除；废纸篓中的项目会保留到被永久删除。自动备份保存在 App 的本地容器中，
+        并按照小时、天、周、月的保留计划轮换。如果启用了 iCloud，同步和删除操作会通过 CloudKit 传播；
+        Apple 可能依照其保留政策在系统中保留相关数据。
+      </p>
+      <p>
+        由于开发者不运营 Tab Space 账号，也不会收到你的会话数据库，因此无法代你读取或删除这些数据。
+        你可以在 App 中管理本地数据、通过操作系统移除 App 及其数据，并在 Apple 账户设置中管理 iCloud 数据。
+      </p>
+
+      <h2>网站图标</h2>
+      <p>
+        为了在已保存的标签页旁显示可识别的网站图标，Tab Space 会请求该网站的图标。Safari 扩展的标签页列表
+        使用 Google 的公共 favicon 服务，因此该标签页的域名（例如 <code>example.com</code>）会被发送给 Google，
+        但不包含完整 URL、页面标题或任何账号标识。Google 的数据处理受
+        <a href="https://policies.google.com/privacy" target="_blank" rel="noopener">Google 隐私政策</a>约束。
+        在其他位置，Tab Space 会直接向网站本身请求图标，因此该网站的服务器会看到这次请求。图标会缓存在你的设备上。
+      </p>
+
+      <h2>少量诊断信息</h2>
+      <p>
+        在 Mac 上，Tab Space 会发送少量产品交互、性能与可靠性诊断信息。这些信息仅用于了解整体产品使用情况、
+        改进性能与可靠性，不与你的身份关联，也绝不用于广告或追踪。原始诊断记录最多保留 35 天；
+        汇总统计可能保留更长时间。
+      </p>
+
+      <h2>开发者不收集的数据</h2>
+      <p>
+        除你主动提交给可选 AI 整理或在线分享功能的特定会话信息外，Tab Space App 不会向开发者发送你保存的会话、
+        浏览历史、网页内容、iCloud 记录、通讯录、位置或广告标识符。App 不包含广告，也不进行由开发者运营的行为追踪。
+      </p>
+
+      <h2>官网分析</h2>
+      <p>
+        mytab.space 的公开营销页面使用 Cloudflare Web Analytics 了解整体访问情况和页面性能。它会报告页面访问、来源、
+        浏览器、设备、操作系统和国家或地区等一般信息，以及页面加载时间和 Core Web Vitals。其分析信标不使用 Cookie
+        或本地存储，不对访客进行指纹识别，也不跨网站追踪个人。网站分析与 App 的少量诊断信息相互独立，
+        绝不包含你保存的会话。我们不会把网站分析与 App 数据结合，也不会将其用于广告；未列出的分享会话页面不会加载分析信标。详情请参阅
+        <a href="https://developers.cloudflare.com/web-analytics/about/" target="_blank" rel="noopener">Cloudflare Web Analytics 文档</a>。
+      </p>
+
+      <h2>儿童隐私</h2>
+      <p>Tab Space 不会有意收集儿童的个人信息。</p>
+
+      <h2>政策变更与联系</h2>
+      <p>
+        当 Tab Space 的功能或数据处理方式发生变化时，我们可能更新本政策。页面顶部日期表示最近一次修订时间。
+        如有隐私问题，请联系 <a href="mailto:support@mytab.space">support@mytab.space</a>。
+      </p>
+    </article>
+  </main>
+
+  <footer>
+    <div class="container">
+      <div class="inner">
+        <p class="author">
+          <a href="/zh/">Tab Space</a>
+          <span class="divider">•</span>
+          <a href="mailto:support@mytab.space">support@mytab.space</a>
+          <span class="divider">•</span>
+          <a href="https://github.com/yuanzhoucq/Tab-Space" target="_blank" rel="noopener">GitHub</a>
+        </p>
+      </div>
+    </div>
+  </footer>
+</body>
+
+</html>
