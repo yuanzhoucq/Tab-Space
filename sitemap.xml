@@ -2,16 +2,16 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url><loc>https://mytab.space/</loc><lastmod>2026-08-24</lastmod><changefreq>weekly</changefreq><priority>1.0</priority></url>
   <url><loc>https://mytab.space/zh/</loc><lastmod>2026-08-24</lastmod><changefreq>weekly</changefreq><priority>1.0</priority></url>
-  <url><loc>https://mytab.space/switcher.html</loc><lastmod>2026-08-24</lastmod><changefreq>monthly</changefreq><priority>0.9</priority></url>
-  <url><loc>https://mytab.space/zh/switcher.html</loc><lastmod>2026-08-24</lastmod><changefreq>monthly</changefreq><priority>0.9</priority></url>
-  <url><loc>https://mytab.space/multi-browser.html</loc><lastmod>2026-08-24</lastmod><changefreq>monthly</changefreq><priority>0.8</priority></url>
-  <url><loc>https://mytab.space/zh/multi-browser.html</loc><lastmod>2026-08-24</lastmod><changefreq>monthly</changefreq><priority>0.8</priority></url>
-  <url><loc>https://mytab.space/manage-too-many-browser-tabs.html</loc><lastmod>2026-08-22</lastmod><changefreq>monthly</changefreq><priority>0.8</priority></url>
-  <url><loc>https://mytab.space/manage-tabs-across-browsers-mac.html</loc><lastmod>2026-08-15</lastmod><changefreq>monthly</changefreq><priority>0.8</priority></url>
-  <url><loc>https://mytab.space/tab-space-vs-onetab.html</loc><lastmod>2026-08-13</lastmod><changefreq>monthly</changefreq><priority>0.7</priority></url>
-  <url><loc>https://mytab.space/tab-space-vs-safari-tab-groups.html</loc><lastmod>2026-08-13</lastmod><changefreq>monthly</changefreq><priority>0.7</priority></url>
-  <url><loc>https://mytab.space/storage.html</loc><changefreq>monthly</changefreq><priority>0.6</priority></url>
-  <url><loc>https://mytab.space/changelog.html</loc><changefreq>monthly</changefreq><priority>0.5</priority></url>
-  <url><loc>https://mytab.space/privacy.html</loc><changefreq>yearly</changefreq><priority>0.4</priority></url>
-  <url><loc>https://mytab.space/zh/privacy.html</loc><changefreq>yearly</changefreq><priority>0.4</priority></url>
+  <url><loc>https://mytab.space/switcher</loc><lastmod>2026-08-24</lastmod><changefreq>monthly</changefreq><priority>0.9</priority></url>
+  <url><loc>https://mytab.space/zh/switcher</loc><lastmod>2026-08-24</lastmod><changefreq>monthly</changefreq><priority>0.9</priority></url>
+  <url><loc>https://mytab.space/multi-browser</loc><lastmod>2026-08-24</lastmod><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://mytab.space/zh/multi-browser</loc><lastmod>2026-08-24</lastmod><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://mytab.space/manage-too-many-browser-tabs</loc><lastmod>2026-08-22</lastmod><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://mytab.space/manage-tabs-across-browsers-mac</loc><lastmod>2026-08-15</lastmod><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://mytab.space/tab-space-vs-onetab</loc><lastmod>2026-08-13</lastmod><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://mytab.space/tab-space-vs-safari-tab-groups</loc><lastmod>2026-08-13</lastmod><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://mytab.space/storage</loc><changefreq>monthly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://mytab.space/changelog</loc><changefreq>monthly</changefreq><priority>0.5</priority></url>
+  <url><loc>https://mytab.space/privacy</loc><changefreq>yearly</changefreq><priority>0.4</priority></url>
+  <url><loc>https://mytab.space/zh/privacy</loc><changefreq>yearly</changefreq><priority>0.4</priority></url>
 </urlset>
