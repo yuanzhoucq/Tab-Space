@@ -48,12 +48,7 @@
         </div>
       </div>
       <div class="empty-state" v-if="nativeDetected && initialRefresh && sessions.length < 1" data-testid="empty-state">
-        <p>{{lang.noSessions}}</p>
-        <p class="empty-state-tip">{{lang.noSessionsTip}}</p>
-        <a class="link empty-state-link"
-           href="https://mytab.space/#features"
-           target="_blank"
-           rel="noopener noreferrer">{{lang.howToUse}}</a>
+        <first-save-guide></first-save-guide>
       </div>
       <div v-if="nativeDetected && initialRefresh" class="sessions-container">
         <session-sidebar></session-sidebar>
@@ -91,10 +86,15 @@
   import Sessions from '../components/Sessions'
   import SwitcherHint from '../components/SwitcherHint'
 
+  // This only exists before the first save; keep its artwork out of the main
+  // dashboard bundle so established libraries retain their render timing.
+  const FirstSaveGuide = () => import(/* webpackChunkName: "first-save-guide" */ '../components/FirstSaveGuide')
+
   export default {
     components: {
       VueLoading,
       IosBanner,
+      FirstSaveGuide,
       Navbar,
       RatingBanner,
       SessionSidebar,
@@ -403,21 +403,26 @@
     color: #333333;
   }
 
+  /* The guide is visually the first session card, while remaining outside the
+     sortable list's DOM. A zero-height anchor lets the real three-column row
+     start at the same y-coordinate underneath it. */
   .empty-state {
-    color: #666666;
-    margin: 20px auto;
-    text-align: center;
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    height: 0;
+    max-width: calc(840px - 2 * var(--dashboard-side-padding) - var(--dashboard-sidebar-column) - var(--dashboard-hub-column));
+    margin: 0 auto;
+    transform: translateX(calc((var(--dashboard-sidebar-column) - var(--dashboard-hub-column)) / 2));
   }
 
-  .empty-state-tip {
-    margin: 6px auto 10px;
-    max-width: 420px;
-    font-size: 14px;
-    line-height: 1.5;
-  }
-
-  .empty-state-link {
-    font-size: 14px;
+  @media (max-width: 700px) {
+    .empty-state {
+      max-width: none;
+      padding: 0 var(--dashboard-side-padding);
+      box-sizing: border-box;
+      transform: none;
+    }
   }
 
   /* The search field and the tab-switcher hint under it move as one block, so
@@ -520,8 +525,7 @@
 
     .connection-state,
     .connection-detail,
-    .connection-permission-hint,
-    .empty-state {
+    .connection-permission-hint {
       color: #bdbdbd;
     }
 

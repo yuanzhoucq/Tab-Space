@@ -2408,13 +2408,36 @@ test('refreshes sessions after a native remote-change notification', async ({ pa
 test('shows a safe empty state when there are no sessions', async ({ page }) => {
   await openDashboard(page, { initialSessions: [] })
 
-  await expect(page.locator('.empty-state')).toContainText('No saved sessions yet.')
-  await expect(page.locator('.empty-state')).toContainText('Click the Tab Space icon in the Safari toolbar')
-  await expect(page.getByRole('link', { name: 'How to use Tab Space' })).toBeVisible()
+  const guide = page.getByTestId('first-save-guide')
+  await expect(guide).toContainText('Save your first space')
+  await expect(guide).toContainText('click the Tab Space button in the toolbar')
+  await expect(guide).toContainText('Save & close tabs')
+  await expect(guide.locator('.toolbar-button img')).toBeVisible()
+  await expect(page.getByTestId('ios-banner')).toHaveCount(0)
   // The empty state is the only "nothing here" message on an empty dashboard.
   await expect(page.locator('.session-placeholder')).toHaveCount(0)
   await expect(page.getByTestId('session-stats')).toContainText('0 sessions')
   await expect(page.getByTestId('session-stats')).toContainText('0 tabs')
+})
+
+test('waits until the first saved session before showing the iOS banner', async ({ page }) => {
+  await openDashboard(page, { initialSessions: [] })
+  await expect(page.getByTestId('ios-banner')).toHaveCount(0)
+
+  await page.evaluate(sessionFixtures => {
+    window.__tabspaceTest.setSessions(sessionFixtures)
+    window.__tabspaceTest.emit('SessionsChangedRemotely')
+  }, [sessions[0]])
+
+  await expect(page.getByTestId('first-save-guide')).toHaveCount(0)
+  await expect(page.getByTestId('ios-banner')).toBeVisible()
+})
+
+test('still opens the iOS banner on explicit request before the first save', async ({ page }) => {
+  await openDashboard(page, { initialSessions: [] })
+
+  await page.getByTestId('ios-app-link').click()
+  await expect(page.getByTestId('ios-banner')).toBeVisible()
 })
 
 test('keeps the dashboard stable when native bookmarks are malformed', async ({ page }) => {

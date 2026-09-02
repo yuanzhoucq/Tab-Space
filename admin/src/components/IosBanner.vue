@@ -1,6 +1,6 @@
 <template>
   <transition name="ios-banner">
-    <div v-if="visible" class="ios-banner" role="region" :aria-label="lang.iosBannerText" data-testid="ios-banner">
+    <div v-if="visible && canDisplay" class="ios-banner" role="region" :aria-label="lang.iosBannerText" data-testid="ios-banner">
       <span class="ios-banner-icon" aria-hidden="true">
         <v-icon name="smartphone"></v-icon>
       </span>
@@ -38,7 +38,7 @@
 </template>
 
 <script>
-import { mapState } from 'vuex'
+import { mapGetters, mapState } from 'vuex'
 import QrcodeVue from 'qrcode.vue'
 import Constants from '../constants'
 import { mobileAppStoreUrl } from '../app-store'
@@ -60,11 +60,16 @@ export default {
       qrSize: QR_SIZE,
       // Resolved once on mount rather than per render: the answer cannot
       // change without a reload, and touch detection is not free.
-      showsQr: false
+      showsQr: false,
+      requestedByUser: false
     }
   },
   computed: {
     ...mapState(["lang", "tabSpaceSettings", "iosBannerRequestCount"]),
+    ...mapGetters(["savedSessionCount"]),
+    canDisplay() {
+      return this.savedSessionCount >= 1 || this.requestedByUser
+    },
     appStoreUrl() {
       const preferredLanguage = this.tabSpaceSettings[Constants.preferredLanguageKey] || navigator.language
       return mobileAppStoreUrl(preferredLanguage)
@@ -77,6 +82,7 @@ export default {
     iosBannerRequestCount() {
       dismissedInMemory = false
       writeBannerFlag(iosBannerDismissedKey, "false")
+      this.requestedByUser = true
       this.showsQr = !this.isHandheld()
       this.visible = true
     }
@@ -90,6 +96,7 @@ export default {
     isHandheld,
     dismiss() {
       dismissedInMemory = true
+      this.requestedByUser = false
       this.visible = false
       writeBannerFlag(iosBannerDismissedKey, "true")
     }
