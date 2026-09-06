@@ -30,6 +30,13 @@
             </span>
           </div>
 
+          <!-- Pro that ends says so here, next to the plan it is standing in
+               for; otherwise Settings would report Pro and never mention the
+               date it stops. -->
+          <p v-if="trialActive" class="help-text" data-testid="settings-trial-summary">
+            {{ trialSummary }}
+          </p>
+
           <p v-if="hasPermanentPlus" class="help-text" data-testid="settings-plus-summary">
             {{lang.plusOwnedSummary || 'Unlimited sessions and all core features are yours permanently. You also receive 5 AI requests each week; Pro makes AI unlimited.'}}
           </p>
@@ -47,7 +54,9 @@
           <!-- The plan comparison stays reachable at every tier: a Pro
                subscriber still needs to see what the plan covers. -->
           <div class="subscription-actions">
-            <button v-if="!isPremium" type="button" class="primary-action"
+            <!-- A trial user has nothing to manage and everything to decide, so
+                 they get the upgrade button rather than the subscriber's pair. -->
+            <button v-if="!isPremium || trialActive" type="button" class="primary-action"
                     data-testid="settings-upgrade" @click="openSubscription">
               {{lang.upgrade || 'Upgrade'}}
             </button>
@@ -158,6 +167,34 @@
               @blur="saveSuggestedTags"
             ></textarea>
             <p class="help-text">{{lang.suggestedTagsHint || 'Comma-separated tags the AI will prefer to use'}}</p>
+          </div>
+        </div>
+
+        <!-- iCloud sync. Rendered only once the native side has answered
+             CheckSyncStatus, which is a macOS Safari-extension message: on
+             every other bridge the reply never arrives and the card stays
+             absent rather than guessing at a state it cannot see. -->
+        <div class="card" v-if="syncStatus" data-testid="sync-card">
+          <h2 class="section-title">{{lang.syncSection || 'iCloud Sync'}}</h2>
+
+          <p class="sync-state" :class="syncCondition.tone" data-testid="sync-state">
+            <v-icon :name="syncIcon" class="sync-icon"></v-icon>
+            <span>{{syncStateLabel}}</span>
+          </p>
+
+          <p v-if="syncHint" class="help-text" data-testid="sync-hint">{{syncHint}}</p>
+          <p v-if="syncLastSyncedLabel" class="help-text" data-testid="sync-last-synced">
+            {{syncLastSyncedLabel}}
+          </p>
+          <p v-if="syncErrorDetail" class="help-text sync-error-detail" data-testid="sync-error-detail">
+            {{syncErrorDetail}}
+          </p>
+
+          <div class="subscription-actions">
+            <button type="button" class="secondary-action" :disabled="syncChecking"
+                    data-testid="sync-refresh" @click="checkSyncStatus">
+              {{syncChecking ? (lang.syncChecking || 'Checking…') : (lang.syncRefresh || 'Check again')}}
+            </button>
           </div>
         </div>
 
@@ -346,7 +383,10 @@ export default {
       ...Constants,
       buildInfo,
       tagsDraft: "",
-      restoring: false
+      restoring: false,
+      syncChecking: false,
+      syncCheckStartedAt: 0,
+      syncCheckTimer: null
     };
   },
   mounted() {
@@ -359,11 +399,36 @@ export default {
     suggestedTagsValue: {
       immediate: true,
       handler(value) { this.tagsDraft = value }
+    },
+    // Sync status is asked for here and nowhere else: it is worth a round trip
+    // when someone is looking at it, not on every dashboard open. Driven by the
+    // bridge rather than by `mounted`, because Settings can be the landing route
+    // and finish mounting before the native handshake produces a bridge at all.
+    bridge: {
+      immediate: true,
+      handler(bridge) { if (bridge) this.refreshSyncStatus() }
+    },
+    // A manual check usually comes back unchanged — the Mac was fine before and
+    // is fine now — so without this the button reads as broken. The reply is
+    // what ends the pending state, held for a moment so an instant answer is
+    // still visible.
+    syncStatus() {
+      if (!this.syncChecking) return
+      const remaining = Math.max(0, 600 - (Date.now() - this.syncCheckStartedAt))
+      setTimeout(() => { this.syncChecking = false }, remaining)
     }
   },
+  beforeDestroy() {
+    if (this.syncCheckTimer) clearTimeout(this.syncCheckTimer)
+  },
   computed: {
-    ...mapState(["lang", "bridge", "tabSpaceSettings", "aiQuotaRemaining", "aiQuotaResetAt", "plusDisplayPrice", "purchaseRedirecting"]),
-    ...mapGetters(["aiEnabled", "isPremium", "hasPermanentPlus"]),
+    ...mapState(["lang", "bridge", "tabSpaceSettings", "aiQuotaRemaining", "aiQuotaResetAt", "plusDisplayPrice", "purchaseRedirecting", "syncStatus"]),
+    ...mapGetters(["aiEnabled", "isPremium", "hasPermanentPlus", "trialActive", "trialDaysRemaining"]),
+    trialSummary() {
+      return (this.lang.trialRunningBody
+        || '{count} days left. Everything you save stays yours; keeping Pro after that needs a plan.')
+        .replace('{count}', this.trialDaysRemaining)
+    },
     currentPlanLabel() {
       if (this.isPremium) return this.lang.planPremium || 'Pro'
       if (this.hasPermanentPlus) return this.lang.planPlus || 'Plus · Permanent'
@@ -415,12 +480,118 @@ export default {
     currentDefaultTags() {
       const lang = this.tabSpaceSettings[Constants.preferredLanguageKey] || 'en-us'
       return Constants.defaultSuggestedTags[lang] || Constants.defaultSuggestedTags['en-us']
+    },
+    // The three facts the native side reports fail independently, and each has
+    // a different fix, so they are ranked by what the user would have to do
+    // first: no account beats a stopped helper beats a failed transfer. A
+    // stopped helper outranks a recorded failure because that failure cannot be
+    // retried by anything while the process that owns mirroring is not running.
+    syncCondition() {
+      const status = this.syncStatus || {}
+      if (status.account && status.account !== 'available') {
+        const known = {
+          noAccount: { tone: 'error', label: 'syncStateNoAccount', hint: 'syncNoAccountHint' },
+          restricted: { tone: 'error', label: 'syncStateRestricted', hint: 'syncNoAccountHint' },
+          temporarilyUnavailable: { tone: 'warn', label: 'syncStateUnavailable', hint: 'syncRetryHint' }
+        }
+        return known[status.account] || { tone: 'warn', label: 'syncStateUnknown', hint: 'syncRetryHint' }
+      }
+      if (status.helper === 'notRunning') {
+        return { tone: 'warn', label: 'syncStateHelperStopped', hint: 'syncHelperHint' }
+      }
+      if (status.recoveryPending) {
+        return { tone: 'warn', label: 'syncStateRecovering', hint: 'syncRetryHint' }
+      }
+      // Cleared by the next completed round trip on the native side, so a
+      // timestamp here means the most recent attempt is the one that failed.
+      if (status.lastErrorAt) {
+        return { tone: 'error', label: 'syncStateError', hint: 'syncErrorHint' }
+      }
+      if (!status.hasHistory) {
+        return { tone: 'warn', label: 'syncStateNever', hint: 'syncNeverHint' }
+      }
+      return { tone: 'ok', label: 'syncStateSynced', hint: '' }
+    },
+    syncIcon() {
+      if (this.syncCondition.tone === 'ok') return 'check-circle'
+      if (this.syncCondition.tone === 'error') return 'alert-circle'
+      return 'alert-triangle'
+    },
+    syncStateLabel() {
+      const fallbacks = {
+        syncStateSynced: 'Synced with iCloud',
+        syncStateNever: 'Nothing has synced yet',
+        syncStateNoAccount: 'This Mac is not signed in to iCloud',
+        syncStateRestricted: 'iCloud is restricted on this Mac',
+        syncStateUnavailable: 'iCloud is temporarily unavailable',
+        syncStateUnknown: 'iCloud status could not be determined',
+        syncStateHelperStopped: 'The Tab Space background helper is not running',
+        syncStateRecovering: 'Reconnecting to iCloud',
+        syncStateError: 'The last iCloud sync did not finish'
+      }
+      const key = this.syncCondition.label
+      return this.lang[key] || fallbacks[key]
+    },
+    syncHint() {
+      const fallbacks = {
+        syncNoAccountHint: 'Sign in to iCloud in System Settings and turn on iCloud Drive. Your sessions stay on this Mac either way.',
+        syncHelperHint: 'Open Tab Space on this Mac once and allow it to start at login. Nothing syncs while the helper is stopped.',
+        syncRetryHint: 'Your sessions are saved on this Mac and will sync as soon as iCloud is reachable.',
+        syncErrorHint: 'Nothing is lost: sessions stay on this Mac, and Tab Space keeps trying on its own.',
+        syncNeverHint: 'Syncing starts the first time Tab Space reaches iCloud after a session is saved.'
+      }
+      const key = this.syncCondition.hint
+      if (!key) return ''
+      return this.lang[key] || fallbacks[key]
+    },
+    // The most recent completed transfer in either direction. Shown whatever
+    // the state is: during an outage, "it worked an hour ago" is the single
+    // most reassuring thing the card can say.
+    syncLastSyncedLabel() {
+      const status = this.syncStatus || {}
+      const latest = Math.max(status.lastImportAt || 0, status.lastExportAt || 0)
+      if (!latest) return ''
+      const date = new Date(latest * 1000)
+      if (isNaN(date.getTime())) return ''
+      const locale = this.tabSpaceSettings[Constants.preferredLanguageKey] || undefined
+      const formatted = date.toLocaleString(locale, {
+        month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit'
+      })
+      const template = this.lang.syncLastSynced || 'Last synced {date}'
+      return template.replace('{date}', formatted)
+    },
+    // Support asks for this: the domain and code are what identify a CloudKit
+    // failure, and they mean nothing to the user, so they stay in small print.
+    syncErrorDetail() {
+      const status = this.syncStatus || {}
+      if (this.syncCondition.tone !== 'error' || !status.lastErrorDomain) return ''
+      const template = this.lang.syncErrorDetail || '{domain} error {code}'
+      return template
+        .replace('{domain}', status.lastErrorDomain)
+        .replace('{code}', status.lastErrorCode === undefined ? '?' : status.lastErrorCode)
     }
   },
   methods: {
     refreshSubscriptionStatus() {
       if (!this.aiEnabled || !this.bridge) return
       this.bridge.send({cmd: "CheckSubscriptionStatus"})
+    },
+    // No protocol gate: an extension that does not know the message ignores it,
+    // no reply arrives, and the card simply never renders.
+    refreshSyncStatus() {
+      if (!this.bridge) return
+      this.bridge.send({cmd: "CheckSyncStatus"})
+    },
+    checkSyncStatus() {
+      if (this.syncChecking || !this.bridge) return
+      this.syncChecking = true
+      this.syncCheckStartedAt = Date.now()
+      this.refreshSyncStatus()
+      // Nothing guarantees a reply — a companion browser can lose the local
+      // helper mid-session — and a button that stays disabled forever is worse
+      // than one that answers late.
+      if (this.syncCheckTimer) clearTimeout(this.syncCheckTimer)
+      this.syncCheckTimer = setTimeout(() => { this.syncChecking = false }, 5000)
     },
     openSubscription() {
       this.$store.commit("setShowSubscriptionModal", true)
@@ -711,6 +882,27 @@ export default {
   color: #ffffff;
 }
 
+.sync-state {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 6px;
+  font-size: 0.95rem;
+  font-weight: 500;
+}
+.sync-state.ok { color: #10b981; }
+.sync-state.warn { color: #d97706; }
+.sync-state.error { color: #dc2626; }
+.sync-icon {
+  width: 16px;
+  height: 16px;
+  flex: none;
+}
+.sync-error-detail {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.75rem;
+  opacity: 0.75;
+}
 .connected-note {
   display: flex;
   align-items: center;
@@ -978,5 +1170,10 @@ export default {
   .back-link:hover {
     background-color: rgba(255, 255, 255, 0.08);
   }
+  /* The 600-weight amber and red carry a warning on white and disappear into a
+     dark card; the 400s keep the same meaning at readable contrast. */
+  .sync-state.ok { color: #34d399; }
+  .sync-state.warn { color: #fbbf24; }
+  .sync-state.error { color: #f87171; }
 }
 </style>

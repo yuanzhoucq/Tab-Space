@@ -60,13 +60,15 @@ export default {
     }
   },
   computed: {
-    ...mapState(["lang", "sessions", "tabSpaceSettings"]),
+    ...mapState(["lang", "sessions", "tabSpaceSettings", "trialBannerVisible"]),
     preferredLanguage() {
       return this.tabSpaceSettings[Constants.preferredLanguageKey] || navigator.language
     },
     visible() {
       if (this.answered || !this.firstSeenAt) return false
-      // The iOS banner owns this slot first; never stack two banners.
+      // The trial banner and then the iOS banner own this slot first; never
+      // stack two banners.
+      if (this.trialBannerVisible) return false
       if (!this.iosBannerDismissed) return false
       if (this.sessions.length < MIN_SESSIONS) return false
       if (this.snoozedAt && Date.now() - this.snoozedAt < SNOOZE_DAYS * DAY_IN_MS) return false

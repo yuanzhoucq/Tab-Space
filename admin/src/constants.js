@@ -19,6 +19,12 @@ const constants = {
     // version is >= aiMinProtocolVersion.
     suggestedTagsKey: "suggested-tags",
     aiMinProtocolVersion: 2,
+    // The seven-day Pro trial: claiming it needs a native build that knows the
+    // ClaimFreeTrial command and reports the trial in its status replies.
+    trialMinProtocolVersion: 3,
+    trialDays: 7,
+    // Advertised by the local helper; see LocalBridgeProtocol.capabilities.
+    trialCapability: "subscription.trial.v1",
     // AI data-flow disclosure (design §7). The native side refuses every AI
     // request with "consent_required" until this default matches its
     // AIConsent.currentVersion, so these two must be bumped together.

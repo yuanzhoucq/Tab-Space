@@ -53,6 +53,7 @@
       <div v-if="nativeDetected && initialRefresh" class="sessions-container">
         <session-sidebar></session-sidebar>
         <div class="session-column">
+          <trial-banner></trial-banner>
           <ios-banner></ios-banner>
           <rating-banner></rating-banner>
           <sessions></sessions>
@@ -85,6 +86,7 @@
   import SessionHub from '../components/SessionHub'
   import Sessions from '../components/Sessions'
   import SwitcherHint from '../components/SwitcherHint'
+  import TrialBanner from '../components/TrialBanner'
 
   // This only exists before the first save; keep its artwork out of the main
   // dashboard bundle so established libraries retain their render timing.
@@ -101,6 +103,7 @@
       SessionHub,
       Sessions,
       SwitcherHint,
+      TrialBanner,
     },
     data() {
       return {

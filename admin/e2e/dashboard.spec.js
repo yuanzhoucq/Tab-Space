@@ -88,7 +88,11 @@ async function openDashboard(page, options = {}) {
     enforcesSessionLimit,
     quotaRemaining,
     aiConsentAccepted,
-    switcherHelperStatus
+    switcherHelperStatus,
+    trialEligible,
+    trialActive,
+    trialDaysLeft,
+    trialClaimIgnored
   }) => {
     const clone = value => JSON.parse(JSON.stringify(value))
     const settingsKey = 'tabspace-e2e-settings'
@@ -116,6 +120,11 @@ async function openDashboard(page, options = {}) {
     let currentFreeSessionLimit = freeSessionLimit
     let currentEnforcesSessionLimit = enforcesSessionLimit
     let currentSwitcherHelperStatus = switcherHelperStatus
+    // The seven-day trial, as the native side reports it: eligible until it is
+    // claimed, then active with an expiry.
+    let currentTrialEligible = trialEligible
+    let currentTrialActive = trialActive
+    const trialExpiry = () => Math.floor(Date.now() / 1000) + trialDaysLeft * 86400
 
     window.__tabspaceBridgeCommands = []
     window.__tabspaceRestoredSessions = []
@@ -196,12 +205,45 @@ async function openDashboard(page, options = {}) {
                   hasPermanentPlus: currentTier === 'plus',
                   freeSessionLimit: currentFreeSessionLimit,
                   enforcesSessionLimit: currentEnforcesSessionLimit,
-                  ...(plusDisplayPrice ? { plusDisplayPrice } : {})
+                  ...(plusDisplayPrice ? { plusDisplayPrice } : {}),
+                  ...(Number(nativeProtocolVersion) >= 3
+                    ? {
+                        trialEligible: currentTrialEligible,
+                        trialActive: currentTrialActive,
+                        ...(currentTrialActive ? { trialExpiresAt: trialExpiry() } : {})
+                      }
+                    : {})
                 }
               : {}),
             quotaRemaining: quotaRemaining !== undefined
               ? quotaRemaining
               : (currentStatus === 'active' ? -1 : 5)
+          })
+          return
+        }
+
+        if (name === 'ClaimFreeTrial') {
+          // A companion browser extension that predates the trial drops the
+          // command instead of forwarding it to the helper.
+          if (trialClaimIgnored) return
+          // Mirrors SubscriptionManagerShared.claimFreeTrial: one grant per
+          // install, and a running trial reads as Pro.
+          if (currentTrialEligible) {
+            currentTrialEligible = false
+            currentTrialActive = true
+            currentTier = 'pro'
+            currentStatus = 'active'
+          }
+          emit('ReturnSubscriptionStatus', {
+            status: currentStatus,
+            tier: currentTier,
+            hasPermanentPlus: false,
+            freeSessionLimit: currentFreeSessionLimit,
+            enforcesSessionLimit: currentEnforcesSessionLimit,
+            trialEligible: currentTrialEligible,
+            trialActive: currentTrialActive,
+            ...(currentTrialActive ? { trialExpiresAt: trialExpiry() } : {}),
+            quotaRemaining: -1
           })
           return
         }
@@ -411,7 +453,11 @@ async function openDashboard(page, options = {}) {
     enforcesSessionLimit: options.enforcesSessionLimit !== false,
     quotaRemaining: options.quotaRemaining,
     aiConsentAccepted: options.aiConsentAccepted !== false,
-    switcherHelperStatus: options.switcherHelperStatus || ''
+    switcherHelperStatus: options.switcherHelperStatus || '',
+    trialEligible: Boolean(options.trialEligible),
+    trialActive: Boolean(options.trialActive),
+    trialDaysLeft: options.trialDaysLeft === undefined ? 7 : options.trialDaysLeft,
+    trialClaimIgnored: Boolean(options.trialClaimIgnored)
   })
 
   await page.route('**/favicon.ico', route => route.fulfill({ status: 204, body: '' }))
@@ -2873,4 +2919,104 @@ test('requires the disclosure before auto-enhance can be switched on', async ({ 
   await expect.poll(() => lastBridgeCommand(page, 'SetDefault')).toMatchObject({
     payload: { name: 'ai-auto-enhance-enabled', value: 'true' }
   })
+})
+
+test('hands a new user the seven-day trial as it tells them about it', async ({ page }) => {
+  await openDashboard(page, {
+    initialSessions: sessions,
+    nativeProtocolVersion: '3',
+    trialEligible: true
+  })
+
+  const banner = page.locator('[data-testid="trial-banner"]')
+  await expect(banner).toBeVisible()
+  // Showing it is what starts the clock — the two must not drift apart.
+  await expect
+    .poll(() => bridgeCommandCount(page, 'ClaimFreeTrial'))
+    .toBe(1)
+  await expect(page.locator('[data-testid="trial-banner-text"]')).toContainText('7')
+
+  // Claimed once, however many status replies land afterwards.
+  await page.evaluate(() => window.__tabspaceTest.emit('SessionsChangedRemotely'))
+  await expect.poll(() => bridgeCommandCount(page, 'ClaimFreeTrial')).toBe(1)
+})
+
+test('never offers the trial through a native build that cannot grant one', async ({ page }) => {
+  // A protocol v2 extension reports no trial fields at all, so the dashboard
+  // must not promise seven days it has no way to start.
+  await openDashboard(page, {
+    initialSessions: sessions,
+    nativeProtocolVersion: '2',
+    trialEligible: true
+  })
+
+  await expect(page.locator('[data-testid="trial-banner"]')).toHaveCount(0)
+  expect(await bridgeCommandCount(page, 'ClaimFreeTrial')).toBe(0)
+})
+
+test('keeps the other banners out of the way while the trial banner is up', async ({ page }) => {
+  await openDashboard(page, {
+    initialSessions: sessions,
+    nativeProtocolVersion: '3',
+    trialActive: true,
+    trialDaysLeft: 5
+  })
+
+  await expect(page.locator('[data-testid="trial-banner"]')).toBeVisible()
+  await expect(page.locator('[data-testid="ios-banner"]')).toHaveCount(0)
+
+  // Proof that the trial banner is what is holding the slot: close it and the
+  // iOS banner takes its place.
+  await page.locator('[data-testid="trial-banner"]').getByRole('button').last().click()
+  await expect(page.locator('[data-testid="ios-banner"]')).toBeVisible()
+})
+
+test('reminds a trial user what ends, and lets them dismiss the rest', async ({ page }) => {
+  await openDashboard(page, {
+    initialSessions: sessions,
+    nativeProtocolVersion: '3',
+    trialActive: true,
+    trialDaysLeft: 4
+  })
+
+  const banner = page.locator('[data-testid="trial-banner"]')
+  await expect(page.locator('[data-testid="trial-banner-text"]')).toContainText('4')
+  await banner.getByRole('button').last().click()
+  await expect(banner).toHaveCount(0)
+
+  // The dismissal is remembered, so the reminder does not reappear on reload.
+  await page.reload()
+  await expect(page.locator('.session')).toHaveCount(sessions.length)
+  await expect(page.locator('[data-testid="trial-banner"]')).toHaveCount(0)
+})
+
+test('shows a trial user the plans instead of a dead end', async ({ page }) => {
+  await openDashboard(page, {
+    initialSessions: sessions,
+    nativeProtocolVersion: '3',
+    trialActive: true,
+    trialDaysLeft: 3
+  })
+
+  await page.locator('[data-testid="trial-banner-cta"]').click()
+  await expect(page.locator('[data-testid="trial-active-message"]')).toBeVisible()
+  // Pro by purchase ends the conversation; Pro on loan must not.
+  await expect(page.locator('[data-testid="pro-active-message"]')).toHaveCount(0)
+  await expect(page.locator('[data-testid="plan-yearly"]')).toBeVisible()
+  await expect(page.locator('[data-testid="subscription-submit"]')).toBeVisible()
+})
+
+test('stands down when the claim it sent is never confirmed', async ({ page }) => {
+  await openDashboard(page, {
+    initialSessions: sessions,
+    nativeProtocolVersion: '3',
+    trialEligible: true,
+    trialClaimIgnored: true
+  })
+
+  const banner = page.locator('[data-testid="trial-banner"]')
+  await expect(banner).toBeVisible()
+  // Promising seven days that never started is worse than saying nothing.
+  await expect(banner).toHaveCount(0, { timeout: 10000 })
+  expect(await bridgeCommandCount(page, 'ClaimFreeTrial')).toBe(1)
 })

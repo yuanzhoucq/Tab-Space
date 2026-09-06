@@ -148,6 +148,19 @@ export function installMockBridge() {
     DismissSuggestion(msg) {
       console.log('[mock bridge] DismissSuggestion', msg.id, msg.muteType ? '(mute type)' : '')
     },
+    // The Mac reports three independent facts; flip these to preview the
+    // unhealthy cards (a stopped helper, a signed-out Mac, a failed export).
+    CheckSyncStatus() {
+      const secondsAgo = seconds => Math.floor(Date.now() / 1000) - seconds
+      emit('ReturnSyncStatus', {
+        account: 'available',
+        helper: 'running',
+        hasHistory: true,
+        lastImportAt: secondsAgo(240),
+        lastExportAt: secondsAgo(90),
+        recoveryPending: false
+      })
+    },
     CheckSubscriptionStatus() {
       emit('ReturnSubscriptionStatus', {
         status: subscriptionStatus,

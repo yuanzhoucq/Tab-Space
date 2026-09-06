@@ -65,9 +65,13 @@ export default {
     }
   },
   computed: {
-    ...mapState(["lang", "tabSpaceSettings", "iosBannerRequestCount"]),
+    ...mapState(["lang", "tabSpaceSettings", "iosBannerRequestCount", "trialBannerVisible"]),
     ...mapGetters(["savedSessionCount"]),
     canDisplay() {
+      // The trial banner owns this slot while it is up: it is time-limited and
+      // this one is not. Asking for it from the navbar still wins, because that
+      // is a direct request.
+      if (this.trialBannerVisible && !this.requestedByUser) return false
       return this.savedSessionCount >= 1 || this.requestedByUser
     },
     appStoreUrl() {
