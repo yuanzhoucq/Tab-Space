@@ -576,10 +576,14 @@ export default {
       if (!this.aiEnabled || !this.bridge) return
       this.bridge.send({cmd: "CheckSubscriptionStatus"})
     },
-    // No protocol gate: an extension that does not know the message ignores it,
-    // no reply arrives, and the card simply never renders.
+    // Safari's bridge ignores a message it does not know, so no protocol gate is
+    // needed there: no reply arrives and the card never renders. A companion
+    // browser is different — its extension answers an unknown command with
+    // `unsupported_command`, which the bridge treats as a failed request and
+    // which would fail an AI request that happened to be in flight. Only the
+    // Mac mirrors, so there is nothing to ask that bridge anyway.
     refreshSyncStatus() {
-      if (!this.bridge) return
+      if (!this.bridge || this.bridge.mode !== "direct") return
       this.bridge.send({cmd: "CheckSyncStatus"})
     },
     checkSyncStatus() {

@@ -228,6 +228,11 @@
         }
       case "CheckSubscriptionStatus":
         return { kind: "native", method: "subscription.status", params: {} }
+      case "ClaimFreeTrial":
+        // The helper only accepts this where it advertises
+        // `subscription.trial.v1`; an older app answers unsupported_method and
+        // the dashboard's claim timeout takes the banner back down.
+        return { kind: "native", method: "subscription.claimTrial", params: {} }
       case "PurchaseSubscription":
         return {
           kind: "native",
@@ -284,7 +289,9 @@
         suggestions: JSON.stringify((result && result.suggestions) || [])
       }]
     }
-    if (operation.method === "subscription.status" || operation.method === "subscription.restore") {
+    if (operation.method === "subscription.status"
+      || operation.method === "subscription.restore"
+      || operation.method === "subscription.claimTrial") {
       return [{ cmd: "ReturnSubscriptionStatus", ...(result || {}) }]
     }
     if (operation.method === "subscription.purchase") {

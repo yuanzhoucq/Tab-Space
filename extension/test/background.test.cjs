@@ -199,6 +199,7 @@ test('maps every dashboard data command onto protocol v2 methods', () => {
   assert.equal(background.dashboardCommandToOperation({ cmd: 'CheckSubscriptionStatus' }).method, 'subscription.status')
   assert.equal(background.dashboardCommandToOperation({ cmd: 'PurchaseSubscription' }).method, 'subscription.purchase')
   assert.equal(background.dashboardCommandToOperation({ cmd: 'RestorePurchases' }).method, 'subscription.restore')
+  assert.equal(background.dashboardCommandToOperation({ cmd: 'ClaimFreeTrial' }).method, 'subscription.claimTrial')
   assert.deepEqual(background.dashboardMessageForEvent({ event: 'sessions.changed', revision: 9 }), {
     cmd: 'SessionsChangedRemotely',
     revision: 9
@@ -250,6 +251,21 @@ test('maps protocol v2 AI and subscription results back to dashboard messages', 
       { status: 'active', tier: 'pro', quotaRemaining: -1 }
     ),
     [{ cmd: 'ReturnSubscriptionStatus', status: 'active', tier: 'pro', quotaRemaining: -1 }]
+  )
+  // The trial claim answers with a status, so the dashboard learns the new tier
+  // and the expiry from the same message it already handles.
+  assert.deepEqual(
+    background.dashboardMessagesFor(
+      { kind: 'native', method: 'subscription.claimTrial' },
+      { status: 'active', tier: 'pro', trialActive: true, trialExpiresAt: 1788000000 }
+    ),
+    [{
+      cmd: 'ReturnSubscriptionStatus',
+      status: 'active',
+      tier: 'pro',
+      trialActive: true,
+      trialExpiresAt: 1788000000
+    }]
   )
   assert.deepEqual(
     background.dashboardMessagesFor(
