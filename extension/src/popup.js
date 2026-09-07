@@ -11,6 +11,7 @@
   const strings = zh ? {
     ready: "访问资料库，或保存当前浏览器的标签页。",
     saveRequiresPro: "从此浏览器保存标签页需要 Pro。",
+    upgradePro: "升级到 Pro",
     planUnavailable: "暂时无法读取套餐，仍可打开资料库。",
     loading: "正在读取打开的标签页…",
     save: "保存标签页",
@@ -52,6 +53,7 @@
   } : {
     ready: "Open your library or save tabs from this browser.",
     saveRequiresPro: "Saving tabs from this browser requires Pro.",
+    upgradePro: "Upgrade to Pro",
     planUnavailable: "Could not check your plan. You can still open your library.",
     loading: "Loading open tabs…",
     save: "Save Tabs",
@@ -139,6 +141,7 @@
     success: document.getElementById("success-view"),
     save: document.getElementById("save"),
     proNote: document.getElementById("pro-note"),
+    upgradePro: document.getElementById("upgrade-pro"),
     saveCurrent: document.getElementById("save-current"),
     openDashboard: document.getElementById("open-dashboard"),
     customizeTabs: document.getElementById("customize-tabs"),
@@ -342,6 +345,20 @@
   }
   elements.openDashboardAfterSave.addEventListener("change", () => persistPreferences().catch(() => {}))
   elements.closeTabsAfterSave.addEventListener("change", () => persistPreferences().catch(() => {}))
+  if (elements.upgradePro) {
+    elements.upgradePro.addEventListener("click", async () => {
+      try {
+        const response = await send({ type: "popup.openPaywall" })
+        if (!response || !response.ok) {
+          throw new Error(response && response.error ? response.error.message : strings.failed)
+        }
+        window.close()
+      } catch (error) {
+        elements.status.textContent = error.message || strings.failed
+        elements.status.className = "error"
+      }
+    })
+  }
   elements.launchApp.addEventListener("click", () => {
     extensionApi.tabs.create({ url: "tabspace://connect" })
   })

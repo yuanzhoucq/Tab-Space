@@ -977,6 +977,7 @@
           case "dashboard.request": return controller.handleDashboard(message.message)
           case "popup.connect": return controller.connect()
           case "popup.subscriptionStatus": return client.request("subscription.status", {})
+          case "popup.openPaywall": return client.request("subscription.purchase", typeof message.productId === "string" ? { productId: message.productId } : {})
           case "popup.listTabs": return controller.listPopupTabs()
           case "popup.listSessions": return controller.listPopupSessions()
           case "popup.saveTabs": return controller.saveTabIds(message.tabIds, {

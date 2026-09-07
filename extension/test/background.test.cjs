@@ -861,3 +861,18 @@ test('a non-Pro save refusal never closes tabs and leaves dashboard access worki
   await controller.openDashboard()
   assert.equal(opened.length, 1)
 })
+
+test('popup openPaywall requests native subscription purchase and is wired in popup UI', () => {
+  const html = readFileSync(join(extensionRoot, 'src/popup.html'), 'utf8')
+  const popup = readFileSync(join(extensionRoot, 'src/popup.js'), 'utf8')
+  const backgroundSource = readFileSync(join(extensionRoot, 'src/background.js'), 'utf8')
+
+  assert.equal(html.includes('id="upgrade-pro"'), true)
+  assert.equal(html.includes('data-i18n="upgradePro"'), true)
+  assert.equal(popup.includes('upgradePro: document.getElementById("upgrade-pro")'), true)
+  assert.equal(popup.includes('send({ type: "popup.openPaywall" })'), true)
+  assert.equal(popup.includes('upgradePro: "升级到 Pro"'), true)
+  assert.equal(popup.includes('upgradePro: "Upgrade to Pro"'), true)
+  assert.equal(backgroundSource.includes('case "popup.openPaywall": return client.request("subscription.purchase"'), true)
+})
+

@@ -56,6 +56,8 @@ button:disabled { opacity: .45; }
 .pro-chip { display: inline-block; margin-left: 8px; padding: 2px 6px; border-radius: 5px; background: var(--subtle); color: CanvasText; font-size: 10px; font-weight: 700; vertical-align: middle; }
 .pro-chip[hidden], .pro-note[hidden] { display: none; }
 .pro-note { margin-top: 10px; text-align: center; font-size: 12px; }
+.text-link-button { display: inline; margin-left: 4px; padding: 0; border: 0; background: transparent; color: var(--accent-strong); font: inherit; font-weight: 650; text-decoration: underline; cursor: pointer; }
+.text-link-button:hover, .text-link-button:focus-visible { color: var(--accent); }
 button:disabled { cursor: not-allowed; }
 button.pro-locked:disabled { opacity: 1; color: GrayText; background: var(--subtle); border-color: var(--separator); }
 button.pro-locked .pro-chip { color: var(--accent-strong); background: color-mix(in srgb, var(--accent) 14%, Canvas); }
