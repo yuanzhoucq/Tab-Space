@@ -9,7 +9,9 @@
   }
   const zh = navigator.language.toLowerCase().startsWith("zh")
   const strings = zh ? {
-    ready: "选择要保存到同一个会话的标签页。",
+    ready: "访问资料库，或保存当前浏览器的标签页。",
+    saveRequiresPro: "从此浏览器保存标签页需要 Pro。",
+    planUnavailable: "暂时无法读取套餐，仍可打开资料库。",
     loading: "正在读取打开的标签页…",
     save: "保存标签页",
     saveCount: count => `保存 ${count} 个标签页`,
@@ -42,13 +44,15 @@
     success: count => `${count} 个标签页已保存，并会通过 iCloud 同步。`,
     appendSuccess: count => `${count} 个标签页已追加到所选会话。`,
     sessionUnavailable: "所选会话已不存在或已移入回收站，请重新选择。",
-    proRequired: "多浏览器支持包含在 Tab Space Pro 中。请在 Mac 上打开 Tab Space 升级。",
+    proRequired: "资料库可免费访问。从此浏览器保存标签页需要 Pro。请在 Mac 上打开 Tab Space 升级。",
     done: "完成",
     doneCloseSaved: "完成并关闭已保存标签页",
     closeFailed: "标签页已保存，但未能关闭，请手动关闭。",
     followUpFailed: "标签页已保存，但有一项保存后操作未能完成。"
   } : {
-    ready: "Choose the tabs to save as one session.",
+    ready: "Open your library or save tabs from this browser.",
+    saveRequiresPro: "Saving tabs from this browser requires Pro.",
+    planUnavailable: "Could not check your plan. You can still open your library.",
     loading: "Loading open tabs…",
     save: "Save Tabs",
     saveCount: count => `Save ${count} Tab${count === 1 ? "" : "s"}`,
@@ -81,7 +85,7 @@
     success: count => `${count} tab${count === 1 ? " is" : "s are"} saved and will sync through iCloud.`,
     appendSuccess: count => `${count} tab${count === 1 ? " was" : "s were"} added to the selected session.`,
     sessionUnavailable: "The selected session no longer exists or is in Trash. Choose another session.",
-    proRequired: "Multi-browser support is included with Tab Space Pro. Open Tab Space on your Mac to upgrade.",
+    proRequired: "Library access is included. Saving tabs from this browser requires Pro. Open Tab Space on your Mac to upgrade.",
     done: "Done",
     doneCloseSaved: "Done and Close Saved Tabs",
     closeFailed: "The tabs were saved, but could not be closed. Please close them manually.",
@@ -126,11 +130,15 @@
     })
   }
 
+  let hasPro = false
+  let entitlementResolved = false
+
   const elements = {
     editor: document.getElementById("editor-view"),
     pairing: document.getElementById("pairing-view"),
     success: document.getElementById("success-view"),
     save: document.getElementById("save"),
+    proNote: document.getElementById("pro-note"),
     saveCurrent: document.getElementById("save-current"),
     openDashboard: document.getElementById("open-dashboard"),
     customizeTabs: document.getElementById("customize-tabs"),
@@ -174,8 +182,14 @@
       ? strings.customizeTabs(selected, tabs.length)
       : strings.hideTabSelection
     elements.saveLabel.textContent = strings.saveCount(selected)
-    elements.save.disabled = selected === 0
-    elements.saveCurrent.disabled = !tabs.some(tab => tab.isCurrent)
+    elements.save.disabled = !hasPro || selected === 0
+    elements.saveCurrent.disabled = !hasPro || !tabs.some(tab => tab.isCurrent)
+    for (const chip of document.querySelectorAll(".pro-chip")) {
+      chip.hidden = !entitlementResolved || hasPro
+    }
+    elements.proNote.hidden = !entitlementResolved || hasPro
+    elements.save.classList.toggle("pro-locked", entitlementResolved && !hasPro)
+    elements.saveCurrent.classList.toggle("pro-locked", entitlementResolved && !hasPro)
   }
 
   function renderSessionOptions(sessions) {
@@ -252,6 +266,7 @@
   }
 
   async function save(tabItems, allWindowsIfEnabled) {
+    if (!hasPro) return
     elements.save.disabled = true
     elements.saveCurrent.disabled = true
     elements.status.textContent = strings.saving
@@ -265,9 +280,11 @@
         closeTabsAfterSave: elements.closeTabsAfterSave.checked
       })
       if (!response || !response.ok) {
-        // Multi-browser support is Pro-only, and the pairing screen is the wrong
-        // answer here: the code would be accepted and then every request refused.
+        // Keep the browser connected for library access; only this save needs Pro.
         if (response && response.error && response.error.code === "pro_required") {
+          hasPro = false
+          entitlementResolved = true
+          updateSelection()
           throw new Error(strings.proRequired)
         }
         if (response && response.error && ["pairing_required", "authentication_failed"].includes(response.error.code)) {
@@ -308,8 +325,14 @@
   elements.save.addEventListener("click", () => save(selectedTabs(), selectedTabs().length === tabs.length))
   elements.saveCurrent.addEventListener("click", () => save(tabs.filter(tab => tab.isCurrent), false))
   elements.openDashboard.addEventListener("click", async () => {
-    await send({ type: "popup.openDashboard" })
-    window.close()
+    try {
+      const response = await send({ type: "popup.openDashboard" })
+      if (!response || !response.ok) throw new Error(response && response.error ? response.error.message : strings.failed)
+      window.close()
+    } catch (error) {
+      elements.status.textContent = error.message
+      elements.status.className = "error"
+    }
   })
   function persistPreferences() {
     return storageSet({
@@ -374,12 +397,21 @@
     const capabilities = connection.result && Array.isArray(connection.result.capabilities)
       ? connection.result.capabilities
       : []
-    const [response, sessionsResponse] = await Promise.all([
+    const [response, sessionsResponse, subscriptionResponse] = await Promise.all([
       send({ type: "popup.listTabs" }),
       capabilities.includes("sessions.appendTo")
         ? send({ type: "popup.listSessions" })
-        : Promise.resolve({ ok: true, result: [] })
+        : Promise.resolve({ ok: true, result: [] }),
+      send({ type: "popup.subscriptionStatus" }).catch(() => ({ ok: false }))
     ])
+    entitlementResolved = Boolean(subscriptionResponse && subscriptionResponse.ok)
+    const subscription = subscriptionResponse && subscriptionResponse.result
+    hasPro = entitlementResolved && Boolean(subscription &&
+      (subscription.tier === "pro" || (!subscription.tier && subscription.status === "active")))
+    if (!entitlementResolved) {
+      elements.status.textContent = strings.planUnavailable
+    }
+    updateSelection()
     elements.loading.hidden = true
     if (!response || !response.ok) throw new Error(response && response.error ? response.error.message : strings.failed)
     renderSessionOptions(sessionsResponse && sessionsResponse.ok && Array.isArray(sessionsResponse.result)

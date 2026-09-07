@@ -124,15 +124,6 @@ const store = new Vuex.Store({
         // native side reports the two facts separately.
         permanentPlusOwned: false,
         plusDisplayPrice: null,      // localized StoreKit price, optional in protocol v2
-        // The one-time seven-day Pro trial (protocol v3). While it runs the tier
-        // above is "pro" like any other Pro; these say that it is a trial, when
-        // it ends, and — before it starts — that this install still has one.
-        trialEligible: false,
-        trialActive: false,
-        trialExpiresAt: null,        // epoch seconds
-        // True while the trial banner holds the slot above the session list; the
-        // iOS and rating banners stand down rather than stack under it.
-        trialBannerVisible: false,
         freeSessionLimit: Constants.freeSessionLimit,
         enforcesSessionLimit: false,
         aiQuotaRemaining: null,      // Int, -1 = unlimited, null = unknown
@@ -191,27 +182,6 @@ const store = new Vuex.Store({
         switcherHintAvailable: (state, getters) => Constants.switcherHintEnabled
             && (getters.switcherAvailable || getters.switcherNeedsAppLaunch),
         isPremium: state => state.entitlementTier === "pro",
-        // Pro that came from the seven-day trial rather than a purchase. Every
-        // Pro feature is genuinely unlocked; what differs is that it ends.
-        trialActive: state => state.trialActive,
-        // Whole days left, rounded up, so the last partial day still reads "1".
-        trialDaysRemaining: state => {
-            if (!state.trialExpiresAt) return 0
-            const seconds = state.trialExpiresAt - Date.now() / 1000
-            return seconds <= 0 ? 0 : Math.max(1, Math.ceil(seconds / 86400))
-        },
-        // Whether this install still has its trial and a native side that can
-        // actually start it. Claiming is what tells the user, so only a surface
-        // that shows them the gift may call it — and only where the claim will
-        // be understood. Safari's direct bridge proves that with its protocol
-        // version; a companion browser's local helper proves it with a
-        // capability, because its envelope version is pinned.
-        canClaimTrial: state => state.trialEligible
-            && !!state.bridge
-            && (state.bridge.mode === "direct"
-                ? state.nativeProtocolVersion >= Constants.trialMinProtocolVersion
-                : (Array.isArray(state.nativeCapabilities)
-                    && state.nativeCapabilities.includes(Constants.trialCapability))),
         hasPermanentPlus: state => state.entitlementTier === "plus",
         // Whether the permanent Plus grant was ever made, regardless of whether
         // a Pro subscription now sits on top of it.
@@ -353,10 +323,7 @@ const store = new Vuex.Store({
             hasPermanentPlus,
             plusDisplayPrice,
             freeSessionLimit,
-            enforcesSessionLimit,
-            trialEligible,
-            trialActive,
-            trialExpiresAt
+            enforcesSessionLimit
         }) {
             const normalizedStatus = status === "active" ? "active" : "free"
             const normalizedTier = ["free", "plus", "pro"].includes(tier)
@@ -382,13 +349,6 @@ const store = new Vuex.Store({
             if (typeof enforcesSessionLimit === "boolean") {
                 state.enforcesSessionLimit = enforcesSessionLimit
             }
-            // A native build older than protocol v3 sends none of these, and
-            // leaving them at their defaults is the right reading: it has no
-            // trial to offer.
-            if (typeof trialEligible === "boolean") state.trialEligible = trialEligible
-            if (typeof trialActive === "boolean") state.trialActive = trialActive
-            const expiry = Number(trialExpiresAt)
-            state.trialExpiresAt = Number.isFinite(expiry) && expiry > 0 ? expiry : null
         },
         setAIQuota(state, { remaining, resetAt }) {
             if (remaining !== undefined && remaining !== null) state.aiQuotaRemaining = Number(remaining)
@@ -397,9 +357,6 @@ const store = new Vuex.Store({
         clearAIQuota(state) {
             state.aiQuotaRemaining = null
             state.aiQuotaResetAt = null
-        },
-        setTrialBannerVisible(state, visible) {
-            state.trialBannerVisible = Boolean(visible)
         },
         setFreeSessionLimit(state, limit) {
             const normalized = Number(limit)

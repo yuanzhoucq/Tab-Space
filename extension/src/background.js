@@ -228,11 +228,6 @@
         }
       case "CheckSubscriptionStatus":
         return { kind: "native", method: "subscription.status", params: {} }
-      case "ClaimFreeTrial":
-        // The helper only accepts this where it advertises
-        // `subscription.trial.v1`; an older app answers unsupported_method and
-        // the dashboard's claim timeout takes the banner back down.
-        return { kind: "native", method: "subscription.claimTrial", params: {} }
       case "PurchaseSubscription":
         return {
           kind: "native",
@@ -290,8 +285,7 @@
       }]
     }
     if (operation.method === "subscription.status"
-      || operation.method === "subscription.restore"
-      || operation.method === "subscription.claimTrial") {
+      || operation.method === "subscription.restore") {
       return [{ cmd: "ReturnSubscriptionStatus", ...(result || {}) }]
     }
     if (operation.method === "subscription.purchase") {
@@ -425,7 +419,7 @@
             "invalid_client",
             "authentication_failed",
             "credential_store_failed",
-            // Terminal: without Pro no amount of retrying or re-pairing helps.
+            // Older hosts can still refuse pairing until upgraded.
             "pro_required"
           ].includes(error.code)) {
             throw error
@@ -982,6 +976,7 @@
           case "dashboard.connect": return controller.connect()
           case "dashboard.request": return controller.handleDashboard(message.message)
           case "popup.connect": return controller.connect()
+          case "popup.subscriptionStatus": return client.request("subscription.status", {})
           case "popup.listTabs": return controller.listPopupTabs()
           case "popup.listSessions": return controller.listPopupSessions()
           case "popup.saveTabs": return controller.saveTabIds(message.tabIds, {

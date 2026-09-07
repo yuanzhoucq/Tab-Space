@@ -65,13 +65,9 @@ export default {
     }
   },
   computed: {
-    ...mapState(["lang", "tabSpaceSettings", "iosBannerRequestCount", "trialBannerVisible"]),
+    ...mapState(["lang", "tabSpaceSettings", "iosBannerRequestCount"]),
     ...mapGetters(["liveSessionCount"]),
     canDisplay() {
-      // The trial banner owns this slot while it is up: it is time-limited and
-      // this one is not. Asking for it from the navbar still wins, because that
-      // is a direct request.
-      if (this.trialBannerVisible && !this.requestedByUser) return false
       // Sessions in Trash do not count: that dashboard is still showing the
       // first-save guide, and the install offer belongs after the first save.
       return this.liveSessionCount >= 1 || this.requestedByUser

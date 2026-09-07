@@ -18,19 +18,23 @@
 
     <section id="editor-view">
       <div class="actions">
-        <button id="save" class="primary-action" type="button" disabled>
+        <button id="open-dashboard" class="primary-action" type="button" data-i18n="openDashboard">Open Tab Space</button>
+        <button id="save" class="secondary-action" type="button" aria-describedby="pro-note" disabled>
           <span id="save-label" data-i18n="save">Save Tabs</span>
+          <span class="pro-chip" hidden>Pro</span>
         </button>
-        <button id="save-current" class="secondary-action" type="button" disabled>
+        <button id="save-current" class="secondary-action" type="button" aria-describedby="pro-note" disabled>
           <span data-i18n="saveCurrent">Save Current Tab</span>
+          <span class="pro-chip" hidden>Pro</span>
         </button>
         <div class="utility-actions">
           <button id="customize-tabs" class="text-action" type="button" aria-expanded="false" disabled>
             <span id="customize-tabs-label">Choose Tabs</span>
           </button>
-          <button id="open-dashboard" class="text-action" type="button" data-i18n="openDashboard">Open Tab Space</button>
         </div>
       </div>
+
+      <p id="pro-note" class="pro-note" hidden data-i18n="saveRequiresPro">Saving tabs from this browser requires Pro.</p>
 
       <section class="save-destination">
         <div class="destination-row">

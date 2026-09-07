@@ -291,10 +291,9 @@ export default {
             this.handleNativeMessage("SessionLimitReached", data)
             break
           }
-          // Multi-browser support is Pro-only. Reaching the dashboard through a
-          // companion browser without Pro is an upgrade prompt, not a lost
-          // connection — showing "can't reach the app" would be misleading.
+          // Collection requires Pro, but the paired library stays available.
           if (data.error && data.error.code === "pro_required") {
+            this.$store.commit("discardUnsavedSessions")
             this.$store.commit("setShowSubscriptionModal", true)
             break
           }
@@ -404,15 +403,7 @@ export default {
           break
         case "SessionUpgradeSuggested":
           this.$store.commit("setFreeSessionLimit", data.limit)
-          // Their first save is the moment the trial is worth the most, so it
-          // is handed over here rather than being sold to. Claiming and showing
-          // it happen together: a trial whose clock started somewhere the user
-          // never saw would spend its first days on nothing.
-          if (this.claimFreeTrial()) {
-            this.$store.commit("setShowSubscriptionModal", {show: true, reason: "trialStarted"})
-          } else {
-            this.$store.commit("setShowSubscriptionModal", {show: true, reason: "suggested"})
-          }
+          this.$store.commit("setShowSubscriptionModal", {show: true, reason: "suggested"})
           break
         case "SessionQuotaExhausted":
           this.$store.commit("setFreeSessionLimit", data.limit)
@@ -449,14 +440,6 @@ export default {
       this.bridge.send({cmd: "CheckDefault", name: Constants.autoEnhanceKey})
       this.bridge.send({cmd: "CheckSubscriptionStatus"})
       this.refreshSuggestions()
-    },
-    // Starts the one-time seven-day trial, and reports whether it did. The
-    // native side is idempotent, so a second caller changes nothing; the guard
-    // here is only to keep the *announcement* honest.
-    claimFreeTrial() {
-      if (!this.$store.getters.canClaimTrial) return false
-      this.bridge.send({cmd: "ClaimFreeTrial"})
-      return true
     },
     prepareAI() {
       if (!this.$store.getters.aiEnabled) return
@@ -646,10 +629,7 @@ export default {
         hasPermanentPlus: data.hasPermanentPlus,
         plusDisplayPrice: data.plusDisplayPrice,
         freeSessionLimit: data.freeSessionLimit,
-        enforcesSessionLimit: data.enforcesSessionLimit,
-        trialEligible: data.trialEligible,
-        trialActive: data.trialActive,
-        trialExpiresAt: data.trialExpiresAt
+        enforcesSessionLimit: data.enforcesSessionLimit
       })
       this.applyQuota(data)
       // RestorePurchases / PurchaseSubscription both hand off to the host app.

@@ -11,19 +11,7 @@
       <div class="modal-content">
         <!-- Status strip. Pro sees this instead of a dead end, because Settings
              can now open this dialog at any tier. -->
-        <!-- A trial is Pro, but it ends, so it gets its own note and keeps the
-             plans on screen. -->
-        <div v-if="trialActive" class="status-note is-active" data-testid="trial-active-message">
-          <v-icon name="gift" class="status-icon"></v-icon>
-          <div>
-            <div class="plus-title">
-              <strong>{{ lang.trialStartedTitle || '7 days of Pro, on us' }}</strong>
-            </div>
-            <p>{{ trialMessage }}</p>
-          </div>
-        </div>
-
-        <div v-else-if="isPremium" class="status-note is-active" data-testid="pro-active-message">
+        <div v-if="isPremium" class="status-note is-active" data-testid="pro-active-message">
           <v-icon name="check-circle" class="status-icon"></v-icon>
           <p>{{ lang.alreadyPremium || "You're on Tab Space Pro." }}</p>
         </div>
@@ -50,7 +38,7 @@
 
         <plan-comparison></plan-comparison>
 
-        <template v-if="!isPremium || trialActive">
+        <template v-if="!isPremium">
           <!-- The selected cycle is handed to the host paywall; final localized
                pricing and purchase confirmation still live in the app.
                aria-pressed is bound as a string on purpose: Vue 2 removes an
@@ -73,7 +61,7 @@
                     @click="selectProduct(yearlyProductId)">
               <div class="best-value">{{ lang.planRecommended || 'Best value' }}</div>
               <h4>{{ lang.planYearly || 'Yearly' }}</h4>
-              <small v-if="!trialActive">{{ lang.annualTrial || '7-day free trial' }}</small>
+              <small>{{ lang.annualTrial || '7-day free trial' }}</small>
             </button>
           </div>
 
@@ -102,7 +90,6 @@
 
 <script>
 import { mapState, mapGetters } from 'vuex'
-import Constants from '../constants'
 import PlanComparison from './PlanComparison'
 
 export default {
@@ -117,34 +104,12 @@ export default {
     }
   },
   computed: {
-    ...mapState(['lang', 'bridge', 'showSubscriptionModal', 'subscriptionModalReason', 'plusDisplayPrice', 'purchaseRedirecting', 'trialExpiresAt', 'tabSpaceSettings']),
-    ...mapGetters(['isPremium', 'hasPermanentPlus', 'trialActive', 'trialDaysRemaining']),
-    // Two openings say the same thing from different distances: the one right
-    // after the first save announces the gift, the one from the banner is a
-    // reminder of what is still running.
-    trialMessage() {
-      const template = this.subscriptionModalReason === 'trialStarted'
-        ? (this.lang.trialStartedBody
-          || 'Session saved. Pro is unlocked until {date}: unlimited sessions, AI titles and tags, and Chrome, Edge and Firefox.')
-        : (this.lang.trialRunningBody
-          || '{count} days left. Everything you save stays yours; keeping Pro after that needs a plan.')
-      return template
-        .replace('{date}', this.trialEndDate)
-        .replace('{count}', this.trialDaysRemaining)
-    },
-    trialEndDate() {
-      if (!this.trialExpiresAt) return ''
-      const language = this.tabSpaceSettings[Constants.preferredLanguageKey] || navigator.language
-      return new Date(this.trialExpiresAt * 1000)
-        .toLocaleDateString(language, { month: 'long', day: 'numeric' })
-    }
+    ...mapState(['lang', 'bridge', 'showSubscriptionModal', 'subscriptionModalReason', 'plusDisplayPrice', 'purchaseRedirecting']),
+    ...mapGetters(['isPremium', 'hasPermanentPlus'])
   },
   watch: {
     isPremium(active) {
-      // The redirect completed in the host app and status synced back. A trial
-      // reaches Pro too, and closing on it would shut the dialog that is in the
-      // middle of telling the user about it.
-      if (active && !this.trialActive) this.close()
+      if (active) this.close()
     }
   },
   methods: {

@@ -1,5 +1,4 @@
 export const iosBannerDismissedKey = "tabspace-ios-banner-dismissed"
-export const trialBannerDismissedKey = "tabspace-trial-banner-dismissed"
 export const ratingBannerAnsweredKey = "tabspace-rating-banner-answered"
 export const ratingBannerFirstSeenKey = "tabspace-rating-banner-first-seen"
 export const ratingBannerSnoozedAtKey = "tabspace-rating-banner-snoozed-at"

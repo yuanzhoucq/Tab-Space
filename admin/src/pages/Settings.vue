@@ -33,9 +33,6 @@
           <!-- Pro that ends says so here, next to the plan it is standing in
                for; otherwise Settings would report Pro and never mention the
                date it stops. -->
-          <p v-if="trialActive" class="help-text" data-testid="settings-trial-summary">
-            {{ trialSummary }}
-          </p>
 
           <p v-if="hasPermanentPlus" class="help-text" data-testid="settings-plus-summary">
             {{lang.plusOwnedSummary || 'Unlimited sessions and all core features are yours permanently. You also receive 5 AI requests each week; Pro makes AI unlimited.'}}
@@ -54,9 +51,7 @@
           <!-- The plan comparison stays reachable at every tier: a Pro
                subscriber still needs to see what the plan covers. -->
           <div class="subscription-actions">
-            <!-- A trial user has nothing to manage and everything to decide, so
-                 they get the upgrade button rather than the subscriber's pair. -->
-            <button v-if="!isPremium || trialActive" type="button" class="primary-action"
+            <button v-if="!isPremium" type="button" class="primary-action"
                     data-testid="settings-upgrade" @click="openSubscription">
               {{lang.upgrade || 'Upgrade'}}
             </button>
@@ -97,8 +92,8 @@
           <div class="feature-lede">
             <v-icon name="globe" class="feature-lede-icon"></v-icon>
             <div class="feature-lede-text">
-              <p class="feature-title">{{lang.featureMultiBrowserTitle || 'Multi-browser support'}}</p>
-              <p class="help-text feature-desc">{{lang.featureMultiBrowserDesc || 'Use the same sessions in Safari, Chrome, Microsoft Edge, and Firefox.'}}</p>
+              <p class="feature-title">{{lang.featureMultiBrowserTitle || 'Save from other browsers'}}</p>
+              <p class="help-text feature-desc">{{lang.featureMultiBrowserDesc || 'Access your library in any supported browser. Saving tabs and switching live tabs across browsers require Pro.'}}</p>
             </div>
             <span class="plan-pill" :class="{ unlocked: isPremium }" data-testid="multi-browser-pill">
               {{lang.planPremium || 'Pro'}}
@@ -122,7 +117,6 @@
               {{lang.upgrade || 'Upgrade'}}
             </button>
           </div>
-          <p v-if="!isPremium" class="help-text">{{lang.multiBrowserProNote || 'Multi-browser support is included with Pro.'}}</p>
           <p class="help-text">
             <a href="https://mytab.space/multi-browser.html" target="_blank" rel="noopener"
                data-testid="multi-browser-guide">{{lang.multiBrowserGuide || 'Multi-browser setup guide'}}</a>
@@ -423,12 +417,7 @@ export default {
   },
   computed: {
     ...mapState(["lang", "bridge", "tabSpaceSettings", "aiQuotaRemaining", "aiQuotaResetAt", "plusDisplayPrice", "purchaseRedirecting", "syncStatus"]),
-    ...mapGetters(["aiEnabled", "isPremium", "hasPermanentPlus", "trialActive", "trialDaysRemaining"]),
-    trialSummary() {
-      return (this.lang.trialRunningBody
-        || '{count} days left. Everything you save stays yours; keeping Pro after that needs a plan.')
-        .replace('{count}', this.trialDaysRemaining)
-    },
+    ...mapGetters(["aiEnabled", "isPremium", "hasPermanentPlus"]),
     currentPlanLabel() {
       if (this.isPremium) return this.lang.planPremium || 'Pro'
       if (this.hasPermanentPlus) return this.lang.planPlus || 'Plus · Permanent'

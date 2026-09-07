@@ -79,7 +79,7 @@ export default {
         },
         {
           id: 'browsers',
-          title: this.lang.featureMultiBrowserTitle || 'Multi-browser support',
+          title: this.lang.featureMultiBrowserTitle || 'Save from other browsers',
           values: [false, false, true]
         },
         {

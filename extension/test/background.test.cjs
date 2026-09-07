@@ -199,7 +199,7 @@ test('maps every dashboard data command onto protocol v2 methods', () => {
   assert.equal(background.dashboardCommandToOperation({ cmd: 'CheckSubscriptionStatus' }).method, 'subscription.status')
   assert.equal(background.dashboardCommandToOperation({ cmd: 'PurchaseSubscription' }).method, 'subscription.purchase')
   assert.equal(background.dashboardCommandToOperation({ cmd: 'RestorePurchases' }).method, 'subscription.restore')
-  assert.equal(background.dashboardCommandToOperation({ cmd: 'ClaimFreeTrial' }).method, 'subscription.claimTrial')
+  assert.throws(() => background.dashboardCommandToOperation({ cmd: 'ClaimFreeTrial' }), /Unsupported dashboard command/)
   assert.deepEqual(background.dashboardMessageForEvent({ event: 'sessions.changed', revision: 9 }), {
     cmd: 'SessionsChangedRemotely',
     revision: 9
@@ -251,21 +251,6 @@ test('maps protocol v2 AI and subscription results back to dashboard messages', 
       { status: 'active', tier: 'pro', quotaRemaining: -1 }
     ),
     [{ cmd: 'ReturnSubscriptionStatus', status: 'active', tier: 'pro', quotaRemaining: -1 }]
-  )
-  // The trial claim answers with a status, so the dashboard learns the new tier
-  // and the expiry from the same message it already handles.
-  assert.deepEqual(
-    background.dashboardMessagesFor(
-      { kind: 'native', method: 'subscription.claimTrial' },
-      { status: 'active', tier: 'pro', trialActive: true, trialExpiresAt: 1788000000 }
-    ),
-    [{
-      cmd: 'ReturnSubscriptionStatus',
-      status: 'active',
-      tier: 'pro',
-      trialActive: true,
-      trialExpiresAt: 1788000000
-    }]
   )
   assert.deepEqual(
     background.dashboardMessagesFor(
@@ -607,9 +592,8 @@ test('trusts only dashboard origins the extension is built for', () => {
 })
 
 test('treats a Pro-only refusal as terminal instead of re-pairing', () => {
-  // Multi-browser support is a Pro benefit enforced by the helper's bridge. The
-  // extension must not react by retrying the handshake or showing the pairing
-  // screen: the code would be accepted and every request refused afterwards.
+  // A collection refusal must keep library access available. Older hosts
+  // may also refuse the handshake; retrying or re-pairing cannot upgrade them.
   const backgroundSource = readFileSync(join(extensionRoot, 'src/background.js'), 'utf8')
   const popup = readFileSync(join(extensionRoot, 'src/popup.js'), 'utf8')
 
@@ -625,8 +609,8 @@ test('treats a Pro-only refusal as terminal instead of re-pairing', () => {
   assert.notEqual(pairingBranch, -1)
   assert.equal(proBranch < pairingBranch, true, 'the Pro check must precede the pairing fallback')
   assert.equal(popup.includes('strings.proRequired'), true)
-  assert.equal(popup.includes('proRequired: "Multi-browser support is included with Tab Space Pro.'), true)
-  assert.equal(popup.includes('proRequired: "多浏览器支持包含在 Tab Space Pro 中。'), true)
+  assert.equal(popup.includes('proRequired: "Library access is included. Saving tabs from this browser requires Pro.'), true)
+  assert.equal(popup.includes('proRequired: "资料库可免费访问。从此浏览器保存标签页需要 Pro。'), true)
 })
 
 class FakeReconnectWebSocket {
@@ -853,4 +837,27 @@ test('registers the wake-ups a suspended background context can be revived by', 
     globalThis.chrome = savedChrome
     globalThis.WebSocket = savedWebSocket
   }
+})
+
+test('a non-Pro save refusal never closes tabs and leaves dashboard access working', async () => {
+  const removed = []
+  const opened = []
+  const browserApi = {
+    queryTabs: async () => [{ id: 42, windowId: 1, title: 'Example', url: 'https://example.com' }],
+    createTab: async options => opened.push(options),
+    updateTab: async () => {},
+    removeTabs: async ids => removed.push(ids),
+    dashboardUrl: () => 'https://app.mytab.space/'
+  }
+  const client = {
+    request: async (method, params) => {
+      if (method === 'settings.get') return { name: params.name, value: 'false' }
+      throw Object.assign(new Error('Pro required'), { code: 'pro_required' })
+    }
+  }
+  const controller = background.createController({ browserApi, client })
+  await assert.rejects(controller.saveTabIds([42], { closeTabsAfterSave: true }), { code: 'pro_required' })
+  assert.deepEqual(removed, [])
+  await controller.openDashboard()
+  assert.equal(opened.length, 1)
 })
