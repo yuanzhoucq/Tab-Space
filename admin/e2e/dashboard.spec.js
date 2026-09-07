@@ -2466,6 +2466,24 @@ test('shows a safe empty state when there are no sessions', async ({ page }) => 
   await expect(page.getByTestId('session-stats')).toContainText('0 tabs')
 })
 
+test('keeps the first-save guide when the only sessions are in trash', async ({ page }) => {
+  await openDashboard(page, {
+    initialSessions: [{ ...sessions[0], tags: [{ name: '@Trash' }] }],
+    expectedSessionCount: 0
+  })
+
+  await expect(page.getByTestId('first-save-guide')).toBeVisible()
+  // The guide is the only "nothing here" message; the filter placeholder would
+  // repeat it.
+  await expect(page.locator('.session-placeholder')).toHaveCount(0)
+  await expect(page.getByTestId('ios-banner')).toHaveCount(0)
+
+  // The Trash view was asked for, so the list it holds is what belongs there.
+  await page.getByTestId('filter-@Trash').click()
+  await expect(page.getByTestId('session-session-research')).toBeVisible()
+  await expect(page.getByTestId('first-save-guide')).toHaveCount(0)
+})
+
 test('waits until the first saved session before showing the iOS banner', async ({ page }) => {
   await openDashboard(page, { initialSessions: [] })
   await expect(page.getByTestId('ios-banner')).toHaveCount(0)
@@ -2939,6 +2957,23 @@ test('hands a new user the seven-day trial as it tells them about it', async ({ 
   // Claimed once, however many status replies land afterwards.
   await page.evaluate(() => window.__tabspaceTest.emit('SessionsChangedRemotely'))
   await expect.poll(() => bridgeCommandCount(page, 'ClaimFreeTrial')).toBe(1)
+})
+
+test('stacks the trial banner above the first-save guide instead of over it', async ({ page }) => {
+  await openDashboard(page, {
+    initialSessions: [],
+    nativeProtocolVersion: '3',
+    trialEligible: true
+  })
+
+  const banner = page.locator('[data-testid="trial-banner"]')
+  const guide = page.getByTestId('first-save-guide')
+  await expect(banner).toBeVisible()
+  await expect(guide).toBeVisible()
+
+  const bannerBox = await banner.boundingBox()
+  const guideBox = await guide.boundingBox()
+  expect(guideBox.y).toBeGreaterThanOrEqual(bannerBox.y + bannerBox.height)
 })
 
 test('never offers the trial through a native build that cannot grant one', async ({ page }) => {

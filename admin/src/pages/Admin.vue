@@ -47,15 +47,18 @@
           <button class="secondary-button" type="button" @click="reload">{{lang.retry}}</button>
         </div>
       </div>
-      <div class="empty-state" v-if="nativeDetected && initialRefresh && sessions.length < 1" data-testid="empty-state">
-        <first-save-guide></first-save-guide>
-      </div>
-      <div v-if="nativeDetected && initialRefresh" class="sessions-container">
+      <!-- Keyed so Vue never patches the connection-state div into this one:
+           the two carry different widths and paddings, and the container's
+           transition would animate the whole dashboard in from 560px. -->
+      <div v-if="nativeDetected && initialRefresh" key="sessions-container" class="sessions-container">
         <session-sidebar></session-sidebar>
         <div class="session-column">
           <trial-banner></trial-banner>
           <ios-banner></ios-banner>
           <rating-banner></rating-banner>
+          <div class="empty-state" v-if="showFirstSaveGuide" data-testid="empty-state">
+            <first-save-guide></first-save-guide>
+          </div>
           <sessions></sessions>
         </div>
         <session-hub></session-hub>
@@ -116,10 +119,20 @@
         "bridge",
         "nativeDetected",
         "connectionTimedOut",
-        "sessions",
+        "activeTag",
         "initialRefresh"
       ]),
-      ...mapGetters(["isPremium", "switcherHintAvailable"]),
+      ...mapGetters(["isPremium", "switcherHintAvailable", "liveSessionCount"]),
+      // Trash does not count as a library: a user who deleted everything is
+      // back where they started and needs the guide again. The one exception
+      // is the Trash view itself, where the list on screen is what was asked
+      // for.
+      showFirstSaveGuide() {
+        return this.nativeDetected
+          && this.initialRefresh
+          && this.liveSessionCount < 1
+          && this.activeTag !== "@Trash"
+      },
       showLoadingState() {
         return (!this.nativeDetected && !this.connectionTimedOut)
           || (this.nativeDetected && !this.initialRefresh)
@@ -406,26 +419,11 @@
     color: #333333;
   }
 
-  /* The guide is visually the first session card, while remaining outside the
-     sortable list's DOM. A zero-height anchor lets the real three-column row
-     start at the same y-coordinate underneath it. */
+  /* The guide sits in the session column's own flow rather than floating over
+     it, so a banner above it can never end up printed across the artwork. */
   .empty-state {
-    position: relative;
-    z-index: 1;
     width: 100%;
-    height: 0;
-    max-width: calc(840px - 2 * var(--dashboard-side-padding) - var(--dashboard-sidebar-column) - var(--dashboard-hub-column));
-    margin: 0 auto;
-    transform: translateX(calc((var(--dashboard-sidebar-column) - var(--dashboard-hub-column)) / 2));
-  }
-
-  @media (max-width: 700px) {
-    .empty-state {
-      max-width: none;
-      padding: 0 var(--dashboard-side-padding);
-      box-sizing: border-box;
-      transform: none;
-    }
+    margin-bottom: 12px;
   }
 
   /* The search field and the tab-switcher hint under it move as one block, so

@@ -216,6 +216,11 @@ const store = new Vuex.Store({
         // Whether the permanent Plus grant was ever made, regardless of whether
         // a Pro subscription now sits on top of it.
         ownsPermanentPlus: state => state.permanentPlusOwned,
+        // Sessions the user still keeps. A library holding nothing but Trash
+        // is, to the user, an empty one: it still deserves the first-save
+        // guide instead of a bare dashboard.
+        liveSessionCount: state => state.sessions.filter(session =>
+            !session.tags.map(tag => tag.name).includes("@Trash")).length,
         // The native side counts every stored session, including the ones in
         // Trash, so this count must not filter by tag.
         savedSessionCount: state => state.sessions.filter(session => !isUnsavedSession(session)).length,
