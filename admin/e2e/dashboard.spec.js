@@ -72,6 +72,7 @@ async function openDashboard(page, options = {}) {
     testBackups,
     testSuggestions,
     nativeProtocolVersion,
+    deferBridge,
     malformedBookmarks,
     bundledDashboard,
     collapseSessions,
@@ -381,7 +382,11 @@ async function openDashboard(page, options = {}) {
       }
     }
 
-    window.__tabspace_bridge = nativeBridge
+    window.__tabspaceInstallBridge = () => {
+      window.__tabspace_bridge = nativeBridge
+      window.dispatchEvent(new Event('tabspace:bridge-ready'))
+    }
+    if (!deferBridge) window.__tabspace_bridge = nativeBridge
 
     if (bannerStorageUnavailable) {
       const storageGetItem = Storage.prototype.getItem
@@ -400,6 +405,7 @@ async function openDashboard(page, options = {}) {
     testBackups: options.backups || [],
     testSuggestions: options.suggestions || [],
     nativeProtocolVersion: options.nativeProtocolVersion || '1',
+    deferBridge: Boolean(options.deferBridge),
     malformedBookmarks: Boolean(options.malformedBookmarks),
     bundledDashboard: Boolean(options.bundledDashboard),
     collapseSessions: Boolean(options.collapseSessions),
@@ -2475,6 +2481,64 @@ test('keeps the dashboard stable when native bookmarks are malformed', async ({ 
   await expect(page.getByText('Loading sessions...')).toBeVisible()
   await expect(page.locator('.session')).toHaveCount(0)
   await expect.poll(() => lastBridgeCommand(page, 'CheckBookmarks')).not.toBeNull()
+})
+
+test('distinguishes a connected library timeout and recovers when valid data arrives', async ({ page }) => {
+  await openDashboard(page, {
+    initialSessions: sessions,
+    malformedBookmarks: true,
+    expectedSessionCount: null
+  })
+
+  const delayed = page.getByTestId('library-load-delayed')
+  await expect(delayed).toBeVisible({ timeout: 10000 })
+  await expect(delayed).toContainText('Connected, but sessions have not loaded')
+  await expect(delayed).toContainText('The extension has responded')
+  await expect(page.getByTestId('pairing-guide')).toHaveCount(0)
+  await expect(page.getByTestId('safari-permission-guide')).toHaveCount(0)
+  await expect(delayed.getByRole('button', { name: 'Open bundled dashboard' })).toHaveCount(0)
+
+  // Retry remains a full reload; it must not send the user to permissions.
+  await Promise.all([
+    page.waitForEvent('domcontentloaded'),
+    delayed.getByRole('button', { name: 'Retry', exact: true }).click()
+  ])
+  await expect(page.getByTestId('connection-loading')).toBeVisible()
+  await expect(delayed).toBeVisible({ timeout: 10000 })
+  await page.evaluate(value => window.__tabspaceTest.emit('ReturnBookmarks', { value }), sessions)
+  await expect(page.locator('.session')).toHaveCount(sessions.length)
+  await expect(delayed).toHaveCount(0)
+  await expect(page.getByTestId('connection-loading')).toHaveCount(0)
+})
+
+test('shows Safari connection checks and accepts a bridge arriving after the timeout', async ({ page }) => {
+  // Exercise the Safari UI branch in Chromium; this does not emulate Safari APIs.
+  await page.addInitScript(() => {
+    Object.defineProperty(navigator, 'userAgent', {
+      value: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 Version/18.0 Safari/605.1.15'
+    })
+  })
+  await page.route('**/storage.html?method=get', route => route.fulfill({
+    contentType: 'text/html', body: '<!doctype html><title>Bridge fallback</title>'
+  }))
+  await openDashboard(page, { initialSessions: sessions, deferBridge: true, expectedSessionCount: null })
+  const guide = page.getByTestId('safari-permission-guide')
+  await expect(guide).toBeVisible({ timeout: 5000 })
+  await expect(guide).toContainText('Tab Space has not responded yet.')
+  await expect(guide).toContainText('Check that the extension is enabled in Safari')
+  await expect(page.getByTestId('pairing-guide')).toHaveCount(0)
+  await page.evaluate(() => window.__tabspaceInstallBridge())
+  await expect(page.locator('.session')).toHaveCount(sessions.length)
+  await expect(guide).toHaveCount(0)
+  await expect(page.getByTestId('library-load-delayed')).toHaveCount(0)
+})
+
+test('treats a valid empty library as loaded rather than a connection failure', async ({ page }) => {
+  await openDashboard(page)
+  await expect(page.getByTestId('empty-state')).toBeVisible()
+  await expect(page.getByTestId('connection-loading')).toHaveCount(0)
+  await expect(page.getByTestId('library-load-delayed')).toHaveCount(0)
+  await expect(page.getByTestId('pairing-guide')).toHaveCount(0)
 })
 
 test('directs visitors without the app to the Tab Space website', async ({ page }) => {

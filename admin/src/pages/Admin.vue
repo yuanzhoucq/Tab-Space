@@ -19,10 +19,10 @@
           </div>
         </div>
       </div>
-      <div v-if="showLoadingState" class="connection-state">
-        <vue-loading type="bars" color="#eb5205" :size="{ width: '50px', height: '50px' }"></vue-loading>
-        <p class="connection-title">{{nativeDetected ? lang.loadingSessions : lang.connectingApp}}</p>
-        <p v-if="connectionTimedOut" class="connection-detail">{{lang.connectionSlow}}</p>
+      <div v-if="showLoadingState" key="connection-state" class="connection-state" role="status" :data-testid="libraryLoadDelayed ? 'library-load-delayed' : 'connection-loading'">
+        <vue-loading v-if="!libraryLoadDelayed" type="bars" color="#eb5205" :size="{ width: '50px', height: '50px' }"></vue-loading>
+        <p class="connection-title">{{libraryLoadDelayed ? lang.libraryLoadDelayedTitle : (nativeDetected ? lang.loadingSessions : lang.connectingApp)}}</p>
+        <p v-if="libraryLoadDelayed" class="connection-detail">{{lang.libraryLoadDelayedDetail}}</p>
         <div v-if="connectionTimedOut" class="connection-actions">
           <button class="secondary-button" type="button" @click="reload">{{lang.retry}}</button>
           <button v-if="canOpenBundledDashboard"
@@ -125,6 +125,9 @@
       showLoadingState() {
         return (!this.nativeDetected && !this.connectionTimedOut)
           || (this.nativeDetected && !this.initialRefresh)
+      },
+      libraryLoadDelayed() {
+        return this.nativeDetected && !this.initialRefresh && this.connectionTimedOut
       },
       canOpenBundledDashboard() {
         return Boolean(this.bridge && typeof this.bridge.fallbackToBundled === "function")
