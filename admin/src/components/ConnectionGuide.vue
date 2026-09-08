@@ -4,7 +4,7 @@
            :data-testid="safari ? 'safari-permission-guide' : 'pairing-guide'">
     <div class="guide-copy">
       <h2>{{safari ? lang.connectSafariTitle : lang.connectPairTitle}}</h2>
-      <p class="guide-lede">{{safari ? lang.connectSafariLede : lang.connectPairLede}}</p>
+      <p v-if="!safari" class="guide-lede">{{lang.connectPairLede}}</p>
       <ol class="guide-steps">
         <li v-for="(step, index) in steps" :key="index">
           <span class="guide-step">{{index + 1}}</span>
@@ -20,7 +20,7 @@
         <span class="traffic-light traffic-light-minimize"></span>
         <span class="traffic-light traffic-light-zoom"></span>
       </div>
-      <div class="mock-toolbar" aria-hidden="true">
+      <div class="mock-toolbar mock-toolbar-safari" aria-hidden="true">
         <div class="toolbar-button">
           <picture>
             <source media="(prefers-color-scheme: dark)" :srcset="toolbarLightIcon">
@@ -30,15 +30,24 @@
         </div>
         <div class="mock-address">{{dashboardHost}}</div>
       </div>
+      <div class="mock-page" aria-hidden="true">
+        <span class="mock-page-line"></span>
+        <span class="mock-page-line"></span>
+        <span class="mock-page-line"></span>
+      </div>
       <div class="mock-menu" aria-hidden="true">
         <div class="mock-menu-pointer"></div>
-        <div class="mock-menu-item mock-menu-item-primary">
+        <p class="mock-menu-title">{{lang.connectWebsiteAccess}}</p>
+        <div class="mock-menu-item mock-menu-item-default">
+          <span>{{lang.connectAllowOnce}}</span>
+        </div>
+        <div class="mock-menu-item mock-menu-item-secondary">
+          <span>{{lang.connectAllowThisSite}}</span>
+        </div>
+        <div class="mock-menu-item mock-menu-item-target">
           <span class="guide-step menu-step">2</span>
           <strong>{{lang.connectAllowAlways}}</strong>
           <span class="mock-menu-check">&#10003;</span>
-        </div>
-        <div class="mock-menu-item mock-menu-item-secondary">
-          <span>{{lang.connectAllowOnce}}</span>
         </div>
       </div>
     </div>
@@ -69,15 +78,19 @@
       </div>
     </div>
 
-    <div class="guide-notes">
-      <div class="guide-note">
-        <h3>{{safari ? lang.connectSafariWhyTitle : lang.connectPairWhyTitle}}</h3>
-        <p>{{safari ? lang.connectSafariWhy : lang.connectPairWhy}}</p>
-      </div>
-      <div class="guide-note">
-        <h3>{{lang.connectPrivacyTitle}}</h3>
-        <p>{{safari ? lang.connectSafariPrivacy : lang.connectPairPrivacy}}</p>
-      </div>
+    <div v-if="safari" class="guide-notes">
+      <h3>{{lang.connectPrivacyTitle}}</h3>
+      <p>{{lang.connectSafariPrivacy}}</p>
+      <p class="guide-note-links">
+        {{lang.connectPrivacyLinksPrefix}}
+        <a :href="permissionRationaleUrl"
+           target="_blank"
+           rel="noopener noreferrer">{{lang.connectPrivacyAuditLink}}</a>
+        <span class="note-link-sep">·</span>
+        <a :href="sourceRepositoryUrl"
+           target="_blank"
+           rel="noopener noreferrer">{{lang.connectPrivacySourceLink}}</a>
+      </p>
     </div>
 
     <div class="guide-actions">
@@ -113,7 +126,10 @@ export default {
       toolbarLightIcon,
       safari: isSafari(),
       pairingCode: samplePairingCode.split(''),
-      dashboardHost: 'app.mytab.space'
+      dashboardHost: 'app.mytab.space',
+      // The same two destinations the app's own privacy note links to.
+      permissionRationaleUrl: 'https://github.com/yuanzhoucq/Tab-Space/issues/15',
+      sourceRepositoryUrl: 'https://github.com/yuanzhoucq/Tab-Space'
     }
   },
   computed: {
@@ -132,10 +148,10 @@ export default {
   display: grid;
   grid-template-columns: minmax(240px, 1fr) minmax(280px, 1fr);
   align-items: center;
-  gap: 22px 26px;
-  max-width: 780px;
+  gap: 26px 32px;
+  max-width: 820px;
   margin: 72px auto 0;
-  padding: 28px;
+  padding: 32px;
   box-sizing: border-box;
   text-align: left;
   border: 1px solid var(--border-color);
@@ -154,6 +170,8 @@ export default {
   letter-spacing: -0.02em;
 }
 
+.guide-copy { align-self: start; }
+
 .guide-lede {
   margin: 11px 0 0;
   color: var(--text-secondary);
@@ -162,10 +180,15 @@ export default {
 }
 
 .guide-steps {
-  margin: 16px 0 0;
+  margin: 18px 0 0;
   padding: 0;
   display: grid;
-  gap: 9px;
+  gap: 12px;
+}
+
+.guide-safari .guide-steps {
+  margin-top: 26px;
+  gap: 15px;
 }
 
 .guide-steps li {
@@ -288,11 +311,12 @@ export default {
   backdrop-filter: blur(18px);
 }
 
-.mock-menu { left: 16px; }
+.mock-menu { left: 16px; width: min(300px, calc(100% + 24px)); }
 .mock-popup { right: 14px; padding: 13px; }
 
-/* The pairing popup is the taller of the two, so its window grows to hold it. */
+/* Both popovers are taller than the window chrome they hang from. */
 .guide-pairing .browser-mock { min-height: 232px; }
+.guide-safari .browser-mock { min-height: 226px; }
 
 .mock-menu-pointer,
 .mock-popup-pointer {
@@ -309,36 +333,75 @@ export default {
 .mock-menu-pointer { left: 9px; }
 .mock-popup-pointer { right: 12px; }
 
+.mock-menu-title {
+  margin: 2px 0 5px;
+  padding: 0 8px;
+  color: #3f3b39;
+  font-size: 11px;
+  font-weight: 600;
+}
+
 .mock-menu-item {
   position: relative;
   display: grid;
   grid-template-columns: minmax(0, 1fr) 18px;
   align-items: center;
   gap: 8px;
-  min-height: 35px;
-  padding: 5px 8px;
+  min-height: 28px;
+  padding: 4px 8px;
   box-sizing: border-box;
-  border-radius: 7px;
+  border-radius: 6px;
   color: #4d4946;
-  font-size: 12px;
+  font-size: 11.5px;
+  white-space: nowrap;
 }
 
-.mock-menu-item-primary {
+/* Safari preselects the one-day option in its accent colour, which is exactly
+   the answer that stops working tomorrow. */
+.mock-menu-item-default {
+  background: #0a6fd8;
+  color: #ffffff;
+}
+
+.mock-menu-item-target {
   background: rgba(38, 166, 91, 0.13);
-  color: #176d3d;
+  box-shadow: inset 0 0 0 1.5px rgba(38, 166, 91, 0.75);
+  color: #14683a;
   animation: menu-highlight 2.1s ease-in-out infinite;
 }
+
+.mock-menu-item-target strong { font-weight: 600; }
 
 .menu-step { position: absolute; right: -12px; top: -10px; }
 
 .mock-menu-check {
   color: #1f9b55;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 800;
   text-align: right;
 }
 
 .mock-menu-item-secondary { color: #77716e; }
+
+/* The page behind the popover, so the toolbar button reads as something you
+   click while looking at a website. */
+.mock-page {
+  position: absolute;
+  top: 86px;
+  left: 16px;
+  right: 16px;
+  display: grid;
+  gap: 9px;
+}
+
+.mock-page-line {
+  height: 7px;
+  border-radius: 4px;
+  background: rgba(60, 55, 52, 0.07);
+}
+
+.mock-page-line:nth-child(2) { width: 82%; }
+.mock-page-line:nth-child(3) { width: 64%; }
 
 .mock-popup-label {
   margin: 0 0 9px;
@@ -385,26 +448,36 @@ export default {
 
 .guide-notes {
   grid-column: 1 / -1;
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
-  gap: 8px 22px;
   padding-top: 18px;
   border-top: 1px solid var(--border-color);
 }
 
-.guide-note h3 {
+.guide-notes h3 {
   margin: 0 0 5px;
   color: var(--text-primary);
   font-size: 13px;
   font-weight: 600;
 }
 
-.guide-note p {
+.guide-notes p {
   margin: 0;
   color: var(--text-secondary);
   font-size: 12.5px;
   line-height: 1.55;
 }
+
+.guide-notes .guide-note-links {
+  margin-top: 7px;
+  font-size: 11.5px;
+}
+
+.guide-note-links a {
+  color: var(--primary-color-hover);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.note-link-sep { padding: 0 2px; }
 
 .guide-actions {
   grid-column: 1 / -1;
@@ -488,8 +561,15 @@ export default {
     background: rgba(52, 52, 54, 0.96);
   }
   .mock-menu-item { color: #dfdcda; }
-  .mock-menu-item-primary { background: rgba(48, 196, 107, 0.18); color: #8de2ad; }
+  .mock-menu-title { color: #e6e3e1; }
+  .mock-menu-item-default { background: #1a72d8; color: #ffffff; }
+  .mock-menu-item-target {
+    background: rgba(48, 196, 107, 0.18);
+    box-shadow: inset 0 0 0 1.5px rgba(48, 196, 107, 0.7);
+    color: #8de2ad;
+  }
   .mock-menu-item-secondary { color: #b5afac; }
+  .mock-page-line { background: rgba(255, 255, 255, 0.07); }
   .mock-popup-label { color: #b5afac; }
   .pair-digit {
     border-color: rgba(255, 255, 255, 0.14);
@@ -500,7 +580,7 @@ export default {
 
 @media (prefers-reduced-motion: reduce) {
   .toolbar-button::after,
-  .mock-menu-item-primary,
+  .mock-menu-item-target,
   .pair-digit:last-child { animation: none; }
 }
 </style>
