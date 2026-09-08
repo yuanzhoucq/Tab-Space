@@ -106,9 +106,9 @@
           </p>
 
           <ol class="steps" data-testid="multi-browser-steps">
-            <li>{{lang.multiBrowserStep1 || 'Open Tab Space on your Mac, choose Multi-Browser Support, then Show Pairing Code.'}}</li>
-            <li>{{lang.multiBrowserStep2 || 'Install the Tab Space extension in Chrome, Microsoft Edge, or Firefox 121 or later.'}}</li>
-            <li>{{lang.multiBrowserStep3 || 'Enter the six-digit code in the extension to connect it.'}}</li>
+            <li>{{lang.multiBrowserStep1 || 'Open the Tab Space extension in this browser.'}}</li>
+            <li>{{lang.multiBrowserStep2 || 'Click Open Tab Space app.'}}</li>
+            <li>{{lang.multiBrowserStep3 || 'Copy the pairing code from the app and paste it here.'}}</li>
           </ol>
 
           <div v-if="!isPremium" class="subscription-actions">
@@ -119,7 +119,7 @@
           </div>
           <p class="help-text">
             <a href="https://mytab.space/multi-browser.html" target="_blank" rel="noopener"
-               data-testid="multi-browser-guide">{{lang.multiBrowserGuide || 'Multi-browser setup guide'}}</a>
+               data-testid="multi-browser-guide">{{lang.multiBrowserGuide || 'Multi-browser overview'}}</a>
           </p>
         </div>
 

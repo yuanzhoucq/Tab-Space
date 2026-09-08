@@ -2565,7 +2565,9 @@ test('directs visitors without the app to the Tab Space website', async ({ page 
   // Chromium runs the tests, so the pairing branch is the one on screen.
   await expect(page.getByTestId('pairing-guide')).toBeVisible({ timeout: 5000 })
   await expect(page.getByRole('heading', { name: 'Pair this browser with Tab Space' })).toBeVisible()
-  await expect(page.getByText('Choose Multi-Browser Support, then Show Pairing Code.')).toBeVisible()
+  await expect(page.getByText('Open the Tab Space extension in this browser.')).toBeVisible()
+  await expect(page.getByText('Click Open Tab Space app.')).toBeVisible()
+  await expect(page.getByText('Copy the pairing code from the app and paste it here.')).toBeVisible()
   await expect(page.getByTestId('pairing-guide'))
     .toContainText('Connect the two securely with a pairing code.')
   // The pairing branch carries no explanatory notes; the lede says it all.
