@@ -37,6 +37,17 @@ const ratingSessions = [
   }
 ]
 
+// The view-switcher note only shows up once a library outgrows a single read
+// through the list.
+const manySessions = Array.from({ length: 11 }, (unused, index) => ({
+  uuid: `session-bulk-${index}`,
+  title: `Session ${index + 1}`,
+  timestamp: 1767225600000 + index * 60000,
+  comment: '',
+  sites: [{ title: 'Example', url: 'https://example.com' }],
+  tags: []
+}))
+
 const backups = [
   {
     filename: 'backup-2026-07-15.tabspace',
@@ -972,11 +983,11 @@ test('offers the AI actions on titles-only rows', async ({ page }) => {
   const research = page.getByTestId('titles-only-session-card').getByTestId('session-session-research')
   const reading = page.getByTestId('titles-only-session-card').getByTestId('session-session-reading')
 
-  // Open stays the rightmost control on the row.
+  // Open stays the rightmost control on the row, with delete just ahead of it.
   const order = await research.locator('.titles-only-session-summary').evaluate(row => (
     [...row.querySelectorAll('button')].map(button => button.dataset.testid)
   ))
-  expect(order.slice(-3)).toEqual(['ai-enhance-session', 'ai-split-session', 'restore-session'])
+  expect(order.slice(-4)).toEqual(['ai-enhance-session', 'ai-split-session', 'delete-session', 'restore-session'])
 
   // Splitting needs at least three tabs; the single-tab session only enhances.
   await expect(reading.getByTestId('ai-enhance-session')).toHaveCount(1)
@@ -993,6 +1004,82 @@ test('offers the AI actions on titles-only rows', async ({ page }) => {
   await expect.poll(() => lastBridgeCommand(page, 'ClusterTabs')).toMatchObject({
     payload: { uuid: 'session-research' }
   })
+})
+
+test('trashes a session from a titles-only row', async ({ page }) => {
+  await openDashboard(page, {
+    initialSessions: [
+      ...sessions,
+      {
+        uuid: 'session-discarded',
+        title: 'Already trashed',
+        timestamp: 1767398400000,
+        comment: '',
+        sites: [{ title: 'Example', url: 'https://example.com' }],
+        tags: [{ name: '@Trash' }]
+      }
+    ],
+    // The trashed session is filtered out of the default library view.
+    expectedSessionCount: 2
+  })
+
+  const toggle = page.getByTestId('toggle-collapse')
+  await page.getByTestId('view-mode-menu').hover()
+  await page.getByTestId('view-mode-titles').click()
+  await page.mouse.move(0, 300)
+  await expect(toggle).toHaveAttribute('data-view-mode', 'titles')
+
+  const titlesCard = page.getByTestId('titles-only-session-card')
+  await titlesCard.getByTestId('session-session-research').getByTestId('delete-session').click()
+  // A live session is tagged for the trash, not dropped: the same two-step
+  // disposal the expanded cards use.
+  await expect.poll(() => lastBridgeCommand(page, 'UpdateSession')).toMatchObject({
+    payload: { bookmarks: [{ uuid: 'session-research', tags: [{ name: 'Work' }, { name: '@Trash' }] }] }
+  })
+  await expect(titlesCard.getByTestId('session-session-research')).toHaveCount(0)
+
+  // A session already in the trash has nowhere left to go, so it is deleted.
+  await page.getByTestId('filter-@Trash').click()
+  await titlesCard.getByTestId('session-session-discarded').getByTestId('delete-session').click()
+  await expect.poll(() => lastBridgeCommand(page, 'DeleteSession')).toMatchObject({
+    payload: { bookmarks: [{ uuid: 'session-discarded' }] }
+  })
+})
+
+test('points a large library at the view switcher once', async ({ page }) => {
+  await openDashboard(page, { initialSessions: manySessions })
+
+  const hint = page.getByTestId('view-mode-hint')
+  await expect(hint).toContainText('Three ways to see your sessions')
+  await page.getByTestId('view-mode-hint-dismiss').click()
+  await expect(hint).toBeHidden()
+  await expect.poll(() => page.evaluate(() => localStorage.getItem('tabspace-view-mode-hint-dismissed'))).toBe('true')
+  await page.reload()
+  await expect(page.getByTestId('toggle-collapse')).toBeVisible()
+  await expect(page.getByTestId('view-mode-hint')).toBeHidden()
+})
+
+test('leaves a short library alone rather than pointing at the view switcher', async ({ page }) => {
+  await openDashboard(page, { initialSessions: manySessions.slice(0, 10) })
+
+  await expect(page.getByTestId('toggle-collapse')).toBeVisible()
+  await expect(page.getByTestId('view-mode-hint')).toBeHidden()
+})
+
+test('keeps the view-switcher note away from people who already switched', async ({ page }) => {
+  await openDashboard(page, { initialSessions: manySessions, preferredViewMode: 'compact' })
+
+  await expect(page.getByTestId('toggle-collapse')).toHaveAttribute('data-view-mode', 'compact')
+  await expect(page.getByTestId('view-mode-hint')).toBeHidden()
+})
+
+test('retires the view-switcher note when the switcher is used', async ({ page }) => {
+  await openDashboard(page, { initialSessions: manySessions })
+
+  await expect(page.getByTestId('view-mode-hint')).toBeVisible()
+  await page.getByTestId('toggle-collapse').click()
+  await expect(page.getByTestId('view-mode-hint')).toBeHidden()
+  await expect.poll(() => page.evaluate(() => localStorage.getItem('tabspace-view-mode-hint-dismissed'))).toBe('true')
 })
 
 test('lets a free user apply the split their weekly AI request paid for', async ({ page }) => {

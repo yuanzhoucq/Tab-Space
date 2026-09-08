@@ -34,6 +34,17 @@ function getInitialSessionViewMode() {
     return "expanded"
 }
 
+// The dashboard only nudges people who have never chosen a view; an existing
+// preference (or a legacy collapse flag) is proof enough that they have.
+export function hasStoredSessionViewMode() {
+    try {
+        return localStorage.getItem(sessionViewModeStorageKey) !== null
+            || localStorage.getItem(legacySessionCollapseStorageKey) !== null
+    } catch {
+        return false
+    }
+}
+
 function isLargeLibrary(sessions) {
     const list = sessions || []
     if (list.length >= largeLibrarySessionThreshold) return true

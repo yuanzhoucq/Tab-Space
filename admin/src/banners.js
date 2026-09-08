@@ -3,6 +3,8 @@ export const ratingBannerAnsweredKey = "tabspace-rating-banner-answered"
 export const ratingBannerFirstSeenKey = "tabspace-rating-banner-first-seen"
 export const ratingBannerSnoozedAtKey = "tabspace-rating-banner-snoozed-at"
 export const ratingBannerSnoozeCountKey = "tabspace-rating-banner-snooze-count"
+// Set once the view switcher has been used or its one-time note dismissed.
+export const viewModeHintDismissedKey = "tabspace-view-mode-hint-dismissed"
 // Holds the release the What's New dialog has already been shown for, so a
 // later release only has to bump Constants.whatsNewVersion.
 export const whatsNewSeenVersionKey = "tabspace-whats-new-seen-version"

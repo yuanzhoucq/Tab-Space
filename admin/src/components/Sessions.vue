@@ -98,6 +98,18 @@
               <v-icon :name="splittingSessionId === session.uuid ? 'loader' : 'server'"
                       :class="{'spinner': splittingSessionId === session.uuid}"></v-icon>
             </button>
+            <!-- Delete sits just before Open so the destructive action is not
+                 the one the pointer lands on at the end of the row. -->
+            <button
+                type="button"
+                class="titles-only-session-btn titles-only-delete-btn"
+                data-testid="delete-session"
+                :title="lang.delete"
+                :aria-label="lang.delete"
+                @click.stop.prevent="deleteSession(session)"
+            >
+              <v-icon name="trash-2"></v-icon>
+            </button>
             <button
                 type="button"
                 class="titles-only-session-btn"
@@ -172,6 +184,7 @@
   import { mapState, mapGetters } from 'vuex'
 
   import SessionCard from './SessionCard';
+  import { isUnsavedSession } from '../store';
 
   const paginationSessionThreshold = 1000
   const sessionPageSize = 250
@@ -313,6 +326,24 @@
       restoreSession(session) {
         const currentSession = this.sessions.find(item => item.uuid === session.uuid) || session
         this.bridge.send({ cmd: 'RestoreSession', bookmarks: [currentSession] })
+      },
+      // Same two-step disposal the cards use: a live session goes to the trash,
+      // and one already there (or holding nothing) is dropped for good.
+      deleteSession(session) {
+        const currentSession = this.sessions.find(item => item.uuid === session.uuid) || session
+        if (this.expandedSessionUuid === currentSession.uuid) this.expandedSessionUuid = null
+        if (isUnsavedSession(currentSession)) {
+          const index = this.sessions.findIndex(item => item.uuid === currentSession.uuid)
+          if (index !== -1) this.$store.commit("spliceSessions", {start: index, deleteCount: 1, items: []})
+          return
+        }
+        const inTrash = currentSession.tags.map(tag => tag.name).includes("@Trash")
+        if (inTrash || currentSession.sites.length === 0) {
+          this.bridge.send({ cmd: 'DeleteSession', bookmarks: [currentSession] })
+          return
+        }
+        currentSession.tags.push({name: "@Trash"})
+        this.bridge.send({ cmd: 'UpdateSession', bookmarks: [currentSession] })
       },
       // Quota and premium gating live on the native/server side and in the
       // split preview, so these mirror the card buttons exactly.
@@ -580,6 +611,16 @@
     stroke: currentColor !important;
   }
 
+  /* Delete stays neutral until hovered, so a row of titles does not read as a
+     row of warnings. */
+  .titles-only-delete-btn:hover svg {
+    color: rgb(235, 82, 5);
+  }
+
+  .titles-only-delete-btn:hover {
+    background-color: rgba(235, 82, 5, 0.12);
+  }
+
   /* Same colour coding as the expanded cards: enhance is gold, split is purple.
      The colour has to land on the icon itself — the shared `.icon` rule sets
      `color` there, which is what its `stroke: currentColor` resolves against. */
@@ -646,6 +687,14 @@
     .titles-only-session-btn:hover {
       color: var(--text-primary, #f7fafc);
       background-color: rgba(255, 255, 255, 0.08);
+    }
+
+    .titles-only-delete-btn:hover svg {
+      color: #ff8a4c;
+    }
+
+    .titles-only-delete-btn:hover {
+      background-color: rgba(235, 82, 5, 0.2);
     }
 
     .titles-only-ai-btn[data-testid="ai-enhance-session"] svg {

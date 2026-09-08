@@ -71,6 +71,17 @@
                   </button>
               </div>
           </div>
+          <!-- The three views are only discoverable by hovering an icon, so the
+               first library big enough to benefit is told once that the icon
+               switches views. Any use of the control retires the note. -->
+          <div v-if="showViewModeHint" class="view-mode-hint" role="note" data-testid="view-mode-hint">
+              <p class="view-mode-hint-title">{{ lang.viewModeHintTitle }}</p>
+              <p class="view-mode-hint-body">{{ lang.viewModeHintBody }}</p>
+              <button type="button"
+                      class="view-mode-hint-dismiss"
+                      data-testid="view-mode-hint-dismiss"
+                      @click="dismissViewModeHint">{{ lang.viewModeHintDismiss }}</button>
+          </div>
       </div>
       <button type="button" class="hub-btn" data-testid="empty-trash" :aria-label="lang.emptyTrash" :title="lang.emptyTrash" @click="emptyTrash" v-if="activeTag === '@Trash'">
           <v-icon class="button" :stroke-width="1.2" name="trash" fill="rgba(235, 82, 5, 0.2)"
@@ -87,7 +98,20 @@
 
 <script>
 import { mapState, mapGetters } from 'vuex'
+import { hasStoredSessionViewMode } from '../store'
+import { readBannerFlag, writeBannerFlag, viewModeHintDismissedKey } from '../banners'
+
+// Up to ten sessions the list is short enough to read whole, and compacting it
+// buys nothing worth interrupting for.
+const viewModeHintSessionThreshold = 11
+
 export default {
+    data() {
+        return {
+            // Someone who already picked a view knows the control exists.
+            viewModeHintDismissed: hasStoredSessionViewMode() || readBannerFlag(viewModeHintDismissedKey) === "true"
+        }
+    },
     computed: {
       ...mapState(["lang", "bridge", "sessions", "sessionViewMode", "activeTag", "keyword", "editingSessionUuid", "suggestions"]),
       ...mapGetters(["displaySessions", "aiEnabled", "canCreateSession"]),
@@ -106,6 +130,11 @@ export default {
       },
       viewModeIcon() {
           return this.activeViewMode.icon
+      },
+      showViewModeHint() {
+          if (this.viewModeHintDismissed) return false
+          if (this.activeTag === '@Trash') return false
+          return this.sessions.length >= viewModeHintSessionThreshold
       },
       viewModeTriggerLabel() {
           return `${this.lang.collapseSessions}: ${this.activeViewMode.label}`
@@ -146,14 +175,21 @@ export default {
             })
         },
         toggleCollapse() {
+            this.dismissViewModeHint()
             this.$store.commit("toggleCollapse")
         },
         setViewMode(mode, event) {
+            this.dismissViewModeHint()
             this.$store.commit("setSessionViewMode", mode)
             // A pointer click leaves focus on the option, and `:focus-within`
             // then pins the menu open on top of the list. Keyboard activation
             // (detail === 0) keeps its focus, since that is the only way back.
             if (event && event.detail > 0 && event.currentTarget) event.currentTarget.blur()
+        },
+        dismissViewModeHint() {
+            if (this.viewModeHintDismissed) return
+            this.viewModeHintDismissed = true
+            writeBannerFlag(viewModeHintDismissedKey, "true")
         },
         openSuggestionReport() {
             this.$store.commit("setShowSuggestionReport", true)
@@ -342,7 +378,84 @@ export default {
     opacity: 0.7;
 }
 
+/* The note sits where the view menu opens, so the pointer already travels the
+   right way. It floats over the session list, so only its dismiss button takes
+   the pointer — the card underneath keeps every one of its own controls. */
+.view-mode-hint {
+    position: absolute;
+    top: -6px;
+    right: calc(100% + 10px);
+    z-index: 90;
+    width: 216px;
+    box-sizing: border-box;
+    padding: 10px 12px;
+    pointer-events: none;
+    border: 1px solid var(--border-color, #e2e8f0);
+    border-radius: 10px;
+    background-color: var(--card-bg, #ffffff);
+    box-shadow: 0 8px 24px rgba(45, 55, 72, 0.16);
+    text-align: left;
+}
+
+.view-mode-hint::before {
+    content: "";
+    position: absolute;
+    top: 14px;
+    right: -6px;
+    width: 10px;
+    height: 10px;
+    background: var(--card-bg, #ffffff);
+    border-right: 1px solid var(--border-color, #e2e8f0);
+    border-top: 1px solid var(--border-color, #e2e8f0);
+    transform: rotate(45deg);
+}
+
+.view-mode-hint-title {
+    margin: 0 0 4px;
+    color: var(--text-primary, #2d3748);
+    font-size: 12.5px;
+    font-weight: 600;
+}
+
+.view-mode-hint-body {
+    margin: 0 0 8px;
+    color: var(--text-secondary, #666);
+    font-size: 12px;
+    line-height: 1.45;
+}
+
+.view-mode-hint-dismiss {
+    pointer-events: auto;
+    padding: 4px 10px;
+    border: 0;
+    border-radius: 6px;
+    background-color: rgba(250, 128, 114, 0.16);
+    color: var(--primary-color, #eb5205);
+    font: inherit;
+    font-size: 11.5px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.view-mode-hint-dismiss:hover {
+    background-color: rgba(250, 128, 114, 0.26);
+}
+
 @media (max-width: 700px) {
+    .view-mode-hint {
+        top: calc(100% + 10px);
+        right: auto;
+        left: -10px;
+    }
+
+    .view-mode-hint::before {
+        top: -6px;
+        right: auto;
+        left: 18px;
+        border-right: 0;
+        border-left: 1px solid var(--border-color, #e2e8f0);
+    }
+
     .view-mode-dropdown {
         top: 100%;
         right: auto;
@@ -352,6 +465,27 @@ export default {
 }
 
 @media (prefers-color-scheme: dark) {
+    .view-mode-hint {
+        border-color: #3a3a3a;
+        background-color: var(--card-bg, #2a2a2a);
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+    }
+
+    .view-mode-hint::before {
+        border-top-color: #3a3a3a;
+        border-right-color: #3a3a3a;
+        border-left-color: #3a3a3a;
+        background: var(--card-bg, #2a2a2a);
+    }
+
+    .view-mode-hint-title {
+        color: #e6e6e6;
+    }
+
+    .view-mode-hint-dismiss {
+        color: #ff9b8f;
+    }
+
     .view-mode-panel {
         border-color: #3a3a3a;
         background-color: var(--card-bg, #2a2a2a);
