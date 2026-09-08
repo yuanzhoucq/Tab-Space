@@ -451,35 +451,6 @@
         </p>
       </section>
 
-      <section class="article-section">
-        <h2>How the connection works</h2>
-        <ul class="plain-list">
-          <li><strong>Everything stays on your Mac.</strong> The browser talks to the Tab Space helper over the local
-            loopback interface (<code>127.0.0.1</code>). No session content passes through a server run by the
-            developer.</li>
-          <li><strong>The pairing code is used once.</strong> After it is accepted, the helper issues a token that is
-            kept in the Mac Keychain, while the browser keeps its copy in local extension storage.</li>
-          <li><strong>Sessions are not stored in the browser.</strong> They live in the Mac app's database and sync
-            with iCloud, so they survive a browser profile reset.</li>
-          <li><strong>A save is confirmed by the Mac app.</strong> Tabs are only closed after the app acknowledges
-            that the session was written.</li>
-        </ul>
-      </section>
-
-      <section class="article-section">
-        <h2>If a browser will not connect</h2>
-        <ul class="plain-list">
-          <li><strong>“Tab Space Helper was not detected.”</strong> Open Tab Space once, then check System Settings →
-            General → Login Items and make sure Tab Space Helper is enabled.</li>
-          <li><strong>The code is rejected.</strong> Codes are single-use. Open Multi-Browser Support in the Mac app,
-            choose <strong>New Code</strong>, and enter the fresh code.</li>
-          <li><strong>Firefox forgets the extension.</strong> A temporary add-on loaded through
-            <code>about:debugging</code> is removed when Firefox quits — install the signed version from Firefox
-            Add-ons instead.</li>
-          <li>Still stuck? Write to <a class="inline-link" href="mailto:support@mytab.space">support@mytab.space</a>.</li>
-        </ul>
-      </section>
-
       <section class="comparison-cta">
         <span class="section-eyebrow">Your web, one shortcut away</span>
         <h2>Keep the browsers. Share the library.</h2>

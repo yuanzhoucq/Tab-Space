@@ -439,29 +439,6 @@
         </p>
       </section>
 
-      <section class="article-section">
-        <h2>连接是如何工作的</h2>
-        <ul class="plain-list">
-          <li><strong>所有数据都留在你的 Mac 上。</strong>浏览器通过本地回环接口（<code>127.0.0.1</code>）与 Tab Space Helper
-            通信，会话内容不会经过开发者的服务器。</li>
-          <li><strong>配对码只能使用一次。</strong>验证通过后，Helper 会签发一个令牌保存在 Mac 钥匙串中，浏览器则把自己的副本保存在扩展的本地存储里。</li>
-          <li><strong>会话不保存在浏览器中。</strong>它们保存在 Mac App 的数据库中并通过 iCloud 同步，即使浏览器配置被重置也不会丢失。</li>
-          <li><strong>保存以 Mac App 的确认为准。</strong>只有在 App 确认会话已写入后，标签页才会被关闭。</li>
-        </ul>
-      </section>
-
-      <section class="article-section">
-        <h2>如果浏览器无法连接</h2>
-        <ul class="plain-list">
-          <li><strong>提示未检测到 Tab Space Helper。</strong>先打开一次 Tab Space，再到“系统设置”→“通用”→“登录项”中确认 Tab Space
-            Helper 已启用。</li>
-          <li><strong>配对码被拒绝。</strong>配对码是一次性的。在 Mac App 中打开“多浏览器支持”，选择<strong>新配对码</strong>，再输入新的配对码。</li>
-          <li><strong>Firefox 重启后扩展消失。</strong>通过 <code>about:debugging</code> 加载的临时附加组件会在 Firefox
-            退出时被移除，请改从 Firefox Add-ons 安装已签名的版本。</li>
-          <li>仍然无法解决？请联系 <a class="inline-link" href="mailto:support@mytab.space">support@mytab.space</a>。</li>
-        </ul>
-      </section>
-
       <section class="comparison-cta">
         <span class="section-eyebrow">整个网页世界，一个快捷键之遥</span>
         <h2>浏览器照旧，资料库共享。</h2>
