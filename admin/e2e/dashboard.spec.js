@@ -2487,10 +2487,11 @@ test('directs visitors without the app to the Tab Space website', async ({ page 
 
   await expect.poll(() => page.evaluate(() => window.location.hostname)).toBe('localhost')
   await expect(page.getByText('Connecting to Tab Space...')).toBeVisible()
-  await expect(page.getByRole('heading', { name: 'Tab Space Helper not detected' })).toBeVisible({ timeout: 5000 })
-  await expect(page.getByTestId('extension-permission-hint')).toHaveText(
-    'Click the Tab Space extension button in Safari and choose “Always Allow on Every Website”; otherwise, Tab Space cannot access your tabs.'
-  )
+  // Chromium runs the tests, so the pairing branch is the one on screen.
+  await expect(page.getByTestId('pairing-guide')).toBeVisible({ timeout: 5000 })
+  await expect(page.getByRole('heading', { name: 'Pair this browser with Tab Space' })).toBeVisible()
+  await expect(page.getByText('Choose Multi-Browser Support, then Show Pairing Code.')).toBeVisible()
+  await expect(page.getByText('What Tab Space reads')).toBeVisible()
   await expect(page.getByRole('link', { name: 'Get Tab Space' })).toHaveAttribute('href', 'https://mytab.space')
   await expect(page.getByTestId('export-menu')).toHaveCount(0)
 })

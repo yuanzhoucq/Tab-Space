@@ -12,3 +12,18 @@ export function isHandheld() {
   if (navigator.maxTouchPoints > 1) return true
   return /iPhone|iPad|iPod|Android/i.test(navigator.userAgent || "")
 }
+
+// Is this Safari, as opposed to a companion browser running the Tab Space
+// WebExtension?
+//
+// The two reach the app by completely different routes — Safari through the
+// extension's per-site permission, everyone else through a pairing code — so
+// the "not connected" screen has to know which one the visitor is on. Every
+// Chromium browser and Firefox's iOS build carry "Safari" in their user agent
+// as well, hence the exclusions.
+export function isSafari() {
+  if (typeof navigator === "undefined") return false
+  const agent = navigator.userAgent || ""
+  if (!/Safari/i.test(agent)) return false
+  return !/Chrome|Chromium|CriOS|FxiOS|EdgiOS|Edg\/|OPR\/|Android/i.test(agent)
+}

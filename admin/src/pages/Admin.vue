@@ -33,20 +33,7 @@
           </button>
         </div>
       </div>
-      <div v-else-if="!nativeDetected" class="connection-state prospect-state">
-        <h2>{{lang.appNotDetected}}</h2>
-        <p class="connection-detail">{{lang.appNotDetectedTip}}</p>
-        <p class="connection-permission-hint" data-testid="extension-permission-hint">
-          {{lang.extensionPermissionHint}}
-        </p>
-        <div class="connection-actions">
-          <a class="primary-button"
-             href="https://mytab.space"
-             target="_blank"
-             rel="noopener noreferrer">{{lang.getTabSpace}}</a>
-          <button class="secondary-button" type="button" @click="reload">{{lang.retry}}</button>
-        </div>
-      </div>
+      <connection-guide v-else-if="!nativeDetected" @retry="reload"></connection-guide>
       <!-- Keyed so Vue never patches the connection-state div into this one:
            the two carry different widths and paddings, and the container's
            transition would animate the whole dashboard in from 560px. -->
@@ -93,9 +80,14 @@
   // dashboard bundle so established libraries retain their render timing.
   const FirstSaveGuide = () => import(/* webpackChunkName: "first-save-guide" */ '../components/FirstSaveGuide')
 
+  // Only a visitor the app never answers sees this, and it shares the guide's
+  // artwork, so it stays out of the dashboard bundle for the same reason.
+  const ConnectionGuide = () => import(/* webpackChunkName: "connection-guide" */ '../components/ConnectionGuide')
+
   export default {
     components: {
       VueLoading,
+      ConnectionGuide,
       IosBanner,
       FirstSaveGuide,
       Navbar,
@@ -376,19 +368,6 @@
     line-height: 1.5;
   }
 
-  .connection-permission-hint {
-    color: #555555;
-    line-height: 1.5;
-    margin: 14px auto 0;
-    max-width: 520px;
-  }
-
-  .prospect-state h2 {
-    color: #333333;
-    font-size: 22px;
-    margin-bottom: 10px;
-  }
-
   .connection-actions {
     display: flex;
     justify-content: center;
@@ -517,13 +496,8 @@
       color: #ffffff;
     }
 
-    .prospect-state h2 {
-      color: #eeeeee;
-    }
-
     .connection-state,
-    .connection-detail,
-    .connection-permission-hint {
+    .connection-detail {
       color: #bdbdbd;
     }
 
