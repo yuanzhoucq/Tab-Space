@@ -133,7 +133,11 @@ export default {
       // PurchaseResult { redirected: true }, which flips purchaseRedirecting.
       this.bridge.send({
         cmd: 'PurchaseSubscription',
-        productId: this.selectedProductId
+        productId: this.selectedProductId,
+        source: this.subscriptionModalReason === 'aiQuota' ? 'ai_quota'
+          : this.subscriptionModalReason === 'aiAction' ? 'ai_action'
+          : ['limitReached', 'allowanceExhausted'].includes(this.subscriptionModalReason) ? 'dashboard_session_limit'
+          : undefined
       })
     },
     restore() {

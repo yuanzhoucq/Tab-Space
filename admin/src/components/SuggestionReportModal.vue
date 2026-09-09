@@ -149,7 +149,7 @@ export default {
     applyAll(group) {
       // Batch apply of a whole type is always premium (design §6).
       if (!this.isPremium) {
-        this.$store.commit('setShowSubscriptionModal', true)
+        this.$store.commit('setShowSubscriptionModal', {show: true, reason: 'aiAction'})
         return
       }
       // Copy first: apply() mutates the queue for reversible types.

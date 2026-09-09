@@ -501,7 +501,7 @@ export default {
         }
         // Genuine free-tier exhaustion: pin remaining to 0 and show upgrade.
         if (data.quotaRemaining === undefined) this.$store.commit("setAIQuota", {remaining: 0})
-        this.$store.commit("setShowSubscriptionModal", true)
+        this.$store.commit("setShowSubscriptionModal", {show: true, reason: "aiQuota"})
         return
       }
       if (data.error === "unauthorized") {
@@ -585,7 +585,7 @@ export default {
         }
       }
       // Persist and trigger the golden flash / typewriter on the card.
-      this.bridge.send({cmd: "UpdateSession", bookmarks: [session]})
+      this.bridge.send({cmd: "UpdateSession", bookmarks: [session], aiApplied: "enhance"})
       this.$store.commit("setEnhancedFlash", {uuid: session.uuid, title: data.title || session.title})
       this.refreshSuggestions()
     },

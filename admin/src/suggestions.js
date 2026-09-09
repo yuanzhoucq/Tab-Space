@@ -75,7 +75,7 @@ export const suggestionMixin = {
       if (!bridge) return
       // Premium gate for merge-type single applies.
       if (this.requiresPremium(s) && !this.$store.getters.isPremium) {
-        this.$store.commit('setShowSubscriptionModal', true)
+        this.$store.commit('setShowSubscriptionModal', {show: true, reason: 'aiAction'})
         return
       }
       switch (s.type) {
@@ -95,7 +95,7 @@ export const suggestionMixin = {
             // Suggestion identity is based on normalized URL content, so the
             // native merge keeps one copy of each matching tab. The first
             // session survives, preserving the destination title/comment.
-            bridge.send({ cmd: 'MergeSessions', bookmarks: group, deduplicateSites: true })
+            bridge.send({ cmd: 'MergeSessions', bookmarks: group, deduplicateSites: true, aiApplied: true })
           }
           break
         }
@@ -111,7 +111,7 @@ export const suggestionMixin = {
           const tagNames = s.tagNames || []
           this.sessionsByUuid(s.sessionUuids).forEach(session => {
             session.tags = session.tags.filter(t => !tagNames.includes(t.name))
-            bridge.send({ cmd: 'UpdateSession', bookmarks: [session] })
+            bridge.send({ cmd: 'UpdateSession', bookmarks: [session], aiApplied: 'orphan_tags' })
           })
           this.removeFromQueue(s.id)
           break
