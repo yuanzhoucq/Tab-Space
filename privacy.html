@@ -160,6 +160,14 @@
         information. It is used only to understand overall product usage and improve performance and reliability,
         is not linked to your identity, and is never used for advertising or tracking. Raw diagnostic records are
         retained for up to 35 days; aggregate statistics may be retained for longer.
+        This includes the purchase screen entry point and version, existing plan, trial eligibility,
+        price-loading and purchase outcomes, a random identifier for one purchase-screen visit,
+        and whether browser setup or an AI suggestion was successfully applied. Successful feature use
+        during the week after a purchase can be associated with that purchase-screen visit on the same installation. New app builds use
+        a random per-install identifier, hashed before storage; older records may use a hashed anonymous
+        account identifier. A build-channel hint helps separate development and sandbox diagnostics.
+        These records contain no pairing codes, receipts, tab titles, URLs, or AI suggestion text.
+        They are not joined to App Store account tokens to identify purchasers.
       </p>
 
       <h2>Data the developer does not collect</h2>
