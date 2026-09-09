@@ -70,6 +70,14 @@
             <span v-if="purchaseRedirecting">{{ lang.continueInApp || 'Continuing in the Tab Space app…' }}</span>
             <span v-else>{{ lang.subscribeInApp || 'Subscribe in Tab Space' }}</span>
           </button>
+
+          <!-- The one-time alternative. Like the subscription, it only hands the
+               intent to the host app, which owns the purchase sheet. -->
+          <button v-if="!hasPermanentPlus" type="button" class="plus-btn"
+                  data-testid="subscription-buy-plus"
+                  :disabled="purchaseRedirecting" @click="buyPlus">
+            {{ lang.buyPlusOnce || 'Buy Plus (one-time)' }}
+          </button>
         </template>
 
         <button v-else type="button" class="purchase-btn standalone" data-testid="modal-manage-subscription"
@@ -100,12 +108,22 @@ export default {
       restoring: false,
       monthlyProductId: 'tabspace.pro.monthly',
       yearlyProductId: 'tabspace.pro.yearly',
+      plusProductId: 'tabspace.plus.lifetime',
       selectedProductId: 'tabspace.pro.yearly'
     }
   },
   computed: {
     ...mapState(['lang', 'bridge', 'showSubscriptionModal', 'subscriptionModalReason', 'plusDisplayPrice', 'purchaseRedirecting']),
-    ...mapGetters(['isPremium', 'hasPermanentPlus'])
+    ...mapGetters(['isPremium', 'hasPermanentPlus']),
+    // Why the dialog is open, in the vocabulary the native side accepts.
+    purchaseSource() {
+      if (this.subscriptionModalReason === 'aiQuota') return 'ai_quota'
+      if (this.subscriptionModalReason === 'aiAction') return 'ai_action'
+      if (['limitReached', 'allowanceExhausted'].includes(this.subscriptionModalReason)) {
+        return 'dashboard_session_limit'
+      }
+      return undefined
+    }
   },
   watch: {
     isPremium(active) {
@@ -134,10 +152,17 @@ export default {
       this.bridge.send({
         cmd: 'PurchaseSubscription',
         productId: this.selectedProductId,
-        source: this.subscriptionModalReason === 'aiQuota' ? 'ai_quota'
-          : this.subscriptionModalReason === 'aiAction' ? 'ai_action'
-          : ['limitReached', 'allowanceExhausted'].includes(this.subscriptionModalReason) ? 'dashboard_session_limit'
-          : undefined
+        source: this.purchaseSource
+      })
+    },
+    // Same handoff as `subscribe`, with the permanent Plus product asked for
+    // instead of a subscription; the host paywall lists both.
+    buyPlus() {
+      if (!this.bridge) return
+      this.bridge.send({
+        cmd: 'PurchaseSubscription',
+        productId: this.plusProductId,
+        source: this.purchaseSource
       })
     },
     restore() {
@@ -327,6 +352,28 @@ export default {
 }
 
 .purchase-btn:disabled {
+  opacity: 0.75;
+  cursor: default;
+}
+
+.plus-btn {
+  width: 100%;
+  margin-top: 10px;
+  padding: 13px;
+  background: transparent;
+  color: var(--primary-color, #fa8072);
+  border: 1px solid var(--primary-color, #fa8072);
+  border-radius: 12px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.plus-btn:hover {
+  background: rgba(250, 128, 114, 0.08);
+}
+
+.plus-btn:disabled {
   opacity: 0.75;
   cursor: default;
 }
