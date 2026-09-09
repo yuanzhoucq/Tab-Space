@@ -74,11 +74,6 @@
     return "unknown"
   }
 
-  function toolbarIconPaths(colorScheme) {
-    const prefix = colorScheme === "dark" ? "toolbar-light" : "toolbar"
-    return Object.fromEntries([16, 32, 48, 128].map(size => [size, `${prefix}-${size}.png`]))
-  }
-
   function isSavableUrl(rawUrl) {
     if (typeof rawUrl !== "string" || rawUrl.length === 0) return false
     let url
@@ -155,7 +150,7 @@
       case "AppendSessions":
         return { kind: "native", method: "sessions.append", params: { sessions: parseBookmarks(msg.bookmarks) } }
       case "UpdateSession":
-        return { kind: "native", method: "sessions.update", params: { sessions: parseBookmarks(msg.bookmarks) } }
+        return { kind: "native", method: "sessions.update", params: { sessions: parseBookmarks(msg.bookmarks), ...(["enhance", "orphan_tags"].includes(msg.aiApplied) ? { aiApplied: msg.aiApplied } : {}) } }
       case "DeleteSession":
         return { kind: "native", method: "sessions.delete", params: { sessions: parseBookmarks(msg.bookmarks) } }
       case "MergeSessions":
@@ -164,7 +159,7 @@
           method: "sessions.merge",
           params: {
             sessions: parseBookmarks(msg.bookmarks),
-            deduplicateSites: msg.deduplicateSites === true
+            deduplicateSites: msg.deduplicateSites === true, aiApplied: msg.aiApplied === true
           }
         }
       case "UpSession":
@@ -232,7 +227,8 @@
         return {
           kind: "native",
           method: "subscription.purchase",
-          params: typeof msg.productId === "string" ? { productId: msg.productId } : {}
+          params: { ...(typeof msg.productId === "string" ? { productId: msg.productId } : {}),
+            ...(["ai_quota", "ai_action", "dashboard_session_limit"].includes(msg.source) ? { source: msg.source } : {}) }
         }
       case "RestorePurchases":
         return { kind: "native", method: "subscription.restore", params: {} }
@@ -327,7 +323,6 @@
       getStorage(keys) { return call(extensionApi.storage.local, "get", keys) },
       setStorage(values) { return call(extensionApi.storage.local, "set", values) },
       removeStorage(keys) { return call(extensionApi.storage.local, "remove", keys) },
-      setActionIcon(details) { return call(extensionApi.action, "setIcon", details) },
       // Deliberately a write to session storage rather than a no-op: the write
       // fires storage.onChanged, and a dispatched WebExtension event is what
       // resets Firefox's background idle timer. See the keepalive handler.
@@ -877,24 +872,6 @@
     })
     const controller = createController({ browserApi: api, client })
     const dashboardPorts = new Set()
-    const offscreenUrl = extensionApi.runtime.getURL("offscreen.html")
-
-    function ensureThemeObserver() {
-      if (!extensionApi.offscreen || typeof extensionApi.offscreen.createDocument !== "function") {
-        return Promise.resolve()
-      }
-      return extensionApi.offscreen.createDocument({
-        url: "offscreen.html",
-        reasons: ["MATCH_MEDIA"],
-        justification: "Keep the Tab Space toolbar icon legible in light and dark browser themes."
-      }).catch(error => {
-        // Chrome keeps MATCH_MEDIA documents alive when the service worker is
-        // suspended, so a restarted worker may find that one already exists.
-        if (!/single offscreen document/i.test(error && error.message ? error.message : String(error))) {
-          throw error
-        }
-      })
-    }
 
     client.addEventListener(event => {
       if (event.event === "bridge.keepalive") {
@@ -957,15 +934,6 @@
 
     extensionApi.runtime.onMessage.addListener((message, sender) => {
       const type = message && message.type
-      if (type === "ui.colorScheme") {
-        if (!(sender && sender.url === offscreenUrl)) {
-          return Promise.resolve({ ok: false, error: { code: "invalid_sender", message: "Theme observer rejected." } })
-        }
-        const colorScheme = message.colorScheme === "dark" ? "dark" : "light"
-        return api.setActionIcon({ path: toolbarIconPaths(colorScheme) })
-          .then(() => ({ ok: true, result: { colorScheme } }))
-          .catch(error => ({ ok: false, error: serializeError(error) }))
-      }
       const dashboardRequest = type && type.startsWith("dashboard.")
       if (dashboardRequest && !(sender && isDashboardUrl(sender.url))) {
         return Promise.resolve({ ok: false, error: { code: "invalid_sender", message: "Dashboard origin rejected." } })
@@ -1013,7 +981,6 @@
       })
     }
 
-    ensureThemeObserver().catch(() => {})
     client.ensureReconnectAlarm()
     // A paired extension must be ready before its popup or dashboard is opened,
     // otherwise the global switcher cannot discover this browser. Every wake-up
@@ -1032,7 +999,6 @@
     dashboardMessageForEvent,
     dashboardMessagesFor,
     browserFamily,
-    toolbarIconPaths,
     createController,
     handleSwitcherEvent,
     isDashboardOrigin,

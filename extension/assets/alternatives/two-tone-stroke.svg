@@ -1,0 +1,87 @@
+<svg viewBox="1.5 1.5 16 16" width="16" height="16" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <title>Tab Space</title>
+  <!-- ALTERNATIVE, not the shipped icon. See README.md in this folder.
+
+       Each line is 2 units wide: the inner unit ink, the outer unit paper.
+       Light chrome swallows the paper half and shows a dark line drawing; dark
+       chrome swallows the ink half and shows a light one of the same weight.
+       The ink is #3C3C3C because that is Chrome's dark toolbar measured off an
+       incognito window, so the ink half vanishes there exactly rather than
+       leaving a dark core inside each white line.
+
+       The most robust of the three — it never asks one colour to work on both
+       backgrounds — and the most complex: every path appears twice, the masks
+       are per-layer, and 16px needs a second simplified glyph because two
+       frames and two arrows cannot survive that size at 2 units a line. That
+       companion glyph is in two-tone-stroke-16.svg. -->
+  <!-- One fixed icon for every browser and every theme. Each line is 2 units
+       wide: the inner unit is ink, the outer unit is paper. Light chrome
+       swallows the paper half and shows a 1-unit dark line drawing, dark chrome
+       swallows the ink half and shows a 1-unit light one. See the default_icon
+       comment in build.mjs.
+
+       Both halves sit half a unit off the line the artwork was drawn on - ink
+       inwards, paper outwards - so neither theme strays further from the
+       original than the other. Putting the whole paper layer outside instead
+       made the dark-theme icon read a full unit larger than the light one.
+
+       Every path therefore appears twice: grown half a unit for paper, shrunk
+       half a unit for ink. The two layers also get their own masks, because a
+       notch or a seam has to be measured against the one line that is visible
+       in a given theme, not against the pair. -->
+  <!-- Notches where an arrow crosses a frame: 2 units for that layer's 1 unit
+       of line plus half a unit of air on each side. Sharing one notch between
+       the layers leaves the line visibly off-centre in it. -->
+  <mask id="upperPaper" maskUnits="userSpaceOnUse" x="-3" y="-3" width="26" height="26">
+    <rect x="-3" y="-3" width="26" height="26" fill="#FFFFFF"/>
+    <rect x="14.5" y="6" width="4" height="2" fill="#000000"/>
+  </mask>
+  <mask id="upperInk" maskUnits="userSpaceOnUse" x="-3" y="-3" width="26" height="26">
+    <rect x="-3" y="-3" width="26" height="26" fill="#FFFFFF"/>
+    <rect x="14.5" y="7" width="4" height="2" fill="#000000"/>
+  </mask>
+  <!-- The lower frame also loses the band where the upper one passes in front,
+       three quarters of a unit wider than the paper layer so a seam survives on
+       dark chrome, where the ink between the two frames is invisible. -->
+  <mask id="lowerPaper" maskUnits="userSpaceOnUse" x="-3" y="-3" width="26" height="26">
+    <rect x="-3" y="-3" width="26" height="26" fill="#FFFFFF"/>
+    <rect x="0.5" y="10" width="4" height="2" fill="#000000"/>
+    <g fill="#000000" stroke="#000000" stroke-width="3.5" stroke-linejoin="round">
+      <rect x="6.5" y="2.5" width="10" height="10" rx="2"/>
+    </g>
+  </mask>
+  <mask id="lowerInk" maskUnits="userSpaceOnUse" x="-3" y="-3" width="26" height="26">
+    <rect x="-3" y="-3" width="26" height="26" fill="#FFFFFF"/>
+    <rect x="0.5" y="11" width="4" height="2" fill="#000000"/>
+    <g fill="#000000" stroke="#000000" stroke-width="3.5" stroke-linejoin="round">
+      <rect x="6.5" y="2.5" width="10" height="10" rx="2"/>
+    </g>
+  </mask>
+  <!-- The outbound arrow keeps only what emerges below the upper frame, the
+       same L the artwork was drawn with. It reads as a hint of a second arrow
+       rather than a whole one; at real size that is what balances the lower
+       frame, and removing it leaves that frame looking empty. -->
+  <mask id="behind" maskUnits="userSpaceOnUse" x="1" y="8" width="9" height="7">
+    <path d="M1 8H7V12H10V15H1V8Z" fill="#FFFFFF"/>
+  </mask>
+  <g stroke="#FFFFFF" stroke-width="1" fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <g mask="url(#lowerPaper)"><rect x="2" y="6" width="11" height="11" rx="2.5"/></g>
+    <g mask="url(#behind)" transform="translate(0 -0.5)">
+      <path d="M1.5 11.5L9 11.5"/><path d="M6.75 8.75L9.5 11.5L6.75 14.25"/>
+    </g>
+    <g mask="url(#upperPaper)"><rect x="6" y="2" width="11" height="11" rx="2.5"/></g>
+    <g transform="translate(0 -0.5)">
+      <path d="M17.5 7.5L10 7.5"/><path d="M12.25 4.75L9.5 7.5L12.25 10.25"/>
+    </g>
+  </g>
+  <g stroke="#3C3C3C" stroke-width="1" fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <g mask="url(#lowerInk)"><rect x="3" y="7" width="9" height="9" rx="1.5"/></g>
+    <g mask="url(#behind)" transform="translate(0 0.5)">
+      <path d="M1.5 11.5L9 11.5"/><path d="M6.75 8.75L9.5 11.5L6.75 14.25"/>
+    </g>
+    <g mask="url(#upperInk)"><rect x="7" y="3" width="9" height="9" rx="1.5"/></g>
+    <g transform="translate(0 0.5)">
+      <path d="M17.5 7.5L10 7.5"/><path d="M12.25 4.75L9.5 7.5L12.25 10.25"/>
+    </g>
+  </g>
+</svg>

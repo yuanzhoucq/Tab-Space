@@ -1,0 +1,33 @@
+<svg viewBox="4.5 -0.5 16 16" width="16" height="16" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <title>Tab Space</title>
+  <!-- The 16px companion to two-tone-stroke.svg. -->
+  <!-- The 16px icon only. The full mark puts two overlapping frames and two
+       arrows inside 15 units, and each line needs 2 of them; measured at 16px
+       the ink only reaches 37 of a possible 32 and the whole thing renders as a
+       smudge. So @1x drops the outbound frame and keeps the half that carries
+       the meaning. Ink and paper work as in toolbar.svg.
+
+       The viewBox is 16 units on a half-unit origin, which is what puts every
+       1-unit stroke on exactly one pixel here: at x0=4 instead the frame's
+       verticals turn grey. -->
+  <mask id="upperPaper" maskUnits="userSpaceOnUse" x="-3" y="-3" width="26" height="26">
+    <rect x="-3" y="-3" width="26" height="26" fill="#FFFFFF"/>
+    <rect x="14.5" y="6" width="4" height="2" fill="#000000"/>
+  </mask>
+  <mask id="upperInk" maskUnits="userSpaceOnUse" x="-3" y="-3" width="26" height="26">
+    <rect x="-3" y="-3" width="26" height="26" fill="#FFFFFF"/>
+    <rect x="14.5" y="7" width="4" height="2" fill="#000000"/>
+  </mask>
+  <g stroke="#FFFFFF" stroke-width="1" fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <g mask="url(#upperPaper)"><rect x="6" y="2" width="11" height="11" rx="2.5"/></g>
+    <g transform="translate(0 -0.5)">
+      <path d="M17.5 7.5L10 7.5"/><path d="M12.25 4.75L9.5 7.5L12.25 10.25"/>
+    </g>
+  </g>
+  <g stroke="#3C3C3C" stroke-width="1" fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <g mask="url(#upperInk)"><rect x="7" y="3" width="9" height="9" rx="1.5"/></g>
+    <g transform="translate(0 0.5)">
+      <path d="M17.5 7.5L10 7.5"/><path d="M12.25 4.75L9.5 7.5L12.25 10.25"/>
+    </g>
+  </g>
+</svg>

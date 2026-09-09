@@ -462,19 +462,15 @@ test('popup keeps tab selection collapsed and uses one destination menu', () => 
   assert.equal(popup.includes('destinationSessionUuid: destinationSessionUuid()'), true)
 })
 
-test('uses the white PDF-derived toolbar icon only for dark browser chrome', () => {
-  assert.deepEqual(background.toolbarIconPaths('light'), {
-    16: 'toolbar-16.png',
-    32: 'toolbar-32.png',
-    48: 'toolbar-48.png',
-    128: 'toolbar-128.png'
-  })
-  assert.deepEqual(background.toolbarIconPaths('dark'), {
-    16: 'toolbar-light-16.png',
-    32: 'toolbar-light-32.png',
-    48: 'toolbar-light-48.png',
-    128: 'toolbar-light-128.png'
-  })
+test('ships one toolbar icon per size and no theme-specific variant', () => {
+  // The icon deliberately does not follow the browser theme; see the comment on
+  // default_icon in build.mjs. A light variant reappearing here would mean the
+  // runtime switching came back with it.
+  for (const size of [16, 32, 48, 128]) {
+    assert.equal(existsSync(join(extensionRoot, `assets/toolbar-${size}.png`)), true)
+    assert.equal(existsSync(join(extensionRoot, `assets/toolbar-light-${size}.png`)), false)
+  }
+  assert.equal(existsSync(join(extensionRoot, 'assets/toolbar.svg')), true)
 })
 
 test('builds valid browser-specific Manifest V3 packages', () => {
@@ -486,8 +482,8 @@ test('builds valid browser-specific Manifest V3 packages', () => {
   assert.equal(chrome.manifest_version, 3)
   assert.equal(chrome.background.service_worker, 'background.js')
   assert.equal(chrome.action.default_icon['16'], 'toolbar-16.png')
-  assert.equal(chrome.permissions.includes('offscreen'), true)
-  assert.equal(edge.permissions.includes('offscreen'), true)
+  assert.equal(chrome.permissions.includes('offscreen'), false)
+  assert.equal(edge.permissions.includes('offscreen'), false)
   assert.deepEqual(edge.background, chrome.background)
   assert.deepEqual(firefox.background, { scripts: ['background.js'] })
   assert.equal(firefox.browser_specific_settings.gecko.id, 'extension@mytab.space')
@@ -496,6 +492,11 @@ test('builds valid browser-specific Manifest V3 packages', () => {
     { required: ['none'] }
   )
   assert.equal(firefox.permissions.includes('offscreen'), false)
+
+  // The fixed icon is for Chromium only. Firefox resolves the theme itself and
+  // keeps the dark/light pair theme_icons switches between.
+  assert.equal('theme_icons' in chrome.action, false)
+  assert.equal('theme_icons' in edge.action, false)
   assert.deepEqual(firefox.action.theme_icons, [
     { size: 16, dark: 'toolbar-16.png', light: 'toolbar-light-16.png' },
     { size: 32, dark: 'toolbar-32.png', light: 'toolbar-light-32.png' }
@@ -508,18 +509,26 @@ test('builds valid browser-specific Manifest V3 packages', () => {
     // Without this the alarms API is undefined and the bridge cannot recover
     // from a suspended background context.
     assert.equal(manifest.permissions.includes('alarms'), true)
+    // Every package names its icons the same way; the artwork behind those
+    // names is what differs between Chromium and Firefox.
+    assert.deepEqual(manifest.action.default_icon, chrome.action.default_icon)
   }
   for (const target of ['chrome', 'edge', 'firefox']) {
     assert.equal(existsSync(join(extensionRoot, `dist/packages/tab-space-${target}.zip`)), true)
+    const prefix = target === 'firefox' ? 'toolbar-firefox' : 'toolbar'
     for (const size of [16, 32, 48, 128]) {
       assert.deepEqual(
         readFileSync(join(extensionRoot, `dist/${target}/toolbar-${size}.png`)),
-        readFileSync(join(extensionRoot, `assets/toolbar-${size}.png`))
+        readFileSync(join(extensionRoot, `assets/${prefix}-${size}.png`))
       )
-      assert.deepEqual(
-        readFileSync(join(extensionRoot, `dist/${target}/toolbar-light-${size}.png`)),
-        readFileSync(join(extensionRoot, `assets/toolbar-light-${size}.png`))
+      // Only Firefox carries the second, theme-switched set.
+      assert.equal(
+        existsSync(join(extensionRoot, `dist/${target}/toolbar-light-${size}.png`)),
+        target === 'firefox'
       )
+    }
+    for (const filename of ['offscreen.html', 'offscreen-theme.js']) {
+      assert.equal(existsSync(join(extensionRoot, `dist/${target}/${filename}`)), false)
     }
   }
 })
@@ -806,7 +815,6 @@ test('registers the wake-ups a suspended background context can be revived by', 
       update: async () => {}
     },
     tabs: { query: async () => [], update: async () => {}, create: async () => {}, remove: async () => {} },
-    action: { setIcon: async () => {} },
     storage: {
       local: { get: async () => ({}), set: async () => {}, remove: async () => {} },
       session: { set: async values => storageWrites.push(values) },

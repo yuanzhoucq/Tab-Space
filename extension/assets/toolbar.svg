@@ -1,0 +1,52 @@
+<svg viewBox="1.875 1.875 15.25 15.25" width="15.25" height="15.25" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <title>Tab Space</title>
+  <!-- One fixed icon for every browser and every theme, in a single weight and
+       a single colour. Chromium has no equivalent of Firefox's theme_icons, and
+       the only colour-scheme signal a service worker can reach describes web
+       content rather than the toolbar, so the icon cannot follow the browser
+       reliably. It does not try.
+
+       #007AFF is macOS's controlAccentColor, read from AppKit rather than eyed
+       off a screenshot. Safari tints the template icon of the Safari extension
+       with it, so this is the same blue that extension already shows, and the
+       value is identical in the light and dark appearances. (Safari re-tints if
+       the user picks another system accent; here the blue is fixed, so the two
+       match on a default install and diverge otherwise.)
+
+       Against Chrome's measured toolbars — #FFFFFF light, #3C3C3C dark — it
+       scores 4.02:1 and 2.75:1. The dark figure is under the 3:1 guidance for
+       non-text, but that formula counts luminance only: a saturated blue also
+       separates from neutral grey by hue, and at every size it renders clearly
+       on the dark toolbar. #0A84FF, Apple's dark-appearance blue, reaches 3.02:1
+       there if the number ever has to be met literally.
+
+       The viewBox crops inside the artwork's bounding box: the browser already
+       pads the toolbar button, so the margin the drawing was made with only made
+       the icon smaller. It is deliberately off-centre. Left, top and bottom sit
+       flush with the artwork and clip nothing; the whole crop comes off the
+       right, where the only thing outside is the inbound arrow's rounded tip,
+       and a line running to the edge suits one the drawing already has arriving
+       from off-canvas. Centring the same viewBox instead splits the crop across
+       both sides and takes 0.5 off the lower frame's left vertical — a clipped
+       frame looks like a mistake in a way a clipped line does not.
+
+       Every size renders from this one file, 16px included. Two overlapping
+       frames and two arrows do not survive 16 pixels — measured, at any stroke
+       weight — so @1x is a smudge that still reads as this icon by its outline.
+       That is a deliberate trade for having one drawing at every size. -->
+  <!-- The outbound arrow keeps only what emerges below the upper frame, the
+       same L the artwork was drawn with. -->
+  <mask id="behind" maskUnits="userSpaceOnUse" x="1" y="8" width="9" height="7">
+    <path d="M1 8H7V12H10V15H1V8Z" fill="#FFFFFF"/>
+  </mask>
+  <g stroke="#007AFF" stroke-width="1.25" fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M16.5 6V4.5C16.5 3.39543 15.6046 2.5 14.5 2.5H8.5C7.39543 2.5 6.5 3.39543 6.5 4.5V10.5C6.5 11.6046 7.39543 12.5 8.5 12.5H14.5C15.6046 12.5 16.5 11.6046 16.5 10.5V9"/>
+    <path d="M17.5 7.5L10 7.5"/>
+    <path d="M12.5 4.5L9.5 7.5L12.5 10.5"/>
+    <path d="M12.5 14L12.5 14.5C12.5 15.6046 11.6046 16.5 10.5 16.5L4.5 16.5C3.39543 16.5 2.5 15.6046 2.5 14.5L2.5 13M5 6.49999L4.49998 6.5C3.39542 6.50001 2.5 7.39544 2.5 8.5L2.5 10"/>
+    <g mask="url(#behind)">
+      <path d="M1.5 11.5L9 11.5"/>
+      <path d="M6.5 14.5L9.5 11.5L6.5 8.5"/>
+    </g>
+  </g>
+</svg>

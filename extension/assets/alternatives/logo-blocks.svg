@@ -1,0 +1,38 @@
+<svg viewBox="1 1 17 17" width="17" height="17" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <title>Tab Space</title>
+  <!-- ALTERNATIVE, not the shipped icon. See README.md in this folder.
+
+       The app icon's two blocks rather than a line drawing. Both clear 3.3:1
+       against light and dark browser chrome, so one piece of artwork reads on
+       either with nothing switched, and it needs no separate 16px glyph —
+       though at that size the arrows inside the blocks do not resolve and only
+       the two-block silhouette identifies it.
+
+       The blocks overlap by 4 of their 10 units, which is the app icon's own
+       proportion. Carrying over the 6-unit overlap the line drawing uses leaves
+       the lower block occluded down to a fragment: line work survives being
+       covered because the strokes still read, a solid block does not. Both
+       arrows stay inside their block, ending 1.5 units short of the filled
+       edge, as they do in the app icon. -->
+  <!-- The upper block is opaque and occludes the lower one by itself; the mask
+       only opens a seam between them. The lower arrow is masked along with its
+       block, otherwise its tip runs on into that seam and fills it. -->
+  <mask id="seam" maskUnits="userSpaceOnUse" x="-4" y="-4" width="28" height="28">
+    <rect x="-4" y="-4" width="28" height="28" fill="#FFFFFF"/>
+    <g fill="#000000" stroke="#000000" stroke-width="1.6" stroke-linejoin="round">
+      <rect x="7.5" y="1.5" width="10" height="10" rx="2"/>
+    </g>
+  </mask>
+  <g stroke-width="1" stroke-linecap="round" stroke-linejoin="round">
+    <g mask="url(#seam)">
+      <g fill="#8079EB" stroke="#8079EB"><rect x="1.5" y="7.5" width="10" height="10" rx="2"/></g>
+      <g fill="none" stroke="#FFFFFF">
+        <path d="M3 12.5L9 12.5"/><path d="M6.25 9.75L9 12.5L6.25 15.25"/>
+      </g>
+    </g>
+    <g fill="#E7583D" stroke="#E7583D"><rect x="7.5" y="1.5" width="10" height="10" rx="2"/></g>
+    <g fill="none" stroke="#FFFFFF">
+      <path d="M16 6.5L10 6.5"/><path d="M12.75 3.75L10 6.5L12.75 9.25"/>
+    </g>
+  </g>
+</svg>

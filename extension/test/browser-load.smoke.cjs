@@ -1,4 +1,5 @@
 const assert = require('node:assert/strict')
+const { readFileSync } = require('node:fs')
 const { mkdtemp, rm } = require('node:fs/promises')
 const { tmpdir } = require('node:os')
 const { join, resolve } = require('node:path')
@@ -30,21 +31,19 @@ async function main() {
     const worker = context.serviceWorkers()[0] || await context.waitForEvent('serviceworker', { timeout: 15000 })
     const manifest = await worker.evaluate(() => chrome.runtime.getManifest())
     assert.equal(manifest.name, target.endsWith('-dev') ? 'Tab Space (Dev)' : 'Tab Space')
-    assert.equal(manifest.version, '1.1.0')
+    // Compared against the package on disk rather than a literal, which went
+    // stale the first time version.mjs was bumped.
+    assert.equal(manifest.version, JSON.parse(readFileSync(join(extensionPath, 'manifest.json'), 'utf8')).version)
     assert.equal('version_name' in manifest, false)
     assert.equal(manifest.manifest_version, 3)
-    const offscreenReady = await worker.evaluate(async () => {
-      for (let attempt = 0; attempt < 50; attempt += 1) {
-        const contexts = await chrome.runtime.getContexts({
-          contextTypes: ['OFFSCREEN_DOCUMENT'],
-          documentUrls: [chrome.runtime.getURL('offscreen.html')]
-        })
-        if (contexts.length === 1) return true
-        await new Promise(resolve => setTimeout(resolve, 100))
-      }
-      return false
-    })
-    assert.equal(offscreenReady, true)
+    // The toolbar icon is fixed, so the extension asks for no offscreen document
+    // and opens none: a stray one would mean theme switching was reintroduced.
+    assert.equal(manifest.permissions.includes('offscreen'), false)
+    assert.deepEqual(Object.keys(manifest.action.default_icon).sort(), ['128', '16', '32', '48'])
+    const offscreenContexts = await worker.evaluate(() => chrome.runtime.getContexts({
+      contextTypes: ['OFFSCREEN_DOCUMENT']
+    }).then(contexts => contexts.length))
+    assert.equal(offscreenContexts, 0)
 
     const extensionId = new URL(worker.url()).host
     const page = await context.newPage()

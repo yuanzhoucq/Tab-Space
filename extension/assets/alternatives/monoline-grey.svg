@@ -1,0 +1,33 @@
+<svg viewBox="1.875 1.875 15.25 15.25" width="15.25" height="15.25" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <title>Tab Space</title>
+  <!-- ALTERNATIVE, not the shipped icon. See README.md in this folder.
+
+       The shipped drawing in a neutral grey instead of the accent blue.
+       #8D8D8D is the grey that maximises the worse of its two contrasts
+       against Chrome's measured toolbars — #FFFFFF light and #3C3C3C dark —
+       landing on 3.32:1 against each, just over the 3:1 guidance for non-text
+       elements. It is the best a single neutral can do having to survive both
+       ends; against Edge's dark toolbar (#333333) it reads 3.81:1.
+
+       Choosing a grey against assumed background colours instead yields
+       #858585, which measures only 2.99:1 on the real Chrome dark toolbar.
+
+       Geometry, stroke weight and viewBox are identical to toolbar.svg, so
+       this is a drop-in swap. -->
+  <!-- The outbound arrow keeps only what emerges below the upper frame, the
+       same L the artwork was drawn with. -->
+  <mask id="behind" maskUnits="userSpaceOnUse" x="1" y="8" width="9" height="7">
+    <path d="M1 8H7V12H10V15H1V8Z" fill="#FFFFFF"/>
+  </mask>
+  <g stroke="#8D8D8D" stroke-width="1.25" fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M16.5 6V4.5C16.5 3.39543 15.6046 2.5 14.5 2.5H8.5C7.39543 2.5 6.5 3.39543 6.5 4.5V10.5C6.5 11.6046 7.39543 12.5 8.5 12.5H14.5C15.6046 12.5 16.5 11.6046 16.5 10.5V9"/>
+    <path d="M17.5 7.5L10 7.5"/>
+    <path d="M12.5 4.5L9.5 7.5L12.5 10.5"/>
+    <path d="M12.5 14L12.5 14.5C12.5 15.6046 11.6046 16.5 10.5 16.5L4.5 16.5C3.39543 16.5 2.5 15.6046 2.5 14.5L2.5 13M5 6.49999L4.49998 6.5C3.39542 6.50001 2.5 7.39544 2.5 8.5L2.5 10"/>
+    <g mask="url(#behind)">
+      <path d="M1.5 11.5L9 11.5"/>
+      <path d="M6.5 14.5L9.5 11.5L6.5 8.5"/>
+    </g>
+  </g>
+</svg>
+

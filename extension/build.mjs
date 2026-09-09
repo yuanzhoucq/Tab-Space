@@ -76,6 +76,17 @@ const baseManifest = {
   action: {
     default_title: "Tab Space",
     default_popup: "popup.html",
+    // Chrome and Edge only. Chromium has no equivalent of Firefox's
+    // theme_icons, and the media query a service worker can reach describes web
+    // content rather than the toolbar: browser themes, Edge's separate
+    // appearance setting, and permanently dark private windows all decouple the
+    // two, and a global setIcon cannot follow a single window anyway. Their
+    // icon is therefore one fixed drawing in #007AFF — macOS's accent colour,
+    // the same blue Safari tints the Safari extension's icon with — which reads
+    // on light and dark chrome alike. See extension/assets/toolbar.svg.
+    //
+    // Firefox keeps its own pair and its theme_icons below; the blue is
+    // deliberately not carried over there.
     default_icon: {
       "16": "toolbar-16.png",
       "32": "toolbar-32.png",
@@ -115,8 +126,10 @@ function manifestFor(target) {
   manifest.content_scripts[0].matches = matches
   manifest.host_permissions = [...new Set([...matches, "http://127.0.0.1/*"])]
   if (target === "firefox") {
-    // Firefox names these properties after the toolbar text color: a dark
-    // icon is used with dark text (light toolbar), and vice versa.
+    // Firefox names these properties after the toolbar text color: a dark icon
+    // is used with dark text (light toolbar), and vice versa. This is the one
+    // browser that resolves the theme correctly on its own, so it keeps the
+    // two-icon treatment it always had rather than the Chromium blue.
     manifest.action.theme_icons = [
       { size: 16, dark: "toolbar-16.png", light: "toolbar-light-16.png" },
       { size: 32, dark: "toolbar-32.png", light: "toolbar-light-32.png" }
@@ -134,7 +147,6 @@ function manifestFor(target) {
       }
     }
   } else {
-    manifest.permissions.push("offscreen")
     manifest.background = { service_worker: "background.js" }
   }
   return manifest
@@ -168,9 +180,17 @@ for (const target of requestedTargets) {
   await mkdir(output, { recursive: true })
   await cp(join(extensionRoot, "src"), output, { recursive: true })
   await cp(join(repositoryRoot, "icon.png"), join(output, "icon.png"))
+  // Firefox ships its own artwork under the same filenames the manifest uses,
+  // so each package carries one toolbar icon set and nothing has to branch at
+  // runtime. Chrome and Edge get the blue drawing; Firefox gets the dark/light
+  // pair its theme_icons switches between.
   for (const size of [16, 32, 48, 128]) {
-    await cp(join(extensionRoot, "assets", `toolbar-${size}.png`), join(output, `toolbar-${size}.png`))
-    await cp(join(extensionRoot, "assets", `toolbar-light-${size}.png`), join(output, `toolbar-light-${size}.png`))
+    const source = target === "firefox" ? `toolbar-firefox-${size}.png` : `toolbar-${size}.png`
+    await cp(join(extensionRoot, "assets", source), join(output, `toolbar-${size}.png`))
+    if (target === "firefox") {
+      await cp(join(extensionRoot, "assets", `toolbar-firefox-light-${size}.png`),
+               join(output, `toolbar-light-${size}.png`))
+    }
   }
   if (development) {
     for (const filename of ["background.js", "content-script.js"]) {
