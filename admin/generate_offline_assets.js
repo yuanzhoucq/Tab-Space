@@ -23,10 +23,12 @@ const alwaysCached = ['js', 'css', 'fonts']
 const smallImages = filesBelow(path.join(distDirectory, 'img'))
   .filter(filePath => fs.statSync(filePath).size <= smallImageLimit)
 const faviconPath = path.join(distDirectory, 'favicon.ico')
+const faviconSvgPath = path.join(distDirectory, 'favicon.svg')
 const assetUrls = Array.from(new Set([
   ...alwaysCached,
   ...smallImages,
-  ...(fs.existsSync(faviconPath) ? [faviconPath] : [])
+  ...(fs.existsSync(faviconPath) ? [faviconPath] : []),
+  ...(fs.existsSync(faviconSvgPath) ? [faviconSvgPath] : [])
 ].map(relativeUrl))).sort()
 
 if (!assetUrls.length) {

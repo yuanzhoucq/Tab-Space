@@ -1,0 +1,21 @@
+<svg viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <title>Tab Space</title>
+  <mask id="seam" maskUnits="userSpaceOnUse" x="-4" y="-4" width="28" height="28">
+    <rect x="-4" y="-4" width="28" height="28" fill="#FFFFFF"/>
+    <g fill="#000000" stroke="#000000" stroke-width="1.6" stroke-linejoin="round">
+      <rect x="8" y="2" width="10" height="10" rx="2"/>
+    </g>
+  </mask>
+  <g stroke-width="1" stroke-linecap="round" stroke-linejoin="round">
+    <g mask="url(#seam)">
+      <g fill="#8079EB" stroke="#8079EB"><rect x="2" y="8" width="10" height="10" rx="2"/></g>
+      <g fill="none" stroke="#FFFFFF">
+        <path d="M3.5 13L9.5 13"/><path d="M6.75 10.25L9.5 13L6.75 15.75"/>
+      </g>
+    </g>
+    <g fill="#E7583D" stroke="#E7583D"><rect x="8" y="2" width="10" height="10" rx="2"/></g>
+    <g fill="none" stroke="#FFFFFF">
+      <path d="M16.5 7L10.5 7"/><path d="M13.25 4.25L10.5 7L13.25 9.75"/>
+    </g>
+  </g>
+</svg>
