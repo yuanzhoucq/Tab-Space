@@ -16,7 +16,7 @@ const requestedTargets = targets.length === 0 || targets.includes("all")
   ? ["chrome", "edge", "firefox"]
   : targets
 
-const supportedTargets = new Set(["chrome", "edge", "firefox"])
+const supportedTargets = new Set(["chrome", "edge", "firefox", "safari"])
 for (const target of requestedTargets) {
   if (!supportedTargets.has(target)) {
     throw new Error(`Unsupported extension target: ${target}`)
@@ -125,7 +125,16 @@ function manifestFor(target) {
   const matches = dashboardMatchPatterns(target)
   manifest.content_scripts[0].matches = matches
   manifest.host_permissions = [...new Set([...matches, "http://127.0.0.1/*"])]
-  if (target === "firefox") {
+  if (target === "safari") {
+    manifest.background = { scripts: ["background.js"] }
+    manifest.permissions.push("nativeMessaging", "contextMenus", "webNavigation")
+    manifest.host_permissions = ["<all_urls>"]
+    manifest.content_scripts.push({
+      matches: ["<all_urls>"],
+      js: ["safari/content-script.js"],
+      run_at: "document_start"
+    })
+  } else if (target === "firefox") {
     // Firefox names these properties after the toolbar text color: a dark icon
     // is used with dark text (light toolbar), and vice versa. This is the one
     // browser that resolves the theme correctly on its own, so it keeps the
@@ -192,6 +201,14 @@ for (const target of requestedTargets) {
                join(output, `toolbar-light-${size}.png`))
     }
   }
+  if (target === "safari") {
+    const backgroundPath = join(output, "background.js")
+    const background = await readFile(backgroundPath, "utf8")
+    await writeFile(backgroundPath, background.replace(
+      'const BUILD_TARGET = "companion"',
+      'const BUILD_TARGET = "safari"'
+    ))
+  }
   if (development) {
     for (const filename of ["background.js", "content-script.js"]) {
       const scriptPath = join(output, filename)
@@ -208,6 +225,7 @@ for (const target of requestedTargets) {
 const packagesDirectory = join(distributionRoot, "packages")
 await mkdir(packagesDirectory, { recursive: true })
 for (const target of requestedTargets) {
+  if (target === "safari") continue
   const filename = packageName(target)
   await rm(join(packagesDirectory, filename), { force: true })
   // Excluding dotfiles keeps a stray .DS_Store copied out of src/ from being
@@ -217,5 +235,7 @@ for (const target of requestedTargets) {
   })
 }
 
-const summary = requestedTargets.map(target => `extension/dist/packages/${packageName(target)}`).join(", ")
+const summary = requestedTargets.map(target => target === "safari"
+  ? "extension/dist/safari/"
+  : `extension/dist/packages/${packageName(target)}`).join(", ")
 process.stdout.write(`Built Tab Space 4.0 ${development ? "development " : ""}extension: ${summary}\n`)

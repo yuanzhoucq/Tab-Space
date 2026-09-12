@@ -8,6 +8,15 @@
 })(typeof globalThis !== "undefined" ? globalThis : this, function (root) {
   "use strict"
 
+  // build.mjs rewrites this literal for the Safari package. Keeping the source
+  // value companion-safe prevents Chrome, Edge, and Firefox from loading any
+  // Safari-only API surface.
+  const BUILD_TARGET = "companion"
+
+  if (BUILD_TARGET === "safari" && typeof root.importScripts === "function") {
+    root.importScripts("safari/native.js")
+  }
+
   const PROTOCOL_VERSION = 2
   const INITIAL_PORT = 53791
   const PORT_STEP = 17
@@ -28,6 +37,16 @@
   const STORAGE_KEYS = {
     clientId: "tabspace-client-id",
     authToken: "tabspace-auth-token"
+  }
+
+  async function verifySafariNativeRoundTrip() {
+    if (BUILD_TARGET !== "safari") return
+    try {
+      const reply = await root.TabSpaceSafariNative.send({ op: "ping" })
+      console.info("[tabspace] Safari native ping", reply)
+    } catch (error) {
+      console.error("[tabspace] Safari native ping failed", error)
+    }
   }
 
   class BridgeError extends Error {
@@ -982,6 +1001,7 @@
     }
 
     client.ensureReconnectAlarm()
+    verifySafariNativeRoundTrip()
     // A paired extension must be ready before its popup or dashboard is opened,
     // otherwise the global switcher cannot discover this browser. Every wake-up
     // re-runs this file, so this is also the reconnect for all of them.
