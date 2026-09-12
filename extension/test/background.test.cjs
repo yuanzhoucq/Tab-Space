@@ -154,7 +154,11 @@ test('answers a switcher close event even when closing fails outright', async ()
 
   assert.deepEqual(requests, [
     ['switcher.tabs.closed', { requestID: 'close-ok', closed: 2 }],
-    ['switcher.tabs.closed', { requestID: 'close-bad', closed: 0 }]
+    ['switcher.tabs.closed', {
+      requestID: 'close-bad',
+      closed: 0,
+      error: { code: 'unexpected_error', message: 'boom' }
+    }]
   ])
 })
 

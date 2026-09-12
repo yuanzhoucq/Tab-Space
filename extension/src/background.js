@@ -868,9 +868,10 @@
           requestID: event.requestID,
           closed: result.closed
         }),
-        () => client.request("switcher.tabs.closed", {
+        error => client.request("switcher.tabs.closed", {
           requestID: event.requestID,
-          closed: 0
+          closed: 0,
+          error: serializeError(error)
         })
       )
     }
