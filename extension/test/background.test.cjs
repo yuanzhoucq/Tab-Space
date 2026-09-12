@@ -122,9 +122,9 @@ test('closes switcher tabs one at a time when the batch is rejected, and counts 
     queryTabs: async () => living.map(id => ({ id, windowId: 1, title: 'T', url: 'https://a.example' })),
     removeTabs: async ids => {
       // Mirrors the engines that reject the whole call when one id is stale.
-      if (ids.length > 1) throw new Error('No tab with id: 99')
-      if (!living.includes(ids[0])) throw new Error('No tab with id: ' + ids[0])
-      living = living.filter(id => id !== ids[0])
+      if (Array.isArray(ids)) throw new Error('Safari requires a scalar tab id')
+      if (!living.includes(ids)) throw new Error('No tab with id: ' + ids)
+      living = living.filter(id => id !== ids)
     }
   }
   const controller = background.createController({ browserApi, client: {} })

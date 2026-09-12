@@ -673,10 +673,12 @@
         await browserApi.removeTabs(ids)
       } catch (error) {
         // A single id the user closed in the meantime rejects the whole batch,
-        // so retry one at a time before giving up on the rest.
+        // so retry one at a time before giving up on the rest. Pass the scalar
+        // form here: Safari accepts a tab id but rejects a one-element array,
+        // while Chromium and Firefox accept both forms.
         for (const id of ids) {
           try {
-            await browserApi.removeTabs([id])
+            await browserApi.removeTabs(id)
           } catch (singleError) {
             // Counted below, not here.
           }
