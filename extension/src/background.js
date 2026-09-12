@@ -370,6 +370,7 @@
       this.reconnectTimer = null
       this.reconnectAttempts = 0
       this.reconnectAlarmArmed = false
+      this.pairingCodeProvider = options.pairingCodeProvider || null
     }
 
     addEventListener(listener) {
@@ -391,10 +392,27 @@
       this.cancelReconnect()
       if (this.socket && this.socket.readyState === 1) return this.handshake || {}
       if (this.connectPromise) return this.connectPromise
-      this.connectPromise = this.connectAcrossPorts(pairingCode).finally(() => {
+      this.connectPromise = this.connectWithAutomaticPairing(pairingCode).finally(() => {
         this.connectPromise = null
       })
       return this.connectPromise
+    }
+
+    async connectWithAutomaticPairing(pairingCode) {
+      try {
+        return await this.connectAcrossPorts(pairingCode)
+      } catch (error) {
+        if (pairingCode || !this.pairingCodeProvider || !error || error.code !== "pairing_required") {
+          throw error
+        }
+        const code = await this.pairingCodeProvider()
+        if (!/^\d{6}$/.test(String(code || ""))) {
+          throw new BridgeError("invalid_pairing_code", "Tab Space did not provide a valid pairing code.")
+        }
+        await this.storage.remove([STORAGE_KEYS.authToken])
+        this.close()
+        return this.connectAcrossPorts(String(code))
+      }
     }
 
     async connectAcrossPorts(pairingCode) {
@@ -879,11 +897,23 @@
         remove: keys => api.removeStorage(keys)
       },
       client: {
-        browser: browserFamily(root.navigator && root.navigator.userAgent),
+        browser: BUILD_TARGET === "safari"
+          ? "safari"
+          : browserFamily(root.navigator && root.navigator.userAgent),
         extensionVersion: manifest.version,
         protocolVersion: PROTOCOL_VERSION,
         capabilities: [SWITCHER_CAPABILITY, SWITCHER_CLOSE_CAPABILITY]
-      }
+      },
+      pairingCodeProvider: BUILD_TARGET === "safari"
+        ? async () => {
+            const native = root.TabSpaceSafariNative
+            if (!native || typeof native.send !== "function") {
+              throw new BridgeError("native_unavailable", "Tab Space native messaging is unavailable.")
+            }
+            const response = await native.send({ op: "bridge.pairingCode" })
+            return response && response.code
+          }
+        : null
     })
     const controller = createController({ browserApi: api, client })
     const dashboardPorts = new Set()

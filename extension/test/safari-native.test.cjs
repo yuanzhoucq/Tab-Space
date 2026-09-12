@@ -19,6 +19,16 @@ test("normalizes transport failures", async () => {
   }), error => error.code === "native_transport_failed" && error.message === "host unavailable")
 })
 
+test("normalizes application errors returned by the containing app", async () => {
+  await assert.rejects(native.send({ op: "bridge.pairingCode" }, {
+    runtime: { sendNativeMessage: () => Promise.resolve({
+      ok: false,
+      error: { code: "pairing_code_unavailable", message: "Open Tab Space." }
+    }) },
+    timeoutMs: 50
+  }), error => error.code === "pairing_code_unavailable" && error.message === "Open Tab Space.")
+})
+
 test("times out native operations after the configured deadline", async () => {
   await assert.rejects(native.send({ op: "ping" }, {
     runtime: { sendNativeMessage: () => new Promise(() => {}) },

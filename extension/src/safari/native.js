@@ -47,7 +47,16 @@
         clearTimeout(timer)
         callback(value)
       }
-      const succeed = finish(resolve)
+      const succeed = finish(value => {
+        if (value && value.ok === false && value.error) {
+          reject(new NativeMessageError(
+            value.error.code || "native_error",
+            value.error.message || "Tab Space rejected the native operation."
+          ))
+          return
+        }
+        resolve(value)
+      })
       const fail = finish(error => reject(normalizeError(error)))
       timer = setTimeout(() => {
         fail(new NativeMessageError("native_timeout", `Native operation ${message.op} timed out after ${timeoutMs} ms.`))

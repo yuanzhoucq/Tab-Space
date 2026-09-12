@@ -664,6 +664,55 @@ function answerHello(socket, token) {
   return false
 }
 
+function rejectHello(socket, code) {
+  for (const raw of socket.sent) {
+    const message = JSON.parse(raw)
+    if (message.method !== 'hello') continue
+    socket.receive(JSON.stringify({
+      version: 2,
+      id: message.id,
+      error: { code, message: code }
+    }))
+    return true
+  }
+  return false
+}
+
+test('automatically pairs Safari after the helper requests pairing', async () => {
+  FakeReconnectWebSocket.instances = []
+  const removed = []
+  const stored = []
+  const client = new background.LocalBridgeClient({
+    WebSocket: FakeReconnectWebSocket,
+    storage: {
+      get: async () => ({ 'tabspace-client-id': 'safari-client' }),
+      set: async values => stored.push(values),
+      remove: async keys => removed.push(keys)
+    },
+    client: { browser: 'safari' },
+    pairingCodeProvider: async () => '123456'
+  })
+
+  const connection = client.connect()
+  await new Promise(resolve => setImmediate(resolve))
+  const firstSocket = FakeReconnectWebSocket.instances[0]
+  firstSocket.open()
+  await new Promise(resolve => setImmediate(resolve))
+  assert.ok(rejectHello(firstSocket, 'pairing_required'))
+  await new Promise(resolve => setImmediate(resolve))
+
+  const secondSocket = FakeReconnectWebSocket.instances[1]
+  secondSocket.open()
+  await new Promise(resolve => setImmediate(resolve))
+  const hello = secondSocket.sent.map(JSON.parse).find(message => message.method === 'hello')
+  assert.equal(hello.params.browser, 'safari')
+  assert.equal(hello.params.pairingCode, '123456')
+  assert.ok(answerHello(secondSocket, 'safari-token'))
+  assert.equal((await connection).authenticated, true)
+  assert.deepEqual(removed, [['tabspace-auth-token']])
+  assert.deepEqual(stored.at(-1), { 'tabspace-auth-token': 'safari-token' })
+})
+
 test('reconnects automatically when the helper drops the socket', async () => {
   FakeReconnectWebSocket.instances = []
   const storage = {
@@ -883,4 +932,3 @@ test('popup openPaywall requests native subscription purchase and is wired in po
   assert.equal(popup.includes('upgradePro: "Upgrade to Pro"'), true)
   assert.equal(backgroundSource.includes('case "popup.openPaywall": return client.request("subscription.purchase"'), true)
 })
-
