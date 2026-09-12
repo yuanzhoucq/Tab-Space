@@ -205,7 +205,7 @@ for (const target of requestedTargets) {
     const backgroundPath = join(output, "background.js")
     const background = await readFile(backgroundPath, "utf8")
     const nativeMessaging = await readFile(join(output, "safari/native.js"), "utf8")
-    await writeFile(backgroundPath, `${nativeMessaging}\n${background.replace(
+    await writeFile(backgroundPath, `${nativeMessaging}\n;\n${background.replace(
       'const BUILD_TARGET = "companion"',
       'const BUILD_TARGET = "safari"'
     )}`)
