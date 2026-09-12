@@ -204,10 +204,11 @@ for (const target of requestedTargets) {
   if (target === "safari") {
     const backgroundPath = join(output, "background.js")
     const background = await readFile(backgroundPath, "utf8")
-    await writeFile(backgroundPath, background.replace(
+    const nativeMessaging = await readFile(join(output, "safari/native.js"), "utf8")
+    await writeFile(backgroundPath, `${nativeMessaging}\n${background.replace(
       'const BUILD_TARGET = "companion"',
       'const BUILD_TARGET = "safari"'
-    ))
+    )}`)
   }
   if (development) {
     for (const filename of ["background.js", "content-script.js"]) {

@@ -26,5 +26,7 @@ test("builds the Safari MV3 manifest without other-browser keys", async () => {
   })
   assert.equal("browser_specific_settings" in manifest, false)
   assert.equal("theme_icons" in manifest.action, false)
-  assert.match(await readFile(join(extensionRoot, "dist/safari/background.js"), "utf8"), /const BUILD_TARGET = "safari"/)
+  const background = await readFile(join(extensionRoot, "dist/safari/background.js"), "utf8")
+  assert.match(background, /const BUILD_TARGET = "safari"/)
+  assert.ok(background.indexOf("const APPLICATION_ID") < background.indexOf("const BUILD_TARGET"))
 })

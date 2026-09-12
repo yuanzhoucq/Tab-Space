@@ -13,10 +13,6 @@
   // Safari-only API surface.
   const BUILD_TARGET = "companion"
 
-  if (BUILD_TARGET === "safari" && typeof root.importScripts === "function") {
-    root.importScripts("safari/native.js")
-  }
-
   const PROTOCOL_VERSION = 2
   const INITIAL_PORT = 53791
   const PORT_STEP = 17
