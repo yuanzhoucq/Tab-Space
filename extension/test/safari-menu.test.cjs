@@ -1,0 +1,71 @@
+const assert = require("node:assert/strict")
+const test = require("node:test")
+
+const nativeCalls = []
+global.TabSpaceSafariNative = {
+  send: async message => {
+    nativeCalls.push(message)
+    if (message.op === "ui.probe") return { available: true }
+    if (message.op === "bridge.command") return { ok: true, result: { source: "native" } }
+    return { ok: true }
+  }
+}
+const menu = require("../src/safari/menu.js")
+
+function probeApi(forced = false) {
+  const popups = []
+  return {
+    popups,
+    action: { setPopup: async value => popups.push(value) },
+    storage: {
+      local: {
+        get: async () => ({ "tabspace-force-popup-fallback": forced })
+      }
+    }
+  }
+}
+
+test("uses native fallback only for WebSocket transport failures", async () => {
+  nativeCalls.length = 0
+  const result = await menu.requestWithFallback({
+    request: async () => { throw Object.assign(new Error("offline"), { code: "not_connected" }) }
+  }, "sessions.list", {})
+  assert.deepEqual(result, { source: "native" })
+  assert.equal(nativeCalls.at(-1).op, "bridge.command")
+
+  await assert.rejects(menu.requestWithFallback({
+    request: async () => { throw Object.assign(new Error("limit"), { code: "session_limit_reached" }) }
+  }, "sessions.append", {}), error => error.code === "session_limit_reached")
+})
+
+test("setPopup switches in both native-menu and forced-fallback directions", async () => {
+  const nativeApi = probeApi(false)
+  assert.equal(await menu.probe(nativeApi), true)
+  assert.deepEqual(nativeApi.popups, [{ popup: "" }])
+
+  const fallbackApi = probeApi(true)
+  assert.equal(await menu.probe(fallbackApi), false)
+  assert.deepEqual(fallbackApi.popups, [{ popup: menu.FALLBACK_POPUP }])
+})
+
+test("restore uses bounded concurrency and opens the first URL active", async () => {
+  let active = 0
+  let peak = 0
+  const created = []
+  const api = {
+    tabs: {
+      create: async properties => {
+        active += 1
+        peak = Math.max(peak, active)
+        created.push(properties)
+        await new Promise(resolve => setTimeout(resolve, 1))
+        active -= 1
+      }
+    }
+  }
+  assert.deepEqual(await menu.restoreUrls(api, ["https://a.test", "https://b.test", "https://c.test"], 2), {
+    restoredCount: 3
+  })
+  assert.equal(peak, 2)
+  assert.deepEqual(created.map(item => item.active), [true, false, false])
+})

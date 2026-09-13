@@ -757,6 +757,9 @@
     async function saveTabIds(tabIds, options = {}) {
       const wanted = new Set((tabIds || []).filter(Number.isInteger))
       const tabs = await browserApi.queryTabs({ currentWindow: true })
+      const activeTabId = options.preserveActiveTab
+        ? (tabs.find(tab => tab.active) || {}).id
+        : null
       const result = await appendTabs(tabs.filter(tab => wanted.has(tab.id)), options)
       const postSaveErrors = []
       let closedTabs = false
@@ -764,7 +767,10 @@
 
       if (options.closeTabsAfterSave && result.tabIds.length > 0) {
         try {
-          await browserApi.removeTabs(result.tabIds)
+          const idsToClose = Number.isInteger(activeTabId)
+            ? result.tabIds.filter(id => id !== activeTabId)
+            : result.tabIds
+          if (idsToClose.length > 0) await browserApi.removeTabs(idsToClose)
           closedTabs = true
         } catch (error) {
           postSaveErrors.push({ action: "closeTabs", error: serializeError(error) })
@@ -930,7 +936,10 @@
           }
         : null
     })
-    const controller = createController({ browserApi: api, client })
+    const commandClient = BUILD_TARGET === "safari" && root.TabSpaceSafariMenu
+      ? root.TabSpaceSafariMenu.commandClient(client)
+      : client
+    const controller = createController({ browserApi: api, client: commandClient })
     const dashboardPorts = new Set()
 
     client.addEventListener(event => {
@@ -1018,6 +1027,25 @@
           })
           case "popup.closeTabs": return controller.closeTabs(message.tabIds).then(() => ({ closed: true }))
           case "popup.openDashboard": return controller.openDashboard()
+          case "safari.settings":
+            if (BUILD_TARGET !== "safari" || !root.TabSpaceSafariMenu) {
+              return Promise.reject(new BridgeError("unsupported_message", "Safari settings are unavailable."))
+            }
+            return root.TabSpaceSafariMenu.readSettings({ api: extensionApi, controller, client })
+          case "safari.command":
+            if (BUILD_TARGET !== "safari" || !root.TabSpaceSafariMenu) {
+              return Promise.reject(new BridgeError("unsupported_message", "Safari commands are unavailable."))
+            }
+            return root.TabSpaceSafariMenu.performCommand(message.command, message.data || {}, {
+              api: extensionApi,
+              controller,
+              client
+            })
+          case "safari.redirect":
+            if (BUILD_TARGET !== "safari" || !(sender && sender.tab && Number.isInteger(sender.tab.id))) {
+              return Promise.reject(new BridgeError("invalid_sender", "Safari redirect sender rejected."))
+            }
+            return api.updateTab(sender.tab.id, { url: api.dashboardUrl() })
           case "popup.pair": return controller.pair(message.code).then(result => {
             for (const port of dashboardPorts) {
               try { port.postMessage({ type: "bridge-connected", result }) } catch (_) {}
@@ -1039,6 +1067,10 @@
           controller.saveCurrentTab().then(() => controller.openDashboard()).catch(() => {})
         }
       })
+    }
+
+    if (BUILD_TARGET === "safari" && root.TabSpaceSafariMenu) {
+      root.TabSpaceSafariMenu.install({ api: extensionApi, controller, client })
     }
 
     client.ensureReconnectAlarm()
