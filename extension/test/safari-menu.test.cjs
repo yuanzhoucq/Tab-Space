@@ -2,9 +2,11 @@ const assert = require("node:assert/strict")
 const test = require("node:test")
 
 const nativeCalls = []
+let nativeResponder = null
 global.TabSpaceSafariNative = {
   send: async message => {
     nativeCalls.push(message)
+    if (nativeResponder) return nativeResponder(message)
     if (message.op === "ui.probe") return { available: true }
     if (message.op === "bridge.command") return { ok: true, result: { source: "native" } }
     return { ok: true }
@@ -66,6 +68,35 @@ test("action listener returns the native-menu workflow promise", async () => {
   const workflow = listener({})
   assert.equal(typeof workflow.then, "function")
   await workflow
+})
+
+test("recycles the possibly stale WebSocket before performing a menu action", async () => {
+  let closed = false
+  nativeResponder = async message => message.op === "ui.menu"
+    ? { shown: true, chosen: { action: "save", closeTabs: true } }
+    : { available: true }
+  const api = {
+    windows: { getCurrent: async () => ({ left: 0, top: 0, width: 100, height: 100 }) },
+    tabs: { query: async () => [] },
+    storage: { local: { get: async () => ({}), set: async () => {} } }
+  }
+  const client = {
+    request: async () => ({ sessions: [] }),
+    close: () => { closed = true }
+  }
+  const controller = {
+    saveTabIds: async () => {
+      assert.equal(closed, true)
+      return { savedCount: 1 }
+    }
+  }
+
+  try {
+    const result = await menu.show({ api, client, controller }, {})
+    assert.equal(result.result.savedCount, 1)
+  } finally {
+    nativeResponder = null
+  }
 })
 
 test("restore uses bounded concurrency and opens the first URL active", async () => {

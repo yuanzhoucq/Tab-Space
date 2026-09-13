@@ -261,6 +261,13 @@
       await setPopup(api, FALLBACK_POPUP)
       return { shown: false, fallback: true }
     }
+    // NSMenu runs a native tracking loop for an arbitrary amount of time.
+    // Safari can discard the background page's loopback socket during that
+    // interval without delivering `onclose` to this JS context, leaving a
+    // readyState=OPEN socket whose requests only fail at the 10 s timeout.
+    // Recycle it after the menu closes so the selected command reconnects to
+    // the Helper immediately and still uses the WS-first transport policy.
+    if (client && typeof client.close === "function") client.close()
     const result = await perform(response.chosen, {
       ...context,
       sessions,
