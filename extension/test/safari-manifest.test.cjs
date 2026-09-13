@@ -19,9 +19,15 @@ test("builds the Safari MV3 manifest without other-browser keys", async () => {
   assert.ok(manifest.permissions.includes("contextMenus"))
   assert.ok(manifest.permissions.includes("webNavigation"))
   assert.equal(manifest.action.default_popup, "popup.html")
+  assert.deepEqual(manifest.content_scripts.at(-2), {
+    matches: ["https://app.mytab.space/*"],
+    js: ["safari/content-script.js"],
+    run_at: "document_start",
+    world: "MAIN"
+  })
   assert.deepEqual(manifest.content_scripts.at(-1), {
     matches: ["<all_urls>"],
-    js: ["safari/content-script.js"],
+    js: ["safari/page-shortcuts.js"],
     run_at: "document_start"
   })
   assert.equal("browser_specific_settings" in manifest, false)

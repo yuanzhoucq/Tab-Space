@@ -130,8 +130,14 @@ function manifestFor(target) {
     manifest.permissions.push("nativeMessaging", "contextMenus", "webNavigation")
     manifest.host_permissions = ["<all_urls>"]
     manifest.content_scripts.push({
-      matches: ["<all_urls>"],
+      matches: ["https://app.mytab.space/*"],
       js: ["safari/content-script.js"],
+      run_at: "document_start",
+      world: "MAIN"
+    })
+    manifest.content_scripts.push({
+      matches: ["<all_urls>"],
+      js: ["safari/page-shortcuts.js"],
       run_at: "document_start"
     })
   } else if (target === "firefox") {

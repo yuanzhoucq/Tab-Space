@@ -1,82 +1,49 @@
 (function () {
   "use strict"
 
-  if (window.top !== window) return
+  // Runs in the page's MAIN world. No preview, loopback, subdomain or iframe
+  // receives this privileged compatibility surface.
+  if (window.top !== window || location.protocol !== "https:" || location.host !== "app.mytab.space") return
 
-  const REDIRECT =
-    (["mytab.space", "tabspacestatic.joyuer.cn"].includes(location.host) && location.pathname === "/redirect.html") ||
-    (["joyuer.cn", "yuanzhoucq.github.io"].includes(location.host) && location.pathname === "/Tab-Space/redirect.html") ||
-    location.href === "http://tabspace/"
+  const REQUEST_EVENT = "tabspace:webextension:command"
+  const MESSAGE_EVENT = "tabspace:webextension:message"
+  let onMessage = null
+  let payloadDeliveryMs = null
 
-  function send(command, data) {
-    try {
-      const runtime = typeof browser !== "undefined" ? browser.runtime : chrome.runtime
-      const response = runtime.sendMessage({ type: "safari.command", command, data: data || {} })
-      if (response && typeof response.catch === "function") response.catch(() => {})
-    } catch (_) {}
-  }
-
-  if (REDIRECT) {
-    try {
-      const runtime = typeof browser !== "undefined" ? browser.runtime : chrome.runtime
-      runtime.sendMessage({ type: "safari.redirect" })
-    } catch (_) {}
-  }
-
-  let settings = {}
-  try {
-    const runtime = typeof browser !== "undefined" ? browser.runtime : chrome.runtime
-    Promise.resolve(runtime.sendMessage({ type: "safari.settings" })).then(response => {
-      settings = response && response.ok ? response.result || {} : response || {}
-    }).catch(() => {})
-  } catch (_) {}
-
-  function copyMarkdown() {
-    const value = `[${document.title}](${document.location.href})`
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-      navigator.clipboard.writeText(value).catch(() => {})
-      return
+  function send(name, data) {
+    const payload = { ...(data || {}) }
+    if (payload.bookmarks && typeof payload.bookmarks !== "string") {
+      payload.bookmarks = JSON.stringify(payload.bookmarks)
     }
-    const area = document.createElement("textarea")
-    area.value = value
-    document.body.appendChild(area)
-    area.select()
-    document.execCommand("copy")
-    area.remove()
+    if (name === "ReportDashboardTiming") {
+      if (payloadDeliveryMs !== null) payload.payloadDeliveryMs = payloadDeliveryMs
+      payloadDeliveryMs = null
+    }
+    document.dispatchEvent(new CustomEvent(REQUEST_EVENT, {
+      detail: JSON.stringify({ name, data: payload })
+    }))
   }
 
-  document.addEventListener("keyup", event => {
-    if (!event.ctrlKey || event.metaKey || event.altKey) return
-    if (settings["disable-shortcuts"] === "true") return
-    const requiresShift = settings["shift-shortcuts"] === "true"
-    if (requiresShift !== event.shiftKey) return
-    const data = { source: "shortcut", shiftKey: event.shiftKey }
-    switch (event.key.toLowerCase()) {
-      case "d": send("DuplicateTab", data); break
-      case "t": send("GoToSpace", data); break
-      case "；":
-      case ";":
-      case "：":
-      case ":": send("SaveTabs", data); break
-      case "s": send("SaveCurrentTab", data); break
-      case "c": send("OpenInExternalBrowser1", data); break
-      case "f": send("OpenInExternalBrowser2", data); break
-      case "r": send("CloseRightTabs", data); break
-      case "l": send("CloseLeftTabs", data); break
-      case "k": send("CloseSameDomainTabs", data); break
-      case "q": send("CloseOtherTabs", data); break
-      case "m": copyMarkdown(); break
-      case "b": {
-        const selection = window.getSelection()
-        const content = selection && selection.toString()
-        if (content) send("AddToNotes", {
-          ...data,
-          url: selection.anchorNode && selection.anchorNode.baseURI || location.href,
-          content
-        })
-        break
-      }
-      default: break
+  window.__tabspace_bridge = {
+    protocolVersion: 1,
+    markReady: () => {},
+    send,
+    get onMessage() { return onMessage },
+    set onMessage(handler) { onMessage = handler }
+  }
+
+  document.addEventListener(MESSAGE_EVENT, event => {
+    let payload
+    try { payload = JSON.parse(event.detail) } catch (_) { return }
+    if (!payload || typeof payload.name !== "string") return
+    const message = payload.message || {}
+    if (typeof message.dispatchedAtMs === "number") {
+      payloadDeliveryMs = Math.max(0, Date.now() - message.dispatchedAtMs)
     }
+    if (typeof onMessage === "function") onMessage(payload.name, message)
   })
+
+  window.addEventListener("tabspace:dashboard-ready", () => {})
+  window.dispatchEvent(new CustomEvent("tabspace:bridge-ready"))
+  send("VerifyOnboardingWebsiteAccess", {})
 })()

@@ -8,6 +8,8 @@
   const DASHBOARD_ORIGINS = ["https://app.mytab.space"]
   const DASHBOARD_ORIGIN_SUFFIXES = []
   const CHANNEL = "tabspace-webextension-v2"
+  const DIRECT_REQUEST_EVENT = "tabspace:webextension:command"
+  const DIRECT_MESSAGE_EVENT = "tabspace:webextension:message"
 
   function isDashboardOrigin(origin) {
     if (typeof origin !== "string" || origin.length === 0) return false
@@ -19,6 +21,9 @@
 
   if (!isDashboardOrigin(window.location.origin)) return
   const DASHBOARD_ORIGIN = window.location.origin
+  const DIRECT_MODE = window.top === window
+    && window.location.protocol === "https:"
+    && window.location.host === "app.mytab.space"
 
   const extensionApi = typeof browser !== "undefined" ? browser : chrome
   const preferPromises = typeof browser !== "undefined"
@@ -50,7 +55,39 @@
   }
 
   function postNativeMessage(message) {
+    if (DIRECT_MODE) {
+      document.dispatchEvent(new CustomEvent(DIRECT_MESSAGE_EVENT, {
+        detail: JSON.stringify({ name: message.cmd, message })
+      }))
+      return
+    }
     post("native-message", { message })
+  }
+
+  async function forwardDashboardRequest(message, requestId) {
+    const response = await sendRuntimeMessage({ type: "dashboard.request", message })
+    if (!response || response.ok !== true) {
+      const error = response && response.error
+        ? response.error
+        : { code: "bridge_unavailable", message: "Tab Space is unavailable." }
+      if (error.code === "session_limit_reached") {
+        postNativeMessage({ cmd: "SessionLimitReached", limit: error.details && error.details.limit })
+      }
+      if (requestId) post("request-error", { requestId, error })
+      return
+    }
+    const messages = response.result && response.result.messages
+    for (const nativeMessage of messages || []) postNativeMessage(nativeMessage)
+    if (requestId) post("request-complete", { requestId })
+  }
+
+  if (DIRECT_MODE) {
+    document.addEventListener(DIRECT_REQUEST_EVENT, event => {
+      let command
+      try { command = JSON.parse(event.detail) } catch (_) { return }
+      if (!command || typeof command.name !== "string") return
+      forwardDashboardRequest({ cmd: command.name, ...(command.data || {}) }).catch(() => {})
+    })
   }
 
   window.addEventListener("message", async event => {
@@ -66,17 +103,7 @@
     if (data.type !== "request" || !data.message || !data.requestId) return
 
     try {
-      const response = await sendRuntimeMessage({ type: "dashboard.request", message: data.message })
-      if (!response || response.ok !== true) {
-        post("request-error", {
-          requestId: data.requestId,
-          error: response && response.error ? response.error : { code: "bridge_unavailable", message: "Tab Space is unavailable." }
-        })
-        return
-      }
-      const messages = response.result && response.result.messages
-      for (const message of messages || []) postNativeMessage(message)
-      post("request-complete", { requestId: data.requestId })
+      await forwardDashboardRequest(data.message, data.requestId)
     } catch (error) {
       post("request-error", {
         requestId: data.requestId,
@@ -94,6 +121,12 @@
       nativeConnected = true
       bridgeInfo = payload.result || bridgeInfo
       post("connected", { bridgeInfo })
+    }
+  })
+
+  extensionApi.runtime.onMessage.addListener(payload => {
+    if (payload && payload.type === "dashboard.nativeMessage" && payload.message) {
+      postNativeMessage(payload.message)
     }
   })
 

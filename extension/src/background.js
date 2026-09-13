@@ -160,6 +160,22 @@
   function dashboardCommandToOperation(message) {
     const msg = message || {}
     switch (msg.cmd) {
+      case "VerifyOnboardingWebsiteAccess":
+        return { kind: "native", method: "onboarding.websiteAccessVerified", params: {} }
+      case "DuplicateTab":
+      case "SaveTabs":
+      case "SaveCurrentTab":
+      case "OpenInExternalBrowser1":
+      case "OpenInExternalBrowser2":
+      case "CloseRightTabs":
+      case "CloseLeftTabs":
+      case "CloseSameDomainTabs":
+      case "CloseOtherTabs":
+      case "AddToNotes":
+        return { kind: "browser-command", method: msg.cmd, params: msg }
+      case "RedirectToSpace":
+      case "GoToSpace":
+        return { kind: "browser", method: "dashboard.open", params: {} }
       case "CheckBookmarks":
         return { kind: "native", method: "sessions.list", params: {} }
       case "AppendSessions":
@@ -179,12 +195,32 @@
         }
       case "UpSession":
         return { kind: "native", method: "sessions.up", params: { sessions: parseBookmarks(msg.bookmarks) } }
+      case "SwapSession":
+        return { kind: "native", method: "sessions.swap", params: { uuids: msg.uuids || [] } }
       case "MoveSession":
         return { kind: "native", method: "sessions.move", params: { uuids: msg.uuids || [] } }
       case "CheckDefault":
+        if (msg.name === "tabspace-native-protocol-version") {
+          return { kind: "local", method: "settings.get", params: {}, result: { name: msg.name, value: "3" } }
+        }
         return { kind: "native", method: "settings.get", params: { name: msg.name } }
       case "SetDefault":
         return { kind: "native", method: "settings.set", params: { name: msg.name, value: msg.value } }
+      case "CheckSwitcherHelperStatus":
+        return { kind: "native", method: "sync.status", params: {}, response: "helper" }
+      case "CheckSyncStatus":
+        return { kind: "native", method: "sync.status", params: {}, response: "sync" }
+      case "OpenTabSpaceApp":
+        return { kind: "native", method: "app.open", params: {} }
+      case "ReportDashboardTiming":
+        return {
+          kind: "native",
+          method: "diagnostics.dashboardTiming",
+          params: {
+            ...(msg.payloadDeliveryMs !== undefined ? { payloadDeliveryMs: msg.payloadDeliveryMs } : {}),
+            ...(msg.dashboardRenderMs !== undefined ? { dashboardRenderMs: msg.dashboardRenderMs } : {})
+          }
+        }
       case "ListBackups":
         return { kind: "native", method: "backups.list", params: {} }
       case "ForceBackup":
@@ -249,16 +285,29 @@
         return { kind: "native", method: "subscription.restore", params: {} }
       case "RestoreSession":
         return { kind: "browser", method: "tabs.restore", params: { sessions: parseBookmarks(msg.bookmarks) } }
+      case "CheckDevBridge":
+        return { kind: "local", method: "dev.bridge", params: {}, result: {} }
       default:
         throw new BridgeError("unsupported_command", `Unsupported dashboard command: ${msg.cmd || "(missing)"}`)
     }
   }
 
   function dashboardMessagesFor(operation, result) {
-    if (operation.kind === "browser") return []
+    if (operation.method === "dev.bridge") return [{ cmd: "DevBridgeAllowed" }]
+    if (operation.response === "helper") {
+      return [{ cmd: "ReturnSwitcherHelperStatus", status: result && result.helperRunning ? "ready" : "needsAppLaunch" }]
+    }
+    if (operation.response === "sync") return [{ cmd: "ReturnSyncStatus", ...(result || {}) }]
+    if (operation.kind === "browser" || operation.kind === "browser-command") return []
     if (operation.method.startsWith("sessions.") || operation.method === "backups.restore") {
       if (Array.isArray(result && result.sessions)) {
-        return [{ cmd: "ReturnBookmarks", bookmarks: result.sessions, source: "local-bridge" }]
+        return [{
+          cmd: "ReturnBookmarks",
+          bookmarks: result.sessions,
+          value: JSON.stringify(result.sessions),
+          source: "local-bridge",
+          dispatchedAtMs: Date.now()
+        }]
       }
       return []
     }
@@ -335,6 +384,7 @@
       updateTab(id, properties) { return call(extensionApi.tabs, "update", id, properties) },
       updateWindow(id, properties) { return call(extensionApi.windows, "update", id, properties) },
       removeTabs(ids) { return call(extensionApi.tabs, "remove", ids) },
+      sendTabMessage(id, message) { return call(extensionApi.tabs, "sendMessage", id, message) },
       getStorage(keys) { return call(extensionApi.storage.local, "get", keys) },
       setStorage(values) { return call(extensionApi.storage.local, "set", values) },
       removeStorage(keys) { return call(extensionApi.storage.local, "remove", keys) },
@@ -635,6 +685,8 @@
   function createController(options) {
     const browserApi = options.browserApi
     const client = options.client
+    const browserCommand = options.browserCommand || (() => Promise.reject(
+      new BridgeError("unsupported_command", "This dashboard browser command is unavailable.")))
     const delay = options.delay || (milliseconds =>
       new Promise(resolve => root.setTimeout(resolve, milliseconds)))
 
@@ -826,9 +878,12 @@
 
     async function handleDashboard(message) {
       const operation = dashboardCommandToOperation(message)
-      const result = operation.kind === "native"
-        ? await client.request(operation.method, operation.params)
-        : await restoreSessions(operation.params.sessions)
+      let result
+      if (operation.kind === "native") result = await client.request(operation.method, operation.params)
+      else if (operation.kind === "local") result = operation.result
+      else if (operation.kind === "browser-command") result = await browserCommand(operation.method, operation.params)
+      else if (operation.method === "dashboard.open") result = await openDashboard()
+      else result = await restoreSessions(operation.params.sessions)
       return { messages: dashboardMessagesFor(operation, result), result }
     }
 
@@ -939,7 +994,21 @@
     const commandClient = BUILD_TARGET === "safari" && root.TabSpaceSafariMenu
       ? root.TabSpaceSafariMenu.commandClient(client)
       : client
-    const controller = createController({ browserApi: api, client: commandClient })
+    let controller
+    controller = createController({
+      browserApi: api,
+      client: commandClient,
+      browserCommand: (command, data) => {
+        if (BUILD_TARGET !== "safari" || !root.TabSpaceSafariMenu) {
+          return Promise.reject(new BridgeError("unsupported_command", `Unsupported browser command: ${command}`))
+        }
+        return root.TabSpaceSafariMenu.performCommand(command, data || {}, {
+          api: extensionApi,
+          controller,
+          client: commandClient
+        })
+      }
+    })
     const dashboardPorts = new Set()
 
     client.addEventListener(event => {
@@ -960,9 +1029,13 @@
       }
       const message = dashboardMessageForEvent(event)
       if (!message) return
-      for (const port of dashboardPorts) {
-        try { port.postMessage({ type: "native-message", message }) } catch (_) {}
-      }
+      // Query at event time so every open dashboard receives the invalidation,
+      // including pages whose long-lived port was discarded while Safari's
+      // background context slept.
+      api.queryTabs({}).then(tabs => Promise.all(
+        (tabs || []).filter(tab => isDashboardUrl(tab.url)).map(tab =>
+          api.sendTabMessage(tab.id, { type: "dashboard.nativeMessage", message }).catch(() => {}))
+      )).catch(() => {})
     })
 
     function wakeBridge() {

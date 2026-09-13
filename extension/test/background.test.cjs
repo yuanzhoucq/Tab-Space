@@ -215,12 +215,32 @@ test('advertises the close capability alongside tab listing', () => {
 })
 
 test('maps every dashboard data command onto protocol v2 methods', () => {
+  const allLegacyCommands = [
+    'VerifyOnboardingWebsiteAccess', 'DuplicateTab', 'RedirectToSpace', 'GoToSpace',
+    'SaveTabs', 'SaveCurrentTab', 'SetDefault', 'CheckDefault',
+    'CheckSwitcherHelperStatus', 'CheckSyncStatus', 'OpenTabSpaceApp',
+    'OpenInExternalBrowser1', 'OpenInExternalBrowser2', 'CloseRightTabs',
+    'CloseLeftTabs', 'CloseSameDomainTabs', 'CloseOtherTabs', 'AddToNotes',
+    'AppendSessions', 'MergeSessions', 'DeleteSession', 'UpdateSession', 'UpSession',
+    'SwapSession', 'MoveSession', 'RestoreSession', 'CheckBookmarks',
+    'ReportDashboardTiming', 'ListBackups', 'RestoreBackup', 'ForceBackup',
+    'CheckDevBridge', 'PrepareAI', 'EnhanceSession', 'ClusterTabs', 'SaveSplitSessions',
+    'GetSuggestions', 'DismissSuggestion', 'CheckSubscriptionStatus',
+    'PurchaseSubscription', 'RestorePurchases'
+  ]
+  assert.equal(allLegacyCommands.length, 41)
+  for (const cmd of allLegacyCommands) {
+    assert.doesNotThrow(() => background.dashboardCommandToOperation({
+      cmd, bookmarks: '[]', clusters: '[]', uuids: []
+    }), cmd)
+  }
   assert.equal(background.dashboardCommandToOperation({ cmd: 'CheckBookmarks' }).method, 'sessions.list')
   assert.equal(background.dashboardCommandToOperation({ cmd: 'AppendSessions', bookmarks: '[]' }).method, 'sessions.append')
   assert.equal(background.dashboardCommandToOperation({ cmd: 'UpdateSession', bookmarks: [] }).method, 'sessions.update')
   assert.equal(background.dashboardCommandToOperation({ cmd: 'DeleteSession', bookmarks: [] }).method, 'sessions.delete')
   assert.equal(background.dashboardCommandToOperation({ cmd: 'MergeSessions', bookmarks: [] }).method, 'sessions.merge')
   assert.equal(background.dashboardCommandToOperation({ cmd: 'UpSession', bookmarks: [] }).method, 'sessions.up')
+  assert.equal(background.dashboardCommandToOperation({ cmd: 'SwapSession', uuids: [] }).method, 'sessions.swap')
   assert.equal(background.dashboardCommandToOperation({ cmd: 'MoveSession', uuids: [] }).method, 'sessions.move')
   assert.equal(background.dashboardCommandToOperation({ cmd: 'CheckDefault', name: 'x' }).method, 'settings.get')
   assert.equal(background.dashboardCommandToOperation({ cmd: 'SetDefault', name: 'x', value: 'y' }).method, 'settings.set')
@@ -250,6 +270,13 @@ test('maps every dashboard data command onto protocol v2 methods', () => {
   assert.equal(background.dashboardCommandToOperation({ cmd: 'CheckSubscriptionStatus' }).method, 'subscription.status')
   assert.equal(background.dashboardCommandToOperation({ cmd: 'PurchaseSubscription' }).method, 'subscription.purchase')
   assert.equal(background.dashboardCommandToOperation({ cmd: 'RestorePurchases' }).method, 'subscription.restore')
+  assert.equal(background.dashboardCommandToOperation({ cmd: 'ReportDashboardTiming' }).method, 'diagnostics.dashboardTiming')
+  assert.equal(background.dashboardCommandToOperation({ cmd: 'VerifyOnboardingWebsiteAccess' }).method, 'onboarding.websiteAccessVerified')
+  assert.equal(background.dashboardCommandToOperation({ cmd: 'OpenTabSpaceApp' }).method, 'app.open')
+  assert.deepEqual(
+    background.dashboardCommandToOperation({ cmd: 'CheckDefault', name: 'tabspace-native-protocol-version' }).result,
+    { name: 'tabspace-native-protocol-version', value: '3' }
+  )
   assert.throws(() => background.dashboardCommandToOperation({ cmd: 'ClaimFreeTrial' }), /Unsupported dashboard command/)
   assert.deepEqual(background.dashboardMessageForEvent({ event: 'sessions.changed', revision: 9 }), {
     cmd: 'SessionsChangedRemotely',
