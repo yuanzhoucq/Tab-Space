@@ -278,7 +278,11 @@
     readSettings(context).catch(() => {})
     if (api.action && api.action.onClicked) {
       api.action.onClicked.addListener(tab => {
-        show(context, tab).then(() => call(api.storage.local, "set", {
+        // Keep Safari's MV3 background context alive while the native NSMenu
+        // tracks and while the selected action crosses the bridge. Without
+        // returning this promise Safari may tear down the event immediately
+        // after the listener returns, before `sendNativeMessage` resolves.
+        return show(context, tab).then(() => call(api.storage.local, "set", {
           "tabspace-safari-menu-last-result": "menu_native"
         })).catch(async () => {
           await setPopup(api, FALLBACK_POPUP).catch(() => {})

@@ -48,6 +48,26 @@ test("setPopup switches in both native-menu and forced-fallback directions", asy
   assert.deepEqual(fallbackApi.popups, [{ popup: menu.FALLBACK_POPUP }])
 })
 
+test("action listener returns the native-menu workflow promise", async () => {
+  let listener
+  const api = {
+    action: {
+      setPopup: async () => {},
+      onClicked: { addListener: value => { listener = value } }
+    },
+    windows: { getCurrent: async () => ({ left: 0, top: 0, width: 100, height: 100 }) },
+    tabs: { query: async () => [] },
+    storage: { local: { get: async () => ({}), set: async () => {} } }
+  }
+  const client = { request: async method => method === "sessions.list" ? { sessions: [] } : { value: "" } }
+  menu.install({ api, client, controller: {} })
+
+  assert.equal(typeof listener, "function")
+  const workflow = listener({})
+  assert.equal(typeof workflow.then, "function")
+  await workflow
+})
+
 test("restore uses bounded concurrency and opens the first URL active", async () => {
   let active = 0
   let peak = 0
