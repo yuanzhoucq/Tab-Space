@@ -362,6 +362,16 @@
     return null
   }
 
+  async function sendDashboardEvent(browserApi, event) {
+    const message = dashboardMessageForEvent(event)
+    if (!message) return { sent: 0 }
+    const tabs = await browserApi.queryTabs({})
+    const dashboards = (tabs || []).filter(tab => isDashboardUrl(tab.url))
+    await Promise.all(dashboards.map(tab =>
+      browserApi.sendTabMessage(tab.id, { type: "dashboard.nativeMessage", message }).catch(() => {})))
+    return { sent: dashboards.length }
+  }
+
   function createBrowserApi(extensionApi, preferPromises) {
     function callbackCall(target, method, args) {
       return new Promise((resolve, reject) => {
@@ -1027,15 +1037,10 @@
         switcherAction.catch(() => {})
         return
       }
-      const message = dashboardMessageForEvent(event)
-      if (!message) return
       // Query at event time so every open dashboard receives the invalidation,
       // including pages whose long-lived port was discarded while Safari's
       // background context slept.
-      api.queryTabs({}).then(tabs => Promise.all(
-        (tabs || []).filter(tab => isDashboardUrl(tab.url)).map(tab =>
-          api.sendTabMessage(tab.id, { type: "dashboard.nativeMessage", message }).catch(() => {}))
-      )).catch(() => {})
+      sendDashboardEvent(api, event).catch(() => {})
     })
 
     function wakeBridge() {
@@ -1164,6 +1169,7 @@
     dashboardCapabilities,
     dashboardMessageForEvent,
     dashboardMessagesFor,
+    sendDashboardEvent,
     browserFamily,
     createController,
     handleSwitcherEvent,

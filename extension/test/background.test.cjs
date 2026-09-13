@@ -339,6 +339,24 @@ test('maps protocol v2 AI and subscription results back to dashboard messages', 
   )
 })
 
+test('pushes session invalidations to every dashboard tab and nowhere else', async () => {
+  const sent = []
+  const result = await background.sendDashboardEvent({
+    queryTabs: async () => [
+      { id: 1, url: 'https://app.mytab.space/' },
+      { id: 2, url: 'https://app.mytab.space/settings' },
+      { id: 3, url: 'https://example.com/' }
+    ],
+    sendTabMessage: async (id, message) => sent.push([id, message])
+  }, { event: 'sessions.changed', revision: 12 })
+
+  assert.equal(result.sent, 2)
+  assert.deepEqual(sent, [
+    [1, { type: 'dashboard.nativeMessage', message: { cmd: 'SessionsChangedRemotely', revision: 12 } }],
+    [2, { type: 'dashboard.nativeMessage', message: { cmd: 'SessionsChangedRemotely', revision: 12 } }]
+  ])
+})
+
 test('saving never closes tabs before the native acknowledgement', async () => {
   const calls = []
   let acknowledge
