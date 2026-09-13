@@ -137,6 +137,28 @@ test('closes switcher tabs one at a time when the batch is rejected, and counts 
   assert.deepEqual(await controller.closeSwitcherTabs(['nope', null]), { closed: 0 })
 })
 
+test('waits for Safari close results to become visible before acknowledging them', async () => {
+  let living = [7]
+  let queryCount = 0
+  const delays = []
+  const browserApi = {
+    queryTabs: async () => {
+      queryCount += 1
+      if (queryCount === 3) living = []
+      return living.map(id => ({ id, windowId: 1, title: 'T', url: 'https://a.example' }))
+    },
+    removeTabs: async () => {}
+  }
+  const controller = background.createController({
+    browserApi,
+    client: {},
+    delay: async milliseconds => delays.push(milliseconds)
+  })
+
+  assert.deepEqual(await controller.closeSwitcherTabs([7, 7]), { closed: 1 })
+  assert.deepEqual(delays, [25, 50])
+})
+
 test('answers a switcher close event even when closing fails outright', async () => {
   const requests = []
   const client = { request: async (method, params) => requests.push([method, params]) }

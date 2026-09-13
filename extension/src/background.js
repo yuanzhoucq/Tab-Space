@@ -635,6 +635,8 @@
   function createController(options) {
     const browserApi = options.browserApi
     const client = options.client
+    const delay = options.delay || (milliseconds =>
+      new Promise(resolve => root.setTimeout(resolve, milliseconds)))
 
     async function listPopupTabs() {
       const [tabs, activeTabs] = await Promise.all([
@@ -666,7 +668,9 @@
     // The app only sends this after the store has confirmed the save, so these
     // ids always name tabs that are already archived.
     async function closeSwitcherTabs(tabIds) {
-      const ids = Array.isArray(tabIds) ? tabIds.filter(Number.isInteger) : []
+      const ids = Array.isArray(tabIds)
+        ? Array.from(new Set(tabIds.filter(Number.isInteger)))
+        : []
       if (ids.length === 0) return { closed: 0 }
 
       try {
@@ -685,10 +689,18 @@
         }
       }
 
-      // Measured rather than assumed: the app turns this into "saved, but N
-      // tabs stayed open", so a tab that survived must not be counted as closed.
-      const remaining = new Set((await browserApi.queryTabs({})).map(tab => tab.id))
-      return { closed: ids.filter(id => !remaining.has(id)).length }
+      // Safari resolves tabs.remove before tabs.query stops returning the
+      // removed tab. Poll that eventually-consistent snapshot briefly so the
+      // app does not report a successful close as a failure. Chromium and
+      // Firefox normally finish on the first query and pay no delay.
+      let closed = 0
+      for (const wait of [0, 25, 50, 100, 200, 400]) {
+        if (wait > 0) await delay(wait)
+        const remaining = new Set((await browserApi.queryTabs({})).map(tab => tab.id))
+        closed = ids.filter(id => !remaining.has(id)).length
+        if (closed === ids.length) break
+      }
+      return { closed }
     }
 
     async function settingEnabled(name) {
