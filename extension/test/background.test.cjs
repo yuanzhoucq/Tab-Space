@@ -285,6 +285,14 @@ test('maps every dashboard data command onto protocol v2 methods', () => {
 })
 
 test('maps protocol v2 AI and subscription results back to dashboard messages', () => {
+  const bookmarkMessage = background.dashboardMessagesFor(
+    { kind: 'native', method: 'sessions.list' },
+    { sessions: [{ uuid: 'one' }] }
+  )[0]
+  assert.equal(bookmarkMessage.cmd, 'ReturnBookmarks')
+  assert.deepEqual(bookmarkMessage.bookmarks, [{ uuid: 'one' }])
+  assert.equal(bookmarkMessage.value, '[{"uuid":"one"}]')
+  assert.equal(typeof bookmarkMessage.dispatchedAtMs, 'number')
   assert.deepEqual(
     background.dashboardMessagesFor(
       { kind: 'native', method: 'ai.enhance' },
@@ -337,6 +345,27 @@ test('maps protocol v2 AI and subscription results back to dashboard messages', 
     ),
     [{ cmd: 'PurchaseResult', redirected: true }]
   )
+})
+
+test('handles direct protocol replies locally and dispatches legacy browser commands', async () => {
+  const browserCommands = []
+  const controller = background.createController({
+    browserApi: {},
+    client: { request: async () => { throw new Error('native request was not expected') } },
+    browserCommand: async (command, data) => browserCommands.push([command, data])
+  })
+
+  const protocol = await controller.handleDashboard({
+    cmd: 'CheckDefault', name: 'tabspace-native-protocol-version'
+  })
+  assert.deepEqual(protocol.messages, [{
+    cmd: 'ReturnDefault', id: 'tabspace-native-protocol-version', value: '3'
+  }])
+
+  await controller.handleDashboard({ cmd: 'DuplicateTab', source: 'dashboard' })
+  assert.deepEqual(browserCommands, [[
+    'DuplicateTab', { cmd: 'DuplicateTab', source: 'dashboard' }
+  ]])
 })
 
 test('pushes session invalidations to every dashboard tab and nowhere else', async () => {
