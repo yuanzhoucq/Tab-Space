@@ -84,6 +84,31 @@ test('lists all browser windows for the switcher and activates the selected tab'
   ])
 })
 
+test('publishes a complete 501-tab Safari snapshot without truncation', async () => {
+  const tabs = Array.from({ length: 501 }, (_, index) => ({
+    id: index + 1,
+    windowId: Math.floor(index / 100) + 1,
+    title: `Tab ${index + 1}`,
+    url: `https://example.com/${index + 1}`
+  }))
+  let queries = 0
+  const controller = background.createController({
+    browserApi: {
+      queryTabs: async query => {
+        assert.deepEqual(query, {})
+        queries += 1
+        return tabs
+      }
+    },
+    client: {}
+  })
+
+  const result = await controller.listSwitcherTabs()
+  assert.equal(queries, 1)
+  assert.equal(result.length, 501)
+  assert.equal(result.at(-1).id, 501)
+})
+
 test('answers helper switcher events through the authenticated bridge', async () => {
   const requests = []
   const controller = {
