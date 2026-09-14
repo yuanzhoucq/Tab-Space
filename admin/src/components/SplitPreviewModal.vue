@@ -1,13 +1,13 @@
 <template>
   <div class="split-modal-overlay" v-if="visible" @click.self="dismiss">
-    <div class="split-modal" role="dialog" aria-modal="true">
+    <div class="split-modal" role="dialog" aria-modal="true" :aria-busy="saving ? 'true' : 'false'">
       <header class="split-header">
         <div class="split-header-icon" aria-hidden="true">🤖</div>
         <div class="split-header-text">
           <h2>{{ lang.splitDetectedTitle || 'Multiple Topics Detected' }}</h2>
           <p class="text-muted">{{ summaryText }}</p>
         </div>
-        <button type="button" class="split-close" :aria-label="lang.cancel || 'Close'" @click="dismiss">
+        <button type="button" class="split-close" :aria-label="lang.cancel || 'Close'" :disabled="saving" @click="dismiss">
           <v-icon name="x"></v-icon>
         </button>
       </header>
@@ -28,12 +28,13 @@
       </div>
 
       <footer class="split-footer">
-        <p class="split-note">{{ lang.splitOriginalToTrash || 'The original session moves to Trash — you can restore it anytime.' }}</p>
+        <p v-if="saveError" class="split-note split-error" role="alert" data-testid="split-save-error">{{ saveErrorText }}</p>
+        <p v-else class="split-note">{{ lang.splitOriginalToTrash || 'The original session moves to Trash — you can restore it anytime.' }}</p>
         <div class="split-actions">
-          <button type="button" class="split-btn-secondary" @click="keepAsSingle">
+          <button type="button" class="split-btn-secondary" :disabled="saving" @click="keepAsSingle">
             {{ lang.keepAsSingle || 'Keep as 1 Session' }}
           </button>
-          <button type="button" class="split-btn-primary" :disabled="validSessionCount === 0" @click="saveAsMultiple">
+          <button type="button" class="split-btn-primary" :disabled="saving || validSessionCount === 0" @click="saveAsMultiple">
             {{ saveButtonText }}
           </button>
         </div>
@@ -43,19 +44,36 @@
 </template>
 
 <script>
-import { mapState } from 'vuex'
+import { mapState, mapGetters } from 'vuex'
 import WangYeIcon from '../assets/img/icon-webpage.svg'
+
+const TRASH_TAG = '@Trash'
+
+// How long a bookmarks refresh may take before a step is treated as refused.
+// The refresh re-serializes the whole library, so a large one needs seconds.
+const NATIVE_REPLY_TIMEOUT_MS = 10000
+
+function isTrashed(session) {
+  return Boolean(session) && (session.tags || []).some(tag => tag && tag.name === TRASH_TAG)
+}
 
 export default {
   name: 'SplitPreviewModal',
   data() {
     return {
       WangYeIcon,
-      previewSessions: []
+      previewSessions: [],
+      saving: false,
+      // '' | 'limit' | 'failed'
+      saveError: ''
     }
   },
   computed: {
-    ...mapState(['lang', 'bridge', 'splitPreview']),
+    ...mapState([
+      'lang', 'bridge', 'splitPreview', 'sessions',
+      'entitlementTier', 'entitlementResolved', 'enforcesSessionLimit', 'freeSessionLimit'
+    ]),
+    ...mapGetters(['liveSessionCount']),
     visible() {
       return Boolean(this.splitPreview && this.splitPreview.clusters && this.splitPreview.clusters.length > 0)
     },
@@ -64,6 +82,9 @@ export default {
     },
     originalUuid() {
       return (this.splitPreview && this.splitPreview.originalUuid) || null
+    },
+    originalSession() {
+      return this.sessions.find(session => session.uuid === this.originalUuid) || null
     },
     validSessionCount() {
       return this.previewSessions.filter(s => s.sites.length > 0).length
@@ -77,14 +98,28 @@ export default {
       return `${this.totalTabs} ${tabsWord} → ${this.previewSessions.length} ${topicsWord}`
     },
     saveButtonText() {
+      if (this.saving) return this.lang.splitSaving || 'Saving…'
       const template = this.lang.saveAsMultiple || 'Save as {count} Sessions'
       return template.replace('{count}', this.validSessionCount)
+    },
+    saveErrorText() {
+      if (this.saveError === 'limit') {
+        const template = this.lang.splitFreeLimit
+          || "Saving {count} sessions would go past the Free plan's limit of {limit} saved sessions."
+        return template.replace('{count}', this.validSessionCount).replace('{limit}', this.freeSessionLimit)
+      }
+      if (this.saveError === 'failed') {
+        return this.lang.splitSaveFailed
+          || 'Tab Space could not save the split sessions. Your original session is unchanged.'
+      }
+      return ''
     }
   },
   watch: {
     splitPreview: {
       immediate: true,
       handler(preview) {
+        this.saveError = ''
         if (preview && preview.clusters) {
           this.previewSessions = preview.clusters.map((cluster, index) => ({
             uuid: `preview-${index}-${Date.now()}`,
@@ -99,6 +134,9 @@ export default {
       }
     }
   },
+  beforeDestroy() {
+    if (this.stopWaiting) this.stopWaiting()
+  },
   methods: {
     getFavicon(url) {
       try {
@@ -108,30 +146,110 @@ export default {
         return ''
       }
     },
-    saveAsMultiple() {
+    // Mirrors CommercializationConfig.canCreateSessions as it applies once the
+    // original sits in Trash: recycled sessions hold no Free slot, so only the
+    // *other* live sessions count against the limit. The native side stays
+    // authoritative; this only spares the user a save that is known to be
+    // refused, with the preview they paid an AI request for still on screen.
+    exceedsFreeLimit(newSessionCount) {
+      if (!this.entitlementResolved || !this.enforcesSessionLimit || this.entitlementTier !== 'free') return false
+      const original = this.originalSession
+      const others = this.liveSessionCount - (original && !isTrashed(original) ? 1 : 0)
+      return others + newSessionCount > this.freeSessionLimit
+    },
+    async saveAsMultiple() {
+      if (this.saving || !this.bridge) return
       // Applying a split is not gated by tier: the split the user already paid a
       // weekly AI request for has to land, otherwise the trial burns the quota
       // and delivers nothing. Pro sells volume (unlimited requests), not the
-      // capability itself.
+      // capability itself. Only the Free *session* limit can refuse it.
       const validSessions = this.previewSessions.filter(s => s.sites.length > 0)
       const clustersData = validSessions.map(session => ({
         name: session.title,
         tags: session.tags,
         sites: session.sites
       }))
-      // Native appends every new session first, then tags the original @Trash
-      // (never a hard delete) — so this is trivially undoable.
-      this.bridge.send({
-        cmd: 'SaveSplitSessions',
-        clusters: JSON.stringify(clustersData),
-        originalUuid: this.originalUuid
+      if (this.exceedsFreeLimit(clustersData.length)) {
+        this.saveError = 'limit'
+        this.$store.commit('setShowSubscriptionModal', { show: true, reason: 'limitReached' })
+        return
+      }
+
+      this.saving = true
+      this.saveError = ''
+      const originalUuid = this.originalUuid
+      // Snapshot before anything moves, so a refused save can put the original
+      // back exactly as it was.
+      const original = this.originalSession ? JSON.parse(JSON.stringify(this.originalSession)) : null
+      const knownUuids = new Set(this.sessions.map(session => session.uuid))
+      const clusterUrls = new Set(clustersData.flatMap(cluster => cluster.sites.map(site => site.url)))
+      let movedToTrash = false
+      try {
+        // Trash the original FIRST. Every tab in the split is, by definition,
+        // still saved in the original, and native's duplicate-tab filter and
+        // Free session count both skip @Trash but count a live session: with
+        // "Don't save duplicated tabs" on, saving the clusters while the
+        // original is live filters every one of them down to nothing and
+        // stores no session. Native then finds the original already trashed and
+        // leaves it alone (reserved tag, sync contract — never a hard delete).
+        if (original && !isTrashed(original)) {
+          this.bridge.send({
+            cmd: 'UpdateSession',
+            bookmarks: [{ ...original, tags: [...(original.tags || []), { name: TRASH_TAG }] }]
+          })
+          movedToTrash = true
+          const trashed = await this.waitForSessions(sessions =>
+            isTrashed(sessions.find(session => session.uuid === originalUuid)))
+          if (!trashed) throw new Error('The original session did not reach Trash.')
+        }
+        this.bridge.send({
+          cmd: 'SaveSplitSessions',
+          clusters: JSON.stringify(clustersData),
+          originalUuid
+        })
+        // Native confirms nothing on its own: a refused or filtered-out save
+        // only re-sends the unchanged library. A new session carrying the
+        // split's tabs is the proof that it landed.
+        const created = await this.waitForSessions(sessions => sessions.some(session =>
+          !knownUuids.has(session.uuid) && (session.sites || []).some(site => clusterUrls.has(site.url))))
+        if (!created) throw new Error('No split session was stored.')
+        this.$store.commit('setSplitPreview', null)
+      } catch (error) {
+        if (movedToTrash) this.bridge.send({ cmd: 'UpdateSession', bookmarks: [original] })
+        this.saveError = 'failed'
+      } finally {
+        this.saving = false
+      }
+    },
+    // Resolves true once a bookmarks refresh satisfies `predicate`, false on
+    // timeout. Content-based on purpose: the trash step, iCloud merges and the
+    // companion bridge all trigger refreshes of their own, so "the next
+    // refresh" is not necessarily the reply to the request just sent.
+    waitForSessions(predicate, timeoutMs = NATIVE_REPLY_TIMEOUT_MS) {
+      return new Promise(resolve => {
+        let settled = false
+        let unsubscribe = null
+        const finish = value => {
+          if (settled) return
+          settled = true
+          clearTimeout(timer)
+          if (unsubscribe) unsubscribe()
+          this.stopWaiting = null
+          resolve(value)
+        }
+        const timer = setTimeout(() => finish(false), timeoutMs)
+        unsubscribe = this.$store.subscribe((mutation, state) => {
+          if (mutation.type === 'setSessions' && predicate(state.sessions)) finish(true)
+        })
+        this.stopWaiting = () => finish(false)
       })
-      this.$store.commit('setSplitPreview', null)
     },
     keepAsSingle() {
+      if (this.saving) return
       this.$store.commit('setSplitPreview', null)
     },
     dismiss() {
+      if (this.saving) return
       this.$store.commit('setSplitPreview', null)
     }
   }
@@ -288,6 +406,10 @@ export default {
   font-size: 0.8rem;
   line-height: 1.4;
   color: var(--text-secondary, #718096);
+}
+
+.split-error {
+  color: #dc2626;
 }
 
 .split-actions {

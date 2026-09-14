@@ -101,7 +101,8 @@ async function openDashboard(page, options = {}) {
     quotaRemaining,
     aiConsentAccepted,
     switcherHelperStatus,
-    trialEligible
+    trialEligible,
+    splitSaveStoresNothing
   }) => {
     const clone = value => JSON.parse(JSON.stringify(value))
     const settingsKey = 'tabspace-e2e-settings'
@@ -272,6 +273,12 @@ async function openDashboard(page, options = {}) {
         }
 
         if (name === 'SaveSplitSessions') {
+          // Native never reports a refused split (Free limit, duplicate-tab
+          // filter, nothing left after dedup): it only re-sends the library.
+          if (splitSaveStoresNothing) {
+            returnBookmarks()
+            return
+          }
           const now = Date.now()
           const clusters = JSON.parse(payload.clusters || '[]')
           currentSessions.unshift(...clusters.map((cluster, index) => ({
@@ -434,7 +441,8 @@ async function openDashboard(page, options = {}) {
     quotaRemaining: options.quotaRemaining,
     aiConsentAccepted: options.aiConsentAccepted !== false,
     switcherHelperStatus: options.switcherHelperStatus || '',
-    trialEligible: Boolean(options.trialEligible)
+    trialEligible: Boolean(options.trialEligible),
+    splitSaveStoresNothing: Boolean(options.splitSaveStoresNothing)
   })
 
   await page.route('**/favicon.ico', route => route.fulfill({ status: 204, body: '' }))
@@ -835,6 +843,10 @@ async function lastBridgeCommand(page, name) {
   }, name)
 }
 
+async function bridgeCommands(page) {
+  return page.evaluate(() => window.__tabspaceBridgeCommands)
+}
+
 async function bridgeCommandCount(page, name) {
   return page.evaluate(commandName => (
     window.__tabspaceBridgeCommands.filter(command => command.name === commandName).length
@@ -1106,8 +1118,91 @@ test('lets a free user apply the split their weekly AI request paid for', async 
   await expect.poll(() => lastBridgeCommand(page, 'SaveSplitSessions')).toMatchObject({
     payload: { originalUuid: 'session-research' }
   })
+  await expect(modal).toBeHidden()
   await expect(page.getByTestId('session-session-research')).toHaveCount(0)
   await expect(page.locator('.sessions-list')).toContainText('Topic A')
+
+  // The original goes to Trash BEFORE the clusters are saved. Every tab in the
+  // split is still saved in the original, and native's duplicate-tab filter
+  // skips Trash but counts a live session: saved the other way round with
+  // "Don't save duplicated tabs" on, every cluster is filtered down to nothing.
+  const commands = await bridgeCommands(page)
+  const trashIndex = commands.findIndex(command => command.name === 'UpdateSession'
+    && command.payload.bookmarks[0].uuid === 'session-research'
+    && command.payload.bookmarks[0].tags.some(tag => tag.name === '@Trash'))
+  const saveIndex = commands.findIndex(command => command.name === 'SaveSplitSessions')
+  expect(trashIndex).toBeGreaterThan(-1)
+  expect(trashIndex).toBeLessThan(saveIndex)
+  expect(commands[trashIndex].payload.bookmarks[0].tags).toEqual([{ name: 'Work' }, { name: '@Trash' }])
+})
+
+test('keeps the split preview open and restores the original when native stores nothing', async ({ page }) => {
+  await openDashboard(page, {
+    initialSessions: [
+      {
+        ...sessions[0],
+        sites: [...sessions[0].sites, { title: 'Hacker News', url: 'https://news.ycombinator.com' }]
+      },
+      sessions[1]
+    ],
+    nativeProtocolVersion: '2',
+    subscriptionStatus: 'active',
+    entitlementTier: 'pro',
+    splitSaveStoresNothing: true
+  })
+
+  await page.getByTestId('session-session-research').getByTestId('ai-split-session').click()
+  const modal = page.locator('.split-modal')
+  await expect(modal).toBeVisible()
+  await modal.locator('.split-btn-primary').click()
+
+  // The original is parked in Trash while the save is in flight …
+  await expect(modal.locator('.split-btn-primary')).toBeDisabled()
+  await expect(page.getByTestId('session-session-research')).toHaveCount(0)
+  await expect.poll(() => lastBridgeCommand(page, 'SaveSplitSessions')).toMatchObject({
+    payload: { originalUuid: 'session-research' }
+  })
+
+  // … and comes back once the refresh proves nothing was stored. The dialog
+  // used to close here regardless, which read as "the button does nothing".
+  await expect(page.getByTestId('split-save-error')).toContainText('could not save', { timeout: 15000 })
+  await expect(modal).toBeVisible()
+  await expect(modal.locator('.split-btn-primary')).toBeEnabled()
+  await expect(page.getByTestId('session-session-research')).toHaveCount(1)
+  await expect(page.locator('.session')).toHaveCount(2)
+  expect(await lastBridgeCommand(page, 'UpdateSession')).toMatchObject({
+    payload: { bookmarks: [{ uuid: 'session-research', tags: [{ name: 'Work' }] }] }
+  })
+  expect(await bridgeCommandCount(page, 'SaveSplitSessions')).toBe(1)
+})
+
+test('offers the upgrade instead of a silent refusal when the split would pass the Free limit', async ({ page }) => {
+  await openDashboard(page, {
+    initialSessions: [
+      {
+        ...sessions[0],
+        sites: [...sessions[0].sites, { title: 'Hacker News', url: 'https://news.ycombinator.com' }]
+      },
+      sessions[1]
+    ],
+    nativeProtocolVersion: '2',
+    entitlementTier: 'free',
+    freeSessionLimit: 2
+  })
+
+  await page.getByTestId('session-session-research').getByTestId('ai-split-session').click()
+  const modal = page.locator('.split-modal')
+  await expect(modal).toBeVisible()
+  await modal.locator('.split-btn-primary').click()
+
+  // The original would leave a Free slot behind in Trash, so the other live
+  // session plus two clusters is what native counts: 1 + 2 > 2.
+  await expect(page.locator('.subscription-modal')).toBeVisible()
+  await expect(page.getByTestId('split-save-error')).toContainText('limit of 2 saved sessions')
+  await expect(modal).toBeVisible()
+  expect(await bridgeCommandCount(page, 'SaveSplitSessions')).toBe(0)
+  expect(await bridgeCommandCount(page, 'UpdateSession')).toBe(0)
+  await expect(page.getByTestId('session-session-research')).toHaveCount(1)
 })
 
 test('scrolls rather than squashing the tag filters in a short window', async ({ page }) => {
