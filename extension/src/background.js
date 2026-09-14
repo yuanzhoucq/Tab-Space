@@ -292,6 +292,21 @@
     }
   }
 
+  // ReturnSplitSaved, as the Safari App Extension sends it: `ok`, or the local
+  // bridge's error code (session_limit_reached, nothing_to_save, save_failed).
+  function splitSavedMessage(operation, error) {
+    const message = {
+      cmd: "ReturnSplitSaved",
+      originalUuid: (operation.params && operation.params.originalUuid) || "",
+      ok: !error
+    }
+    if (error) {
+      message.error = error.code || "save_failed"
+      if (error.details && error.details.limit !== undefined) message.limit = error.details.limit
+    }
+    return message
+  }
+
   function dashboardMessagesFor(operation, result) {
     if (operation.method === "dev.bridge") return [{ cmd: "DevBridgeAllowed" }]
     if (operation.response === "helper") {
@@ -300,16 +315,20 @@
     if (operation.response === "sync") return [{ cmd: "ReturnSyncStatus", ...(result || {}) }]
     if (operation.kind === "browser" || operation.kind === "browser-command") return []
     if (operation.method.startsWith("sessions.") || operation.method === "backups.restore") {
+      const messages = []
       if (Array.isArray(result && result.sessions)) {
-        return [{
+        messages.push({
           cmd: "ReturnBookmarks",
           bookmarks: result.sessions,
           value: JSON.stringify(result.sessions),
           source: "local-bridge",
           dispatchedAtMs: Date.now()
-        }]
+        })
       }
-      return []
+      // The split preview waits for this acknowledgement; it follows the
+      // bookmarks so the new sessions are on screen when the preview closes.
+      if (operation.method === "sessions.saveSplit") messages.push(splitSavedMessage(operation))
+      return messages
     }
     if (operation.method === "settings.get" || operation.method === "settings.set") {
       return [{ cmd: "ReturnDefault", id: result.name, value: result.value }]
@@ -895,11 +914,29 @@
     async function handleDashboard(message) {
       const operation = dashboardCommandToOperation(message)
       let result
-      if (operation.kind === "native") result = await client.request(operation.method, operation.params)
-      else if (operation.kind === "local") result = operation.result
-      else if (operation.kind === "browser-command") result = await browserCommand(operation.method, operation.params)
-      else if (operation.method === "dashboard.open") result = await openDashboard()
-      else result = await restoreSessions(operation.params.sessions)
+      if (operation.kind === "native") {
+        try {
+          result = await client.request(operation.method, operation.params)
+        } catch (error) {
+          // A refused split is the answer the preview dialog is waiting for,
+          // not a transport failure — and the Safari direct bridge has no
+          // request-error channel at all, so it has to travel as a message.
+          // Duck-typed: the Safari native fallback rethrows a plain Error that
+          // carries only the code.
+          if (operation.method === "sessions.saveSplit" && error && typeof error.code === "string") {
+            return { messages: [splitSavedMessage(operation, error)], result: null }
+          }
+          throw error
+        }
+      } else if (operation.kind === "local") {
+        result = operation.result
+      } else if (operation.kind === "browser-command") {
+        result = await browserCommand(operation.method, operation.params)
+      } else if (operation.method === "dashboard.open") {
+        result = await openDashboard()
+      } else {
+        result = await restoreSessions(operation.params.sessions)
+      }
       return { messages: dashboardMessagesFor(operation, result), result }
     }
 

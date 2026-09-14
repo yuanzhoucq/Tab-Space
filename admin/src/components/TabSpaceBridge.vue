@@ -383,6 +383,14 @@ export default {
         case "ReturnSplitPreview":
           this.handleSplitPreview(data)
           break
+        case "ReturnSplitSaved":
+          this.$store.commit("setSplitSaveResult", {
+            originalUuid: data.originalUuid || "",
+            ok: data.ok === true,
+            error: data.error || null,
+            limit: data.limit
+          })
+          break
         case "ReturnSuggestions":
           this.handleSuggestions(data)
           break

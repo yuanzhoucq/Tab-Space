@@ -102,7 +102,8 @@ async function openDashboard(page, options = {}) {
     aiConsentAccepted,
     switcherHelperStatus,
     trialEligible,
-    splitSaveStoresNothing
+    splitSaveStoresNothing,
+    splitSaveError
   }) => {
     const clone = value => JSON.parse(JSON.stringify(value))
     const settingsKey = 'tabspace-e2e-settings'
@@ -273,10 +274,22 @@ async function openDashboard(page, options = {}) {
         }
 
         if (name === 'SaveSplitSessions') {
-          // Native never reports a refused split (Free limit, duplicate-tab
-          // filter, nothing left after dedup): it only re-sends the library.
+          // Native before 4.2 never reports a refused split (Free limit,
+          // duplicate-tab filter, nothing left after dedup): it only re-sends
+          // the library.
           if (splitSaveStoresNothing) {
             returnBookmarks()
+            return
+          }
+          // 4.2 names the refusal, after the unchanged library.
+          if (splitSaveError) {
+            returnBookmarks()
+            emit('ReturnSplitSaved', {
+              originalUuid: payload.originalUuid,
+              ok: false,
+              error: splitSaveError,
+              ...(splitSaveError === 'session_limit_reached' ? { limit: currentFreeSessionLimit } : {})
+            })
             return
           }
           const now = Date.now()
@@ -295,6 +308,8 @@ async function openDashboard(page, options = {}) {
             original.tags = [...(original.tags || []), { name: '@Trash' }]
           }
           returnBookmarks()
+          // Bookmarks first, then the acknowledgement — the order native keeps.
+          emit('ReturnSplitSaved', { originalUuid: payload.originalUuid, ok: true })
           return
         }
 
@@ -442,7 +457,8 @@ async function openDashboard(page, options = {}) {
     aiConsentAccepted: options.aiConsentAccepted !== false,
     switcherHelperStatus: options.switcherHelperStatus || '',
     trialEligible: Boolean(options.trialEligible),
-    splitSaveStoresNothing: Boolean(options.splitSaveStoresNothing)
+    splitSaveStoresNothing: Boolean(options.splitSaveStoresNothing),
+    splitSaveError: options.splitSaveError || ''
   })
 
   await page.route('**/favicon.ico', route => route.fulfill({ status: 204, body: '' }))
@@ -1174,6 +1190,38 @@ test('keeps the split preview open and restores the original when native stores 
     payload: { bookmarks: [{ uuid: 'session-research', tags: [{ name: 'Work' }] }] }
   })
   expect(await bridgeCommandCount(page, 'SaveSplitSessions')).toBe(1)
+})
+
+test('names the Free limit the moment native refuses the split and puts the original back', async ({ page }) => {
+  // The dashboard's own count allows the split (1 other session + 2 < 5), so
+  // the refusal has to come from native — as it does when the library changed
+  // on another device — and it must not take the ten-second fallback to show.
+  await openDashboard(page, {
+    initialSessions: [
+      {
+        ...sessions[0],
+        sites: [...sessions[0].sites, { title: 'Hacker News', url: 'https://news.ycombinator.com' }]
+      },
+      sessions[1]
+    ],
+    nativeProtocolVersion: '2',
+    entitlementTier: 'free',
+    splitSaveError: 'session_limit_reached'
+  })
+
+  await page.getByTestId('session-session-research').getByTestId('ai-split-session').click()
+  const modal = page.locator('.split-modal')
+  await expect(modal).toBeVisible()
+  await modal.locator('.split-btn-primary').click()
+
+  await expect(page.getByTestId('split-save-error')).toContainText('limit of 5 saved sessions', { timeout: 3000 })
+  await expect(page.locator('.subscription-modal')).toBeVisible()
+  await expect(modal).toBeVisible()
+  await expect(modal.locator('.split-btn-primary')).toBeEnabled()
+  await expect(page.getByTestId('session-session-research')).toHaveCount(1)
+  expect(await lastBridgeCommand(page, 'UpdateSession')).toMatchObject({
+    payload: { bookmarks: [{ uuid: 'session-research', tags: [{ name: 'Work' }] }] }
+  })
 })
 
 test('offers the upgrade instead of a silent refusal when the split would pass the Free limit', async ({ page }) => {

@@ -347,6 +347,62 @@ test('maps protocol v2 AI and subscription results back to dashboard messages', 
   )
 })
 
+test('acknowledges a split save after the bookmarks, and turns a refusal into the same message', async () => {
+  const operation = background.dashboardCommandToOperation({
+    cmd: 'SaveSplitSessions',
+    clusters: '[{"name":"Topic A","tags":[],"sites":[{"title":"A","url":"https://a.example"}]}]',
+    originalUuid: 'session-research'
+  })
+  const sessions = [{ uuid: 'split-1', title: 'Topic A', sites: [], tags: [] }]
+  const messages = background.dashboardMessagesFor(operation, { sessions })
+  assert.deepEqual(messages.map(message => message.cmd), ['ReturnBookmarks', 'ReturnSplitSaved'])
+  assert.deepEqual(messages[1], { cmd: 'ReturnSplitSaved', originalUuid: 'session-research', ok: true })
+
+  // The native side refuses the split (Free limit, nothing left to save, a
+  // failed write). The preview dialog is waiting on ReturnSplitSaved, and the
+  // Safari direct bridge has no request-error channel, so the refusal must
+  // travel as that message rather than as a rejected request.
+  const refuse = code => background.createController({
+    browserApi: {},
+    client: {
+      request: async () => {
+        throw new background.BridgeError(code, 'refused', code === 'session_limit_reached' ? { limit: 2 } : undefined)
+      }
+    }
+  })
+  const limited = await refuse('session_limit_reached').handleDashboard({
+    cmd: 'SaveSplitSessions', clusters: '[]', originalUuid: 'session-research'
+  })
+  assert.deepEqual(limited, {
+    messages: [{
+      cmd: 'ReturnSplitSaved', originalUuid: 'session-research', ok: false, error: 'session_limit_reached', limit: 2
+    }],
+    result: null
+  })
+  const nothing = await refuse('nothing_to_save').handleDashboard({
+    cmd: 'SaveSplitSessions', clusters: '[]', originalUuid: 'session-research'
+  })
+  assert.deepEqual(nothing.messages, [{
+    cmd: 'ReturnSplitSaved', originalUuid: 'session-research', ok: false, error: 'nothing_to_save'
+  }])
+
+  // Safari's native fallback rethrows a plain Error carrying only the code.
+  const plain = background.createController({
+    browserApi: {},
+    client: { request: async () => { const error = new Error('refused'); error.code = 'save_failed'; throw error } }
+  })
+  const failed = await plain.handleDashboard({ cmd: 'SaveSplitSessions', clusters: '[]', originalUuid: 'session-research' })
+  assert.deepEqual(failed.messages, [{
+    cmd: 'ReturnSplitSaved', originalUuid: 'session-research', ok: false, error: 'save_failed'
+  }])
+
+  // Every other command still surfaces its failure as a rejected request.
+  await assert.rejects(
+    refuse('session_limit_reached').handleDashboard({ cmd: 'AppendSessions', bookmarks: [] }),
+    error => error.code === 'session_limit_reached'
+  )
+})
+
 test('handles direct protocol replies locally and dispatches legacy browser commands', async () => {
   const browserCommands = []
   const controller = background.createController({

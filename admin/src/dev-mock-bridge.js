@@ -141,6 +141,7 @@ export function installMockBridge() {
       const original = sessions[indexOf(msg.originalUuid)]
       if (original && !original.tags.some(t => t.name === '@Trash')) original.tags.push({ name: '@Trash' })
       emitSessions()
+      emit('ReturnSplitSaved', { originalUuid: msg.originalUuid, ok: true })
     },
     GetSuggestions() {
       emit('ReturnSuggestions', { suggestions: sampleSuggestions() })

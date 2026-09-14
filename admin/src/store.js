@@ -118,6 +118,10 @@ const store = new Vuex.Store({
         enhancingSessionId: "",
         splittingSessionId: "",
         splitPreview: null,          // { clusters, totalTabs, originalUuid }
+        // Native's answer to SaveSplitSessions: { originalUuid, ok, error?, limit? }.
+        // Builds before 4.2 never send one; the preview then falls back to
+        // reading the outcome off the next bookmarks refresh.
+        splitSaveResult: null,
         // Golden "just enhanced" flash + typewriter, keyed by session uuid.
         enhancedFlash: null,         // { uuid, title }
         // Local, ranked suggestion queue from GetSuggestions (top item first).
@@ -318,6 +322,9 @@ const store = new Vuex.Store({
         },
         setSplitPreview(state, preview) {
             state.splitPreview = preview
+        },
+        setSplitSaveResult(state, result) {
+            state.splitSaveResult = result
         },
         setEnhancedFlash(state, flash) {
             state.enhancedFlash = flash

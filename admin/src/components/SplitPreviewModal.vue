@@ -57,6 +57,12 @@ function isTrashed(session) {
   return Boolean(session) && (session.tags || []).some(tag => tag && tag.name === TRASH_TAG)
 }
 
+function splitSaveError(code) {
+  const error = new Error(`Split save failed: ${code}`)
+  error.code = code || 'save_failed'
+  return error
+}
+
 export default {
   name: 'SplitPreviewModal',
   data() {
@@ -170,8 +176,7 @@ export default {
         sites: session.sites
       }))
       if (this.exceedsFreeLimit(clustersData.length)) {
-        this.saveError = 'limit'
-        this.$store.commit('setShowSubscriptionModal', { show: true, reason: 'limitReached' })
+        this.showSaveError('session_limit_reached')
         return
       }
 
@@ -198,34 +203,57 @@ export default {
             bookmarks: [{ ...original, tags: [...(original.tags || []), { name: TRASH_TAG }] }]
           })
           movedToTrash = true
-          const trashed = await this.waitForSessions(sessions =>
-            isTrashed(sessions.find(session => session.uuid === originalUuid)))
-          if (!trashed) throw new Error('The original session did not reach Trash.')
+          const trashed = await this.waitForStore((mutation, state) => (
+            mutation.type === 'setSessions'
+              && isTrashed(state.sessions.find(session => session.uuid === originalUuid))
+              ? true : undefined
+          ), false)
+          if (!trashed) throw splitSaveError('trash_failed')
         }
+        this.$store.commit('setSplitSaveResult', null)
         this.bridge.send({
           cmd: 'SaveSplitSessions',
           clusters: JSON.stringify(clustersData),
           originalUuid
         })
-        // Native confirms nothing on its own: a refused or filtered-out save
-        // only re-sends the unchanged library. A new session carrying the
-        // split's tabs is the proof that it landed.
-        const created = await this.waitForSessions(sessions => sessions.some(session =>
-          !knownUuids.has(session.uuid) && (session.sites || []).some(site => clusterUrls.has(site.url))))
-        if (!created) throw new Error('No split session was stored.')
+        // Native 4.2+ answers with ReturnSplitSaved, which is what names a
+        // refusal (the Free limit, nothing left to save, a failed write).
+        // Older builds confirm nothing and only re-send the library, where a
+        // new session carrying the split's tabs is the proof that it landed.
+        const outcome = await this.waitForStore((mutation, state) => {
+          if (mutation.type === 'setSplitSaveResult'
+            && state.splitSaveResult && state.splitSaveResult.originalUuid === originalUuid) {
+            return state.splitSaveResult
+          }
+          if (mutation.type === 'setSessions' && state.sessions.some(session =>
+            !knownUuids.has(session.uuid) && (session.sites || []).some(site => clusterUrls.has(site.url)))) {
+            return { ok: true }
+          }
+          return undefined
+        }, { ok: false, error: 'timeout' })
+        if (!outcome.ok) throw splitSaveError(outcome.error)
         this.$store.commit('setSplitPreview', null)
       } catch (error) {
         if (movedToTrash) this.bridge.send({ cmd: 'UpdateSession', bookmarks: [original] })
-        this.saveError = 'failed'
+        this.showSaveError(error.code)
       } finally {
         this.saving = false
       }
     },
-    // Resolves true once a bookmarks refresh satisfies `predicate`, false on
-    // timeout. Content-based on purpose: the trash step, iCloud merges and the
-    // companion bridge all trigger refreshes of their own, so "the next
-    // refresh" is not necessarily the reply to the request just sent.
-    waitForSessions(predicate, timeoutMs = NATIVE_REPLY_TIMEOUT_MS) {
+    showSaveError(code) {
+      if (code === 'session_limit_reached') {
+        this.saveError = 'limit'
+        this.$store.commit('setShowSubscriptionModal', { show: true, reason: 'limitReached' })
+      } else {
+        this.saveError = 'failed'
+      }
+    },
+    // Resolves with the first value `settle` returns for a store mutation, or
+    // with `onTimeout` after `timeoutMs`. Content-based on purpose: the trash
+    // step, iCloud merges and the companion bridge all trigger refreshes of
+    // their own, so "the next refresh" is not necessarily the reply to the
+    // request just sent.
+    waitForStore(settle, onTimeout, timeoutMs = NATIVE_REPLY_TIMEOUT_MS) {
       return new Promise(resolve => {
         let settled = false
         let unsubscribe = null
@@ -237,11 +265,12 @@ export default {
           this.stopWaiting = null
           resolve(value)
         }
-        const timer = setTimeout(() => finish(false), timeoutMs)
+        const timer = setTimeout(() => finish(onTimeout), timeoutMs)
         unsubscribe = this.$store.subscribe((mutation, state) => {
-          if (mutation.type === 'setSessions' && predicate(state.sessions)) finish(true)
+          const value = settle(mutation, state)
+          if (value !== undefined) finish(value)
         })
-        this.stopWaiting = () => finish(false)
+        this.stopWaiting = () => finish(onTimeout)
       })
     },
     keepAsSingle() {
