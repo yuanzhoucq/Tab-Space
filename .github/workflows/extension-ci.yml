@@ -1,0 +1,39 @@
+name: Build Browser Extensions
+
+on:
+  push:
+    paths:
+      - 'extension/**'
+      - '.github/workflows/extension-ci.yml'
+  pull_request:
+    paths:
+      - 'extension/**'
+      - '.github/workflows/extension-ci.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: browser-extensions-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+
+      - name: Build and test Chrome, Edge, Firefox, and Safari extensions
+        run: node extension/build.mjs all && node --test extension/test/*.test.cjs
+
+      - name: Store browser extension packages
+        uses: actions/upload-artifact@v4
+        with:
+          name: tab-space-webextensions-${{ github.sha }}
+          path: extension/dist
+          if-no-files-found: error
