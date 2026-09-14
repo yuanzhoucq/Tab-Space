@@ -706,6 +706,12 @@
         browserApi.queryTabs({ active: true, currentWindow: true })
       ])
       const activeId = activeTabs && activeTabs[0] && activeTabs[0].id
+      if (activeTabs && activeTabs[0] && activeTabs[0].url === "") {
+        throw new BridgeError(
+          "website_access_required",
+          "Allow Tab Space access to this website in Safari, then try again."
+        )
+      }
       return normalizeTabs(tabs).map(tab => ({ ...tab, isCurrent: tab.id === activeId }))
     }
 
@@ -1110,6 +1116,11 @@
               return Promise.reject(new BridgeError("unsupported_message", "Safari settings are unavailable."))
             }
             return root.TabSpaceSafariMenu.readSettings({ api: extensionApi, controller, client })
+          case "safari.menuTelemetry":
+            if (BUILD_TARGET !== "safari" || !root.TabSpaceSafariMenu) {
+              return Promise.reject(new BridgeError("unsupported_message", "Safari menu telemetry is unavailable."))
+            }
+            return root.TabSpaceSafariMenu.recordMenu(commandClient, "fallback")
           case "safari.command":
             if (BUILD_TARGET !== "safari" || !root.TabSpaceSafariMenu) {
               return Promise.reject(new BridgeError("unsupported_message", "Safari commands are unavailable."))

@@ -49,7 +49,8 @@
     done: "完成",
     doneCloseSaved: "完成并关闭已保存标签页",
     closeFailed: "标签页已保存，但未能关闭，请手动关闭。",
-    followUpFailed: "标签页已保存，但有一项保存后操作未能完成。"
+    followUpFailed: "标签页已保存，但有一项保存后操作未能完成。",
+    websiteAccessRequired: "请在 Safari 中允许 Tab Space 访问当前网站，然后重试。"
   } : {
     ready: "Open your library or save tabs from this browser.",
     saveRequiresPro: "Saving tabs from this browser requires Pro.",
@@ -91,7 +92,8 @@
     done: "Done",
     doneCloseSaved: "Done and Close Saved Tabs",
     closeFailed: "The tabs were saved, but could not be closed. Please close them manually.",
-    followUpFailed: "The tabs were saved, but one selected after-save action could not be completed."
+    followUpFailed: "The tabs were saved, but one selected after-save action could not be completed.",
+    websiteAccessRequired: "Allow Tab Space access to this website in Safari, then try again."
   }
 
   for (const element of document.querySelectorAll("[data-i18n]")) {
@@ -396,6 +398,9 @@
   })
 
   async function bootstrap() {
+    if (/Safari/i.test(navigator.userAgent) && !/(Chrome|Chromium|Edg)/i.test(navigator.userAgent)) {
+      send({ type: "safari.menuTelemetry" }).catch(() => {})
+    }
     const preferences = await storageGet({
       [preferenceKeys.openDashboardAfterSave]: false,
       [preferenceKeys.closeTabsAfterSave]: false
@@ -430,7 +435,12 @@
     }
     updateSelection()
     elements.loading.hidden = true
-    if (!response || !response.ok) throw new Error(response && response.error ? response.error.message : strings.failed)
+    if (!response || !response.ok) {
+      if (response && response.error && response.error.code === "website_access_required") {
+        throw new Error(strings.websiteAccessRequired)
+      }
+      throw new Error(response && response.error ? response.error.message : strings.failed)
+    }
     renderSessionOptions(sessionsResponse && sessionsResponse.ok && Array.isArray(sessionsResponse.result)
       ? sessionsResponse.result
       : [])

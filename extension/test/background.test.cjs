@@ -561,6 +561,16 @@ test('popup checks the helper connection before listing savable tabs', () => {
   assert.equal(connect < listTabs, true)
 })
 
+test('Safari popup explains missing website access and reports fallback use', () => {
+  const popup = readFileSync(join(extensionRoot, 'src/popup.js'), 'utf8')
+  const background = readFileSync(join(extensionRoot, 'src/background.js'), 'utf8')
+  assert.equal(background.includes('activeTabs[0].url === ""'), true)
+  assert.equal(background.includes('"website_access_required"'), true)
+  assert.equal(background.includes('case "safari.menuTelemetry"'), true)
+  assert.equal(popup.includes('strings.websiteAccessRequired'), true)
+  assert.equal(popup.includes('send({ type: "safari.menuTelemetry" })'), true)
+})
+
 test('popup exposes and persists both opt-in post-save actions', () => {
   const html = readFileSync(join(extensionRoot, 'src/popup.html'), 'utf8')
   const popup = readFileSync(join(extensionRoot, 'src/popup.js'), 'utf8')

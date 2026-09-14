@@ -52,6 +52,11 @@
     }
   }
 
+  async function recordMenu(client, menu) {
+    if (!["native", "fallback"].includes(menu)) return
+    await requestWithFallback(client, "diagnostics.safariMenu", { menu })
+  }
+
   function commandClient(client) {
     return {
       request(method, params) { return requestWithFallback(client, method, params) },
@@ -238,6 +243,13 @@
 
   async function show(context, clickedTab) {
     const { api, client } = context
+    if (clickedTab && clickedTab.url === "") {
+      await setPopup(api, FALLBACK_POPUP)
+      throw Object.assign(
+        new Error("Allow Tab Space access to this website in Safari, then try again."),
+        { code: "website_access_required" }
+      )
+    }
     const [window, currentTabs, sessionResult, stored] = await Promise.all([
       call(api.windows, "getCurrent", { populate: false }),
       call(api.tabs, "query", { currentWindow: true }),
@@ -268,6 +280,7 @@
     // Recycle it after the menu closes so the selected command reconnects to
     // the Helper immediately and still uses the WS-first transport policy.
     if (client && typeof client.close === "function") client.close()
+    recordMenu(client, "native").catch(() => {})
     const result = await perform(response.chosen, {
       ...context,
       sessions,
@@ -340,6 +353,7 @@
     probe,
     requestWithFallback,
     restoreUrls,
+    recordMenu,
     readSettings,
     show,
     install

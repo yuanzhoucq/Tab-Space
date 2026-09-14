@@ -50,6 +50,28 @@ test("setPopup switches in both native-menu and forced-fallback directions", asy
   assert.deepEqual(fallbackApi.popups, [{ popup: menu.FALLBACK_POPUP }])
 })
 
+test("empty Safari tab URL switches to a clear website-access fallback", async () => {
+  const popups = []
+  await assert.rejects(menu.show({
+    api: { action: { setPopup: async value => popups.push(value) } },
+    client: {},
+    controller: {}
+  }, { url: "" }), error => error.code === "website_access_required")
+  assert.deepEqual(popups, [{ popup: menu.FALLBACK_POPUP }])
+})
+
+test("menu telemetry accepts only the two rollout paths", async () => {
+  const calls = []
+  const client = { request: async (method, params) => { calls.push({ method, params }); return {} } }
+  await menu.recordMenu(client, "native")
+  await menu.recordMenu(client, "fallback")
+  await menu.recordMenu(client, "popup")
+  assert.deepEqual(calls, [
+    { method: "diagnostics.safariMenu", params: { menu: "native" } },
+    { method: "diagnostics.safariMenu", params: { menu: "fallback" } }
+  ])
+})
+
 test("action listener returns the native-menu workflow promise", async () => {
   let listener
   const api = {
