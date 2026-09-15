@@ -9,6 +9,12 @@
   const FALLBACK_POPUP = "popup.html"
   const MENU_TIMEOUT_MS = 24 * 60 * 60 * 1000
   const SETTINGS_CACHE_KEY = "tabspace-safari-settings-v1"
+  const SETTINGS_CACHED_AT_KEY = "tabspace-safari-settings-cached-at-v1"
+  // Every page load asks for the shortcut settings, so they are served from
+  // storage.local and refreshed at most this often (or when the dashboard
+  // writes one). Without the cache each page load cost five bridge round trips
+  // — and, with the Helper down, five appex launches.
+  const SETTINGS_MAX_AGE_MS = 5 * 60 * 1000
   const REDIRECT_HOSTS = new Set(["mytab.space", "tabspacestatic.joyuer.cn"])
   const REDIRECT_GITHUB_HOSTS = new Set(["joyuer.cn", "yuanzhoucq.github.io"])
 
@@ -26,6 +32,15 @@
     return !!error && [
       "not_connected", "helper_unavailable", "connection_failed",
       "connection_timeout", "connection_closed", "request_timeout"
+    ].includes(error.code)
+  }
+
+  // Only these mean the native menu could not be put on screen. Everything
+  // else — a session limit, a lost session, a command that failed after the
+  // menu closed — is an ordinary error and must not take the native menu away.
+  function isMenuUnavailableError(error) {
+    return !!error && [
+      "native_unavailable", "native_transport_failed", "native_timeout", "menu_unavailable", "menu_not_shown"
     ].includes(error.code)
   }
 
@@ -120,14 +135,20 @@
     return response && response.domain
   }
 
-  async function closeRelativeTabs(api, mode) {
+  // Same rules as the Safari App Extension's `getTabs(at:)`: closing to the
+  // left or right never touches pinned tabs (they sit at the far left, so
+  // Close Left would otherwise take every one of them), Close Other Tabs
+  // spares them only when the user asked to ignore pinned tabs, and Close
+  // Same Domain treats them like any other tab.
+  async function closeRelativeTabs(api, mode, settings = {}) {
     const tabs = await call(api.tabs, "query", { currentWindow: true })
     const active = tabs.find(tab => tab.active)
     if (!active) return { closed: 0 }
+    const ignorePinned = settings["ignore-pinned-tabs"] === "true"
     let doomed = []
-    if (mode === "right") doomed = tabs.filter(tab => tab.index > active.index)
-    if (mode === "left") doomed = tabs.filter(tab => tab.index < active.index)
-    if (mode === "other") doomed = tabs.filter(tab => tab.id !== active.id)
+    if (mode === "right") doomed = tabs.filter(tab => tab.index > active.index && !tab.pinned)
+    if (mode === "left") doomed = tabs.filter(tab => tab.index < active.index && !tab.pinned)
+    if (mode === "other") doomed = tabs.filter(tab => tab.id !== active.id && !(ignorePinned && tab.pinned))
     if (mode === "domain") {
       const activeDomain = await topDomain(active.url)
       if (activeDomain) {
@@ -143,15 +164,36 @@
   async function readSettings(context) {
     const names = [
       "disable-shortcuts", "shift-shortcuts", "disable-context-menus",
-      "externalBrowser1", "externalBrowser2"
+      "ignore-pinned-tabs", "externalBrowser1", "externalBrowser2"
     ]
     const entries = await Promise.all(names.map(async name => {
       const result = await requestWithFallback(context.client, "settings.get", { name })
       return [name, result && result.value || ""]
     }))
     const settings = Object.fromEntries(entries)
-    await call(context.api.storage.local, "set", { [SETTINGS_CACHE_KEY]: settings })
+    await call(context.api.storage.local, "set", {
+      [SETTINGS_CACHE_KEY]: settings,
+      [SETTINGS_CACHED_AT_KEY]: Date.now()
+    })
     return settings
+  }
+
+  // The cached copy when it is fresh enough, otherwise a refresh. A cache with
+  // no timestamp (written by an earlier build) counts as stale.
+  async function cachedSettings(context, maxAgeMs = SETTINGS_MAX_AGE_MS) {
+    let stored = null
+    try {
+      stored = await call(context.api.storage.local, "get", [SETTINGS_CACHE_KEY, SETTINGS_CACHED_AT_KEY])
+    } catch (_) {}
+    const settings = stored && stored[SETTINGS_CACHE_KEY]
+    const cachedAt = stored && stored[SETTINGS_CACHED_AT_KEY]
+    if (settings && typeof cachedAt === "number" && Date.now() - cachedAt < maxAgeMs) return settings
+    return readSettings(context)
+  }
+
+  // The dashboard's Settings page wrote a value: the next reader refreshes.
+  async function invalidateSettings(api) {
+    await call(api.storage.local, "remove", [SETTINGS_CACHED_AT_KEY]).catch(() => {})
   }
 
   async function performCommand(command, data, context) {
@@ -179,7 +221,7 @@
         })
       case "CloseRightTabs": return closeRelativeTabs(api, "right")
       case "CloseLeftTabs": return closeRelativeTabs(api, "left")
-      case "CloseOtherTabs": return closeRelativeTabs(api, "other")
+      case "CloseOtherTabs": return closeRelativeTabs(api, "other", await cachedSettings(context))
       case "CloseSameDomainTabs": return closeRelativeTabs(api, "domain")
       case "OpenInExternalBrowser1":
       case "OpenInExternalBrowser2": {
@@ -241,37 +283,65 @@
     }
   }
 
-  async function show(context, clickedTab) {
-    const { api, client } = context
-    if (clickedTab && clickedTab.url === "") {
-      await setPopup(api, FALLBACK_POPUP)
-      throw Object.assign(
-        new Error("Allow Tab Space access to this website in Safari, then try again."),
-        { code: "website_access_required" }
-      )
+  // Which save items the menu may enable: the same rule the App Extension's
+  // popover applied, computed from the tabs the controller would actually
+  // save. A tab whose URL Safari withholds (no website access, a start page)
+  // just disables Save Current Tab — it never takes the native menu away.
+  async function saveAvailability(controller) {
+    if (!controller || typeof controller.listPopupTabs !== "function") {
+      return { hasValidTabs: true, currentTabValid: true }
     }
-    const [window, currentTabs, sessionResult, stored] = await Promise.all([
+    try {
+      const savable = await controller.listPopupTabs()
+      return {
+        hasValidTabs: savable.length > 0,
+        currentTabValid: savable.some(tab => tab.isCurrent)
+      }
+    } catch (_) {
+      return { hasValidTabs: true, currentTabValid: true }
+    }
+  }
+
+  // The menu is worth showing even when the library cannot be read right now:
+  // its tab and dashboard items do not need it, and the session submenus
+  // simply come up empty (the popover behaved the same way on a cold store).
+  async function menuSessions(client) {
+    try {
+      const result = await requestWithFallback(client, "sessions.list", {})
+      return result && Array.isArray(result.sessions) ? result.sessions : []
+    } catch (error) {
+      console.warn("[safari-menu] sessions unavailable for the menu:", error)
+      return []
+    }
+  }
+
+  async function show(context, clickedTab) {
+    const { api, client, controller } = context
+    const [window, currentTabs, sessions, stored, availability] = await Promise.all([
       call(api.windows, "getCurrent", { populate: false }),
       call(api.tabs, "query", { currentWindow: true }),
-      requestWithFallback(client, "sessions.list", {}),
-      call(api.storage.local, "get", [MENU_INSET_KEY])
+      menuSessions(client),
+      call(api.storage.local, "get", [MENU_INSET_KEY]),
+      saveAvailability(controller)
     ])
-    const sessions = sessionResult && Array.isArray(sessionResult.sessions) ? sessionResult.sessions : []
     const response = await root.TabSpaceSafariNative.send({
       op: "ui.menu",
       window: currentWindowRect(window),
       inset: stored && stored[MENU_INSET_KEY],
       sentAt: Date.now(),
       sessions,
-      tabs: currentTabs
+      tabs: currentTabs,
+      hasValidTabs: availability.hasValidTabs,
+      currentTabValid: availability.currentTabValid
     }, { timeoutMs: MENU_TIMEOUT_MS })
 
     if (response && Number.isFinite(response.measuredInset)) {
       await call(api.storage.local, "set", { [MENU_INSET_KEY]: response.measuredInset })
     }
     if (!response || response.shown !== true) {
-      await setPopup(api, FALLBACK_POPUP)
-      return { shown: false, fallback: true }
+      // The one case the HTML popup exists for: AppKit could not draw the
+      // menu. The click handler switches the button over to the popup.
+      throw Object.assign(new Error("Safari could not display the native Tab Space menu."), { code: "menu_not_shown" })
     }
     // NSMenu runs a native tracking loop for an arbitrary amount of time.
     // Safari can discard the background page's loopback socket during that
@@ -295,7 +365,7 @@
     probe(api).then(available => call(api.storage.local, "set", {
       "tabspace-safari-menu-last-result": available ? "menu_native" : "menu_fallback"
     })).catch(() => {})
-    readSettings(context).catch(() => {})
+    const settingsAtStartup = cachedSettings(context).catch(() => ({}))
     if (api.action && api.action.onClicked) {
       api.action.onClicked.addListener(tab => {
         // Keep Safari's MV3 background context alive while the native NSMenu
@@ -304,7 +374,14 @@
         // after the listener returns, before `sendNativeMessage` resolves.
         return show(context, tab).then(() => call(api.storage.local, "set", {
           "tabspace-safari-menu-last-result": "menu_native"
-        })).catch(async () => {
+        })).catch(async error => {
+          // Only a menu that never appeared hands the button to the HTML
+          // popup. A command that failed after the menu closed keeps the
+          // native menu for the next click; it is logged, not punished.
+          if (!isMenuUnavailableError(error)) {
+            console.warn("[safari-menu] menu action failed:", error)
+            return
+          }
           await setPopup(api, FALLBACK_POPUP).catch(() => {})
           await call(api.storage.local, "set", {
             "tabspace-safari-menu-last-result": "menu_fallback"
@@ -314,7 +391,7 @@
     }
     if (api.contextMenus) {
       call(api.contextMenus, "removeAll").catch(() => {}).then(async () => {
-        const settings = await readSettings(context).catch(() => ({}))
+        const settings = await settingsAtStartup
         if (settings["disable-context-menus"] === "true") return
         await call(api.contextMenus, "create", { id: "SaveCurrentPageToTabSpace", title: "Save Current Page", contexts: ["page"] })
         await call(api.contextMenus, "create", { id: "SaveAllPagesToTabSpace", title: "Save All Pages", contexts: ["page"] })
@@ -346,7 +423,13 @@
     FALLBACK_POPUP,
     MENU_INSET_KEY,
     SETTINGS_CACHE_KEY,
+    SETTINGS_CACHED_AT_KEY,
+    SETTINGS_MAX_AGE_MS,
+    cachedSettings,
+    closeRelativeTabs,
     commandClient,
+    invalidateSettings,
+    isMenuUnavailableError,
     isTransportError,
     perform,
     performCommand,

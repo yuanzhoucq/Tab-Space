@@ -129,6 +129,11 @@ function manifestFor(target) {
     manifest.background = { scripts: ["background.js"] }
     manifest.permissions.push("nativeMessaging", "contextMenus", "webNavigation")
     manifest.host_permissions = ["<all_urls>"]
+    // Safari keeps the App Extension's shortcuts, handled by page-shortcuts.js
+    // so they follow the user's Shift/disable settings. Declaring `commands`
+    // too would fire Ctrl+Shift+S/T twice when Shift shortcuts are on, and
+    // Safari offers no way for the user to rebind them.
+    delete manifest.commands
     manifest.content_scripts.push({
       matches: ["https://app.mytab.space/*"],
       js: ["safari/content-script.js"],

@@ -179,7 +179,9 @@
       case "CheckBookmarks":
         return { kind: "native", method: "sessions.list", params: {} }
       case "AppendSessions":
-        return { kind: "native", method: "sessions.append", params: { sessions: parseBookmarks(msg.bookmarks) } }
+        // `origin` tells the app this save came from the dashboard rather than
+        // the toolbar; its analytics label the two differently for Safari.
+        return { kind: "native", method: "sessions.append", params: { sessions: parseBookmarks(msg.bookmarks), origin: "dashboard" } }
       case "UpdateSession":
         return { kind: "native", method: "sessions.update", params: { sessions: parseBookmarks(msg.bookmarks), ...(["enhance", "orphan_tags"].includes(msg.aiApplied) ? { aiApplied: msg.aiApplied } : {}) } }
       case "DeleteSession":
@@ -257,7 +259,8 @@
           method: "sessions.saveSplit",
           params: {
             clusters: parseBookmarks(msg.clusters),
-            originalUuid: msg.originalUuid || ""
+            originalUuid: msg.originalUuid || "",
+            origin: "dashboard"
           }
         }
       case "GetSuggestions":
@@ -903,12 +906,23 @@
       // for the localhost development origin, especially Firefox's rejection
       // of explicit ports in match patterns.
       const matches = (await browserApi.queryTabs({})).filter(tab => isDashboardUrl(tab.url))
-      if (matches && matches.length > 0) {
-        await browserApi.updateTab(matches[0].id, { active: true })
-        return { reused: true }
+      if (!matches || matches.length === 0) {
+        await browserApi.createTab({ url: browserApi.dashboardUrl(), active: true })
+        return { reused: false }
       }
-      await browserApi.createTab({ url: browserApi.dashboardUrl(), active: true })
-      return { reused: false }
+      // Prefer the dashboard in the window the user is looking at. After a
+      // Save & Close that window is nearly empty, and a dashboard activated in
+      // some other window would leave them staring at the wrong one — so a
+      // dashboard elsewhere is only reused together with its window.
+      const [current] = await browserApi.queryTabs({ active: true, currentWindow: true })
+      const currentWindowId = current ? current.windowId : undefined
+      const match = matches.find(tab => tab.windowId === currentWindowId) || matches[0]
+      await browserApi.updateTab(match.id, { active: true })
+      if (Number.isInteger(match.windowId) && match.windowId !== currentWindowId
+          && typeof browserApi.updateWindow === "function") {
+        await browserApi.updateWindow(match.windowId, { state: "normal", focused: true })
+      }
+      return { reused: true }
     }
 
     async function handleDashboard(message) {
@@ -917,6 +931,9 @@
       if (operation.kind === "native") {
         try {
           result = await client.request(operation.method, operation.params)
+          if (operation.method === "settings.set" && BUILD_TARGET === "safari" && root.TabSpaceSafariMenu) {
+            await browserApi.removeStorage([root.TabSpaceSafariMenu.SETTINGS_CACHED_AT_KEY]).catch(() => {})
+          }
         } catch (error) {
           // A refused split is the answer the preview dialog is waiting for,
           // not a transport failure — and the Safari direct bridge has no
@@ -1152,7 +1169,7 @@
             if (BUILD_TARGET !== "safari" || !root.TabSpaceSafariMenu) {
               return Promise.reject(new BridgeError("unsupported_message", "Safari settings are unavailable."))
             }
-            return root.TabSpaceSafariMenu.readSettings({ api: extensionApi, controller, client })
+            return root.TabSpaceSafariMenu.cachedSettings({ api: extensionApi, controller, client })
           case "safari.menuTelemetry":
             if (BUILD_TARGET !== "safari" || !root.TabSpaceSafariMenu) {
               return Promise.reject(new BridgeError("unsupported_message", "Safari menu telemetry is unavailable."))

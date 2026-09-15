@@ -564,9 +564,48 @@ test('opens an existing dashboard tab without relying on port-sensitive match pa
   const result = await controller.openDashboard()
   assert.deepEqual(calls, [
     ['query', {}],
+    ['query', { active: true, currentWindow: true }],
     ['update', 7, { active: true }]
   ])
   assert.deepEqual(result, { reused: true })
+})
+
+test('reuses the dashboard in the current window first, and brings another window forward otherwise', async () => {
+  function makeApi(tabs) {
+    const calls = []
+    return {
+      calls,
+      queryTabs: async query => query.active ? tabs.filter(tab => tab.active && tab.windowId === 1) : tabs,
+      updateTab: async (id, properties) => calls.push(['update', id, properties]),
+      updateWindow: async (id, properties) => calls.push(['window', id, properties]),
+      createTab: async properties => calls.push(['create', properties]),
+      dashboardUrl: () => 'https://app.mytab.space/'
+    }
+  }
+  const both = makeApi([
+    { id: 1, windowId: 2, url: 'https://app.mytab.space/' },
+    { id: 2, windowId: 1, url: 'https://example.com', active: true },
+    { id: 3, windowId: 1, url: 'https://app.mytab.space/settings' }
+  ])
+  assert.deepEqual(await background.createController({ browserApi: both, client: {} }).openDashboard(), { reused: true })
+  assert.deepEqual(both.calls, [['update', 3, { active: true }]])
+
+  const elsewhere = makeApi([
+    { id: 1, windowId: 2, url: 'https://app.mytab.space/' },
+    { id: 2, windowId: 1, url: 'https://example.com', active: true }
+  ])
+  assert.deepEqual(await background.createController({ browserApi: elsewhere, client: {} }).openDashboard(), { reused: true })
+  assert.deepEqual(elsewhere.calls, [
+    ['update', 1, { active: true }],
+    ['window', 2, { state: 'normal', focused: true }]
+  ])
+})
+
+test('dashboard-initiated saves carry their origin for the app\'s analytics', () => {
+  const append = background.dashboardCommandToOperation({ cmd: 'AppendSessions', bookmarks: '[]' })
+  assert.equal(append.params.origin, 'dashboard')
+  const split = background.dashboardCommandToOperation({ cmd: 'SaveSplitSessions', clusters: '[]', originalUuid: 'x' })
+  assert.equal(split.params.origin, 'dashboard')
 })
 
 test('default full selection honors all-window and pinned-tab preferences', async () => {

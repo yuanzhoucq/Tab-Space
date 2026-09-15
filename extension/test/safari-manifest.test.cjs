@@ -32,6 +32,9 @@ test("builds the Safari MV3 manifest without other-browser keys", async () => {
   })
   assert.equal("browser_specific_settings" in manifest, false)
   assert.equal("theme_icons" in manifest.action, false)
+  // The App Extension's shortcuts live in page-shortcuts.js; a `commands`
+  // block would double-fire them when Shift shortcuts are enabled.
+  assert.equal("commands" in manifest, false)
   const background = await readFile(join(extensionRoot, "dist/safari/background.js"), "utf8")
   assert.match(background, /const BUILD_TARGET = "safari"/)
   assert.match(background, /BUILD_TARGET === "safari"\s*\? "safari"/)
