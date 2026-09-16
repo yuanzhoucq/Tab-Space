@@ -1,9 +1,9 @@
 <template>
-  <div v-if="showAIConsentModal" class="ai-consent-overlay" @click.self="decline">
-    <div class="ai-consent-modal" role="dialog" aria-modal="true"
-         aria-labelledby="ai-consent-title" data-testid="ai-consent-modal">
+  <div v-if="showAIConsentModal" class="ai-disclosure-overlay" @click.self="decline">
+    <div class="ai-disclosure-modal" role="dialog" aria-modal="true"
+         aria-labelledby="ai-disclosure-title" data-testid="ai-disclosure-modal">
       <div class="modal-header">
-        <h2 id="ai-consent-title">{{ lang.aiConsentTitle || 'Before Tab Space uses AI' }}</h2>
+        <h2 id="ai-disclosure-title">{{ lang.aiConsentTitle || 'Before Tab Space uses AI' }}</h2>
       </div>
 
       <div class="modal-content">
@@ -36,11 +36,11 @@
         <p class="revoke-note">{{ lang.aiConsentRevokeNote || 'You can turn AI off again at any time in Settings. Nothing is sent while it is off.' }}</p>
 
         <div class="actions">
-          <button type="button" class="secondary-action" data-testid="ai-consent-decline"
+          <button type="button" class="secondary-action" data-testid="ai-disclosure-decline"
                   @click="decline">
             {{ lang.aiConsentDecline || 'Not now' }}
           </button>
-          <button type="button" class="primary-action" data-testid="ai-consent-accept"
+          <button type="button" class="primary-action" data-testid="ai-disclosure-accept"
                   @click="accept">
             {{ lang.aiConsentAccept || 'Allow and continue' }}
           </button>
@@ -65,19 +65,91 @@
  * turns that code into this dialog. Accepting writes the acceptance through the
  * normal SetDefault path, then re-sends whatever request triggered the prompt so
  * the user's original click is not lost.
+ *
+ * Nothing in the dialog's class, id or test-id names says "consent": cookie
+ * notice blockers hide elements by exactly that word, and a hidden disclosure
+ * leaves every AI action a silent no-op with no way for the user to find out
+ * why. For the same reason the dialog checks, once rendered, that it is
+ * actually on screen, and falls back to the browser's own confirm() — which no
+ * page style can hide — when it is not.
  */
 import { mapState } from 'vuex'
 import Constants from '../constants'
+
+// Long enough for an extension that hides elements after they appear (a
+// MutationObserver, not a stylesheet) to have acted; short enough that a user
+// staring at a blank page gets the fallback before they click again.
+const VISIBILITY_CHECK_DELAY_MS = 300
 
 export default {
   // Registered as AiConsentModal so the kebab-case tag resolves: a name with
   // consecutive capitals would become <a-i-consent-modal>. Matches AiToast.
   name: 'AiConsentModal',
+  data() {
+    return { visibilityCheckTimer: null }
+  },
   computed: {
     ...mapState(['lang', 'bridge', 'showAIConsentModal', 'aiConsentPendingRetry'])
   },
+  watch: {
+    showAIConsentModal(show) {
+      clearTimeout(this.visibilityCheckTimer)
+      if (!show) return
+      this.$nextTick(() => {
+        this.visibilityCheckTimer = setTimeout(() => this.confirmVisible(), VISIBILITY_CHECK_DELAY_MS)
+      })
+    }
+  },
+  beforeDestroy() {
+    clearTimeout(this.visibilityCheckTimer)
+  },
   methods: {
-    accept() {
+    // The dialog counts as shown only when it is on screen, not merely rendered:
+    // a blocker's `display: none`, an overlay whose offsets never applied (it
+    // then sits at the end of the document, below the fold), or a node an
+    // extension removed all leave the user looking at a page that did nothing.
+    confirmVisible() {
+      if (!this.showAIConsentModal || this.isOnScreen()) return
+      console.warn('Tab Space: the AI disclosure dialog is not visible; asking through the browser instead.')
+      this.askThroughBrowser()
+    },
+    isOnScreen() {
+      const overlay = this.$el
+      if (!(overlay instanceof HTMLElement) || !overlay.isConnected) return false
+      const dialog = overlay.querySelector('[role="dialog"]')
+      if (!dialog) return false
+      for (const element of [overlay, dialog]) {
+        const style = window.getComputedStyle(element)
+        if (style.display === 'none' || style.visibility === 'hidden' || Number(style.opacity) === 0) return false
+      }
+      const rect = dialog.getBoundingClientRect()
+      if (rect.width === 0 || rect.height === 0) return false
+      return rect.bottom > 0 && rect.right > 0
+        && rect.top < window.innerHeight && rect.left < window.innerWidth
+    },
+    // The same disclosure, as plain text, through a dialog the page cannot
+    // style away. Confirming is exactly a click on "Allow and continue".
+    askThroughBrowser() {
+      const lang = this.lang
+      const text = [
+        lang.aiConsentTitle || 'Before Tab Space uses AI',
+        lang.aiConsentLede || 'AI features send some information about your tabs off your device. Here is exactly what happens.',
+        `${lang.aiConsentSentTitle || 'What is sent'}: ${lang.aiConsentSentDetail || 'Only the page titles and URLs of the tabs in that session. Never page contents, cookies, form data, or anything from other tabs.'}`,
+        `${lang.aiConsentRecipientsTitle || 'Who receives it'}: ${lang.aiConsentRecipientsDetail || 'The Tab Space AI service, hosted on Cloudflare, which forwards the titles and URLs to Google Gemini to generate the result. Tab Space does not store them and does not use them to train models.'}`,
+        `${lang.aiConsentQuotaTitle || 'What it costs you'}: ${lang.aiConsentQuotaDetail || 'Free and Plus include 5 AI requests each week. Each AI action uses one. Pro removes the weekly limit.'}`,
+        lang.aiConsentRevokeNote || 'You can turn AI off again at any time in Settings. Nothing is sent while it is off.'
+      ].join('\n\n')
+      if (window.confirm(text)) this.accept()
+      else this.decline()
+    },
+    // Only a person may answer the disclosure. A click an extension synthesises
+    // (isTrusted false) is exactly the auto-dismiss that cookie notice helpers
+    // perform, and it must neither refuse nor grant on the user's behalf.
+    isSynthetic(event) {
+      return Boolean(event) && event.isTrusted === false
+    },
+    accept(event) {
+      if (this.isSynthetic(event)) return
       if (!this.bridge) return
       const retry = this.aiConsentPendingRetry
       this.bridge.send({
@@ -102,7 +174,8 @@ export default {
         if (this.bridge) this.bridge.send(retry)
       }, 150)
     },
-    decline() {
+    decline(event) {
+      if (this.isSynthetic(event)) return
       this.$store.commit('setAIConsentPrompt', { show: false })
     }
   }
@@ -110,9 +183,12 @@ export default {
 </script>
 
 <style scoped>
-.ai-consent-overlay {
+.ai-disclosure-overlay {
   position: fixed;
-  inset: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
   background: rgba(0, 0, 0, 0.6);
   display: flex;
   align-items: center;
@@ -121,7 +197,7 @@ export default {
   backdrop-filter: blur(4px);
 }
 
-.ai-consent-modal {
+.ai-disclosure-modal {
   background: var(--card-bg, #ffffff);
   color: var(--text-primary, #2d3748);
   border-radius: 16px;

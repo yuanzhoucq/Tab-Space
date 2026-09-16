@@ -3269,7 +3269,7 @@ test('asks for the AI data-flow disclosure before the first AI request, then ret
   await card.hover()
   await card.getByTestId('ai-enhance-session').click()
 
-  const modal = page.getByTestId('ai-consent-modal')
+  const modal = page.getByTestId('ai-disclosure-modal')
   await expect(modal).toBeVisible()
   // The disclosure has to name the fields, the recipients and the quota cost.
   await expect(modal).toContainText('page titles and URLs')
@@ -3277,7 +3277,7 @@ test('asks for the AI data-flow disclosure before the first AI request, then ret
   await expect(modal).toContainText('Google Gemini')
   await expect(modal).toContainText('5 AI requests each week')
 
-  await modal.getByTestId('ai-consent-accept').click()
+  await modal.getByTestId('ai-disclosure-accept').click()
   await expect(modal).toBeHidden()
 
   // Acceptance is recorded through the normal defaults path...
@@ -3301,9 +3301,9 @@ test('sends nothing when the AI disclosure is declined', async ({ page }) => {
   await card.hover()
   await card.getByTestId('ai-enhance-session').click()
 
-  const modal = page.getByTestId('ai-consent-modal')
+  const modal = page.getByTestId('ai-disclosure-modal')
   await expect(modal).toBeVisible()
-  await modal.getByTestId('ai-consent-decline').click()
+  await modal.getByTestId('ai-disclosure-decline').click()
   await expect(modal).toBeHidden()
 
   // No acceptance recorded and no retry: the one refused attempt is all there was.
@@ -3329,7 +3329,7 @@ test('requires the disclosure before auto-enhance can be switched on', async ({ 
   await expect(toggle).toBeVisible()
   await toggle.click()
 
-  const modal = page.getByTestId('ai-consent-modal')
+  const modal = page.getByTestId('ai-disclosure-modal')
   await expect(modal).toBeVisible()
 
   // Nothing is enabled while the disclosure is still on screen.
@@ -3338,7 +3338,90 @@ test('requires the disclosure before auto-enhance can be switched on', async ({ 
       && command.payload.name === 'ai-auto-enhance-enabled').length)
   expect(earlyWrites).toBe(0)
 
-  await modal.getByTestId('ai-consent-accept').click()
+  await modal.getByTestId('ai-disclosure-accept').click()
+  await expect.poll(() => lastBridgeCommand(page, 'SetDefault')).toMatchObject({
+    payload: { name: 'ai-auto-enhance-enabled', value: 'true' }
+  })
+})
+
+test('asks through the browser when page styles hide the disclosure', async ({ page }) => {
+  // A cookie-notice blocker that hides the dialog would otherwise turn every AI
+  // action into a silent no-op: the toggle never moves and nothing explains why.
+  // The dialog notices it is not on screen and asks through confirm() instead,
+  // which no stylesheet can suppress.
+  await openDashboard(page, {
+    initialSessions: sessions,
+    nativeProtocolVersion: '2',
+    entitlementTier: 'plus',
+    aiConsentAccepted: false
+  })
+  await page.addStyleTag({ content: '.ai-disclosure-overlay { display: none !important; }' })
+
+  const dialogs = []
+  page.on('dialog', dialog => {
+    dialogs.push({ type: dialog.type(), message: dialog.message() })
+    dialog.accept()
+  })
+
+  await page.getByTestId('settings-link').click()
+  await page.getByTestId('ai-auto-enhance-toggle').click()
+
+  await expect.poll(() => dialogs.length).toBe(1)
+  expect(dialogs[0].type).toBe('confirm')
+  // The fallback carries the same disclosure, not a bare yes/no.
+  expect(dialogs[0].message).toContain('page titles and URLs')
+  expect(dialogs[0].message).toContain('Google Gemini')
+
+  // Confirming is an acceptance like any other: recorded, then the toggle's
+  // own write goes through.
+  await expect.poll(() => bridgeCommandCount(page, 'SetDefault')).toBeGreaterThanOrEqual(2)
+  const writes = (await bridgeCommands(page))
+    .filter(command => command.name === 'SetDefault')
+    .map(command => [command.payload.name, command.payload.value])
+  expect(writes).toEqual(expect.arrayContaining([
+    ['ai-data-disclosure-accepted-version', '1'],
+    ['ai-auto-enhance-enabled', 'true']
+  ]))
+  await expect(page.getByTestId('ai-disclosure-modal')).toHaveCount(0)
+})
+
+test('ignores clicks on the disclosure that no person made', async ({ page }) => {
+  // Extensions that auto-dismiss cookie notices click buttons from script. Such
+  // a click is not the user's answer, so it may neither refuse nor grant.
+  await openDashboard(page, {
+    initialSessions: sessions,
+    nativeProtocolVersion: '2',
+    entitlementTier: 'plus',
+    aiConsentAccepted: false
+  })
+
+  const dialogs = []
+  page.on('dialog', dialog => {
+    dialogs.push(dialog.type())
+    dialog.dismiss()
+  })
+
+  await page.getByTestId('settings-link').click()
+  await page.getByTestId('ai-auto-enhance-toggle').click()
+  const modal = page.getByTestId('ai-disclosure-modal')
+  await expect(modal).toBeVisible()
+
+  await page.evaluate(() => {
+    document.querySelector('[data-testid="ai-disclosure-decline"]').click()
+    document.querySelector('[data-testid="ai-disclosure-accept"]').click()
+  })
+  await expect(modal).toBeVisible()
+  // The on-screen check must stay quiet while the dialog really is on screen;
+  // a second, native prompt on top of a visible one would be its own bug.
+  await page.waitForTimeout(600)
+  expect(dialogs).toEqual([])
+  const aiWrites = await page.evaluate(() => window.__tabspaceBridgeCommands
+    .filter(command => command.name === 'SetDefault' && command.payload.name.startsWith('ai-')).length)
+  expect(aiWrites).toBe(0)
+
+  // A real click still answers it.
+  await modal.getByTestId('ai-disclosure-accept').click()
+  await expect(modal).toBeHidden()
   await expect.poll(() => lastBridgeCommand(page, 'SetDefault')).toMatchObject({
     payload: { name: 'ai-auto-enhance-enabled', value: 'true' }
   })
