@@ -1,12 +1,12 @@
 <template>
   <div v-if="showSuggestionReport" class="report-overlay" @click.self="close">
-    <div class="report-modal" role="dialog" aria-modal="true">
+    <div class="report-modal" role="dialog" aria-modal="true" aria-labelledby="suggestion-report-title">
       <header class="report-header">
         <div class="report-heading">
           <span class="report-mark" aria-hidden="true"><v-icon name="zap"></v-icon></span>
           <div>
             <p class="report-kicker">{{ groupCountLabel({ items: suggestions }) }}</p>
-            <h2>{{ lang.suggestionReportTitle || 'Cleanup report' }}</h2>
+            <h2 id="suggestion-report-title">{{ lang.suggestionReportTitle || 'Cleanup report' }}</h2>
           </div>
         </div>
         <button type="button" class="report-close" :aria-label="lang.cancel || 'Close'" @click="close">
@@ -52,7 +52,15 @@
                     <v-icon name="eye"></v-icon>
                     {{ lang.suggestionReview || 'Review' }}
                   </button>
-                  <button type="button" class="mini-btn primary" @click="apply(s)">
+                  <button
+                    type="button"
+                    class="mini-btn primary"
+                    :class="{ 'is-loading': isApplying(s) }"
+                    :disabled="isApplying(s)"
+                    :aria-busy="isApplying(s) ? 'true' : 'false'"
+                    :data-testid="'apply-suggestion-' + s.id"
+                    @click="applyFromReport(s)">
+                    <v-icon v-if="isApplying(s)" name="loader" class="spinner"></v-icon>
                     {{ primaryLabelFor(s) }}
                   </button>
                   <button type="button" class="mini-btn ghost" :aria-label="lang.suggestionDismiss || 'Dismiss'" @click="dismiss(s)">
@@ -113,7 +121,7 @@ export default {
     }
   },
   computed: {
-    ...mapState(['lang', 'suggestions', 'showSuggestionReport']),
+    ...mapState(['lang', 'suggestions', 'showSuggestionReport', 'splittingSessionId']),
     ...mapGetters(['isPremium']),
     groups() {
       return GROUP_ORDER
@@ -154,6 +162,18 @@ export default {
       }
       // Copy first: apply() mutates the queue for reversible types.
       group.items.slice().forEach(s => this.apply(s))
+    },
+    // Splitting waits on a native AI reply, so the row shows the same spinner
+    // as the session card until the preview opens or the request fails.
+    isApplying(s) {
+      return s.type === 'oversizedSession'
+        && Boolean(this.splittingSessionId)
+        && (s.sessionUuids || []).includes(this.splittingSessionId)
+    },
+    applyFromReport(s) {
+      // At most one split runs at a time; ignore clicks while one is pending.
+      if (s.type === 'oversizedSession' && this.splittingSessionId) return
+      this.apply(s)
     },
     reviewItems(s) {
       return this.sessionsByUuid(s.sessionUuids)
@@ -442,6 +462,23 @@ export default {
 
 .mini-btn.primary:hover {
   filter: brightness(0.95);
+}
+
+.mini-btn.primary.is-loading {
+  gap: 6px;
+  pointer-events: none;
+  opacity: 0.85;
+}
+
+.mini-btn.primary .spinner {
+  width: 14px;
+  height: 14px;
+  animation: report-spin 1s linear infinite;
+}
+
+@keyframes report-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
 
 .mini-btn.ghost {

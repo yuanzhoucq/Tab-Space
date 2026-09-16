@@ -1,10 +1,10 @@
 <template>
   <div class="split-modal-overlay" v-if="visible" @click.self="dismiss">
-    <div class="split-modal" role="dialog" aria-modal="true" :aria-busy="saving ? 'true' : 'false'">
+    <div class="split-modal" role="dialog" aria-modal="true" aria-labelledby="split-preview-title" :aria-busy="saving ? 'true' : 'false'">
       <header class="split-header">
         <div class="split-header-icon" aria-hidden="true">🤖</div>
         <div class="split-header-text">
-          <h2>{{ lang.splitDetectedTitle || 'Multiple Topics Detected' }}</h2>
+          <h2 id="split-preview-title">{{ lang.splitDetectedTitle || 'Multiple Topics Detected' }}</h2>
           <p class="text-muted">{{ summaryText }}</p>
         </div>
         <button type="button" class="split-close" :aria-label="lang.cancel || 'Close'" :disabled="saving" @click="dismiss">
@@ -293,7 +293,9 @@ export default {
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 1000;
+  /* Above the cleanup report (1000) that can open this preview, below the
+     subscription modal (1100) that a refused save opens on top of it. */
+  z-index: 1050;
   backdrop-filter: blur(4px);
 }
 

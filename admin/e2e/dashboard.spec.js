@@ -103,7 +103,8 @@ async function openDashboard(page, options = {}) {
     switcherHelperStatus,
     trialEligible,
     splitSaveStoresNothing,
-    splitSaveError
+    splitSaveError,
+    holdSplitPreview
   }) => {
     const clone = value => JSON.parse(JSON.stringify(value))
     const settingsKey = 'tabspace-e2e-settings'
@@ -160,8 +161,16 @@ async function openDashboard(page, options = {}) {
         currentTier = tier
         currentStatus = tier === 'free' ? 'free' : 'active'
       },
+      // With holdSplitPreview, the ClusterTabs reply waits here so a test can
+      // look at the dashboard while the AI request is in flight.
+      releaseSplitPreview() {
+        const release = heldSplitPreview
+        heldSplitPreview = null
+        if (release) release()
+      },
       emit
     }
+    let heldSplitPreview = null
 
     const nativeBridge = {
       onMessage: null,
@@ -261,7 +270,7 @@ async function openDashboard(page, options = {}) {
         if (name === 'ClusterTabs') {
           const session = (payload.bookmarks || [])[0] || { sites: [] }
           const half = Math.ceil(session.sites.length / 2)
-          emit('ReturnSplitPreview', {
+          const reply = () => emit('ReturnSplitPreview', {
             clusters: JSON.stringify([
               { name: 'Topic A', tags: ['Work'], sites: session.sites.slice(0, half) },
               { name: 'Topic B', tags: ['Reading'], sites: session.sites.slice(half) }
@@ -270,6 +279,8 @@ async function openDashboard(page, options = {}) {
             originalUuid: payload.uuid,
             quotaRemaining: subscriptionStatus === 'active' ? -1 : 4
           })
+          if (holdSplitPreview) heldSplitPreview = reply
+          else reply()
           return
         }
 
@@ -458,7 +469,8 @@ async function openDashboard(page, options = {}) {
     switcherHelperStatus: options.switcherHelperStatus || '',
     trialEligible: Boolean(options.trialEligible),
     splitSaveStoresNothing: Boolean(options.splitSaveStoresNothing),
-    splitSaveError: options.splitSaveError || ''
+    splitSaveError: options.splitSaveError || '',
+    holdSplitPreview: Boolean(options.holdSplitPreview)
   })
 
   await page.route('**/favicon.ico', route => route.fulfill({ status: 204, body: '' }))
@@ -539,6 +551,61 @@ test('opens AI organization suggestions from the right toolbar without showing a
   expect(Math.abs(layout.previewLeft - layout.rowLeft)).toBeLessThanOrEqual(1)
   expect(Math.abs(layout.previewRight - layout.rowRight)).toBeLessThanOrEqual(1)
   await expect(review).toHaveAttribute('aria-expanded', 'true')
+  await expect(report).toBeVisible()
+})
+
+test('splits an oversized session from the cleanup report', async ({ page }) => {
+  await openDashboard(page, {
+    initialSessions: sessions,
+    nativeProtocolVersion: '2',
+    subscriptionStatus: 'active',
+    entitlementTier: 'pro',
+    holdSplitPreview: true,
+    suggestions: [{
+      id: 'large-research',
+      type: 'oversizedSession',
+      sessionUuids: ['session-research'],
+      tagNames: [],
+      confidence: 1,
+      impact: 2
+    }]
+  })
+
+  await expect.poll(() => lastBridgeCommand(page, 'PrepareAI')).not.toBeNull()
+  await page.getByTestId('organize-library').click()
+  const report = page.getByRole('dialog', { name: 'Cleanup report' })
+  await expect(report).toBeVisible()
+
+  // The split waits on a native AI reply, so the row spins like the session
+  // card's own button does instead of looking like the click was ignored.
+  const split = report.getByTestId('apply-suggestion-large-research')
+  await expect(split).toHaveAttribute('aria-busy', 'false')
+  await split.click()
+  await expect.poll(() => lastBridgeCommand(page, 'ClusterTabs')).toMatchObject({
+    payload: { uuid: 'session-research' }
+  })
+  await expect(split).toHaveAttribute('aria-busy', 'true')
+  await expect(split).toBeDisabled()
+  await expect(split.locator('.spinner')).toHaveCount(1)
+  await expect(page.getByRole('dialog', { name: 'Multiple Topics Detected' })).toHaveCount(0)
+
+  await page.evaluate(() => window.__tabspaceTest.releaseSplitPreview())
+  const preview = page.getByRole('dialog', { name: 'Multiple Topics Detected' })
+  await expect(preview).toBeVisible()
+  await expect(split).toHaveAttribute('aria-busy', 'false')
+
+  // The preview opens from the report, so it has to stack above it: the
+  // report stays open underneath, and a click in the preview reaches the
+  // preview rather than the report behind it.
+  await expect(report).toBeVisible()
+  const topmost = await preview.evaluate(element => {
+    const rect = element.getBoundingClientRect()
+    const hit = document.elementFromPoint(rect.left + rect.width / 2, rect.top + rect.height / 2)
+    return element.contains(hit)
+  })
+  expect(topmost).toBe(true)
+  await preview.getByRole('button', { name: 'Keep as 1 Session' }).click()
+  await expect(preview).toHaveCount(0)
   await expect(report).toBeVisible()
 })
 
