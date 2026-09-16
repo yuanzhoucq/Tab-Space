@@ -104,7 +104,8 @@ async function openDashboard(page, options = {}) {
     trialEligible,
     splitSaveStoresNothing,
     splitSaveError,
-    holdSplitPreview
+    holdSplitPreview,
+    splitPreviewOmitsOriginalUuid
   }) => {
     const clone = value => JSON.parse(JSON.stringify(value))
     const settingsKey = 'tabspace-e2e-settings'
@@ -276,7 +277,8 @@ async function openDashboard(page, options = {}) {
               { name: 'Topic B', tags: ['Reading'], sites: session.sites.slice(half) }
             ].filter(cluster => cluster.sites.length > 0)),
             totalTabs: session.sites.length,
-            originalUuid: payload.uuid,
+            // Native before 4.2 did not echo the session back.
+            ...(splitPreviewOmitsOriginalUuid ? {} : { originalUuid: payload.uuid }),
             quotaRemaining: subscriptionStatus === 'active' ? -1 : 4
           })
           if (holdSplitPreview) heldSplitPreview = reply
@@ -470,7 +472,8 @@ async function openDashboard(page, options = {}) {
     trialEligible: Boolean(options.trialEligible),
     splitSaveStoresNothing: Boolean(options.splitSaveStoresNothing),
     splitSaveError: options.splitSaveError || '',
-    holdSplitPreview: Boolean(options.holdSplitPreview)
+    holdSplitPreview: Boolean(options.holdSplitPreview),
+    splitPreviewOmitsOriginalUuid: Boolean(options.splitPreviewOmitsOriginalUuid)
   })
 
   await page.route('**/favicon.ico', route => route.fulfill({ status: 204, body: '' }))
@@ -607,6 +610,69 @@ test('splits an oversized session from the cleanup report', async ({ page }) => 
   await preview.getByRole('button', { name: 'Keep as 1 Session' }).click()
   await expect(preview).toHaveCount(0)
   await expect(report).toBeVisible()
+})
+
+test('drops a suggestion whose sessions are gone instead of ignoring the click', async ({ page }) => {
+  await openDashboard(page, {
+    initialSessions: sessions,
+    nativeProtocolVersion: '2',
+    subscriptionStatus: 'active',
+    entitlementTier: 'pro',
+    suggestions: [{
+      id: 'gone-session',
+      type: 'oversizedSession',
+      sessionUuids: ['session-deleted-elsewhere'],
+      tagNames: [],
+      confidence: 1,
+      impact: 2
+    }]
+  })
+
+  await expect.poll(() => lastBridgeCommand(page, 'PrepareAI')).not.toBeNull()
+  await page.getByTestId('organize-library').click()
+  const report = page.getByRole('dialog', { name: 'Cleanup report' })
+  await expect(report).toBeVisible()
+
+  const split = report.getByTestId('apply-suggestion-gone-session')
+  await split.click()
+
+  // Nothing to split: no AI request goes out, the dead row leaves the report
+  // and the user is told why rather than watching the click do nothing.
+  await expect(page.locator('.ai-toast')).toContainText('That suggestion is out of date')
+  await expect(split).toHaveCount(0)
+  expect(await lastBridgeCommand(page, 'ClusterTabs')).toBeNull()
+})
+
+test('stops the split spinner when an older native reply omits the session id', async ({ page }) => {
+  // Split only offers itself on sessions with three or more tabs.
+  const extra = { title: 'Hacker News', url: 'https://news.ycombinator.com' }
+  const extra2 = { title: 'Lobsters', url: 'https://lobste.rs' }
+  await openDashboard(page, {
+    initialSessions: [
+      { ...sessions[0], sites: [...sessions[0].sites, extra] },
+      { ...sessions[1], sites: [...sessions[1].sites, extra, extra2] }
+    ],
+    nativeProtocolVersion: '2',
+    subscriptionStatus: 'active',
+    entitlementTier: 'pro',
+    splitPreviewOmitsOriginalUuid: true
+  })
+
+  const card = page.getByTestId('session-session-research')
+  await card.getByTestId('ai-split-session').click()
+  const preview = page.getByRole('dialog', { name: 'Multiple Topics Detected' })
+  await expect(preview).toBeVisible()
+  await expect(card.getByTestId('ai-split-session').locator('.spinner')).toHaveCount(0)
+
+  // With the in-flight id cleared, a second split is accepted rather than
+  // swallowed by the "one at a time" guard.
+  await preview.getByRole('button', { name: 'Keep as 1 Session' }).click()
+  await expect(preview).toHaveCount(0)
+  await page.getByTestId('session-session-reading').getByTestId('ai-split-session').click()
+  await expect.poll(() => lastBridgeCommand(page, 'ClusterTabs')).toMatchObject({
+    payload: { uuid: 'session-reading' }
+  })
+  await expect(preview).toBeVisible()
 })
 
 test('shows the iOS launch banner at card width and persists dismissal', async ({ page }) => {

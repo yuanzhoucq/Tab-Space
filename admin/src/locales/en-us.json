@@ -211,6 +211,7 @@
   "aiErrorNetwork": "Network problem. Check your connection and try again.",
   "aiErrorUnauthorized": "Please open the Tab Space app to sign in again.",
   "splitNoTopics": "This session is already focused on one topic.",
+  "suggestionStale": "That suggestion is out of date — the sessions it referred to are no longer here.",
   "aiErrorTooMany": "This session has too many tabs for AI. Sessions over {limit} tabs can't be processed.",
   "aiErrorTooManyNoLimit": "This session is too large for AI. Split it into smaller sessions first.",
   "aiSection": "AI",

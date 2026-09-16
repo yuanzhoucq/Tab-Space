@@ -91,25 +91,34 @@ export const suggestionMixin = {
             if (aTimestamp !== bTimestamp) return aTimestamp - bTimestamp
             return (a.uuid || '').localeCompare(b.uuid || '')
           })
-          if (group.length >= 2) {
-            // Suggestion identity is based on normalized URL content, so the
-            // native merge keeps one copy of each matching tab. The first
-            // session survives, preserving the destination title/comment.
-            bridge.send({ cmd: 'MergeSessions', bookmarks: group, deduplicateSites: true, aiApplied: true })
+          if (group.length < 2) {
+            this.discardStale(s)
+            break
           }
+          // Suggestion identity is based on normalized URL content, so the
+          // native merge keeps one copy of each matching tab. The first
+          // session survives, preserving the destination title/comment.
+          bridge.send({ cmd: 'MergeSessions', bookmarks: group, deduplicateSites: true, aiApplied: true })
           break
         }
         case 'oversizedSession': {
           const [session] = this.sessionsByUuid(s.sessionUuids)
-          if (session) {
-            this.$store.commit('setSplittingSessionId', session.uuid)
-            bridge.send({ cmd: 'ClusterTabs', uuid: session.uuid, bookmarks: [session] })
+          if (!session) {
+            this.discardStale(s)
+            break
           }
+          this.$store.commit('setSplittingSessionId', session.uuid)
+          bridge.send({ cmd: 'ClusterTabs', uuid: session.uuid, bookmarks: [session] })
           break
         }
         case 'orphanTags': {
           const tagNames = s.tagNames || []
-          this.sessionsByUuid(s.sessionUuids).forEach(session => {
+          const sessions = this.sessionsByUuid(s.sessionUuids)
+          if (sessions.length === 0) {
+            this.discardStale(s)
+            break
+          }
+          sessions.forEach(session => {
             session.tags = session.tags.filter(t => !tagNames.includes(t.name))
             bridge.send({ cmd: 'UpdateSession', bookmarks: [session], aiApplied: 'orphan_tags' })
           })
@@ -146,6 +155,13 @@ export const suggestionMixin = {
       if (bridge) bridge.send({ cmd: 'DismissSuggestion', id: s.id, muteType: true, type: s.type })
       const remaining = (this.$store.state.suggestions || []).filter(x => x.type !== s.type)
       this.$store.commit('setSuggestions', remaining)
+    },
+    // The sessions a suggestion refers to can disappear between the engine
+    // producing it and the user applying it (deleted, merged, synced away).
+    // Applying silently would leave a dead card the user keeps clicking.
+    discardStale(s) {
+      this.removeFromQueue(s.id)
+      this.$store.commit('setAIToast', { messageKey: 'suggestionStale', retry: null })
     },
     removeFromQueue(id) {
       const remaining = (this.$store.state.suggestions || []).filter(x => x.id !== id)

@@ -598,7 +598,10 @@ export default {
       this.refreshSuggestions()
     },
     handleSplitPreview(data) {
-      if (data.originalUuid) this.$store.commit("setSplittingSessionId", "")
+      // At most one split is in flight, so any reply ends it. Older native
+      // builds (and replies for an empty bookmarks payload) omit originalUuid;
+      // gating on it left the card spinning and blocked every later Split.
+      this.$store.commit("setSplittingSessionId", "")
       if (data.error) {
         this.handleAIError(data)
         return
