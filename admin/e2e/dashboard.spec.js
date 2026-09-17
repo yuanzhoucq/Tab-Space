@@ -1639,9 +1639,18 @@ test('offers free library setup and explains Pro collection in Settings', async 
   const card = page.getByTestId('multi-browser-card')
   await expect(card).toBeVisible()
   await expect(card).toContainText('Access your library in any supported browser')
-  await expect(card.getByTestId('multi-browser-steps').locator('li')).toHaveCount(3)
+  await expect(card.getByTestId('multi-browser-downloads').locator('a')).toHaveCount(3)
+  await expect(card.getByTestId('download-chrome'))
+    .toHaveAttribute('href', 'https://chromewebstore.google.com/detail/tab-space/nhheanllfhaincfgjpdiacdnfgkipeep')
+  await expect(card.getByTestId('download-edge'))
+    .toHaveAttribute('href', 'https://microsoftedge.microsoft.com/addons/detail/tab-space/afpnlldgbkigccngpjclblbpjplbffel')
+  await expect(card.getByTestId('download-firefox'))
+    .toHaveAttribute('href', 'https://addons.mozilla.org/firefox/addon/tab-space/')
+  await expect(card.getByTestId('multi-browser-chromium-note'))
+    .toContainText('Brave, Vivaldi, Arc and other Chromium browsers work too')
   await expect(card.getByTestId('multi-browser-guide'))
     .toHaveAttribute('href', 'https://mytab.space/multi-browser.html')
+  await expect(card.getByTestId('multi-browser-guide')).toHaveText('Overview')
 
   // Subscription, multi-browser, then AI lead the page: the paid features stay
   // above the general preferences.

@@ -105,22 +105,56 @@
             <span>{{lang.multiBrowserConnected || 'This browser is connected to Tab Space.'}}</span>
           </p>
 
-          <ol class="steps" data-testid="multi-browser-steps">
-            <li>{{lang.multiBrowserStep1 || 'Open the Tab Space extension in this browser.'}}</li>
-            <li>{{lang.multiBrowserStep2 || 'Click Open Tab Space app.'}}</li>
-            <li>{{lang.multiBrowserStep3 || 'Copy the pairing code from the app and paste it here.'}}</li>
-          </ol>
+          <!-- Installation is the first action on this surface, so keep the
+               official stores one click away instead of making people find
+               them through the marketing-site overview. Store names are
+               product names and intentionally stay the same in every locale. -->
+          <div class="browser-downloads" data-testid="multi-browser-downloads">
+            <a class="browser-download chrome"
+               href="https://chromewebstore.google.com/detail/tab-space/nhheanllfhaincfgjpdiacdnfgkipeep"
+               target="_blank" rel="noopener" data-testid="download-chrome">
+              <img class="browser-logo" src="../../../assets/img/browser-chrome.png" alt="" aria-hidden="true">
+              <span class="browser-download-copy">
+                <strong>Chrome</strong>
+                <small>Chrome Web Store</small>
+              </span>
+              <span class="download-arrow" aria-hidden="true">&#8599;</span>
+            </a>
+            <a class="browser-download edge"
+               href="https://microsoftedge.microsoft.com/addons/detail/tab-space/afpnlldgbkigccngpjclblbpjplbffel"
+               target="_blank" rel="noopener" data-testid="download-edge">
+              <img class="browser-logo" src="../../../assets/img/browser-edge.png" alt="" aria-hidden="true">
+              <span class="browser-download-copy">
+                <strong>Microsoft Edge</strong>
+                <small>Edge Add-ons</small>
+              </span>
+              <span class="download-arrow" aria-hidden="true">&#8599;</span>
+            </a>
+            <a class="browser-download firefox"
+               href="https://addons.mozilla.org/firefox/addon/tab-space/"
+               target="_blank" rel="noopener" data-testid="download-firefox">
+              <img class="browser-logo" src="../../../assets/img/browser-firefox.png" alt="" aria-hidden="true">
+              <span class="browser-download-copy">
+                <strong>Firefox</strong>
+                <small>Firefox Add-ons</small>
+              </span>
+              <span class="download-arrow" aria-hidden="true">&#8599;</span>
+            </a>
+          </div>
+          <p class="help-text chromium-note" data-testid="multi-browser-chromium-note">
+            {{lang.multiBrowserChromiumNote || 'Brave, Vivaldi, Arc and other Chromium browsers work too — they use the same Chrome extension, and sometimes report themselves as Chrome.'}}
+          </p>
 
-          <div v-if="!isPremium" class="subscription-actions">
-            <button type="button" class="primary-action"
+          <div class="subscription-actions multi-browser-actions">
+            <button v-if="!isPremium" type="button" class="primary-action"
                     data-testid="multi-browser-upgrade" @click="openSubscription">
               {{lang.upgrade || 'Upgrade'}}
             </button>
+            <a class="multi-browser-guide" href="https://mytab.space/multi-browser.html"
+               target="_blank" rel="noopener" data-testid="multi-browser-guide">
+              {{lang.multiBrowserGuide || 'Overview'}}
+            </a>
           </div>
-          <p class="help-text">
-            <a href="https://mytab.space/multi-browser.html" target="_blank" rel="noopener"
-               data-testid="multi-browser-guide">{{lang.multiBrowserGuide || 'Multi-browser overview'}}</a>
-          </p>
         </div>
 
         <!-- AI (only when the native extension speaks protocol v2) -->
@@ -910,26 +944,96 @@ export default {
   height: 15px;
 }
 
-.steps {
-  margin: 14px 0 0;
-  padding-left: 1.3rem;
-  list-style: decimal;
+.browser-downloads {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.browser-download {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-width: 0;
+  padding: 11px 28px 11px 11px;
+  color: var(--text-primary);
+  background: var(--bg-color);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.browser-download:hover {
+  background-color: rgba(0, 0, 0, 0.04);
+}
+
+.browser-download:focus-visible {
+  outline: 2px solid var(--primary-color);
+  outline-offset: 2px;
+}
+
+.chromium-note {
+  margin: 9px 2px 0;
+  font-size: 0.72rem;
+  line-height: 1.45;
+}
+
+.multi-browser-actions {
+  align-items: center;
+}
+
+.multi-browser-guide {
+  margin-left: auto;
+  font-size: 0.78rem;
   color: var(--text-secondary);
-  font-size: 0.85rem;
+  text-decoration: underline;
+  text-underline-offset: 2px;
 }
 
-/* A bare global `li` rule in Admin.vue makes every list item a flex box with
-   no marker and its own padding. Undo it for these steps. */
-.steps li {
-  display: list-item;
-  list-style: decimal;
-  padding: 0;
-  margin-left: 0;
-  margin-right: 0;
+.browser-logo {
+  width: 30px;
+  height: 30px;
+  flex: 0 0 30px;
+  object-fit: contain;
 }
 
-.steps li + li {
-  margin-top: 5px;
+.browser-download-copy {
+  min-width: 0;
+}
+
+.browser-download-copy strong,
+.browser-download-copy small {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.browser-download-copy strong {
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.browser-download-copy small {
+  margin-top: 1px;
+  color: var(--text-secondary);
+  font-size: 0.67rem;
+}
+
+.download-arrow {
+  position: absolute;
+  top: 11px;
+  right: 10px;
+  color: var(--text-secondary);
+  font-size: 0.75rem;
+}
+
+@media (max-width: 620px) {
+  .browser-downloads {
+    grid-template-columns: 1fr;
+  }
 }
 
 .legal-links a {
@@ -1162,6 +1266,9 @@ export default {
 @media (prefers-color-scheme: dark) {
   .back-link:hover {
     background-color: rgba(255, 255, 255, 0.08);
+  }
+  .browser-download:hover {
+    background-color: rgba(255, 255, 255, 0.06);
   }
   /* The 600-weight amber and red carry a warning on white and disappear into a
      dark card; the 400s keep the same meaning at readable contrast. */
