@@ -394,6 +394,27 @@
     return { sent: dashboards.length }
   }
 
+  // A saved session reaches an open dashboard two ways: the helper broadcasts
+  // `sessions.changed` to every socket, and the extension that made the save
+  // reports it itself right after the acknowledgement. The second path exists
+  // because the first is not reliable from the saving extension's own side:
+  // Safari suspends the background context as soon as the toolbar action's
+  // promise settles, and the helper sends the request's result before the
+  // broadcast, so the event arrived after the context was gone — the
+  // dashboard only showed the new session after a manual reload. It also
+  // covers Safari's native-messaging fallback, which has no socket to be
+  // broadcast on at all. The revision tells the two reports of one change
+  // apart, so a dashboard is asked to refresh once, not twice.
+  function createDashboardChangeNotifier(browserApi) {
+    let lastRevision = null
+    return async function notify(revision) {
+      const known = Number.isFinite(revision) && revision > 0
+      if (known && revision === lastRevision) return { sent: 0, duplicate: true }
+      if (known) lastRevision = revision
+      return sendDashboardEvent(browserApi, { event: "sessions.changed", revision })
+    }
+  }
+
   function createBrowserApi(extensionApi, preferPromises) {
     function callbackCall(target, method, args) {
       return new Promise((resolve, reject) => {
@@ -721,6 +742,7 @@
       new BridgeError("unsupported_command", "This dashboard browser command is unavailable.")))
     const delay = options.delay || (milliseconds =>
       new Promise(resolve => root.setTimeout(resolve, milliseconds)))
+    const notifyDashboards = options.notifyDashboards || createDashboardChangeNotifier(browserApi)
 
     async function listPopupTabs() {
       const [tabs, activeTabs] = await Promise.all([
@@ -836,6 +858,9 @@
             sites: normalizedTabs.map(tab => ({ title: tab.title, url: tab.url }))
           })
         : await client.request("sessions.append", { sessions })
+      // Awaited, not fire-and-forget: on Safari the work has to finish inside
+      // the action's promise or the suspended context drops it.
+      await notifyDashboards(result && result.revision).catch(() => {})
       return {
         savedCount: normalizedTabs.length,
         tabIds: normalizedTabs.map(tab => tab.id),
@@ -1064,10 +1089,12 @@
     const commandClient = BUILD_TARGET === "safari" && root.TabSpaceSafariMenu
       ? root.TabSpaceSafariMenu.commandClient(client)
       : client
+    const notifyDashboards = createDashboardChangeNotifier(api)
     let controller
     controller = createController({
       browserApi: api,
       client: commandClient,
+      notifyDashboards,
       browserCommand: (command, data) => {
         if (BUILD_TARGET !== "safari" || !root.TabSpaceSafariMenu) {
           return Promise.reject(new BridgeError("unsupported_command", `Unsupported browser command: ${command}`))
@@ -1100,6 +1127,10 @@
       // Query at event time so every open dashboard receives the invalidation,
       // including pages whose long-lived port was discarded while Safari's
       // background context slept.
+      if (event.event === "sessions.changed") {
+        notifyDashboards(event.revision).catch(() => {})
+        return
+      }
       sendDashboardEvent(api, event).catch(() => {})
     })
 
@@ -1235,6 +1266,7 @@
     dashboardMessageForEvent,
     dashboardMessagesFor,
     sendDashboardEvent,
+    createDashboardChangeNotifier,
     browserFamily,
     createController,
     handleSwitcherEvent,

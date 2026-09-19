@@ -442,6 +442,44 @@ test('pushes session invalidations to every dashboard tab and nowhere else', asy
   ])
 })
 
+test('a save asks open dashboards to refresh before it returns, once per revision', async () => {
+  const sent = []
+  const browserApi = {
+    queryTabs: async query => query.currentWindow
+      ? [{ id: 42, windowId: 1, title: 'Example', url: 'https://example.com' }]
+      : [
+          { id: 42, windowId: 1, title: 'Example', url: 'https://example.com' },
+          { id: 7, windowId: 1, url: 'https://app.mytab.space/' }
+        ],
+    sendTabMessage: async (id, message) => sent.push([id, message.message.cmd, message.message.revision]),
+    removeTabs: async () => {},
+    dashboardUrl: () => 'https://app.mytab.space/'
+  }
+  const client = {
+    request: async (method, params) => {
+      if (method === 'settings.get') return { name: params.name, value: 'false' }
+      return { sessions: [], revision: 12 }
+    },
+    pair: async () => {},
+    connect: async () => {}
+  }
+  const notifyDashboards = background.createDashboardChangeNotifier(browserApi)
+  const controller = background.createController({ browserApi, client, notifyDashboards })
+
+  await controller.saveTabIds([42])
+  assert.deepEqual(sent, [[7, 'SessionsChangedRemotely', 12]])
+
+  // The helper's broadcast of the same change arrives afterwards: no second refresh.
+  assert.deepEqual(await notifyDashboards(12), { sent: 0, duplicate: true })
+  assert.deepEqual(sent, [[7, 'SessionsChangedRemotely', 12]])
+
+  // A change the extension did not make, and a native-fallback save with no
+  // revision, both still reach the dashboard.
+  await notifyDashboards(13)
+  await notifyDashboards(undefined)
+  assert.deepEqual(sent.map(entry => entry[2]), [12, 13, undefined])
+})
+
 test('saving never closes tabs before the native acknowledgement', async () => {
   const calls = []
   let acknowledge
