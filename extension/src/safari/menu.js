@@ -8,6 +8,10 @@
   const MENU_INSET_KEY = "tabspace-safari-menu-inset"
   const FALLBACK_POPUP = "popup.html"
   const MENU_TIMEOUT_MS = 24 * 60 * 60 * 1000
+  // What the toolbar menu draws: this many recent sessions plus the favorites.
+  // NativeMenu.swift takes the same prefix; the host trims the list so the
+  // whole library no longer crosses the socket and the native hop per click.
+  const MENU_RECENT_LIMIT = 25
   const SETTINGS_CACHE_KEY = "tabspace-safari-settings-v1"
   const SETTINGS_CACHED_AT_KEY = "tabspace-safari-settings-cached-at-v1"
   // Every page load asks for the shortcut settings, so they are served from
@@ -42,6 +46,20 @@
     return !!error && [
       "native_unavailable", "native_transport_failed", "native_timeout", "menu_unavailable", "menu_not_shown"
     ].includes(error.code)
+  }
+
+  // The native handler itself reported that AppKit could not draw a menu. A
+  // transport failure is different: the handler process may simply have been
+  // replaced (an update, a rebuild) and the next message relaunches it.
+  function isMenuDrawFailure(error) {
+    return !!error && ["menu_unavailable", "menu_not_shown"].includes(error.code)
+  }
+
+  // The handler declined this click on purpose — it arrived too late to be
+  // the menu the user is waiting for, or a menu is already open. Nothing to
+  // fall back from; the next click is answered normally.
+  function isMenuDeclined(error) {
+    return !!error && ["menu_stale", "menu_busy"].includes(error.code)
   }
 
   async function nativeCommand(method, params) {
@@ -305,9 +323,17 @@
   // The menu is worth showing even when the library cannot be read right now:
   // its tab and dashboard items do not need it, and the session submenus
   // simply come up empty (the popover behaved the same way on a cold store).
+  // Only the slice the menu draws is requested; a host too old to know the
+  // method still answers with the whole library.
   async function menuSessions(client) {
     try {
-      const result = await requestWithFallback(client, "sessions.list", {})
+      let result
+      try {
+        result = await requestWithFallback(client, "sessions.listRecent", { limit: MENU_RECENT_LIMIT })
+      } catch (error) {
+        if (!error || error.code !== "unsupported_method") throw error
+        result = await requestWithFallback(client, "sessions.list", {})
+      }
       return result && Array.isArray(result.sessions) ? result.sessions : []
     } catch (error) {
       console.warn("[safari-menu] sessions unavailable for the menu:", error)
@@ -315,7 +341,7 @@
     }
   }
 
-  async function show(context, clickedTab) {
+  async function show(context, clickedTab, clickedAt = Date.now()) {
     const { api, client, controller } = context
     const [window, currentTabs, sessions, stored, availability] = await Promise.all([
       call(api.windows, "getCurrent", { populate: false }),
@@ -328,6 +354,9 @@
       op: "ui.menu",
       window: currentWindowRect(window),
       inset: stored && stored[MENU_INSET_KEY],
+      // The click itself and the moment its data was ready: the handler
+      // declines a click that has gone stale and logs both latencies.
+      clickedAt,
       sentAt: Date.now(),
       sessions,
       tabs: currentTabs,
@@ -339,6 +368,10 @@
       await call(api.storage.local, "set", { [MENU_INSET_KEY]: response.measuredInset })
     }
     if (!response || response.shown !== true) {
+      const declined = response && response.error && ["menu_stale", "menu_busy"].includes(response.error.code)
+      if (declined) {
+        throw Object.assign(new Error(response.error.message || response.error.code), { code: response.error.code })
+      }
       // The one case the HTML popup exists for: AppKit could not draw the
       // menu. The click handler switches the button over to the popup.
       throw Object.assign(new Error("Safari could not display the native Tab Space menu."), { code: "menu_not_shown" })
@@ -366,15 +399,21 @@
       "tabspace-safari-menu-last-result": available ? "menu_native" : "menu_fallback"
     })).catch(() => {})
     const settingsAtStartup = cachedSettings(context).catch(() => ({}))
+    // The click being served, if any. `popUp` holds the native handler's
+    // main thread until the menu closes, so a second click meanwhile would
+    // only queue another menu behind it; it is the user closing this one.
+    let menuInFlight = null
     if (api.action && api.action.onClicked) {
       api.action.onClicked.addListener(tab => {
+        if (menuInFlight) return menuInFlight
         // Keep Safari's MV3 background context alive while the native NSMenu
         // tracks and while the selected action crosses the bridge. Without
         // returning this promise Safari may tear down the event immediately
         // after the listener returns, before `sendNativeMessage` resolves.
-        return show(context, tab).then(() => call(api.storage.local, "set", {
+        menuInFlight = show(context, tab, Date.now()).then(() => call(api.storage.local, "set", {
           "tabspace-safari-menu-last-result": "menu_native"
         })).catch(async error => {
+          if (isMenuDeclined(error)) return
           // Only a menu that never appeared hands the button to the HTML
           // popup. A command that failed after the menu closed keeps the
           // native menu for the next click; it is logged, not punished.
@@ -382,11 +421,23 @@
             console.warn("[safari-menu] menu action failed:", error)
             return
           }
-          await setPopup(api, FALLBACK_POPUP).catch(() => {})
+          // A dead or replaced handler is asked again before the button is
+          // taken away: the probe relaunches it, and only a handler that
+          // answers "not available" (or none at all) gets the popup. The
+          // probe sets the popup itself either way.
+          if (!isMenuDrawFailure(error)) {
+            if (await probe(api)) {
+              console.warn("[safari-menu] native handler recovered after:", error)
+              return
+            }
+          } else {
+            await setPopup(api, FALLBACK_POPUP).catch(() => {})
+          }
           await call(api.storage.local, "set", {
             "tabspace-safari-menu-last-result": "menu_fallback"
           }).catch(() => {})
-        })
+        }).finally(() => { menuInFlight = null })
+        return menuInFlight
       })
     }
     if (api.contextMenus) {
@@ -422,6 +473,7 @@
   return {
     FALLBACK_POPUP,
     MENU_INSET_KEY,
+    MENU_RECENT_LIMIT,
     SETTINGS_CACHE_KEY,
     SETTINGS_CACHED_AT_KEY,
     SETTINGS_MAX_AGE_MS,
@@ -429,6 +481,8 @@
     closeRelativeTabs,
     commandClient,
     invalidateSettings,
+    isMenuDeclined,
+    isMenuDrawFailure,
     isMenuUnavailableError,
     isTransportError,
     perform,

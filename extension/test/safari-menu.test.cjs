@@ -121,7 +121,7 @@ test("only a menu that never appeared hands the button to the HTML popup", async
       }
     }
   }
-  const client = { request: async method => method === "sessions.list" ? { sessions: [] } : { value: "" } }
+  const client = { request: async method => method === "sessions.listRecent" ? { sessions: [] } : { value: "" } }
   menu.install({ api, client, controller: {} })
   // Let the startup probe finish its own setPopup before counting the click's.
   await new Promise(resolve => setTimeout(resolve, 0))
@@ -223,6 +223,177 @@ test("menu telemetry accepts only the two rollout paths", async () => {
   ])
 })
 
+test("the menu asks for its own slice of the library and stamps the click", async () => {
+  const requests = []
+  const sent = []
+  nativeResponder = async message => {
+    sent.push(message)
+    return message.op === "ui.menu" ? { shown: true, chosen: null } : { available: true }
+  }
+  const api = {
+    windows: { getCurrent: async () => ({ left: 0, top: 0, width: 100, height: 100 }) },
+    tabs: { query: async () => [] },
+    storage: { local: { get: async () => ({}), set: async () => {} } }
+  }
+  const client = {
+    request: async (method, params) => {
+      requests.push([method, params])
+      return { sessions: [{ uuid: "recent" }] }
+    }
+  }
+  try {
+    const before = Date.now()
+    await menu.show({ api, client, controller: {} }, {}, before)
+    assert.deepEqual(requests.filter(([method]) => method.startsWith("sessions.")), [
+      ["sessions.listRecent", { limit: menu.MENU_RECENT_LIMIT }]
+    ])
+    const request = sent.find(message => message.op === "ui.menu")
+    assert.deepEqual(request.sessions, [{ uuid: "recent" }])
+    assert.equal(request.clickedAt, before)
+    assert.ok(request.sentAt >= before)
+
+    // A host too old to know the method still gets the menu, from the whole list.
+    requests.length = 0
+    client.request = async (method, params) => {
+      requests.push([method, params])
+      if (method === "sessions.listRecent") {
+        throw Object.assign(new Error("old host"), { code: "unsupported_method" })
+      }
+      return { sessions: [{ uuid: "everything" }] }
+    }
+    await menu.show({ api, client, controller: {} }, {})
+    assert.deepEqual(
+      requests.map(([method]) => method).filter(method => method.startsWith("sessions.")),
+      ["sessions.listRecent", "sessions.list"]
+    )
+    assert.deepEqual(sent.at(-1).sessions, [{ uuid: "everything" }])
+  } finally {
+    nativeResponder = null
+  }
+})
+
+test("a click the handler declined is neither a failure nor a fallback", async () => {
+  const popups = []
+  const warnings = []
+  let listener
+  const api = {
+    action: {
+      setPopup: async value => popups.push(value),
+      onClicked: { addListener: value => { listener = value } }
+    },
+    windows: { getCurrent: async () => ({ left: 0, top: 0, width: 100, height: 100 }) },
+    tabs: { query: async () => [] },
+    storage: { local: { get: async () => ({}), set: async () => {} } }
+  }
+  const client = { request: async () => ({ sessions: [] }) }
+  menu.install({ api, client, controller: {} })
+  await new Promise(resolve => setTimeout(resolve, 0))
+  popups.length = 0
+  const warn = console.warn
+  console.warn = (...args) => warnings.push(args)
+  nativeResponder = async message => message.op === "ui.menu"
+    ? { shown: false, error: { code: "menu_stale", message: "too old" } }
+    : { available: true }
+  try {
+    await listener({})
+    nativeResponder = async message => message.op === "ui.menu"
+      ? { shown: false, error: { code: "menu_busy", message: "open" } }
+      : { available: true }
+    await listener({})
+    assert.deepEqual(popups, [])
+    assert.deepEqual(warnings, [])
+  } finally {
+    console.warn = warn
+    nativeResponder = null
+  }
+})
+
+test("a second click while the menu is being served does not queue another menu", async () => {
+  const sent = []
+  let release
+  const opened = new Promise(resolve => { release = resolve })
+  nativeResponder = async message => {
+    sent.push(message)
+    if (message.op !== "ui.menu") return { available: true }
+    await opened
+    return { shown: true, chosen: null }
+  }
+  let listener
+  const api = {
+    action: { setPopup: async () => {}, onClicked: { addListener: value => { listener = value } } },
+    windows: { getCurrent: async () => ({ left: 0, top: 0, width: 100, height: 100 }) },
+    tabs: { query: async () => [] },
+    storage: { local: { get: async () => ({}), set: async () => {} } }
+  }
+  const client = { request: async () => ({ sessions: [] }) }
+  menu.install({ api, client, controller: {} })
+  try {
+    const first = listener({})
+    await new Promise(resolve => setTimeout(resolve, 0))
+    const second = listener({})
+    assert.equal(second, first)
+    release()
+    await Promise.all([first, second])
+    assert.equal(sent.filter(message => message.op === "ui.menu").length, 1)
+
+    // Once the menu has closed the next click is served again.
+    await listener({})
+    assert.equal(sent.filter(message => message.op === "ui.menu").length, 2)
+  } finally {
+    nativeResponder = null
+  }
+})
+
+test("a transport failure re-probes the handler before handing over the popup", async () => {
+  const popups = []
+  const results = []
+  let listener
+  const api = {
+    action: {
+      setPopup: async value => popups.push(value),
+      onClicked: { addListener: value => { listener = value } }
+    },
+    windows: { getCurrent: async () => ({ left: 0, top: 0, width: 100, height: 100 }) },
+    tabs: { query: async () => [] },
+    storage: {
+      local: {
+        get: async () => ({}),
+        set: async values => {
+          if ("tabspace-safari-menu-last-result" in values) results.push(values["tabspace-safari-menu-last-result"])
+        }
+      }
+    }
+  }
+  const client = { request: async () => ({ sessions: [] }) }
+  menu.install({ api, client, controller: {} })
+  await new Promise(resolve => setTimeout(resolve, 0))
+  popups.length = 0
+  const warn = console.warn
+  console.warn = () => {}
+  try {
+    // The handler process was replaced mid-click (native.js reports the
+    // rejected sendNativeMessage as a transport failure); the probe relaunches it.
+    const gone = () => Object.assign(new Error("Could not find specified service"), { code: "native_transport_failed" })
+    nativeResponder = async message => {
+      if (message.op === "ui.menu") throw gone()
+      return { available: true }
+    }
+    await listener({})
+    assert.deepEqual(popups, [{ popup: "" }])
+    assert.equal(results.includes("menu_fallback"), false)
+
+    // Nothing answers the probe either: the popup takes over.
+    popups.length = 0
+    nativeResponder = async () => { throw gone() }
+    await listener({})
+    assert.deepEqual(popups, [{ popup: menu.FALLBACK_POPUP }])
+    assert.equal(results.at(-1), "menu_fallback")
+  } finally {
+    console.warn = warn
+    nativeResponder = null
+  }
+})
+
 test("action listener returns the native-menu workflow promise", async () => {
   let listener
   const api = {
@@ -234,7 +405,7 @@ test("action listener returns the native-menu workflow promise", async () => {
     tabs: { query: async () => [] },
     storage: { local: { get: async () => ({}), set: async () => {} } }
   }
-  const client = { request: async method => method === "sessions.list" ? { sessions: [] } : { value: "" } }
+  const client = { request: async method => method === "sessions.listRecent" ? { sessions: [] } : { value: "" } }
   menu.install({ api, client, controller: {} })
 
   assert.equal(typeof listener, "function")
