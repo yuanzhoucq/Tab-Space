@@ -223,6 +223,36 @@ test("menu telemetry accepts only the two rollout paths", async () => {
   ])
 })
 
+test("open tabs belong to the switcher: the menu neither sends them nor activates one", async () => {
+  const sent = []
+  const updated = []
+  nativeResponder = async message => {
+    sent.push(message)
+    return message.op === "ui.menu"
+      ? { shown: true, chosen: { action: "activateTab", tabId: 2 } }
+      : { available: true }
+  }
+  const api = {
+    windows: { getCurrent: async () => ({ left: 0, top: 0, width: 100, height: 100 }) },
+    tabs: {
+      query: async () => [{ id: 1, url: "https://a.test", active: true }, { id: 2, url: "https://b.test" }],
+      update: async (...args) => updated.push(args)
+    },
+    storage: { local: { get: async () => ({}), set: async () => {} } }
+  }
+  try {
+    await assert.rejects(
+      menu.show({ api, client: { request: async () => ({ sessions: [] }) }, controller: {} }, {}),
+      error => error.code === "unsupported_menu_action"
+    )
+    const request = sent.find(message => message.op === "ui.menu")
+    assert.equal("tabs" in request, false)
+    assert.deepEqual(updated, [])
+  } finally {
+    nativeResponder = null
+  }
+})
+
 test("the menu asks for its own slice of the library and stamps the click", async () => {
   const requests = []
   const sent = []

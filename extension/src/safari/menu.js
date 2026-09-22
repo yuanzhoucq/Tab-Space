@@ -284,12 +284,6 @@
       }
       case "openSpace": return controller.openDashboard()
       case "restore": return restoreUrls(api, chosen.urls)
-      case "activateTab":
-        if (Number.isInteger(chosen.windowId)) {
-          await call(api.windows, "update", chosen.windowId, { state: "normal", focused: true })
-        }
-        await call(api.tabs, "update", chosen.tabId, { active: true })
-        return { activated: true }
       case "deleteSession": {
         const session = sessionByUuid(sessions, chosen.sessionUuid)
         if (!session) throw Object.assign(new Error("The selected session no longer exists."), { code: "session_not_found" })
@@ -321,7 +315,7 @@
   }
 
   // The menu is worth showing even when the library cannot be read right now:
-  // its tab and dashboard items do not need it, and the session submenus
+  // its save and dashboard items do not need it, and the session submenus
   // simply come up empty (the popover behaved the same way on a cold store).
   // Only the slice the menu draws is requested; a host too old to know the
   // method still answers with the whole library.
@@ -359,7 +353,6 @@
       clickedAt,
       sentAt: Date.now(),
       sessions,
-      tabs: currentTabs,
       hasValidTabs: availability.hasValidTabs,
       currentTabValid: availability.currentTabValid
     }, { timeoutMs: MENU_TIMEOUT_MS })
