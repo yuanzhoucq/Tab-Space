@@ -473,6 +473,62 @@ test("recycles the possibly stale WebSocket before performing a menu action", as
   }
 })
 
+test("a slow library does not hold the menu shut; the last slice opens it instead", async () => {
+  const stored = { "tabspace-safari-menu-sessions-v1": [{ uuid: "cached", title: "Cached" }] }
+  const api = {
+    storage: {
+      local: {
+        get: async keys => Object.fromEntries(keys.filter(key => key in stored).map(key => [key, stored[key]])),
+        set: async values => Object.assign(stored, values)
+      }
+    }
+  }
+  let release
+  const slow = new Promise(resolve => { release = resolve })
+  const slowClient = { request: async () => { await slow; return { sessions: [{ uuid: "fresh" }] } } }
+
+  const opened = await menu.menuSessions({ api, client: slowClient })
+  assert.deepEqual(opened.map(session => session.uuid), ["cached"])
+
+  // The request was not abandoned: it refreshes the slice for the next click.
+  release()
+  await new Promise(resolve => setTimeout(resolve, 5))
+  assert.deepEqual(
+    stored["tabspace-safari-menu-sessions-v1"].map(session => session.uuid),
+    ["fresh"]
+  )
+
+  const fastClient = { request: async () => ({ sessions: [{ uuid: "now" }] }) }
+  assert.deepEqual(
+    (await menu.menuSessions({ api, client: fastClient })).map(session => session.uuid),
+    ["now"]
+  )
+})
+
+test("a library that cannot be read falls back to the last slice, then to nothing", async () => {
+  const stored = {}
+  const api = {
+    storage: {
+      local: {
+        get: async keys => Object.fromEntries(keys.filter(key => key in stored).map(key => [key, stored[key]])),
+        set: async values => Object.assign(stored, values)
+      }
+    }
+  }
+  const failing = { request: async () => { throw Object.assign(new Error("cold"), { code: "internal_error" }) } }
+  nativeResponder = async () => ({ ok: false, error: { code: "internal_error", message: "cold" } })
+  try {
+    assert.deepEqual(await menu.menuSessions({ api, client: failing }), [])
+    stored["tabspace-safari-menu-sessions-v1"] = [{ uuid: "cached" }]
+    assert.deepEqual(
+      (await menu.menuSessions({ api, client: failing })).map(session => session.uuid),
+      ["cached"]
+    )
+  } finally {
+    nativeResponder = null
+  }
+})
+
 test("restore uses bounded concurrency and opens the first URL active", async () => {
   let active = 0
   let peak = 0

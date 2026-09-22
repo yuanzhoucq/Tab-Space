@@ -12,6 +12,13 @@
   // NativeMenu.swift takes the same prefix; the host trims the list so the
   // whole library no longer crosses the socket and the native hop per click.
   const MENU_RECENT_LIMIT = 25
+  // The menu's last library slice, and how long a click waits for a fresh one
+  // before opening with it. The helper answers on the same main thread a
+  // CloudKit import occupies, so the wait is occasionally seconds long — and a
+  // toolbar button that has not opened a menu reads as broken, not as slow.
+  // The request is not abandoned; it refreshes the slice for the next click.
+  const MENU_SESSIONS_CACHE_KEY = "tabspace-safari-menu-sessions-v1"
+  const MENU_SESSIONS_DEADLINE_MS = 1200
   const SETTINGS_CACHE_KEY = "tabspace-safari-settings-v1"
   const SETTINGS_CACHED_AT_KEY = "tabspace-safari-settings-cached-at-v1"
   // Every page load asks for the shortcut settings, so they are served from
@@ -314,25 +321,43 @@
     }
   }
 
-  // The menu is worth showing even when the library cannot be read right now:
-  // its save and dashboard items do not need it, and the session submenus
-  // simply come up empty (the popover behaved the same way on a cold store).
   // Only the slice the menu draws is requested; a host too old to know the
   // method still answers with the whole library.
-  async function menuSessions(client) {
+  async function fetchMenuSessions(client) {
+    let result
     try {
-      let result
-      try {
-        result = await requestWithFallback(client, "sessions.listRecent", { limit: MENU_RECENT_LIMIT })
-      } catch (error) {
-        if (!error || error.code !== "unsupported_method") throw error
-        result = await requestWithFallback(client, "sessions.list", {})
-      }
-      return result && Array.isArray(result.sessions) ? result.sessions : []
+      result = await requestWithFallback(client, "sessions.listRecent", { limit: MENU_RECENT_LIMIT })
     } catch (error) {
-      console.warn("[safari-menu] sessions unavailable for the menu:", error)
-      return []
+      if (!error || error.code !== "unsupported_method") throw error
+      result = await requestWithFallback(client, "sessions.list", {})
     }
+    return result && Array.isArray(result.sessions) ? result.sessions : []
+  }
+
+  // The menu is worth showing even when the library cannot be read right now:
+  // its save and dashboard items do not need it, and the session submenus come
+  // up from the last slice this menu drew — or empty, the way the popover did
+  // on a cold store.
+  async function menuSessions(context) {
+    const { api, client } = context
+    const refresh = fetchMenuSessions(client).then(sessions => {
+      call(api.storage.local, "set", { [MENU_SESSIONS_CACHE_KEY]: sessions }).catch(() => {})
+      return sessions
+    }, error => {
+      console.warn("[safari-menu] sessions unavailable for the menu:", error)
+      return null
+    })
+    const fresh = await Promise.race([
+      refresh,
+      new Promise(resolve => setTimeout(() => resolve(undefined), MENU_SESSIONS_DEADLINE_MS))
+    ])
+    if (Array.isArray(fresh)) return fresh
+    let cached = null
+    try {
+      cached = await call(api.storage.local, "get", [MENU_SESSIONS_CACHE_KEY])
+    } catch (_) {}
+    const sessions = cached && cached[MENU_SESSIONS_CACHE_KEY]
+    return Array.isArray(sessions) ? sessions : []
   }
 
   async function show(context, clickedTab, clickedAt = Date.now()) {
@@ -340,7 +365,7 @@
     const [window, currentTabs, sessions, stored, availability] = await Promise.all([
       call(api.windows, "getCurrent", { populate: false }),
       call(api.tabs, "query", { currentWindow: true }),
-      menuSessions(client),
+      menuSessions(context),
       call(api.storage.local, "get", [MENU_INSET_KEY]),
       saveAvailability(controller)
     ])
@@ -467,6 +492,9 @@
     FALLBACK_POPUP,
     MENU_INSET_KEY,
     MENU_RECENT_LIMIT,
+    MENU_SESSIONS_CACHE_KEY,
+    MENU_SESSIONS_DEADLINE_MS,
+    menuSessions,
     SETTINGS_CACHE_KEY,
     SETTINGS_CACHED_AT_KEY,
     SETTINGS_MAX_AGE_MS,

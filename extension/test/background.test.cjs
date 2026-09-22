@@ -639,6 +639,32 @@ test('reuses the dashboard in the current window first, and brings another windo
   ])
 })
 
+test('the dashboard is told which upgrade prompt a save earned', () => {
+  const append = background.dashboardCommandToOperation({ cmd: 'AppendSessions', bookmarks: '[]' })
+  const messages = background.dashboardMessagesFor(append, {
+    sessions: [],
+    milestone: { message: 'SessionUpgradeSuggested', limit: 2 }
+  })
+  assert.deepEqual(messages.map(message => message.cmd), ['ReturnBookmarks', 'SessionUpgradeSuggested'])
+  assert.equal(messages[1].limit, 2)
+
+  // A toolbar save has no page: its prompt rides back on the library the
+  // dashboard asks for when that save opens it.
+  const check = background.dashboardCommandToOperation({ cmd: 'CheckBookmarks' })
+  assert.equal(check.params.origin, 'dashboard')
+  const delivered = background.dashboardMessagesFor(check, {
+    sessions: [],
+    milestone: { message: 'SessionQuotaExhausted', limit: 2 }
+  })
+  assert.deepEqual(delivered.map(message => message.cmd), ['ReturnBookmarks', 'SessionQuotaExhausted'])
+
+  // No milestone, no extra message.
+  assert.deepEqual(
+    background.dashboardMessagesFor(check, { sessions: [] }).map(message => message.cmd),
+    ['ReturnBookmarks']
+  )
+})
+
 test('dashboard-initiated saves carry their origin for the app\'s analytics', () => {
   const append = background.dashboardCommandToOperation({ cmd: 'AppendSessions', bookmarks: '[]' })
   assert.equal(append.params.origin, 'dashboard')

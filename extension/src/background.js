@@ -177,7 +177,9 @@
       case "GoToSpace":
         return { kind: "browser", method: "dashboard.open", params: {} }
       case "CheckBookmarks":
-        return { kind: "native", method: "sessions.list", params: {} }
+        // `origin` lets the app hand back an upgrade prompt a toolbar save
+        // earned: only a dashboard can show one, and taking it consumes it.
+        return { kind: "native", method: "sessions.list", params: { origin: "dashboard" } }
       case "AppendSessions":
         // `origin` tells the app this save came from the dashboard rather than
         // the toolbar; its analytics label the two differently for Safari.
@@ -327,6 +329,15 @@
           source: "local-bridge",
           dispatchedAtMs: Date.now()
         })
+      }
+      // The upgrade prompt this save earned, or one a toolbar save left
+      // queued. It follows the library so the modal opens over the session the
+      // user just saved. Named by the app; the dashboard has switched on
+      // SessionUpgradeSuggested / SessionQuotaExhausted since the App
+      // Extension sent them.
+      const milestone = result && result.milestone
+      if (milestone && typeof milestone.message === "string") {
+        messages.push({ cmd: milestone.message, limit: milestone.limit })
       }
       // The split preview waits for this acknowledgement; it follows the
       // bookmarks so the new sessions are on screen when the preview closes.
