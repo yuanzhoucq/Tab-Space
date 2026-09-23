@@ -42,7 +42,13 @@
   function isTransportError(error) {
     return !!error && [
       "not_connected", "helper_unavailable", "connection_failed",
-      "connection_timeout", "connection_closed", "request_timeout"
+      "connection_timeout", "connection_closed", "request_timeout",
+      // The connection could not be authorized. Only connect() raises these,
+      // before any command is sent, so the native handler running the command
+      // instead cannot make it run twice.
+      "pairing_required", "pairing_code_unavailable", "invalid_pairing_code",
+      "pairing_rate_limited", "authentication_failed", "invalid_client",
+      "credential_store_failed"
     ].includes(error.code)
   }
 

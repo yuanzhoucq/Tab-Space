@@ -44,6 +44,15 @@ test("uses native fallback only for WebSocket transport failures", async () => {
   }, "sessions.append", {}), error => error.code === "session_limit_reached")
 })
 
+test("a connection that could not be paired falls back too: no command reached the helper", async () => {
+  nativeCalls.length = 0
+  const result = await menu.requestWithFallback({
+    request: async () => { throw Object.assign(new Error("no code"), { code: "pairing_code_unavailable" }) }
+  }, "sessions.append", { sessions: [] })
+  assert.deepEqual(result, { source: "native" })
+  assert.equal(nativeCalls.filter(call => call.op === "bridge.command").length, 1)
+})
+
 test("setPopup switches in both native-menu and forced-fallback directions", async () => {
   const nativeApi = probeApi(false)
   assert.equal(await menu.probe(nativeApi), true)
