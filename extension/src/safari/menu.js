@@ -100,30 +100,54 @@
     })
   }
 
+  // After the helper could not be reached, the next requests of the same flow
+  // go straight to the native handler for a while instead of each probing all
+  // ten ports again: a Save & Close with the helper down made three requests
+  // and spent ~0.8 s per probe, ~3 s in all, against ~0.15 s of actual work.
+  // An open socket (the background reconnect found the helper) always wins.
+  const TRANSPORT_DOWN_MS = 30 * 1000
+  let transportDownAt = 0
+
+  function socketOpen(client) {
+    return !!(client && client.socket && client.socket.readyState === 1)
+  }
+
+  async function runNative(method, params, started, reason) {
+    trace("fallback", `${method} after ${reason} ${Date.now() - started}ms`)
+    let response
+    try {
+      response = await nativeCommand(method, params)
+    } catch (nativeError) {
+      trace("fallback-failed", `${method} ${nativeError && nativeError.code} ${Date.now() - started}ms`)
+      throw nativeError
+    }
+    if (response && response.error) {
+      trace("fallback-failed", `${method} ${response.error.code} ${Date.now() - started}ms`)
+      const bridged = new Error(response.error.message || response.error.code)
+      bridged.code = response.error.code || "native_error"
+      throw bridged
+    }
+    trace("fallback-done", `${method} ${Date.now() - started}ms`)
+    return response && response.result ? response.result : response
+  }
+
   async function requestWithFallback(client, method, params) {
     const started = Date.now()
+    if (!socketOpen(client) && transportDownAt && started - transportDownAt < TRANSPORT_DOWN_MS) {
+      return runNative(method, params, started, "recent helper_unavailable")
+    }
     try {
-      return await client.request(method, params || {})
+      const result = await client.request(method, params || {})
+      transportDownAt = 0
+      return result
     } catch (error) {
       if (!isTransportError(error)) throw error
-      trace("fallback", `${method} after ${error.code} ${Date.now() - started}ms`)
-      let response
-      try {
-        response = await nativeCommand(method, params)
-      } catch (nativeError) {
-        trace("fallback-failed", `${method} ${nativeError && nativeError.code} ${Date.now() - started}ms`)
-        throw nativeError
-      }
-      if (response && response.error) {
-        trace("fallback-failed", `${method} ${response.error.code} ${Date.now() - started}ms`)
-        const bridged = new Error(response.error.message || response.error.code)
-        bridged.code = response.error.code || "native_error"
-        throw bridged
-      }
-      trace("fallback-done", `${method} ${Date.now() - started}ms`)
-      return response && response.result ? response.result : response
+      transportDownAt = Date.now()
+      return runNative(method, params, started, error.code)
     }
   }
+
+  function resetTransportState() { transportDownAt = 0 }
 
   async function recordMenu(client, menu) {
     if (!["native", "fallback"].includes(menu)) return
@@ -566,6 +590,7 @@
     performCommand,
     probe,
     requestWithFallback,
+    resetTransportState,
     restoreUrls,
     recordMenu,
     readSettings,

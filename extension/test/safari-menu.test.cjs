@@ -14,6 +14,9 @@ global.TabSpaceSafariNative = {
 }
 const menu = require("../src/safari/menu.js")
 
+// The fallback remembers a helper it could not reach; no test inherits that.
+test.beforeEach(() => menu.resetTransportState())
+
 function probeApi(forced = false) {
   const popups = []
   return {
@@ -39,9 +42,40 @@ test("uses native fallback only for WebSocket transport failures", async () => {
   assert.deepEqual(traces.map(call => call.step), ["fallback", "fallback-done"])
   assert.match(traces[0].detail, /^sessions\.list after not_connected \d+ms$/)
 
+  // An application error from a reachable helper is never retried natively.
+  menu.resetTransportState()
   await assert.rejects(menu.requestWithFallback({
     request: async () => { throw Object.assign(new Error("limit"), { code: "session_limit_reached" }) }
   }, "sessions.append", {}), error => error.code === "session_limit_reached")
+})
+
+test("after one unreachable helper, the next requests go native without probing the ports again", async () => {
+  nativeCalls.length = 0
+  let wsAttempts = 0
+  const down = {
+    request: async () => {
+      wsAttempts += 1
+      throw Object.assign(new Error("offline"), { code: "helper_unavailable" })
+    }
+  }
+  await menu.requestWithFallback(down, "settings.get", { name: "ignore-pinned-tabs" })
+  await menu.requestWithFallback(down, "settings.get", { name: "save-all-windows" })
+  await menu.requestWithFallback(down, "sessions.append", { sessions: [] })
+  assert.equal(wsAttempts, 1)
+  assert.equal(nativeCalls.filter(call => call.op === "bridge.command").length, 3)
+
+  // A socket the background reconnect opened meanwhile is used at once.
+  let reached = 0
+  const back = {
+    socket: { readyState: 1 },
+    request: async () => { reached += 1; return { value: "false" } }
+  }
+  assert.deepEqual(await menu.requestWithFallback(back, "settings.get", { name: "x" }), { value: "false" })
+  assert.equal(reached, 1)
+  // And a success clears the memory, so a client without a socket probes again.
+  let probed = 0
+  await menu.requestWithFallback({ request: async () => { probed += 1; return {} } }, "settings.get", {})
+  assert.equal(probed, 1)
 })
 
 test("a connection that could not be paired falls back too: no command reached the helper", async () => {
