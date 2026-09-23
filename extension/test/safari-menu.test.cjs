@@ -33,7 +33,11 @@ test("uses native fallback only for WebSocket transport failures", async () => {
     request: async () => { throw Object.assign(new Error("offline"), { code: "not_connected" }) }
   }, "sessions.list", {})
   assert.deepEqual(result, { source: "native" })
-  assert.equal(nativeCalls.at(-1).op, "bridge.command")
+  assert.equal(nativeCalls.filter(call => call.op === "bridge.command").length, 1)
+  // The fallback is reported to the system log, content-free.
+  const traces = nativeCalls.filter(call => call.op === "diagnostics.trace")
+  assert.deepEqual(traces.map(call => call.step), ["fallback", "fallback-done"])
+  assert.match(traces[0].detail, /^sessions\.list after not_connected \d+ms$/)
 
   await assert.rejects(menu.requestWithFallback({
     request: async () => { throw Object.assign(new Error("limit"), { code: "session_limit_reached" }) }

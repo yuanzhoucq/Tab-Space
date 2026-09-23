@@ -69,6 +69,23 @@
     return !!error && ["menu_stale", "menu_busy"].includes(error.code)
   }
 
+  // Progress of the flows that end in a write, sent to the native handler so
+  // it reaches the system log: a menu pick that saves nothing leaves no other
+  // trace outside the background page. Operation names, error codes, counts
+  // and durations only — never a URL or a title.
+  function trace(step, detail) {
+    try {
+      const native = root.TabSpaceSafariNative
+      if (!native || typeof native.send !== "function") return
+      const sent = native.send({
+        op: "diagnostics.trace",
+        step: String(step).slice(0, 60),
+        detail: String(detail === undefined ? "" : detail).slice(0, 160)
+      }, { timeoutMs: 3000 })
+      if (sent && typeof sent.catch === "function") sent.catch(() => {})
+    } catch (_) {}
+  }
+
   async function nativeCommand(method, params) {
     return root.TabSpaceSafariNative.send({
       op: "bridge.command",
@@ -78,16 +95,26 @@
   }
 
   async function requestWithFallback(client, method, params) {
+    const started = Date.now()
     try {
       return await client.request(method, params || {})
     } catch (error) {
       if (!isTransportError(error)) throw error
-      const response = await nativeCommand(method, params)
+      trace("fallback", `${method} after ${error.code} ${Date.now() - started}ms`)
+      let response
+      try {
+        response = await nativeCommand(method, params)
+      } catch (nativeError) {
+        trace("fallback-failed", `${method} ${nativeError && nativeError.code} ${Date.now() - started}ms`)
+        throw nativeError
+      }
       if (response && response.error) {
+        trace("fallback-failed", `${method} ${response.error.code} ${Date.now() - started}ms`)
         const bridged = new Error(response.error.message || response.error.code)
         bridged.code = response.error.code || "native_error"
         throw bridged
       }
+      trace("fallback-done", `${method} ${Date.now() - started}ms`)
       return response && response.result ? response.result : response
     }
   }
@@ -271,6 +298,29 @@
 
   async function perform(chosen, context) {
     if (!chosen || typeof chosen.action !== "string") return null
+    const started = Date.now()
+    trace("perform", chosen.action)
+    try {
+      const result = await performChosen(chosen, context)
+      const outcome = result && typeof result === "object"
+        ? [
+            Number.isInteger(result.savedCount) ? `saved=${result.savedCount}` : "",
+            "closedTabs" in result ? `closed=${result.closedTabs}` : "",
+            "openedDashboard" in result ? `dashboard=${result.openedDashboard}` : "",
+            Array.isArray(result.postSaveErrors) && result.postSaveErrors.length
+              ? `errors=${result.postSaveErrors.map(entry => `${entry.action}:${entry.error && entry.error.code}`).join(",")}`
+              : ""
+          ].filter(Boolean).join(" ")
+        : ""
+      trace("perform-done", `${chosen.action} ${Date.now() - started}ms ${outcome}`.trim())
+      return result
+    } catch (error) {
+      trace("perform-failed", `${chosen.action} ${error && error.code} ${Date.now() - started}ms`)
+      throw error
+    }
+  }
+
+  async function performChosen(chosen, context) {
     const { api, controller, client, sessions, currentTabs } = context
     switch (chosen.action) {
       case "save":

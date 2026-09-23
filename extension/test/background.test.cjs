@@ -558,6 +558,81 @@ test('runs remembered post-save actions only after the native acknowledgement', 
   assert.deepEqual(result.postSaveErrors, [])
 })
 
+function saveCloseApi({ dashboards = [], createdWindowId = 1 } = {}) {
+  const calls = []
+  const pages = [
+    { id: 41, windowId: 1, title: 'One', url: 'https://one.example' },
+    { id: 42, windowId: 1, title: 'Two', url: 'https://two.example', active: true },
+    { id: 43, windowId: 1, title: 'Three', url: 'https://three.example' }
+  ]
+  return {
+    calls,
+    queryTabs: async query => {
+      if (query.active) return pages.filter(tab => tab.active)
+      if (query.currentWindow) return pages
+      return [...pages, ...dashboards]
+    },
+    createTab: async properties => {
+      calls.push(['create', properties])
+      return { id: 99, windowId: createdWindowId, url: properties.url }
+    },
+    updateTab: async (id, properties) => calls.push(['update', id, properties]),
+    updateWindow: async (id, properties) => calls.push(['window', id, properties]),
+    removeTabs: async ids => calls.push(['remove', ids]),
+    dashboardUrl: () => 'https://app.mytab.space/'
+  }
+}
+
+const saveCloseClient = {
+  request: async method => method === 'settings.get' ? { value: 'false' } : { sessions: [] },
+  pair: async () => {},
+  connect: async () => {}
+}
+
+test('Safari Save & Close opens the dashboard first and then closes every saved tab, the active one too', async () => {
+  const browserApi = saveCloseApi()
+  const controller = background.createController({ browserApi, client: saveCloseClient })
+  const result = await controller.saveTabIds([41, 42, 43], {
+    closeTabsAfterSave: true,
+    openDashboardAfterSave: true,
+    preserveActiveTab: true
+  })
+  assert.deepEqual(browserApi.calls, [
+    ['create', { url: 'https://app.mytab.space/', active: true }],
+    ['remove', [41, 42, 43]]
+  ])
+  assert.equal(result.closedTabs, true)
+  assert.equal(result.openedDashboard, true)
+})
+
+test('Safari Save & Close keeps the active tab when the dashboard lives in another window', async () => {
+  const browserApi = saveCloseApi({
+    dashboards: [{ id: 7, windowId: 2, url: 'https://app.mytab.space/' }]
+  })
+  const controller = background.createController({ browserApi, client: saveCloseClient })
+  await controller.saveTabIds([41, 42, 43], {
+    closeTabsAfterSave: true,
+    openDashboardAfterSave: true,
+    preserveActiveTab: true
+  })
+  // The saving window would otherwise close with its last tab.
+  assert.deepEqual(browserApi.calls.at(-1), ['remove', [41, 43]])
+})
+
+test('Safari Save & Close keeps the active tab when the dashboard could not be opened', async () => {
+  const browserApi = saveCloseApi()
+  browserApi.createTab = async () => { throw Object.assign(new Error('blocked'), { code: 'blocked' }) }
+  const controller = background.createController({ browserApi, client: saveCloseClient })
+  const result = await controller.saveTabIds([41, 42, 43], {
+    closeTabsAfterSave: true,
+    openDashboardAfterSave: true,
+    preserveActiveTab: true
+  })
+  assert.deepEqual(browserApi.calls.at(-1), ['remove', [41, 43]])
+  assert.equal(result.openedDashboard, false)
+  assert.equal(result.postSaveErrors[0].action, 'openDashboard')
+})
+
 test('appends selected tabs to an existing session through the atomic native method', async () => {
   const calls = []
   const browserApi = {
@@ -625,14 +700,14 @@ test('reuses the dashboard in the current window first, and brings another windo
     { id: 2, windowId: 1, url: 'https://example.com', active: true },
     { id: 3, windowId: 1, url: 'https://app.mytab.space/settings' }
   ])
-  assert.deepEqual(await background.createController({ browserApi: both, client: {} }).openDashboard(), { reused: true })
+  assert.deepEqual(await background.createController({ browserApi: both, client: {} }).openDashboard(), { reused: true, windowId: 1 })
   assert.deepEqual(both.calls, [['update', 3, { active: true }]])
 
   const elsewhere = makeApi([
     { id: 1, windowId: 2, url: 'https://app.mytab.space/' },
     { id: 2, windowId: 1, url: 'https://example.com', active: true }
   ])
-  assert.deepEqual(await background.createController({ browserApi: elsewhere, client: {} }).openDashboard(), { reused: true })
+  assert.deepEqual(await background.createController({ browserApi: elsewhere, client: {} }).openDashboard(), { reused: true, windowId: 2 })
   assert.deepEqual(elsewhere.calls, [
     ['update', 1, { active: true }],
     ['window', 2, { state: 'normal', focused: true }]

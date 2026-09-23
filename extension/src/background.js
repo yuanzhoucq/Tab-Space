@@ -891,9 +891,27 @@
       let closedTabs = false
       let openedDashboard = false
 
+      // Preserving the active tab only keeps the window alive while its other
+      // tabs close. So the dashboard opens first; once it is in this window it
+      // carries the window, and the active tab — saved like the rest — closes
+      // too. It is kept only when the dashboard did not land here.
+      let dashboardWindowId
+      const dashboardFirst = Number.isInteger(activeTabId) && options.openDashboardAfterSave
+      if (dashboardFirst) {
+        try {
+          const opened = await openDashboard()
+          openedDashboard = true
+          dashboardWindowId = opened && opened.windowId
+        } catch (error) {
+          postSaveErrors.push({ action: "openDashboard", error: serializeError(error) })
+        }
+      }
       if (options.closeTabsAfterSave && result.tabIds.length > 0) {
         try {
-          const idsToClose = Number.isInteger(activeTabId)
+          const activeWindowId = (tabs.find(tab => tab.id === activeTabId) || {}).windowId
+          const keepActive = Number.isInteger(activeTabId) &&
+            !(Number.isInteger(dashboardWindowId) && dashboardWindowId === activeWindowId)
+          const idsToClose = keepActive
             ? result.tabIds.filter(id => id !== activeTabId)
             : result.tabIds
           if (idsToClose.length > 0) await browserApi.removeTabs(idsToClose)
@@ -902,7 +920,7 @@
           postSaveErrors.push({ action: "closeTabs", error: serializeError(error) })
         }
       }
-      if (options.openDashboardAfterSave) {
+      if (options.openDashboardAfterSave && !dashboardFirst) {
         try {
           await openDashboard()
           openedDashboard = true
@@ -937,14 +955,20 @@
       return { restoredCount }
     }
 
+    // Where the dashboard ended up, when the browser says: Save & Close uses it
+    // to decide whether the saving window still needs a tab of its own.
+    function withWindow(result, windowId) {
+      return Number.isInteger(windowId) ? { ...result, windowId } : result
+    }
+
     async function openDashboard() {
       // Filtering by URL here avoids browser-specific match-pattern handling
       // for the localhost development origin, especially Firefox's rejection
       // of explicit ports in match patterns.
       const matches = (await browserApi.queryTabs({})).filter(tab => isDashboardUrl(tab.url))
       if (!matches || matches.length === 0) {
-        await browserApi.createTab({ url: browserApi.dashboardUrl(), active: true })
-        return { reused: false }
+        const created = await browserApi.createTab({ url: browserApi.dashboardUrl(), active: true })
+        return withWindow({ reused: false }, created && created.windowId)
       }
       // Prefer the dashboard in the window the user is looking at. After a
       // Save & Close that window is nearly empty, and a dashboard activated in
@@ -958,7 +982,7 @@
           && typeof browserApi.updateWindow === "function") {
         await browserApi.updateWindow(match.windowId, { state: "normal", focused: true })
       }
-      return { reused: true }
+      return withWindow({ reused: true }, match.windowId)
     }
 
     async function handleDashboard(message) {
