@@ -1047,6 +1047,24 @@ function rejectHello(socket, code) {
   return false
 }
 
+test('a WebSocket the browser refuses to construct is a transport failure, not an app error', async () => {
+  class RefusedWebSocket {
+    constructor() {
+      throw Object.assign(new Error('The operation is insecure.'), { name: 'SecurityError', code: 18 })
+    }
+  }
+  const client = new background.LocalBridgeClient({
+    WebSocket: RefusedWebSocket,
+    storage: { get: async () => ({}), set: async () => {}, remove: async () => {} },
+    client: { browser: 'safari' },
+    reconnectDelays: [60000]
+  })
+  // Every port refuses the same way; the caller must see the code its
+  // transport fallback keys on, never the raw DOMException.
+  await assert.rejects(client.request('settings.get', { name: 'x' }), { code: 'helper_unavailable' })
+  client.cancelReconnect()
+})
+
 test('automatically pairs Safari after the helper requests pairing', async () => {
   FakeReconnectWebSocket.instances = []
   const removed = []

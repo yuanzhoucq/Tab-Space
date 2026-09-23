@@ -577,7 +577,20 @@
     openSocket(port) {
       return new Promise((resolve, reject) => {
         let settled = false
-        const socket = new this.WebSocket(`ws://127.0.0.1:${port}/tabspace/v2`)
+        let socket
+        try {
+          socket = new this.WebSocket(`ws://127.0.0.1:${port}/tabspace/v2`)
+        } catch (error) {
+          // The browser refused to create the socket at all — Safari throws a
+          // SecurityError from the constructor in some contexts. Nothing was
+          // connected, so this is a transport failure like a refused port,
+          // and callers that fall back on those must fall back on it too.
+          reject(new BridgeError(
+            "connection_failed",
+            `Could not open a connection to Tab Space (${error && error.name || "error"}).`
+          ))
+          return
+        }
         const timer = setTimeout(() => {
           if (settled) return
           settled = true

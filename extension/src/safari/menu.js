@@ -315,7 +315,7 @@
       trace("perform-done", `${chosen.action} ${Date.now() - started}ms ${outcome}`.trim())
       return result
     } catch (error) {
-      trace("perform-failed", `${chosen.action} ${error && error.code} ${Date.now() - started}ms`)
+      trace("perform-failed", `${chosen.action} ${error && error.code} ${error && error.name} ${Date.now() - started}ms`)
       throw error
     }
   }
