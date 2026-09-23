@@ -35,6 +35,8 @@ test("builds the Safari MV3 manifest without other-browser keys", async () => {
   // The App Extension's shortcuts live in page-shortcuts.js; a `commands`
   // block would double-fire them when Shift shortcuts are enabled.
   assert.equal("commands" in manifest, false)
+  // Safari 17 blocks the loopback bridge under any connect-src; see build.mjs.
+  assert.equal(manifest.content_security_policy.extension_pages, "script-src 'self'; object-src 'self'")
   const background = await readFile(join(extensionRoot, "dist/safari/background.js"), "utf8")
   assert.match(background, /const BUILD_TARGET = "safari"/)
   assert.match(background, /BUILD_TARGET === "safari"\s*\? "safari"/)

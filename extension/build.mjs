@@ -129,6 +129,18 @@ function manifestFor(target) {
     manifest.background = { scripts: ["background.js"] }
     manifest.permissions.push("nativeMessaging", "contextMenus", "webNavigation")
     manifest.host_permissions = ["<all_urls>"]
+    // No connect-src for Safari. Safari 17 refuses every loopback connection
+    // from an extension page while the manifest CSP has any connect-src at
+    // all — ws://127.0.0.1:*, an http source beside it, even * — throwing a
+    // SecurityError from the WebSocket constructor, although the same policy
+    // on an ordinary page lets the socket through. Safari 18 and 26 are not
+    // affected, but one manifest serves every Safari, so the bridge would be
+    // unreachable on macOS 14. script-src 'self' still keeps every script
+    // but the extension's own out of its pages; the only fetch/WebSocket an
+    // extension page makes is the loopback bridge.
+    manifest.content_security_policy = {
+      extension_pages: "script-src 'self'; object-src 'self'"
+    }
     // Safari keeps the App Extension's shortcuts, handled by page-shortcuts.js
     // so they follow the user's Shift/disable settings. Declaring `commands`
     // too would fire Ctrl+Shift+S/T twice when Shift shortcuts are on, and

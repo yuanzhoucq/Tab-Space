@@ -878,6 +878,10 @@ test('builds valid browser-specific Manifest V3 packages', () => {
     // Without this the alarms API is undefined and the bridge cannot recover
     // from a suspended background context.
     assert.equal(manifest.permissions.includes('alarms'), true)
+    // Only Safari drops this (Safari 17 blocks the bridge under any
+    // connect-src; see build.mjs). Everywhere else extension pages may
+    // connect to the loopback bridge and nothing else.
+    assert.match(manifest.content_security_policy.extension_pages, /connect-src ws:\/\/127\.0\.0\.1:\*/)
     // Every package names its icons the same way; the artwork behind those
     // names is what differs between Chromium and Firefox.
     assert.deepEqual(manifest.action.default_icon, chrome.action.default_icon)
