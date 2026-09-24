@@ -63,3 +63,43 @@ test("does not expose the privileged bridge outside the exact production host", 
     assert.equal(sandbox.window.__tabspace_bridge, undefined)
   }
 })
+
+test("in Safari 17's isolated world it answers the dashboard's App Extension protocol instead", () => {
+  const sandbox = context()
+  // What Safari 17 gives a `world: "MAIN"` script: the extension APIs.
+  sandbox.browser = { runtime: { id: "safari-web-extension-id" } }
+  const commands = []
+  const replies = []
+  const ready = []
+  sandbox.document.addEventListener("tabspace:webextension:command", event => commands.push(JSON.parse(event.detail)))
+  sandbox.document.addEventListener("tabspace:app-extension:ready", event => ready.push(JSON.parse(event.detail)))
+  sandbox.document.addEventListener("tabspace:app-extension:message", event => replies.push(JSON.parse(event.detail)))
+  vm.runInNewContext(source, sandbox)
+
+  // Announced on load, and again whenever the dashboard probes.
+  assert.deepEqual(ready, [{ protocolVersion: 1 }])
+  sandbox.document.dispatchEvent(new CustomEvent("tabspace:app-extension:probe"))
+  assert.equal(ready.length, 2)
+
+  // The dashboard's command reaches the extension exactly as the direct bridge sends it.
+  sandbox.document.dispatchEvent(new CustomEvent("tabspace:app-extension:command", {
+    detail: JSON.stringify({ name: "CheckBookmarks", data: { cmd: "CheckBookmarks", bookmarks: [{ uuid: "one" }] } })
+  }))
+  const relayed = commands.find(command => command.name === "CheckBookmarks")
+  assert.equal(relayed.data.cmd, "CheckBookmarks")
+  assert.equal(relayed.data.bookmarks, '[{"uuid":"one"}]')
+
+  // And the reply comes back on the protocol the dashboard is listening to.
+  const reply = { name: "ReturnBookmarks", message: { value: "[]" } }
+  sandbox.document.dispatchEvent(new CustomEvent("tabspace:webextension:message", { detail: JSON.stringify(reply) }))
+  assert.deepEqual(replies, [reply])
+})
+
+test("where the page's world is honored it leaves the App Extension protocol alone", () => {
+  const sandbox = context()
+  const ready = []
+  sandbox.document.addEventListener("tabspace:app-extension:ready", event => ready.push(event))
+  vm.runInNewContext(source, sandbox)
+  sandbox.document.dispatchEvent(new CustomEvent("tabspace:app-extension:probe"))
+  assert.equal(ready.length, 0)
+})

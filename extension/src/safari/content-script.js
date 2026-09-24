@@ -43,6 +43,33 @@
     if (typeof onMessage === "function") onMessage(payload.name, message)
   })
 
+  // Safari 17 does not honor `world: "MAIN"`: this script then runs in the
+  // extension's isolated world, where the extension APIs are visible and the
+  // window.__tabspace_bridge above is not visible to the dashboard, which is
+  // left waiting for a library that never arrives. The dashboard also speaks
+  // the App Extension's event protocol (tabspace:app-extension:*), and a
+  // string detail crosses worlds, so here that protocol is translated onto
+  // this one. Where the page's world is honored (Safari 18 and later) the
+  // extension APIs are absent and nothing below runs.
+  const isolatedWorld = typeof browser !== "undefined" && !!(browser && browser.runtime && browser.runtime.id)
+  if (isolatedWorld) {
+    const appExtensionEvent = name => `tabspace:app-extension:${name}`
+    const announce = () => document.dispatchEvent(new CustomEvent(appExtensionEvent("ready"), {
+      detail: JSON.stringify({ protocolVersion: 1 })
+    }))
+    document.addEventListener(appExtensionEvent("probe"), announce)
+    document.addEventListener(appExtensionEvent("command"), event => {
+      let request
+      try { request = JSON.parse(event.detail) } catch (_) { return }
+      if (!request || typeof request.name !== "string") return
+      send(request.name, request.data)
+    })
+    document.addEventListener(MESSAGE_EVENT, event => {
+      document.dispatchEvent(new CustomEvent(appExtensionEvent("message"), { detail: event.detail }))
+    })
+    announce()
+  }
+
   window.addEventListener("tabspace:dashboard-ready", () => {})
   window.dispatchEvent(new CustomEvent("tabspace:bridge-ready"))
   send("VerifyOnboardingWebsiteAccess", {})
