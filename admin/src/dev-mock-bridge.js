@@ -54,11 +54,115 @@ function sampleSessions() {
   ]
 }
 
+// `?mock=marketing` swaps in a fuller library for store screenshots: themed
+// sessions with real, recognisable sites, titled in the browser's language.
+function marketingSessions() {
+  const zh = (navigator.language || '').toLowerCase().startsWith('zh')
+  const t = (en, cn) => (zh ? cn : en)
+  const now = Date.now()
+  const hour = 60 * 60 * 1000
+  const site = (title, url) => ({ title, url })
+  return [
+    {
+      uuid: 'mkt-kyoto',
+      title: t('Kyoto trip', '京都之旅'),
+      timestamp: now - 2 * hour,
+      comment: '',
+      sites: [
+        site('Kyoto Travel Guide - What to do in Kyoto City', 'https://www.japan-guide.com/e/e2158.html'),
+        site('Kyoto – Travel guide at Wikivoyage', 'https://en.wikivoyage.org/wiki/Kyoto'),
+        site('Fushimi Inari Shrine - Kyoto Travel', 'https://www.japan-guide.com/e/e3915.html'),
+        site('Inside Kyoto | Kyoto Travel Guide', 'https://www.insidekyoto.com'),
+        site('Kyoto Itineraries', 'https://www.insidekyoto.com/kyoto-itineraries'),
+        site('Sanjusangendo Temple - Kyoto Travel', 'https://www.japan-guide.com/e/e3900.html'),
+        site('Japan National Tourism Organization', 'https://www.jnto.go.jp'),
+        site('Airbnb | Kyoto – Holiday Rentals', 'https://www.airbnb.com/kyoto-japan/stays')
+      ],
+      tags: [{ name: t('Travel', '旅行') }, { name: '@Favorite' }]
+    },
+    {
+      uuid: 'mkt-wwdc',
+      title: 'WWDC26',
+      timestamp: now - 26 * hour,
+      comment: '',
+      sites: [
+        site('Videos - Apple Developer', 'https://developer.apple.com/videos/'),
+        site('SwiftUI | Apple Developer Documentation', 'https://developer.apple.com/documentation/swiftui'),
+        site('Human Interface Guidelines', 'https://developer.apple.com/design/human-interface-guidelines'),
+        site('Swift - Apple Developer', 'https://developer.apple.com/swift/'),
+        site('GitHub · Trending', 'https://github.com/trending')
+      ],
+      tags: [{ name: t('Work', '工作') }]
+    },
+    {
+      uuid: 'mkt-thesis',
+      title: t('Thesis: LLM agents', '论文：大模型智能体'),
+      timestamp: now - 3 * 24 * hour,
+      comment: '',
+      sites: [
+        site('ReAct: Synergizing Reasoning and Acting in Language Models', 'https://arxiv.org/abs/2210.03629'),
+        site('arXiv.org e-Print archive', 'https://arxiv.org'),
+        site('Coursera | Online Courses From Top Universities', 'https://www.coursera.org'),
+        site('GitHub', 'https://github.com')
+      ],
+      tags: [{ name: t('Research', '研究') }]
+    },
+    {
+      uuid: 'mkt-mac',
+      title: t('New Mac setup', '新 Mac 配置'),
+      timestamp: now - 5 * 24 * hour,
+      comment: '',
+      sites: [
+        site('MacBook Pro - Apple', 'https://www.apple.com/macbook-pro/'),
+        site('AirPods - Apple', 'https://www.apple.com/airpods/'),
+        site('Amazon Best Sellers', 'https://www.amazon.com/gp/bestsellers'),
+        site('The Verge', 'https://www.theverge.com')
+      ],
+      tags: [{ name: t('Shopping', '购物') }]
+    },
+    {
+      uuid: 'mkt-design',
+      title: t('Design inspiration', '设计灵感'),
+      timestamp: now - 8 * 24 * hour,
+      comment: '',
+      sites: [
+        site('Figma Community', 'https://www.figma.com/community'),
+        site('Notion – The AI workspace that works for you', 'https://www.notion.so'),
+        site('Explore GitHub', 'https://github.com/explore')
+      ],
+      tags: [{ name: t('Design', '设计') }]
+    },
+    {
+      // Left untitled and untagged for the AI scene; EnhanceSession names it.
+      uuid: 'mkt-untitled',
+      title: '',
+      timestamp: now - 10 * 24 * hour,
+      comment: '',
+      sites: [
+        site('Introducing SwiftUI | Apple Developer Documentation', 'https://developer.apple.com/tutorials/swiftui'),
+        site('SwiftUI by Example - Hacking with Swift', 'https://www.hackingwithswift.com/quick-start/swiftui'),
+        site('Develop in Swift Tutorials', 'https://developer.apple.com/tutorials/develop-in-swift'),
+        site('pointfreeco/swift-composable-architecture · GitHub', 'https://github.com/pointfreeco/swift-composable-architecture')
+      ],
+      tags: []
+    }
+  ]
+}
+
+// What the marketing library's AI enhance "finds" for its untitled session.
+function marketingEnhancement() {
+  const zh = (navigator.language || '').toLowerCase().startsWith('zh')
+  return zh
+    ? { title: '学习 SwiftUI', tags: [{ name: 'Swift' }, { name: '教程' }] }
+    : { title: 'Learning SwiftUI', tags: [{ name: 'Swift' }, { name: 'Tutorial' }] }
+}
+
 export function installMockBridge() {
   if (window.__tabspace_bridge) return
 
   const clone = value => JSON.parse(JSON.stringify(value))
-  let sessions = sampleSessions()
+  const marketing = new URLSearchParams(window.location.search).get('mock') === 'marketing'
+  let sessions = marketing ? marketingSessions() : sampleSessions()
   const defaults = {}
 
   const emit = (name, message) => {
@@ -105,10 +209,13 @@ export function installMockBridge() {
         emit('ReturnEnhancedSession', { uuid, error: 'quota_exceeded', ...quotaFields() })
         return
       }
+      const enhanced = marketing
+        ? marketingEnhancement()
+        : { title: 'AI: ' + (msg.bookmarks[0].title || 'Organized session'), tags: [{ name: 'AI' }, { name: 'Research' }] }
       emit('ReturnEnhancedSession', {
         uuid,
-        title: 'AI: ' + (msg.bookmarks[0].title || 'Organized session'),
-        tags: JSON.stringify([{ name: 'AI' }, { name: 'Research' }]),
+        title: enhanced.title,
+        tags: JSON.stringify(enhanced.tags),
         ...quotaFields()
       })
     },
