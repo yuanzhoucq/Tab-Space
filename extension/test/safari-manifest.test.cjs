@@ -42,6 +42,13 @@ test("builds the Safari MV3 manifest without other-browser keys", async () => {
   const contentScript = await readFile(join(extensionRoot, "dist/safari/content-script.js"), "utf8")
   assert.match(contentScript, /const SAFARI_DIRECT_BRIDGE = true/)
   assert.deepEqual(manifest.icons, { 16: "icon-16.png", 32: "icon-32.png", 48: "icon-48.png", 128: "icon-128.png" })
+  // Safari's own render of the blue drawing, lighter to match its SF Symbols.
+  for (const size of [16, 32, 48, 128]) {
+    assert.deepEqual(
+      await readFile(join(extensionRoot, `dist/safari/toolbar-${size}.png`)),
+      await readFile(join(extensionRoot, `assets/toolbar-safari-${size}.png`))
+    )
+  }
   const background = await readFile(join(extensionRoot, "dist/safari/background.js"), "utf8")
   assert.match(background, /const BUILD_TARGET = "safari"/)
   assert.match(background, /BUILD_TARGET === "safari"\s*\? "safari"/)
