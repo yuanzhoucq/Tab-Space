@@ -7,7 +7,10 @@
   --subtle: color-mix(in srgb, CanvasText 5%, transparent);
 }
 
-body { margin: 0; min-width: 360px; background: Canvas; color: CanvasText; }
+/* A fixed width, not a minimum: browsers size a popup to its content, and a
+   native <select> is as wide as its longest option, so one long session title
+   in "Save to" stretched the whole popup — to most of the screen in Firefox. */
+body { margin: 0; width: 360px; background: Canvas; color: CanvasText; }
 main { padding: 16px; }
 .brand { display: flex; gap: 12px; align-items: flex-start; }
 .logo { width: 48px; height: 48px; flex: 0 0 48px; border-radius: 12px; object-fit: cover; }
@@ -47,6 +50,19 @@ button:disabled { opacity: .45; }
 #status, #pairing-status, #success-status { min-height: 18px; margin-top: 10px; text-align: center; }
 #status.error, #pairing-status.error, #success-status.error { color: #d33b36; }
 .pairing-view { margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--separator); }
+.pairing-wait { display: grid; grid-template-columns: 18px minmax(0, 1fr); gap: 10px; align-items: center; margin-bottom: 12px; }
+.pairing-wait p { color: CanvasText; font-weight: 600; }
+.pairing-escape { grid-column: 2; justify-self: start; margin: 2px 0 0; font-size: 12px; }
+.pairing-spinner {
+  width: 16px; height: 16px; border-radius: 50%;
+  border: 2px solid color-mix(in srgb, var(--accent) 30%, transparent);
+  border-top-color: var(--accent-strong);
+  animation: pairing-spin 850ms linear infinite;
+}
+@keyframes pairing-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .pairing-spinner { animation-duration: 2.4s; } }
+.pairing-help { margin-top: 14px; }
+#pairing-manual[hidden], #pairing-wait[hidden] { display: none; }
 #pairing-code { box-sizing: border-box; width: 100%; margin-top: 14px; padding: 11px 12px; border: 1px solid var(--separator); border-radius: 10px; background: Canvas; color: CanvasText; font: 600 22px ui-monospace, monospace; letter-spacing: .28em; text-align: center; }
 .success-view { padding: 28px 8px 12px; text-align: center; }
 .success-icon { display: grid; place-items: center; width: 58px; height: 58px; margin: 0 auto 14px; border-radius: 50%; background: color-mix(in srgb, var(--accent) 13%, Canvas); color: var(--accent-strong); }

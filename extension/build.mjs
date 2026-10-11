@@ -1,11 +1,10 @@
 import { cp, mkdir, readFile, rm, writeFile } from "node:fs/promises"
 import { execFileSync } from "node:child_process"
-import { dirname, join, resolve } from "node:path"
+import { dirname, join } from "node:path"
 import { fileURLToPath } from "node:url"
 import { extensionVersion } from "./version.mjs"
 
 const extensionRoot = dirname(fileURLToPath(import.meta.url))
-const repositoryRoot = resolve(extensionRoot, "..")
 const argumentsList = process.argv.slice(2)
 const development = argumentsList.includes("dev")
 const dashboardFlag = "--dashboard="
@@ -94,11 +93,14 @@ const baseManifest = {
       "128": "toolbar-128.png"
     }
   },
+  // The app icon, exported per size from the Mac app's Icon Composer document
+  // (see README). The marketing site's icon.png is left to the site: it shows
+  // what is released, and this package can ship ahead of the app.
   icons: {
-    "16": "icon.png",
-    "32": "icon.png",
-    "48": "icon.png",
-    "128": "icon.png"
+    "16": "icon-16.png",
+    "32": "icon-32.png",
+    "48": "icon-48.png",
+    "128": "icon-128.png"
   },
   content_scripts: [{
     matches: [],
@@ -211,7 +213,9 @@ for (const target of requestedTargets) {
   await rm(output, { recursive: true, force: true })
   await mkdir(output, { recursive: true })
   await cp(join(extensionRoot, "src"), output, { recursive: true })
-  await cp(join(repositoryRoot, "icon.png"), join(output, "icon.png"))
+  for (const size of [16, 32, 48, 128]) {
+    await cp(join(extensionRoot, "assets", `icon-${size}.png`), join(output, `icon-${size}.png`))
+  }
   // Firefox ships its own artwork under the same filenames the manifest uses,
   // so each package carries one toolbar icon set and nothing has to branch at
   // runtime. Chrome and Edge get the blue drawing; Firefox gets the dark/light
@@ -225,6 +229,16 @@ for (const target of requestedTargets) {
     }
   }
   if (target === "safari") {
+    // Only this package carries safari/content-script.js, the page-side end of
+    // the direct dashboard bridge, so only here may the shared content script
+    // reply through it.
+    const contentScriptPath = join(output, "content-script.js")
+    const contentScript = await readFile(contentScriptPath, "utf8")
+    const directOff = "const SAFARI_DIRECT_BRIDGE = false"
+    if (!contentScript.includes(directOff)) {
+      throw new Error("content-script.js no longer declares SAFARI_DIRECT_BRIDGE; the Safari build cannot enable its bridge.")
+    }
+    await writeFile(contentScriptPath, contentScript.replace(directOff, "const SAFARI_DIRECT_BRIDGE = true"))
     const backgroundPath = join(output, "background.js")
     const background = await readFile(backgroundPath, "utf8")
     const nativeMessaging = await readFile(join(output, "safari/native.js"), "utf8")

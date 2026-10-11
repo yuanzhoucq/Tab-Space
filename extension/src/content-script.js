@@ -19,9 +19,17 @@
       origin === `https://${suffix}` || origin.endsWith(`.${suffix}`))
   }
 
+  // build.mjs turns this on for the Safari package only. That package also
+  // injects safari/content-script.js, the one listener for the document events
+  // direct mode replies with. Chrome, Edge and Firefox have no such listener,
+  // so with direct mode on there a dashboard connected and then waited forever
+  // for a library that had been sent to nobody.
+  const SAFARI_DIRECT_BRIDGE = false
+
   if (!isDashboardOrigin(window.location.origin)) return
   const DASHBOARD_ORIGIN = window.location.origin
-  const DIRECT_MODE = window.top === window
+  const DIRECT_MODE = SAFARI_DIRECT_BRIDGE
+    && window.top === window
     && window.location.protocol === "https:"
     && window.location.host === "app.mytab.space"
 
@@ -52,6 +60,17 @@
 
   function postReady() {
     post("ready", { protocolVersion: 2 })
+  }
+
+  // The dashboard is told once per page that the bridge is up. The background
+  // announces every successful handshake and the page's own connect request
+  // answers too; both arriving used to make the dashboard load its whole
+  // library twice.
+  function markConnected(info) {
+    bridgeInfo = info || bridgeInfo
+    if (nativeConnected) return
+    nativeConnected = true
+    post("connected", { bridgeInfo })
   }
 
   function postNativeMessage(message) {
@@ -117,26 +136,23 @@
     if (payload && payload.type === "native-message" && payload.message) {
       postNativeMessage(payload.message)
     }
-    if (payload && payload.type === "bridge-connected") {
-      nativeConnected = true
-      bridgeInfo = payload.result || bridgeInfo
-      post("connected", { bridgeInfo })
-    }
+    if (payload && payload.type === "bridge-connected") markConnected(payload.result)
   })
 
   extensionApi.runtime.onMessage.addListener(payload => {
     if (payload && payload.type === "dashboard.nativeMessage" && payload.message) {
       postNativeMessage(payload.message)
     }
+    // Another part of the extension connected the browser — typically the
+    // popup, after the person approved it on their Mac.
+    if (payload && payload.type === "dashboard.bridgeConnected") markConnected(payload.result)
   })
 
   sendRuntimeMessage({ type: "dashboard.connect" }).then(response => {
     if (!response || response.ok !== true) {
       post("connection-error", { error: response && response.error })
     } else {
-      nativeConnected = true
-      bridgeInfo = response.result || null
-      post("connected", { bridgeInfo })
+      markConnected(response.result || null)
     }
   }).catch(error => {
     post("connection-error", { error: { code: "extension_error", message: error.message } })

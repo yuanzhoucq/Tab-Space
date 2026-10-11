@@ -844,6 +844,21 @@ test('ships one toolbar icon per size and no theme-specific variant', () => {
 
 test('builds valid browser-specific Manifest V3 packages', () => {
   execFileSync(process.execPath, [join(extensionRoot, 'build.mjs'), 'all'], { stdio: 'pipe' })
+  for (const target of ['chrome', 'edge', 'firefox']) {
+    // Only the Safari package has a page-side listener for the direct bridge;
+    // here it would send the dashboard's library to nobody.
+    const contentScript = readFileSync(join(extensionRoot, `dist/${target}/content-script.js`), 'utf8')
+    assert.equal(contentScript.includes('const SAFARI_DIRECT_BRIDGE = false'), true, target)
+    // The app icon, one export per size rather than one 1024 px image.
+    const manifest = JSON.parse(readFileSync(join(extensionRoot, `dist/${target}/manifest.json`), 'utf8'))
+    assert.deepEqual(manifest.icons, {
+      16: 'icon-16.png', 32: 'icon-32.png', 48: 'icon-48.png', 128: 'icon-128.png'
+    }, target)
+    for (const file of Object.values(manifest.icons)) {
+      assert.equal(existsSync(join(extensionRoot, `dist/${target}/${file}`)), true, `${target}/${file}`)
+    }
+    assert.equal(existsSync(join(extensionRoot, `dist/${target}/icon.png`)), false, target)
+  }
   const chrome = JSON.parse(readFileSync(join(extensionRoot, 'dist/chrome/manifest.json'), 'utf8'))
   const edge = JSON.parse(readFileSync(join(extensionRoot, 'dist/edge/manifest.json'), 'utf8'))
   const firefox = JSON.parse(readFileSync(join(extensionRoot, 'dist/firefox/manifest.json'), 'utf8'))
@@ -979,11 +994,17 @@ test('treats a Pro-only refusal as terminal instead of re-pairing', () => {
   const backgroundSource = readFileSync(join(extensionRoot, 'src/background.js'), 'utf8')
   const popup = readFileSync(join(extensionRoot, 'src/popup.js'), 'utf8')
 
-  const terminalCodes = backgroundSource.slice(
-    backgroundSource.indexOf('if (error && ['),
-    backgroundSource.indexOf('].includes(error.code))')
-  )
-  assert.equal(terminalCodes.includes('"pro_required"'), true)
+  // A Pro refusal outranks every other handshake answer, so it is the one the
+  // popup is given even when another account's helper on the same Mac answered
+  // "this browser is unknown" first.
+  assert.equal(background.preferredBridgeError(
+    new Error('x'),
+    Object.assign(new Error('pro'), { code: 'pro_required' })
+  ).code, 'pro_required')
+  assert.equal(background.preferredBridgeError(
+    Object.assign(new Error('pro'), { code: 'pro_required' }),
+    Object.assign(new Error('unknown browser'), { code: 'pairing_required' })
+  ).code, 'pro_required')
 
   const proBranch = popup.indexOf('response.error.code === "pro_required"')
   const pairingBranch = popup.indexOf('["pairing_required", "authentication_failed"].includes(response.error.code)')
@@ -1037,6 +1058,26 @@ function answerHello(socket, token) {
   return false
 }
 
+const settle = () => new Promise(resolve => setImmediate(resolve))
+
+// Refuse the rest of one sweep, one port at a time. An unused loopback port
+// refuses the connection immediately, and that refusal is what lets the sweep
+// move on to the next port. The count is explicit so this stops at the end of
+// the sweep instead of swallowing the socket that follows it.
+async function refuseRemainingPorts(fromIndex, count) {
+  let index = fromIndex
+  for (let remaining = count; remaining > 0; remaining -= 1) {
+    const socket = FakeReconnectWebSocket.instances[index]
+    if (!socket) break
+    if (socket.onerror) socket.onerror()
+    index += 1
+    await settle()
+  }
+  return index
+}
+
+const sweepLength = background.portCandidates().length
+
 function rejectHello(socket, code) {
   for (const raw of socket.sent) {
     const message = JSON.parse(raw)
@@ -1085,38 +1126,404 @@ test('automatically pairs Safari after the helper requests pairing', async () =>
   })
 
   const connection = client.connect()
-  await new Promise(resolve => setImmediate(resolve))
+  await settle()
   const firstSocket = FakeReconnectWebSocket.instances[0]
   firstSocket.open()
-  await new Promise(resolve => setImmediate(resolve))
+  await settle()
   assert.ok(rejectHello(firstSocket, 'pairing_required'))
-  await new Promise(resolve => setImmediate(resolve))
+  await settle()
+  // The sweep now visits every remaining port before the pairing code is
+  // fetched, so that another account's helper answering first cannot hide this
+  // browser's own.
+  const retryIndex = await refuseRemainingPorts(1, sweepLength - 1)
 
-  const secondSocket = FakeReconnectWebSocket.instances[1]
+  const secondSocket = FakeReconnectWebSocket.instances[retryIndex]
   secondSocket.open()
-  await new Promise(resolve => setImmediate(resolve))
+  await settle()
   const hello = secondSocket.sent.map(JSON.parse).find(message => message.method === 'hello')
   assert.equal(hello.params.browser, 'safari')
   assert.equal(hello.params.pairingCode, '123456')
   assert.ok(answerHello(secondSocket, 'safari-token'))
   assert.equal((await connection).authenticated, true)
-  assert.deepEqual(removed, [['tabspace-auth-token']])
-  assert.deepEqual(stored.at(-1), { 'tabspace-auth-token': 'safari-token' })
+  // The stored token is never discarded on the way to pairing: a pairing
+  // attempt that fails must leave a credential that still worked in place.
+  assert.deepEqual(removed, [])
+  assert.deepEqual(stored.at(-1), {
+    'tabspace-bridge-port': 53791,
+    'tabspace-auth-token': 'safari-token'
+  })
+})
+
+// A client whose storage behaves like a real browser profile: what the client
+// writes is what the next read returns.
+function storedClient(options = {}) {
+  const values = { 'tabspace-client-id': 'browser-1', ...(options.values || {}) }
+  const writes = []
+  const awaiting = []
+  const client = new background.LocalBridgeClient({
+    // Announced at once unless a test is about the delay itself.
+    approvalAnnounceDelay: 0,
+    ...(options.clientOptions || {}),
+    WebSocket: FakeReconnectWebSocket,
+    storage: {
+      get: async keys => Object.fromEntries(keys
+        .filter(key => values[key] !== undefined)
+        .map(key => [key, values[key]])),
+      set: async update => { writes.push(update); Object.assign(values, update) },
+      remove: async keys => { for (const key of keys) delete values[key] }
+    },
+    client: { browser: options.browser || 'chrome' },
+    onAwaitingApproval: details => awaiting.push(details || {})
+  })
+  return { client, values, writes, awaiting }
+}
+
+function sentMethods(socket) {
+  return socket.sent.map(JSON.parse).map(message => message.method)
+}
+
+function answerMethod(socket, method, result) {
+  for (const raw of socket.sent) {
+    const message = JSON.parse(raw)
+    if (message.method !== method) continue
+    socket.receive(JSON.stringify({ version: 2, id: message.id, result }))
+    return JSON.parse(raw)
+  }
+  return null
+}
+
+function rejectMethod(socket, method, code) {
+  for (const raw of socket.sent) {
+    const message = JSON.parse(raw)
+    if (message.method !== method) continue
+    socket.receive(JSON.stringify({ version: 2, id: message.id, error: { code, message: code } }))
+    return JSON.parse(raw)
+  }
+  return null
+}
+
+// Opens the next socket the sweep creates and hands it to `respond`.
+async function atPort(index, respond) {
+  const socket = FakeReconnectWebSocket.instances[index]
+  assert.ok(socket, `no socket was opened for port index ${index}`)
+  socket.open()
+  await settle()
+  respond(socket)
+  await settle()
+  return socket
+}
+
+test('keeps looking past another account\'s helper on the same Mac', async () => {
+  // Every logged-in account runs its own helper and loopback ports are
+  // machine-wide, so the helper that answers first is often one that has never
+  // seen this browser. Giving up there is what left a paired browser unable to
+  // reach its own helper.
+  FakeReconnectWebSocket.instances = []
+  const { client, values } = storedClient({ values: { 'tabspace-auth-token': 'token-1' } })
+
+  const connection = client.connect()
+  await settle()
+  await atPort(0, socket => assert.ok(rejectHello(socket, 'pairing_required')))
+  const mine = await atPort(1, socket => assert.ok(answerHello(socket, 'token-1')))
+
+  assert.equal((await connection).authenticated, true)
+  assert.equal(client.socket, mine)
+  // The port that answered is remembered, so the next connect starts there.
+  assert.equal(values['tabspace-bridge-port'], 53808)
+})
+
+test('tries the port that answered last time before sweeping', async () => {
+  FakeReconnectWebSocket.instances = []
+  const { client } = storedClient({
+    values: { 'tabspace-auth-token': 'token-1', 'tabspace-bridge-port': 53825 }
+  })
+
+  const connection = client.connect()
+  await settle()
+  assert.match(FakeReconnectWebSocket.instances[0].url, /:53825\//)
+  await atPort(0, socket => assert.ok(answerHello(socket, 'token-1')))
+  assert.equal((await connection).authenticated, true)
+})
+
+test('asks the Mac app to approve this browser instead of a pairing code', async () => {
+  FakeReconnectWebSocket.instances = []
+  const { client, values, writes, awaiting } = storedClient()
+
+  const connection = client.connect({ trigger: 'user', requestApproval: true })
+  await settle()
+  const helper = await atPort(0, socket => assert.ok(rejectHello(socket, 'pairing_required')))
+  // The handshake says which connects may be approved at all.
+  assert.equal(JSON.parse(helper.sent[0]).params.trigger, 'user')
+  const next = await refuseRemainingPorts(1, sweepLength - 1)
+
+  // Only after the whole sweep found no helper that knows this browser is the
+  // person asked: a helper further down the sweep might have authenticated it.
+  const prompt = await atPort(next, socket => {
+    assert.deepEqual(sentMethods(socket), ['pairing.request'])
+    assert.ok(answerMethod(socket, 'pairing.request', {
+      authenticated: true,
+      protocolVersion: 2,
+      capabilities: [],
+      token: 'approved-token'
+    }))
+  })
+
+  assert.equal((await connection).authenticated, true)
+  assert.equal(client.socket, prompt)
+  assert.equal(values['tabspace-auth-token'], 'approved-token')
+  assert.deepEqual(writes.at(-1), {
+    'tabspace-bridge-port': 53791,
+    'tabspace-auth-token': 'approved-token'
+  })
+  // The waiting state is announced once, not once per helper.
+  assert.equal(awaiting.length, 1)
+})
+
+test('moves on to the next helper when one declines the request', async () => {
+  // The prompt lands in the Mac session of whoever owns that helper, so on a
+  // shared Mac the first answer can be "no" from somebody else's account.
+  FakeReconnectWebSocket.instances = []
+  const { client, values } = storedClient()
+
+  const connection = client.connect({ trigger: 'user', requestApproval: true })
+  await settle()
+  await atPort(0, socket => assert.ok(rejectHello(socket, 'pairing_required')))
+  await atPort(1, socket => assert.ok(rejectHello(socket, 'pairing_required')))
+  const next = await refuseRemainingPorts(2, sweepLength - 2)
+
+  await atPort(next, socket => assert.ok(rejectMethod(socket, 'pairing.request', 'pairing_declined')))
+  await atPort(next + 1, socket => assert.ok(answerMethod(socket, 'pairing.request', {
+    authenticated: true,
+    protocolVersion: 2,
+    capabilities: [],
+    token: 'second-token'
+  })))
+
+  assert.equal((await connection).authenticated, true)
+  assert.equal(values['tabspace-auth-token'], 'second-token')
+  assert.equal(values['tabspace-bridge-port'], 53808)
+})
+
+test('never asks for approval on a background wake-up', async () => {
+  // An unattended reconnect would be approved by whoever is at the machine,
+  // which on a shared Mac is not necessarily this browser's owner.
+  FakeReconnectWebSocket.instances = []
+  const { client, awaiting } = storedClient()
+
+  const connection = client.connect({ trigger: 'background' })
+  const refusal = connection.then(() => null, error => error)
+  await settle()
+  const helper = await atPort(0, socket => assert.ok(rejectHello(socket, 'pairing_required')))
+  assert.equal(JSON.parse(helper.sent[0]).params.trigger, 'background')
+  await refuseRemainingPorts(1, sweepLength - 1)
+
+  assert.equal((await refusal).code, 'pairing_required')
+  assert.deepEqual(awaiting, [])
+  for (const socket of FakeReconnectWebSocket.instances) {
+    assert.equal(sentMethods(socket).includes('pairing.request'), false)
+  }
+})
+
+test('does not offer approval to a helper that refused on entitlement', async () => {
+  // Nobody approving a prompt can turn a Pro refusal into access, and asking
+  // would present an upgrade as if it were a connection problem.
+  FakeReconnectWebSocket.instances = []
+  const { client, awaiting } = storedClient({ values: { 'tabspace-auth-token': 'token-1' } })
+
+  const connection = client.connect({ trigger: 'user', requestApproval: true })
+  const refusal = connection.then(() => null, error => error)
+  await settle()
+  await atPort(0, socket => assert.ok(rejectHello(socket, 'pro_required')))
+  await refuseRemainingPorts(1, sweepLength - 1)
+
+  assert.equal((await refusal).code, 'pro_required')
+  assert.deepEqual(awaiting, [])
+  for (const socket of FakeReconnectWebSocket.instances) {
+    assert.equal(sentMethods(socket).includes('pairing.request'), false)
+  }
+})
+
+test('stays silent until this browser has a credential', async () => {
+  const unpaired = storedClient()
+  assert.equal(await unpaired.client.hasCredential(), false)
+  const paired = storedClient({ values: { 'tabspace-auth-token': 'token-1' } })
+  assert.equal(await paired.client.hasCredential(), true)
+
+  // install() gates every background wake-up on that answer, so an unpaired
+  // browser stops knocking on every helper on the machine once a minute.
+  const source = readFileSync(join(extensionRoot, 'src/background.js'), 'utf8')
+  const wake = source.slice(source.indexOf('function wakeBridge()'))
+  assert.match(wake.slice(0, wake.indexOf('}')), /hasCredential\(\)/)
+})
+
+test('an unpaired browser does not reconnect when the helper closes its socket', async () => {
+  // The helper closing an approval socket — the app quit, say — used to start
+  // a retry loop that swept every port on the machine every fifteen seconds.
+  FakeReconnectWebSocket.instances = []
+  const { client } = storedClient({ clientOptions: { reconnectDelays: [5, 5] } })
+
+  const connection = client.connect({ trigger: 'user', requestApproval: true })
+  const outcome = connection.then(() => null, error => error)
+  await settle()
+  await atPort(0, socket => assert.ok(rejectHello(socket, 'pairing_required')))
+  const next = await refuseRemainingPorts(1, sweepLength - 1)
+  const prompt = await atPort(next, () => {})
+  prompt.onclose()
+  await outcome
+
+  const opened = FakeReconnectWebSocket.instances.length
+  await new Promise(resolve => setTimeout(resolve, 30))
+  assert.equal(FakeReconnectWebSocket.instances.length, opened)
+})
+
+test('a second caller waits on the pending approval instead of getting an empty handshake', async () => {
+  // While the app is asking, the socket is open but unauthenticated. Treating
+  // it as a connection handed a second popup `{}` and a broken session.
+  FakeReconnectWebSocket.instances = []
+  const { client } = storedClient()
+
+  const first = client.connect({ trigger: 'user', requestApproval: true })
+  await settle()
+  await atPort(0, socket => assert.ok(rejectHello(socket, 'pairing_required')))
+  const next = await refuseRemainingPorts(1, sweepLength - 1)
+  const prompt = await atPort(next, () => {})
+  assert.deepEqual(sentMethods(prompt), ['pairing.request'])
+
+  let secondSettled = false
+  const second = client.connect({ trigger: 'user', requestApproval: true })
+    .then(result => { secondSettled = true; return result })
+  const plain = client.connect()
+  await settle()
+  assert.equal(secondSettled, false)
+
+  assert.ok(answerMethod(prompt, 'pairing.request', {
+    authenticated: true, protocolVersion: 2, capabilities: ['x'], token: 'approved'
+  }))
+  for (const result of await Promise.all([first, second, plain])) {
+    assert.equal(result.authenticated, true)
+  }
+})
+
+test('a typed code replaces the pending approval and is not swallowed by it', async () => {
+  FakeReconnectWebSocket.instances = []
+  const { client, values } = storedClient()
+
+  const approval = client.connect({ trigger: 'user', requestApproval: true })
+  const approvalOutcome = approval.then(() => null, error => error)
+  await settle()
+  await atPort(0, socket => assert.ok(rejectHello(socket, 'pairing_required')))
+  const next = await refuseRemainingPorts(1, sweepLength - 1)
+  await atPort(next, () => {})
+
+  const paired = client.pair('482915')
+  await settle()
+  // The prompt is abandoned rather than raised on the next helper.
+  assert.equal((await approvalOutcome).code, 'pairing_superseded')
+  await settle()
+
+  const codeSocket = await atPort(next + 1, socket => {
+    const hello = JSON.parse(socket.sent[0])
+    assert.equal(hello.method, 'hello')
+    assert.equal(hello.params.pairingCode, '482915')
+    assert.ok(answerHello(socket, 'code-token'))
+  })
+  assert.equal((await paired).paired, true)
+  assert.equal(client.socket, codeSocket)
+  assert.equal(values['tabspace-auth-token'], 'code-token')
+  for (const socket of FakeReconnectWebSocket.instances.slice(next + 1)) {
+    assert.equal(sentMethods(socket).includes('pairing.request'), false)
+  }
+})
+
+test('pairs Safari with a token the app issued, without touching the pairing code', async () => {
+  // The one-time code may be on its way into another browser at that moment;
+  // a token from the app's own native handler needs no code at all.
+  FakeReconnectWebSocket.instances = []
+  const { client, values } = storedClient({
+    browser: 'safari',
+    clientOptions: { pairingCodeProvider: async () => ({ token: 'issued-token' }) }
+  })
+
+  const connection = client.connect()
+  await settle()
+  await atPort(0, socket => assert.ok(rejectHello(socket, 'pairing_required')))
+  const next = await refuseRemainingPorts(1, sweepLength - 1)
+  await atPort(next, socket => {
+    const hello = JSON.parse(socket.sent[0])
+    assert.equal(hello.method, 'hello')
+    assert.equal(hello.params.token, 'issued-token')
+    assert.equal(hello.params.pairingCode, '')
+    assert.ok(answerHello(socket))
+  })
+  assert.equal((await connection).authenticated, true)
+  assert.equal(values['tabspace-auth-token'], 'issued-token')
+})
+
+test('Safari never raises an approval prompt', async () => {
+  // Its extension is paired by the app over native messaging, so asking a
+  // person would only add a prompt to a path that needs none.
+  FakeReconnectWebSocket.instances = []
+  const { client } = storedClient({
+    browser: 'safari',
+    clientOptions: { pairingCodeProvider: async () => '123456' }
+  })
+
+  const connection = client.connect({ trigger: 'user', requestApproval: true })
+  await settle()
+  await atPort(0, socket => assert.ok(rejectHello(socket, 'pairing_required')))
+  const next = await refuseRemainingPorts(1, sweepLength - 1)
+  await atPort(next, socket => {
+    assert.deepEqual(sentMethods(socket), ['hello'])
+    assert.ok(answerHello(socket, 'safari-token'))
+  })
+  assert.equal((await connection).authenticated, true)
+  for (const socket of FakeReconnectWebSocket.instances) {
+    assert.equal(sentMethods(socket).includes('pairing.request'), false)
+  }
+})
+
+test('an app that refuses at once never shows the waiting state', async () => {
+  // An app that predates approval answers the request immediately. Announcing
+  // the wait up front flashed "waiting for your Mac" on every older install.
+  FakeReconnectWebSocket.instances = []
+  const { client, awaiting } = storedClient({ clientOptions: { approvalAnnounceDelay: 40 } })
+
+  const connection = client.connect({ trigger: 'user', requestApproval: true })
+  const outcome = connection.then(() => null, error => error)
+  await settle()
+  await atPort(0, socket => assert.ok(rejectHello(socket, 'pairing_required')))
+  const next = await refuseRemainingPorts(1, sweepLength - 1)
+  await atPort(next, socket => assert.ok(rejectMethod(socket, 'pairing.request', 'pairing_required')))
+
+  assert.equal((await outcome).code, 'pairing_required')
+  await new Promise(resolve => setTimeout(resolve, 60))
+  assert.deepEqual(awaiting, [])
+})
+
+test('loading the dashboard connects without asking anyone to approve', () => {
+  // A restored session reopens dashboard tabs with nobody at the keyboard, and
+  // a refused browser would be asked again on every reload.
+  const source = readFileSync(join(extensionRoot, 'src/background.js'), 'utf8')
+  const dashboard = source.slice(source.indexOf('case "dashboard.connect":'))
+  const line = dashboard.slice(0, dashboard.indexOf('\n'))
+  assert.equal(line.includes('requestApproval'), false)
+  const popup = source.slice(source.indexOf('case "popup.connect":'))
+  assert.match(popup.slice(0, popup.indexOf('\n')), /requestApproval: true/)
+})
+
+test('gives an approval request a budget longer than the app\'s own prompt', () => {
+  const { client } = storedClient()
+  // Same reasoning as the AI budget: the app's typed answer — approved,
+  // declined, or not visible — has to win the race against this timer.
+  assert.equal(client.timeoutFor('pairing.request'), 120000)
+  assert.ok(client.timeoutFor('pairing.request') > client.timeoutFor('sessions.list'))
 })
 
 test('reconnects automatically when the helper drops the socket', async () => {
   FakeReconnectWebSocket.instances = []
-  const storage = {
-    get: async () => ({}),
-    set: async () => {},
-    remove: async () => {}
-  }
-  const client = new background.LocalBridgeClient({
-    WebSocket: FakeReconnectWebSocket,
-    storage,
-    client: { browser: 'chrome' },
-    reconnectDelays: [10, 10]
-  })
+  // Storage keeps what the handshake issued: only a browser that holds a
+  // credential reconnects on its own.
+  const { client } = storedClient({ clientOptions: { reconnectDelays: [10, 10] } })
 
   const firstConnection = client.connect()
   await new Promise(resolve => setImmediate(resolve))
@@ -1322,4 +1729,47 @@ test('popup openPaywall requests native subscription purchase and is wired in po
   assert.equal(popup.includes('upgradePro: "升级到 Pro"'), true)
   assert.equal(popup.includes('upgradePro: "Upgrade to Pro"'), true)
   assert.equal(backgroundSource.includes('case "popup.openPaywall": return client.request("subscription.purchase"'), true)
+})
+
+test('Safari asks its app for a token before falling back to the pairing code', async () => {
+  const native = calls => ({
+    send: async message => {
+      calls.push(message)
+      if (message.op === 'bridge.credential') return { ok: true, token: 'issued' }
+      return { ok: true, code: '123456' }
+    }
+  })
+  const calls = []
+  assert.deepEqual(await background.safariBridgeCredential(native(calls), 'safari-1'), { token: 'issued' })
+  assert.deepEqual(calls, [{ op: 'bridge.credential', clientId: 'safari-1' }])
+})
+
+test('an app that predates issued tokens still pairs Safari with its code', async () => {
+  const calls = []
+  const native = {
+    send: async message => {
+      calls.push(message.op)
+      if (message.op === 'bridge.credential') {
+        throw Object.assign(new Error('unsupported'), { code: 'unsupported_operation' })
+      }
+      return { ok: true, code: '654321' }
+    }
+  }
+  assert.equal(await background.safariBridgeCredential(native, 'safari-1'), '654321')
+  assert.deepEqual(calls, ['bridge.credential', 'bridge.pairingCode'])
+})
+
+test('a failure to issue a token is not mistaken for an older app', async () => {
+  // Only "unsupported" means the app predates the operation. Reading the code
+  // after any other failure would quietly use up a code a person may need.
+  const calls = []
+  const native = {
+    send: async message => {
+      calls.push(message.op)
+      throw Object.assign(new Error('keychain'), { code: 'credential_store_failed' })
+    }
+  }
+  await assert.rejects(background.safariBridgeCredential(native, 'safari-1'),
+    error => error.code === 'credential_store_failed')
+  assert.deepEqual(calls, ['bridge.credential'])
 })

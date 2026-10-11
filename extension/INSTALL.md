@@ -31,12 +31,16 @@ add-on when files on disk change: after running `yarn serve:extension`, click
 **Reload** beside Tab Space (Dev) in `about:debugging`, then reload the
 Dashboard tab.
 
-## Pair a browser
+## Connect a browser
 
-1. Open Tab Space on your Mac.
-2. Click **Multi-Browser Support…** in the Tab Space main window, then **Show
-   Pairing Code**.
-3. Open the Tab Space extension and enter the six-digit code.
+1. Open Tab Space on your Mac once, so its background helper is running.
+2. Click the Tab Space button in the browser toolbar.
+3. If Tab Space asks on your Mac whether to allow this browser, choose
+   **Allow**. Otherwise the extension asks for the six-digit pairing code: open
+   Tab Space, click **Multi-Browser Support…**, and type the code shown there.
+
+Versions of Tab Space that do not ask, a Mac reached over screen sharing, and a
+request you declined all end at the pairing code.
 
 The code is one-time use. The extension keeps its issued token in browser-local
 extension storage, while the Mac app keeps the matching credential in Keychain.

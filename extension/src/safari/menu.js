@@ -176,7 +176,9 @@
     return {
       request(method, params) { return requestWithFallback(client, method, params) },
       pair(code) { return client.pair(code) },
-      connect() { return client.connect() }
+      // Options carry who asked for the connection; dropping them made every
+      // Safari popup look like a background wake-up to the helper.
+      connect(options) { return client.connect(options) }
     }
   }
 

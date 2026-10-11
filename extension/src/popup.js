@@ -36,7 +36,13 @@
     empty: "当前窗口没有可保存的网页标签。",
     failed: "保存失败，请打开 Tab Space 后重试。",
     connectTitle: "连接这个浏览器",
-    connectHelp: "打开 Mac 上的 Tab Space，在主界面点击“多浏览器支持”，再点击“显示配对码”，然后输入六位数字。",
+    connectApprovalWait: "正在等待你在 Mac 上的 Tab Space 里点“允许”…",
+    connectCodeHelp: "打开 Mac 上的 Tab Space，点击“多浏览器支持…”，把其中的六位配对码输入到这里。",
+    connectDeclined: "Tab Space 没有批准这个浏览器。",
+    connectNoResponse: "没有收到 Mac 的回应。",
+    connectNotVisible: "这个 Mac 账户上的 Tab Space 没有回应。打开它后重试，或使用配对码。",
+    connectUseCode: "没看到提示？改用配对码",
+    connectHelperMissing: "Tab Space 似乎没有在运行。先打开它，然后重试。",
     connect: "连接",
     openApp: "打开 Tab Space App",
     connecting: "正在连接…",
@@ -79,7 +85,13 @@
     empty: "There are no web tabs to save in this window.",
     failed: "Could not save. Open Tab Space, then try again.",
     connectTitle: "Connect this browser",
-    connectHelp: "Open Tab Space on your Mac, click Multi-Browser Support in the main window, choose Show Pairing Code, then enter the six-digit code.",
+    connectApprovalWait: "Waiting for you to allow this browser in Tab Space on your Mac.",
+    connectCodeHelp: "Open Tab Space on your Mac, click Multi-Browser Support…, and enter the six-digit pairing code it shows.",
+    connectDeclined: "Tab Space did not approve this browser.",
+    connectNoResponse: "No answer came back from your Mac.",
+    connectNotVisible: "Tab Space did not answer for this Mac account. Open it and try again, or use a pairing code.",
+    connectUseCode: "No prompt? Use a pairing code",
+    connectHelperMissing: "Tab Space does not seem to be running. Open it, then try again.",
     connect: "Connect",
     openApp: "Open Tab Space App",
     connecting: "Connecting…",
@@ -158,6 +170,9 @@
     tabList: document.getElementById("tab-list"),
     selection: document.getElementById("selection-summary"),
     toggleAll: document.getElementById("toggle-all"),
+    pairingWait: document.getElementById("pairing-wait"),
+    usePairingCode: document.getElementById("use-pairing-code"),
+    pairingManual: document.getElementById("pairing-manual"),
     pairingCode: document.getElementById("pairing-code"),
     pair: document.getElementById("pair"),
     launchApp: document.getElementById("launch-app"),
@@ -242,13 +257,47 @@
     updateSelection()
   }
 
-  function showPairing(error) {
+  // Shown while the Mac app is asking the person whether to allow this browser.
+  // The request lives in the background page, so it survives this popup being
+  // closed — clicking the app's prompt takes focus away from the browser, and
+  // that closes the popup in Chrome and Edge.
+  function showPairingWaiting() {
+    elements.loading.hidden = true
     elements.editor.hidden = true
     elements.success.hidden = true
     elements.pairing.hidden = false
-    elements.pairingStatus.textContent = error && error.code === "invalid_pairing_code"
-      ? strings.invalidCode
-      : (error && !["pairing_required", "authentication_failed"].includes(error.code) ? error.message : "")
+    elements.pairingWait.hidden = false
+    elements.pairingManual.hidden = true
+    elements.pairingStatus.textContent = ""
+    elements.pairingStatus.className = ""
+  }
+
+  // Why the code is being asked for. The approval path has already been tried
+  // by the time this runs, so the copy names what happened instead of
+  // presenting the code as the only way in.
+  function pairingReason(error) {
+    const code = error && error.code
+    if (code === "invalid_pairing_code") return strings.invalidCode
+    if (code === "pairing_declined") return strings.connectDeclined
+    // Every helper that answered belongs to a macOS session that is not on
+    // screen — from this person's point of view, their Tab Space is not there.
+    if (code === "pairing_not_visible") return strings.connectNotVisible
+    if (["pairing_timeout", "request_timeout"].includes(code)) return strings.connectNoResponse
+    if (code === "helper_unavailable") return strings.connectHelperMissing
+    // An app that predates approval answers with `pairing_required`, which is
+    // the plain first-run state and needs no explanation beyond the lede.
+    if (["pairing_required", "authentication_failed", "pairing_superseded"].includes(code)) return ""
+    return (error && error.message) || ""
+  }
+
+  function showPairing(error) {
+    elements.loading.hidden = true
+    elements.editor.hidden = true
+    elements.success.hidden = true
+    elements.pairing.hidden = false
+    elements.pairingWait.hidden = true
+    elements.pairingManual.hidden = false
+    elements.pairingStatus.textContent = pairingReason(error)
     elements.pairingStatus.className = elements.pairingStatus.textContent ? "error" : ""
     elements.pairingCode.focus()
   }
@@ -364,7 +413,7 @@
   elements.launchApp.addEventListener("click", () => {
     extensionApi.tabs.create({ url: "tabspace://connect" })
   })
-  elements.pair.addEventListener("click", async () => {
+  async function submitPairingCode() {
     const code = elements.pairingCode.value.trim()
     if (!/^\d{6}$/.test(code)) {
       elements.pairingStatus.textContent = strings.invalidCode
@@ -373,15 +422,37 @@
     }
     elements.pair.disabled = true
     elements.pairingStatus.textContent = strings.connecting
+    elements.pairingStatus.className = ""
     try {
       const response = await send({ type: "popup.pair", code })
-      if (!response || !response.ok) throw new Error(response && response.error ? response.error.message : strings.failed)
+      if (!response || !response.ok) {
+        throw new Error(pairingReason(response && response.error) || strings.failed)
+      }
       window.location.reload()
     } catch (error) {
-      elements.pairingStatus.textContent = error.message
+      elements.pairingStatus.textContent = error.message || strings.failed
       elements.pairingStatus.className = "error"
       elements.pair.disabled = false
     }
+  }
+
+  elements.pair.addEventListener("click", submitPairingCode)
+  // The request keeps running in the background while the code is typed, so
+  // allowing the browser on the Mac afterwards still connects it. Submitting a
+  // code abandons the request instead of raising it on another account.
+  elements.usePairingCode.addEventListener("click", () => {
+    elements.pairingWait.hidden = true
+    elements.pairingManual.hidden = false
+    elements.pairingCode.focus()
+  })
+  // A six-digit field that cannot be submitted from the keyboard is a field
+  // people retype. Copying the code from the app also brings spaces with it.
+  elements.pairingCode.addEventListener("keydown", event => {
+    if (event.key === "Enter") submitPairingCode()
+  })
+  elements.pairingCode.addEventListener("input", () => {
+    const digits = elements.pairingCode.value.replace(/\D/g, "").slice(0, 6)
+    if (digits !== elements.pairingCode.value) elements.pairingCode.value = digits
   })
   elements.done.addEventListener("click", () => window.close())
   elements.doneClose.addEventListener("click", async () => {
@@ -397,6 +468,16 @@
     }
   })
 
+  if (extensionApi.runtime.onMessage) {
+    extensionApi.runtime.onMessage.addListener(payload => {
+      if (!payload || typeof payload.type !== "string") return
+      if (payload.type === "pairing-awaiting") showPairingWaiting()
+      // The browser was approved, or authenticated on its own after the app
+      // started. Re-run from the top rather than patching a half-built view.
+      if (payload.type === "bridge-connected" && !elements.pairing.hidden) window.location.reload()
+    })
+  }
+
   async function bootstrap() {
     if (/Safari/i.test(navigator.userAgent) && !/(Chrome|Chromium|Edg)/i.test(navigator.userAgent)) {
       send({ type: "safari.menuTelemetry" }).catch(() => {})
@@ -410,6 +491,10 @@
 
     const connection = await send({ type: "popup.connect" })
     if (!connection || connection.ok !== true) {
+      // The person typed a code here while the app was still asking; that
+      // code's own result decides what this popup shows next.
+      if (connection && connection.error && connection.error.code === "pairing_superseded"
+        && !elements.pairing.hidden && !elements.pairingManual.hidden) return
       showPairing(connection && connection.error
         ? connection.error
         : { code: "bridge_unavailable", message: strings.failed })

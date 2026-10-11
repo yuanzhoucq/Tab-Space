@@ -32,7 +32,8 @@
   const DASHBOARD_ORIGIN = DASHBOARD_ORIGINS[0]
   const STORAGE_KEYS = {
     clientId: "tabspace-client-id",
-    authToken: "tabspace-auth-token"
+    authToken: "tabspace-auth-token",
+    bridgePort: "tabspace-bridge-port"
   }
 
   async function verifySafariNativeRoundTrip() {
@@ -71,8 +72,72 @@
     }
   }
 
-  function portCandidates() {
-    return Array.from({ length: PORT_ATTEMPTS }, (_, index) => INITIAL_PORT + PORT_STEP * index)
+  // The port that answered last time is tried first. That is an ordering hint
+  // and nothing more: any unrelated process can take a loopback port at any
+  // moment, so the full sweep stays the authoritative way to find the helper.
+  function portCandidates(preferredPort) {
+    const ports = Array.from({ length: PORT_ATTEMPTS }, (_, index) => INITIAL_PORT + PORT_STEP * index)
+    if (!ports.includes(preferredPort)) return ports
+    return [preferredPort, ...ports.filter(port => port !== preferredPort)]
+  }
+
+  // Codes that describe the connection rather than an answer from a helper.
+  // Reaching one of these means nothing was listening, or nothing replied.
+  const TRANSPORT_ERROR_CODES = [
+    "connection_failed",
+    "connection_timeout",
+    "connection_closed",
+    "request_timeout",
+    "not_connected"
+  ]
+
+  function isTransportError(error) {
+    return Boolean(error) && TRANSPORT_ERROR_CODES.includes(error.code)
+  }
+
+  // The refusals an approval prompt can actually resolve. A helper that already
+  // recognizes this browser and refuses it on entitlement is deliberately left
+  // out: no one approving a prompt can turn that into access, and asking would
+  // offer an upgrade as if it were a connection problem.
+  const APPROVABLE_ERROR_CODES = ["pairing_required", "authentication_failed"]
+
+  // Which refusal to report when several helpers answered.
+  //
+  // A Mac with more than one logged-in account runs one helper per account, and
+  // loopback ports are machine-wide, so this browser hears from all of them.
+  // The answer worth showing is the most specific one: an entitlement or code
+  // problem is actionable, "this browser is unknown" is the normal first-run
+  // state, and a transport failure says only that nobody was there.
+  const BRIDGE_ERROR_RANK = [
+    "connection_failed",
+    "connection_timeout",
+    "connection_closed",
+    "not_connected",
+    "request_timeout",
+    "pairing_required",
+    "pairing_not_visible",
+    "pairing_timeout",
+    "pairing_declined",
+    "authentication_failed",
+    "credential_store_failed",
+    "pairing_rate_limited",
+    "invalid_pairing_code",
+    "pro_required"
+  ]
+
+  // An unexpected code still came from a helper, so it outranks the states that
+  // merely describe a first run, but it loses to the answers above that name
+  // something the person can act on.
+  const UNRANKED_BRIDGE_ERROR = BRIDGE_ERROR_RANK.indexOf("authentication_failed")
+
+  function preferredBridgeError(current, next) {
+    if (!next) return current || null
+    if (!current) return next
+    const rank = error => {
+      const index = BRIDGE_ERROR_RANK.indexOf(error && error.code)
+      return index === -1 ? UNRANKED_BRIDGE_ERROR : index
+    }
+    return rank(next) >= rank(current) ? next : current
   }
 
   function randomId(prefix) {
@@ -426,6 +491,27 @@
     }
   }
 
+  // How the Safari extension pairs: it asks its own app over native messaging,
+  // a channel no other extension can reach. A token issued there pairs Safari
+  // without touching the one-time code, which a person may be copying for
+  // another browser at that very moment. An app that predates the operation
+  // refuses it, and the code is read instead.
+  async function safariBridgeCredential(native, clientId) {
+    if (!native || typeof native.send !== "function") {
+      throw new BridgeError("native_unavailable", "Tab Space native messaging is unavailable.")
+    }
+    try {
+      const issued = await native.send({ op: "bridge.credential", clientId })
+      if (issued && typeof issued.token === "string" && issued.token.length > 0) {
+        return { token: issued.token }
+      }
+    } catch (error) {
+      if (!error || error.code !== "unsupported_operation") throw error
+    }
+    const response = await native.send({ op: "bridge.pairingCode" })
+    return response && response.code
+  }
+
   function createBrowserApi(extensionApi, preferPromises) {
     function callbackCall(target, method, args) {
       return new Promise((resolve, reject) => {
@@ -475,16 +561,31 @@
       this.connectTimeout = options.connectTimeout || 650
       this.requestTimeout = options.requestTimeout || 10000
       this.aiRequestTimeout = options.aiRequestTimeout || 90000
+      this.pairingRequestTimeout = options.pairingRequestTimeout || 120000
       this.reconnectDelays = options.reconnectDelays || [500, 1000, 2000, 4000, 8000, 15000]
       this.socket = null
       this.handshake = null
       this.pending = new Map()
       this.connectPromise = null
+      // What the in-flight attempt is allowed to do: "plain", "approval" (may
+      // ask the Mac app to approve this browser) or "code" (carries a pairing
+      // code). Callers only share an attempt that can do what they need.
+      this.connectKind = null
+      this.approvalAborted = false
+      this.awaitingApproval = false
+      this.approvalAnnounceDelay = options.approvalAnnounceDelay === undefined
+        ? 350
+        : options.approvalAnnounceDelay
       this.listeners = new Set()
       this.reconnectTimer = null
       this.reconnectAttempts = 0
       this.reconnectAlarmArmed = false
       this.pairingCodeProvider = options.pairingCodeProvider || null
+      // Fired on every successful handshake, not only after the user typed a
+      // pairing code: a dashboard left open while the app was started has no
+      // other way to learn that the bridge came up.
+      this.onConnected = options.onConnected || null
+      this.onAwaitingApproval = options.onAwaitingApproval || null
     }
 
     addEventListener(listener) {
@@ -493,85 +594,246 @@
     }
 
     async identity() {
-      const values = await this.storage.get([STORAGE_KEYS.clientId, STORAGE_KEYS.authToken])
+      const values = await this.storage.get([
+        STORAGE_KEYS.clientId,
+        STORAGE_KEYS.authToken,
+        STORAGE_KEYS.bridgePort
+      ])
       let clientId = values[STORAGE_KEYS.clientId]
       if (!clientId) {
         clientId = randomId("browser")
         await this.storage.set({ [STORAGE_KEYS.clientId]: clientId })
       }
-      return { clientId, authToken: values[STORAGE_KEYS.authToken] || "" }
+      return {
+        clientId,
+        authToken: values[STORAGE_KEYS.authToken] || "",
+        port: Number(values[STORAGE_KEYS.bridgePort]) || 0
+      }
     }
 
-    async connect(pairingCode) {
+    // Whether this browser has ever been paired. A background wake-up with no
+    // credential has nothing to authenticate with, so it stays silent instead
+    // of knocking on every helper on the machine once a minute.
+    async hasCredential() {
+      const values = await this.storage.get([STORAGE_KEYS.authToken])
+      const token = values[STORAGE_KEYS.authToken]
+      return typeof token === "string" && token.length > 0
+    }
+
+    // `trigger` separates a connect the person asked for from a background
+    // wake-up, and only the first may ask a Mac session to approve this
+    // browser. An unattended reconnect that could be approved would be
+    // approved by whoever happens to be at the machine, which on a shared Mac
+    // is not necessarily this browser's owner.
+    async connect(options = {}) {
+      const kind = options.pairingCode
+        ? "code"
+        : (options.requestApproval === true ? "approval" : "plain")
       this.cancelReconnect()
-      if (this.socket && this.socket.readyState === 1) return this.handshake || {}
-      if (this.connectPromise) return this.connectPromise
-      this.connectPromise = this.connectWithAutomaticPairing(pairingCode).finally(() => {
+      for (;;) {
+        if (this.isAuthenticated()) return this.handshake
+        if (!this.connectPromise) break
+        const running = this.connectKind
+        // An attempt is shared only when it can do what this caller needs.
+        // Anything can wait on an attempt that may pair; a plain attempt can
+        // not answer a caller who brought a code or wants approval — that is
+        // how a code the user had just typed came back as "pairing required".
+        if (kind === "plain" || kind === running || (kind === "approval" && running === "code")) {
+          // A popup opened while the app is already asking has to show the
+          // wait it joined, not "Loading" for the next two minutes.
+          if (kind === "approval" && this.awaitingApproval) this.announceAwaitingApproval()
+          return this.connectPromise
+        }
+        // A typed code is the person choosing the fallback; the prompt they
+        // did not see is abandoned rather than raised on the next helper.
+        if (kind === "code" && running === "approval") this.abortApproval()
+        try { await this.connectPromise } catch (_) {}
+      }
+      this.connectKind = kind
+      this.approvalAborted = false
+      this.connectPromise = this.connectWithAutomaticPairing(options).finally(() => {
         this.connectPromise = null
+        this.connectKind = null
       })
       return this.connectPromise
     }
 
-    async connectWithAutomaticPairing(pairingCode) {
+    // An open socket is not a connection: during the sweep and while the app is
+    // asking for approval the socket is open but unauthenticated, and treating
+    // it as connected handed a second popup an empty handshake.
+    isAuthenticated() {
+      return Boolean(this.socket && this.socket.readyState === 1 && this.handshake)
+    }
+
+    abortApproval() {
+      if (this.connectKind !== "approval") return
+      this.approvalAborted = true
+      // Interrupts the request the helper is holding open for its prompt.
+      this.close()
+    }
+
+    announceAwaitingApproval() {
+      this.awaitingApproval = true
+      if (!this.onAwaitingApproval) return
+      try { this.onAwaitingApproval({ browser: this.client && this.client.browser }) } catch (_) {}
+    }
+
+    async connectWithAutomaticPairing(options) {
       try {
-        return await this.connectAcrossPorts(pairingCode)
+        // A browser with its own pairing channel never raises a prompt: the
+        // Safari extension is paired by the app over native messaging, without
+        // asking anyone.
+        return await this.connectAcrossPorts(this.pairingCodeProvider
+          ? { ...options, requestApproval: false }
+          : options)
       } catch (error) {
-        if (pairingCode || !this.pairingCodeProvider || !error || error.code !== "pairing_required") {
+        if (options.pairingCode || !this.pairingCodeProvider
+          || !error || error.code !== "pairing_required") {
           throw error
         }
-        const code = await this.pairingCodeProvider()
+        // The provider answers with a token the app issued directly, or — from
+        // an app that predates that — the six-digit code to pair with.
+        const credential = await this.pairingCodeProvider()
+        this.close()
+        if (credential && typeof credential === "object" && typeof credential.token === "string"
+          && credential.token.length > 0) {
+          await this.storage.set({ [STORAGE_KEYS.authToken]: credential.token })
+          return this.connectAcrossPorts(options)
+        }
+        const code = credential && typeof credential === "object" ? credential.code : credential
         if (!/^\d{6}$/.test(String(code || ""))) {
           throw new BridgeError("invalid_pairing_code", "Tab Space did not provide a valid pairing code.")
         }
-        await this.storage.remove([STORAGE_KEYS.authToken])
-        this.close()
-        return this.connectAcrossPorts(String(code))
+        return this.connectAcrossPorts({ ...options, pairingCode: String(code) })
       }
     }
 
-    async connectAcrossPorts(pairingCode) {
+    // Every port is tried, even after a helper has answered.
+    //
+    // Each logged-in account runs its own helper and loopback ports are
+    // machine-wide, so the first helper to answer is often another account's,
+    // which does not know this browser. Stopping at that refusal is what left
+    // an already-paired browser permanently unable to find its own helper.
+    async connectAcrossPorts(options = {}) {
       const identity = await this.identity()
-      let lastError = null
-      for (const port of portCandidates()) {
+      const pairingCode = options.pairingCode || ""
+      const helperPorts = []
+      let bestError = null
+
+      for (const port of portCandidates(identity.port)) {
+        let result
         try {
           const socket = await this.openSocket(port)
           this.attachSocket(socket)
-          const result = await this.requestOnOpenSocket("hello", {
+          result = await this.requestOnOpenSocket("hello", {
             clientId: identity.clientId,
-            token: identity.authToken,
-            pairingCode: pairingCode || "",
+            // An explicit code means the user is deliberately pairing this
+            // browser again, so the stored token is left out: with it present
+            // the helper would authenticate and never consume the code.
+            token: pairingCode ? "" : identity.authToken,
+            pairingCode,
+            trigger: options.trigger || "background",
             ...this.client
           })
-          if (!result || result.authenticated !== true) {
-            throw new BridgeError("authentication_failed", "Tab Space rejected the browser connection.")
-          }
-          if (result.token) {
-            await this.storage.set({ [STORAGE_KEYS.authToken]: result.token })
-          }
-          this.handshake = result
-          this.resetReconnect()
-          return result
         } catch (error) {
-          lastError = error
           this.close()
-          if (error && [
-            "pairing_required",
-            "invalid_pairing_code",
-            "pairing_rate_limited",
-            "invalid_client",
-            "authentication_failed",
-            "credential_store_failed",
-            // Older hosts can still refuse pairing until upgraded.
-            "pro_required"
-          ].includes(error.code)) {
-            throw error
-          }
+          // The client identifier travels unchanged to every helper, so a
+          // helper rejecting it is the one answer no other helper can improve.
+          if (error && error.code === "invalid_client") throw error
+          if (error && APPROVABLE_ERROR_CODES.includes(error.code)) helperPorts.push(port)
+          bestError = preferredBridgeError(bestError, error)
+          continue
         }
+        if (!result || result.authenticated !== true) {
+          this.close()
+          helperPorts.push(port)
+          bestError = preferredBridgeError(bestError, new BridgeError(
+            "authentication_failed", "Tab Space rejected the browser connection."))
+          continue
+        }
+        return this.adoptHandshake(result, port)
       }
-      if (!lastError || ["connection_failed", "connection_timeout", "connection_closed"].includes(lastError.code)) {
+
+      if (options.requestApproval === true && !pairingCode && helperPorts.length > 0) {
+        const approval = await this.requestApprovalAcrossPorts(identity, helperPorts)
+        if (approval.handshake) return approval.handshake
+        if (approval.superseded) throw approval.error
+        bestError = preferredBridgeError(bestError, approval.error)
+      }
+
+      if (!bestError || isTransportError(bestError)) {
         throw new BridgeError("helper_unavailable", "Open Tab Space once to enable its browser helper.")
       }
-      throw lastError
+      throw bestError
+    }
+
+    // Ask the Mac app to approve this browser, instead of asking the person to
+    // carry a six-digit code between the two.
+    //
+    // The request goes to every helper that answered, in port order, because
+    // the helper belonging to the person at the keyboard is not necessarily
+    // the first one found. A helper whose session is not on screen is expected
+    // to refuse immediately rather than raise a prompt nobody can see, which
+    // is what keeps this from stalling on a backgrounded account.
+    async requestApprovalAcrossPorts(identity, ports) {
+      const superseded = () => ({
+        superseded: true,
+        error: new BridgeError("pairing_superseded", "A pairing code replaced the approval request.")
+      })
+      let bestError = null
+      // Announced only once a request has been pending for a moment. An app
+      // that predates approval refuses at once, and announcing straight away
+      // flashed a "waiting for your Mac" state that was never going to resolve.
+      const announce = this.approvalAnnounceDelay > 0
+        ? setTimeout(() => this.announceAwaitingApproval(), this.approvalAnnounceDelay)
+        : null
+      if (!announce) this.announceAwaitingApproval()
+      try {
+        for (const port of ports) {
+          if (this.approvalAborted) return superseded()
+          try {
+            const socket = await this.openSocket(port)
+            this.attachSocket(socket)
+            if (this.approvalAborted) {
+              this.close()
+              return superseded()
+            }
+            const result = await this.requestOnOpenSocket("pairing.request", {
+              clientId: identity.clientId,
+              trigger: "user",
+              ...this.client
+            })
+            if (result && result.authenticated === true) {
+              return { handshake: await this.adoptHandshake(result, port) }
+            }
+            this.close()
+            bestError = preferredBridgeError(bestError, new BridgeError(
+              "pairing_declined", "Tab Space did not approve this browser."))
+          } catch (error) {
+            this.close()
+            if (this.approvalAborted) return superseded()
+            // An app that predates approval answers the unknown method with
+            // `pairing_required`, which is also the honest thing to report.
+            bestError = preferredBridgeError(bestError, error)
+          }
+        }
+        return { error: bestError }
+      } finally {
+        if (announce) clearTimeout(announce)
+        this.awaitingApproval = false
+      }
+    }
+
+    async adoptHandshake(result, port) {
+      const values = { [STORAGE_KEYS.bridgePort]: port }
+      if (result.token) values[STORAGE_KEYS.authToken] = result.token
+      await this.storage.set(values)
+      this.handshake = result
+      this.resetReconnect()
+      if (this.onConnected) {
+        try { this.onConnected(result) } catch (_) {}
+      }
+      return result
     }
 
     openSocket(port) {
@@ -614,9 +876,13 @@
 
     attachSocket(socket) {
       this.socket = socket
+      this.handshake = null
       socket.onmessage = message => this.handleMessage(message.data)
       socket.onclose = () => {
-        if (this.socket === socket) this.socket = null
+        if (this.socket === socket) {
+          this.socket = null
+          this.handshake = null
+        }
         this.rejectPending(new BridgeError("connection_closed", "The Tab Space connection closed."))
         // The helper restarts whenever Tab Space is rebuilt or updated, which
         // drops every browser's socket. Reconnect on our own instead of waiting
@@ -634,7 +900,14 @@
       this.reconnectAttempts += 1
       this.reconnectTimer = setTimeout(() => {
         this.reconnectTimer = null
-        this.connect().catch(() => this.scheduleReconnect())
+        // An unpaired browser whose approval socket the helper closed has
+        // nothing to reconnect with, and retrying would knock on every helper
+        // on the machine every fifteen seconds for as long as it ran.
+        this.hasCredential()
+          .then(paired => {
+            if (paired) return this.connect({ trigger: "background" })
+          })
+          .catch(() => this.scheduleReconnect())
       }, delay)
       this.ensureReconnectAlarm()
     }
@@ -710,7 +983,14 @@
     // had in fact refused in two milliseconds. The AI budget is deliberately
     // longer than the app's own, so the typed error always wins the race.
     timeoutFor(method) {
-      return String(method).indexOf("ai.") === 0 ? this.aiRequestTimeout : this.requestTimeout
+      const name = String(method)
+      if (name.indexOf("ai.") === 0) return this.aiRequestTimeout
+      // An approval request waits on a person reading a prompt on their Mac.
+      // Deliberately longer than the app's own prompt timeout, for the same
+      // reason the AI budget is: the app's typed answer — approved, declined,
+      // or not visible — has to win the race against this timer.
+      if (name.indexOf("pairing.") === 0) return this.pairingRequestTimeout
+      return this.requestTimeout
     }
 
     requestOnOpenSocket(method, params) {
@@ -737,9 +1017,13 @@
       if (!/^\d{6}$/.test(String(pairingCode || ""))) {
         throw new BridgeError("invalid_pairing_code", "Enter the six-digit code shown by the Tab Space app.")
       }
-      await this.storage.remove([STORAGE_KEYS.authToken])
+      // The stored token is deliberately left alone. It is already left out of
+      // a code handshake, and discarding it up front meant a code typed at the
+      // wrong moment — a helper not running yet, a rate limit — destroyed a
+      // credential that still worked.
+      this.abortApproval()
       this.close()
-      const handshake = await this.connect(String(pairingCode))
+      const handshake = await this.connect({ pairingCode: String(pairingCode), trigger: "user" })
       return {
         paired: true,
         protocolVersion: handshake.protocolVersion,
@@ -1043,8 +1327,8 @@
       closeSwitcherTabs,
       closeTabs(tabIds) { return browserApi.removeTabs(tabIds) },
       pair(code) { return client.pair(code) },
-      connect() {
-        return client.connect().then(handshake => ({
+      connect(options) {
+        return client.connect(options).then(handshake => ({
           connected: true,
           protocolVersion: handshake.protocolVersion,
           capabilities: dashboardCapabilities(handshake.capabilities)
@@ -1123,15 +1407,10 @@
         protocolVersion: PROTOCOL_VERSION,
         capabilities: [SWITCHER_CAPABILITY, SWITCHER_CLOSE_CAPABILITY]
       },
+      onConnected: handshake => announceBridgeConnected(handshake),
+      onAwaitingApproval: details => announceAwaitingApproval(details),
       pairingCodeProvider: BUILD_TARGET === "safari"
-        ? async () => {
-            const native = root.TabSpaceSafariNative
-            if (!native || typeof native.send !== "function") {
-              throw new BridgeError("native_unavailable", "Tab Space native messaging is unavailable.")
-            }
-            const response = await native.send({ op: "bridge.pairingCode" })
-            return response && response.code
-          }
+        ? async () => safariBridgeCredential(root.TabSpaceSafariNative, (await client.identity()).clientId)
         : null
     })
     const commandClient = BUILD_TARGET === "safari" && root.TabSpaceSafariMenu
@@ -1155,6 +1434,49 @@
       }
     })
     const dashboardPorts = new Set()
+
+    // Dashboards are found at the moment of the announcement rather than
+    // through the port each one opened at load. That port does not survive the
+    // background going idle, and an unpaired browser has no socket traffic to
+    // keep it awake — so by the time someone approves the browser, the port to
+    // the dashboard they are looking at is usually already gone.
+    async function postToDashboards(payload) {
+      const tabs = await api.queryTabs({})
+      await Promise.all((tabs || [])
+        .filter(tab => isDashboardUrl(tab.url))
+        .map(tab => api.sendTabMessage(tab.id, payload).catch(() => {})))
+    }
+
+    // Extension pages — the popup — are told through runtime messages, because
+    // the popup can be closed and reopened while the app is still waiting for
+    // the person to answer the prompt.
+    function postToExtensionPages(payload) {
+      try {
+        if (preferPromises) {
+          const sent = extensionApi.runtime.sendMessage(payload)
+          if (sent && typeof sent.catch === "function") sent.catch(() => {})
+          return
+        }
+        extensionApi.runtime.sendMessage(payload, () => {
+          // Read so a closed popup does not log an unchecked lastError.
+          void (extensionApi.runtime && extensionApi.runtime.lastError)
+        })
+      } catch (_) {}
+    }
+
+    function announceBridgeConnected(handshake) {
+      const result = {
+        connected: true,
+        protocolVersion: handshake && handshake.protocolVersion,
+        capabilities: dashboardCapabilities(handshake && handshake.capabilities)
+      }
+      postToDashboards({ type: "dashboard.bridgeConnected", result }).catch(() => {})
+      postToExtensionPages({ type: "bridge-connected", result })
+    }
+
+    function announceAwaitingApproval(details) {
+      postToExtensionPages({ type: "pairing-awaiting", ...(details || {}) })
+    }
 
     client.addEventListener(event => {
       if (event.event === "bridge.keepalive") {
@@ -1183,7 +1505,12 @@
     })
 
     function wakeBridge() {
-      client.connect().catch(() => {})
+      // An unpaired browser has nothing to say: knocking anyway woke every
+      // helper on the machine once a minute, and each refusal was recorded as a
+      // failed setup on the Mac side.
+      client.hasCredential()
+        .then(paired => { if (paired) return client.connect({ trigger: "background" }) })
+        .catch(() => {})
     }
 
     // Wake-ups. A suspended background context is revived only by an event it
@@ -1227,9 +1554,13 @@
 
       const action = (() => {
         switch (type) {
-          case "dashboard.connect": return controller.connect()
+          // Loading the dashboard is not a request to pair: a restored session
+          // reopens dashboard tabs with nobody at the keyboard, and a refused
+          // browser would be asked again on every reload. The popup is where a
+          // person asks to connect.
+          case "dashboard.connect": return controller.connect({ trigger: "user" })
           case "dashboard.request": return controller.handleDashboard(message.message)
-          case "popup.connect": return controller.connect()
+          case "popup.connect": return controller.connect({ trigger: "user", requestApproval: true })
           case "popup.subscriptionStatus": return client.request("subscription.status", {})
           case "popup.openPaywall": return client.request("subscription.purchase", typeof message.productId === "string" ? { productId: message.productId } : {})
           case "popup.listTabs": return controller.listPopupTabs()
@@ -1268,12 +1599,9 @@
               return Promise.reject(new BridgeError("invalid_sender", "Safari redirect sender rejected."))
             }
             return api.updateTab(sender.tab.id, { url: api.dashboardUrl() })
-          case "popup.pair": return controller.pair(message.code).then(result => {
-            for (const port of dashboardPorts) {
-              try { port.postMessage({ type: "bridge-connected", result }) } catch (_) {}
-            }
-            return result
-          })
+          // The dashboards are told by the client's own connected callback, so
+          // this no longer has to announce the handshake itself.
+          case "popup.pair": return controller.pair(message.code)
           default: return Promise.reject(new BridgeError("unsupported_message", `Unsupported extension message: ${type}`))
         }
       })()
@@ -1300,7 +1628,7 @@
     // A paired extension must be ready before its popup or dashboard is opened,
     // otherwise the global switcher cannot discover this browser. Every wake-up
     // re-runs this file, so this is also the reconnect for all of them.
-    client.connect().catch(() => {})
+    wakeBridge()
   }
 
   return {
@@ -1325,6 +1653,9 @@
     normalizeTabs,
     popupSessionOptions,
     portCandidates,
+    preferredBridgeError,
+    isTransportError,
+    safariBridgeCredential,
     serializeError,
     install
   }

@@ -63,6 +63,21 @@ committed as `assets/toolbar-firefox-*.png` and `assets/toolbar-firefox-light-*.
 and renamed into the plain filenames inside the Firefox package. The blue is
 deliberately not carried over there, and nothing else in the product uses it.
 
+The extension's own icon — the extensions page, the store listing, the popup's
+logo — is the Mac app's icon, exported per size from the app's Icon Composer
+document in the private repository and committed as `assets/icon-*.png`:
+
+```bash
+ictool="/Applications/Xcode.app/Contents/Applications/Icon Composer.app/Contents/Executables/ictool"
+for size in 16 32 48 128; do
+  "$ictool" "../Tab-Works/Tab Space.icon" --export-image --output-file "extension/assets/icon-$size.png" \
+    --platform macOS --rendition Default --width $size --height $size --scale 1
+done
+```
+
+The repository-root `icon.png` belongs to the marketing site, which shows the
+released app; this package can ship ahead of an app release.
+
 `assets/toolbar.svg` is the Chromium source for every size; the committed PNGs
 are rendered from it with [librsvg](https://gitlab.gnome.org/GNOME/librsvg):
 
@@ -124,6 +139,65 @@ The extension has two responsibilities:
 - Collect and restore tabs in the browser where the user invoked Tab Space.
 - Relay the exact `https://app.mytab.space` dashboard to the authenticated
   local bridge owned by the Tab Space background helper.
+
+## Connecting a browser
+
+The bridge is a WebSocket server on a fixed loopback port, so finding it means
+trying the ports in `portCandidates()` until one of them authenticates this
+browser. **Every port is tried.** Each logged-in macOS account runs its own
+helper and loopback ports are machine-wide, so the first helper to answer is
+frequently another account's, which has never seen this browser; stopping at
+that refusal is what left a paired browser unable to reach its own helper. The
+port that last worked is tried first, as an ordering hint only — any process
+can take a port at any time.
+
+When no helper knows this browser, opening the popup sends `pairing.request`
+to each helper that reported it as unknown. The helper raises a prompt in its
+own macOS session and, if the person allows it, answers with the same payload a
+`hello` success carries, token included. That prompt is the whole reason this is
+safe on a shared Mac: the person who owns a library is the one who sees the
+request, in their own session, and a request that reached the wrong account is
+declined there.
+
+Only the popup asks. Loading the Dashboard connects without asking, because a
+restored browser session reopens Dashboard tabs with nobody at the keyboard and
+a refused browser would otherwise be asked again on every reload. Requests carry
+`trigger`, and a background wake-up — the reconnect alarm, a window gaining
+focus — never asks either. An unpaired browser does not reconnect in the
+background at all.
+
+What the helper owes the extension for this to work:
+
+- Refuse `pairing.request` at once — `pairing_not_visible` — when its macOS
+  session is not on screen, instead of raising a prompt nobody can see. That
+  answer is what lets the request move on to the next account's helper.
+- Answer a refusal with `pairing_declined` and an unanswered prompt with
+  `pairing_timeout`, sooner than the extension's 120-second budget.
+- Keep sending `bridge.keepalive` on the socket while the prompt is open. A
+  Chromium service worker or a Firefox event page with no traffic is suspended
+  after about thirty seconds, and the approval would arrive at a socket that is
+  no longer there.
+- Refuse WebSocket handshakes whose `Origin` is a web page (`http:` or
+  `https:`). Anything that can connect can ask, so a page that could reach the
+  bridge could raise this prompt.
+
+The popup shows the waiting state only once a request has been pending for a
+moment: an app that predates approval refuses at once, and the popup goes
+straight to the pairing code instead of flashing a wait that cannot resolve.
+
+The six-digit pairing code remains as the fallback for everything the prompt
+cannot cover: an app that predates it, a session reached over screen sharing,
+a declined request. The popup offers it from the waiting state as well; typing
+a code abandons the pending request rather than raising it on another account's
+helper. The code is never sent together with the stored token, because the
+helper authenticates the token first and would never consume the code.
+
+Safari does not use either path. Its extension asks the app directly over
+native messaging, a channel only this app's own extension can reach, and the
+app's native handler issues a token there (`bridge.credential`). That pairs
+Safari without reading the one-time code, which a person may be copying for
+another browser at the same moment. An app that predates the operation answers
+`unsupported_operation`, and the extension reads the code instead.
 
 It never stores the session database. A save is considered successful only
 after the macOS app acknowledges that it has persisted the session. The popup
