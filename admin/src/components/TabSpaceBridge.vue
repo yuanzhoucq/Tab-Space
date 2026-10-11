@@ -265,9 +265,12 @@ export default {
       switch (data.type) {
         case "ready":
           this.setupWebExtensionBridge()
+          this.$store.commit("setWebExtensionDetected", true)
           break
         case "connected":
           this.setupWebExtensionBridge()
+          this.$store.commit("setWebExtensionDetected", true)
+          this.$store.commit("setBridgeErrorCode", "")
           this.$store.commit(
             "setNativeCapabilities",
             data.bridgeInfo && Array.isArray(data.bridgeInfo.capabilities)
@@ -301,6 +304,9 @@ export default {
           // cleared the spinner is never coming.
           this.failInFlightAIRequest()
           if (!this.$store.state.nativeDetected) {
+            // Keeps why the browser is not connected — the app not running is
+            // a different instruction from connecting the browser.
+            this.$store.commit("setBridgeErrorCode", data.error && data.error.code)
             this.$store.commit("setConnectionTimedOut", true)
           }
           break

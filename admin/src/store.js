@@ -86,6 +86,12 @@ const store = new Vuex.Store({
         bridge: null,
         nativeDetected: false,
         connectionTimedOut: false,
+        // Whether the browser extension's content script answered on this page,
+        // and why its connection to the app failed. Outside Safari they decide
+        // which setup step the connection guide shows: install the extension,
+        // open the app, or connect the browser from the extension.
+        webExtensionDetected: false,
+        bridgeErrorCode: "",
         initialRefresh: false,
         sessions: [],
         keyword: "",
@@ -264,6 +270,12 @@ const store = new Vuex.Store({
         },
         setConnectionTimedOut(state, timedOut) {
             state.connectionTimedOut = timedOut
+        },
+        setWebExtensionDetected(state, detected) {
+            state.webExtensionDetected = detected
+        },
+        setBridgeErrorCode(state, code) {
+            state.bridgeErrorCode = typeof code === "string" ? code : ""
         },
         setSessions(state, newSessions) {
             state.sessions = newSessions

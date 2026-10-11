@@ -985,6 +985,67 @@ async function openWebExtensionDashboard(page, capabilities) {
   await page.goto('http://127.0.0.1:8080/')
 }
 
+// The extension's content script is on the page but its connection to the app
+// failed with `errorCode`. `window.__tabspaceConnectBrowser()` then plays the
+// popup having connected the browser: the background announces it to every
+// dashboard tab.
+async function openUnconnectedWebExtensionDashboard(page, errorCode) {
+  await page.addInitScript(({ testSessions, code }) => {
+    const clone = value => JSON.parse(JSON.stringify(value))
+    const channel = 'tabspace-webextension-v2'
+    localStorage.setItem('tabspace-whats-new-seen-version', '4.1')
+    window.__tabspaceBridgeCommands = []
+    const post = (type, payload = {}) => {
+      window.postMessage({ channel, source: 'extension', type, ...payload }, window.location.origin)
+    }
+    window.__tabspaceConnectBrowser = () => post('connected', {
+      bridgeInfo: { connected: true, protocolVersion: 2, capabilities: ['sessions.read'] }
+    })
+    window.addEventListener('message', event => {
+      const data = event.data
+      if (event.source !== window || data.channel !== channel || data.source !== 'dashboard') return
+      if (data.type === 'probe') {
+        post('ready', { protocolVersion: 2 })
+        post('connection-error', { error: { code, message: code } })
+        return
+      }
+      if (data.type !== 'request' || !data.message) return
+      const command = clone(data.message)
+      window.__tabspaceBridgeCommands.push({ name: command.cmd, payload: command })
+      if (command.cmd === 'CheckBookmarks') {
+        post('native-message', { message: { cmd: 'ReturnBookmarks', bookmarks: clone(testSessions) } })
+      } else if (command.cmd === 'CheckDefault') {
+        post('native-message', {
+          message: {
+            cmd: 'ReturnDefault',
+            id: command.name,
+            value: command.name === 'tabspace-native-protocol-version' ? '2' : ''
+          }
+        })
+      }
+      post('request-complete', { requestId: data.requestId })
+    })
+  }, { testSessions: sessions, code: errorCode })
+
+  const distRoot = path.resolve(__dirname, '..', 'dist')
+  await page.route('http://127.0.0.1:8080/**', async route => {
+    const pathname = new URL(route.request().url()).pathname
+    const relativePath = pathname === '/' ? 'index.html' : pathname.replace(/^\/+/, '')
+    const filePath = path.resolve(distRoot, relativePath)
+    if (!filePath.startsWith(`${distRoot}${path.sep}`)) {
+      await route.fulfill({ status: 404, body: '' })
+      return
+    }
+    try {
+      await fs.access(filePath)
+      await route.fulfill({ path: filePath })
+    } catch (_) {
+      await route.fulfill({ status: 404, body: '' })
+    }
+  })
+  await page.goto('http://127.0.0.1:8080/')
+}
+
 async function lastBridgeCommand(page, name) {
   return page.evaluate(commandName => {
     const commands = window.__tabspaceBridgeCommands.filter(command => command.name === commandName)
@@ -2934,16 +2995,21 @@ test('directs visitors without the app to the Tab Space website', async ({ page 
 
   await expect.poll(() => page.evaluate(() => window.location.hostname)).toBe('localhost')
   await expect(page.getByText('Connecting to Tab Space...')).toBeVisible()
-  // Chromium runs the tests, so the pairing branch is the one on screen.
-  await expect(page.getByTestId('pairing-guide')).toBeVisible({ timeout: 5000 })
-  await expect(page.getByRole('heading', { name: 'Pair this browser with Tab Space' })).toBeVisible()
-  await expect(page.getByText('Open the Tab Space extension in this browser.')).toBeVisible()
-  await expect(page.getByText('Click Open Tab Space app.')).toBeVisible()
-  await expect(page.getByText('Copy the pairing code from the app and paste it here.')).toBeVisible()
-  await expect(page.getByTestId('pairing-guide'))
-    .toContainText('Connect the two securely with a pairing code.')
+  // Chromium runs the tests, so the non-Safari branch is the one on screen,
+  // and with no extension answering on the page it starts at installing one.
+  const guide = page.getByTestId('pairing-guide')
+  await expect(guide).toBeVisible({ timeout: 5000 })
+  await expect(guide).toHaveAttribute('data-variant', 'install')
+  await expect(page.getByRole('heading', { name: 'Add Tab Space to this browser' })).toBeVisible()
+  await expect(guide).toContainText('Install the Tab Space extension for this browser.')
+  await expect(guide).toContainText('Reload this page once it is installed.')
+  await expect(page.getByTestId('install-extension'))
+    .toHaveAttribute('href', 'https://chromewebstore.google.com/detail/tab-space/nhheanllfhaincfgjpdiacdnfgkipeep')
+  await expect(page.getByTestId('install-extension')).toContainText('Chrome Web Store')
+  // The page told nobody to paste a code into it: there is nowhere to paste one.
+  await expect(guide).not.toContainText('paste it here')
   // The pairing branch carries no explanatory notes; the lede says it all.
-  await expect(page.getByTestId('pairing-guide').locator('.guide-notes')).toHaveCount(0)
+  await expect(guide.locator('.guide-notes')).toHaveCount(0)
   await expect(page.getByRole('link', { name: 'Get Tab Space' })).toHaveAttribute('href', 'https://mytab.space')
   await expect(page.getByTestId('export-menu')).toHaveCount(0)
 })
@@ -3469,4 +3535,39 @@ test('non-Pro companion library stays usable after a Pro-only refusal', async ({
   await page.locator('.subscription-modal .close-btn').click()
   await expect(page.locator('.session')).toHaveCount(2)
   await expect(page.getByTestId('trial-banner')).toHaveCount(0)
+})
+
+test('sends an unconnected browser to its toolbar button, then loads once it connects', async ({ page }) => {
+  await openUnconnectedWebExtensionDashboard(page, 'pairing_required')
+  const guide = page.getByTestId('pairing-guide')
+  await expect(guide).toBeVisible({ timeout: 5000 })
+  await expect(guide).toHaveAttribute('data-variant', 'connect')
+  await expect(page.getByRole('heading', { name: 'Connect this browser to Tab Space' })).toBeVisible()
+  await expect(guide).toContainText('Make sure Tab Space is open on your Mac.')
+  await expect(guide).toContainText("Click the Tab Space button in this browser's toolbar.")
+  await expect(guide).toContainText('Follow the steps it shows to connect this browser.')
+  // The extension answered, so the "no extension yet?" hedge would be wrong.
+  await expect(guide.locator('.guide-footnote')).toHaveCount(0)
+  await expect(page.getByTestId('install-extension')).toHaveCount(0)
+  expect(await bridgeCommandCount(page, 'CheckBookmarks')).toBe(0)
+
+  // The person connects the browser from the popup; the dashboard picks it up
+  // without a reload.
+  await page.evaluate(() => window.__tabspaceConnectBrowser())
+  await expect(page.locator('.session')).toHaveCount(sessions.length)
+  await expect(guide).toHaveCount(0)
+  expect(await bridgeCommandCount(page, 'CheckBookmarks')).toBe(1)
+})
+
+test('asks to open the app when the extension found no Tab Space for this account', async ({ page }) => {
+  await openUnconnectedWebExtensionDashboard(page, 'helper_unavailable')
+  const guide = page.getByTestId('pairing-guide')
+  await expect(guide).toBeVisible({ timeout: 5000 })
+  await expect(guide).toHaveAttribute('data-variant', 'openApp')
+  await expect(page.getByRole('heading', { name: 'Open Tab Space on your Mac' })).toBeVisible()
+  await expect(guide).toContainText('did not answer for this Mac account')
+  await expect(page.getByTestId('open-tab-space')).toHaveAttribute('href', 'tabspace://connect')
+  // Nothing to draw beside a single instruction.
+  await expect(guide.locator('.browser-mock')).toHaveCount(0)
+  await expect(guide.getByRole('button', { name: 'Retry', exact: true })).toBeVisible()
 })

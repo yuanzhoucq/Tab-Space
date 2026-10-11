@@ -1,11 +1,12 @@
 <template>
   <section class="connection-guide"
-           :class="safari ? 'guide-safari' : 'guide-pairing'"
-           :data-testid="safari ? 'safari-permission-guide' : 'pairing-guide'">
+           :class="[safari ? 'guide-safari' : 'guide-pairing', { 'guide-single': !showIllustration }]"
+           :data-testid="safari ? 'safari-permission-guide' : 'pairing-guide'"
+           :data-variant="variant">
     <div class="guide-copy">
-      <h2>{{safari ? lang.connectSafariTitle : lang.connectPairTitle}}</h2>
-      <p v-if="!safari" class="guide-lede">{{lang.connectPairLede}}</p>
-      <ol class="guide-steps">
+      <h2>{{title}}</h2>
+      <p v-if="lede" class="guide-lede">{{lede}}</p>
+      <ol v-if="steps.length" class="guide-steps">
         <li v-for="(step, index) in steps" :key="index">
           <span class="guide-step">{{index + 1}}</span>
           <span>{{step}}</span>
@@ -52,8 +53,11 @@
       </div>
     </div>
 
-    <!-- Other browsers: the extension popup asking for the app's pairing code. -->
-    <div v-else class="browser-mock" role="img" :aria-label="lang.connectPairStep3">
+    <!-- Other browsers: the extension popup asking for the app's pairing code.
+         Every released app still ends at the code, so the drawing shows it; the
+         steps beside it stay general, because a newer app asks on the Mac
+         instead and the popup is what knows which one applies. -->
+    <div v-else-if="showIllustration" class="browser-mock" role="img" :aria-label="lang.connectPairStep2">
       <div class="mock-titlebar" aria-hidden="true">
         <span class="traffic-light traffic-light-close"></span>
         <span class="traffic-light traffic-light-minimize"></span>
@@ -94,7 +98,20 @@
     </div>
 
     <div class="guide-actions">
-      <button class="primary-button" type="button" @click="$emit('retry')">{{lang.retry}}</button>
+      <a v-if="variant === 'install'"
+         class="primary-button"
+         :href="extensionStore.url"
+         target="_blank"
+         rel="noopener noreferrer"
+         data-testid="install-extension">{{lang.connectInstallAction}} · {{extensionStore.name}}</a>
+      <!-- LaunchServices hands the URL to the app, which raises its window. -->
+      <a v-if="variant === 'openApp'"
+         class="primary-button"
+         href="tabspace://connect"
+         data-testid="open-tab-space">{{lang.connectOpenAppAction}}</a>
+      <button :class="['install', 'openApp'].includes(variant) ? 'secondary-button' : 'primary-button'"
+              type="button"
+              @click="$emit('retry')">{{lang.retry}}</button>
       <a v-if="!safari"
          class="secondary-button"
          href="https://mytab.space/multi-browser.html"
@@ -105,7 +122,9 @@
          target="_blank"
          rel="noopener noreferrer">{{lang.getTabSpace}}</a>
     </div>
-    <p class="guide-footnote">{{lang.connectMissingExtension}}</p>
+    <!-- Outside Safari the guide already knows whether the extension answered,
+         so the "no extension yet?" hedge would only contradict it. -->
+    <p v-if="safari" class="guide-footnote">{{lang.connectMissingExtension}}</p>
   </section>
 </template>
 
@@ -118,6 +137,25 @@ import toolbarLightIcon from '../assets/toolbar-tab-space-light.png'
 // A stand-in for the six digits the Mac app shows, not a real code.
 const samplePairingCode = '482915'
 
+// Chromium forks install the Chrome listing, so anything that is neither Edge
+// nor Firefox is sent there. Store names are product names and stay untranslated.
+function extensionStoreFor(userAgent) {
+  const agent = userAgent || ''
+  if (/Edg\//.test(agent)) {
+    return {
+      name: 'Edge Add-ons',
+      url: 'https://microsoftedge.microsoft.com/addons/detail/tab-space/afpnlldgbkigccngpjclblbpjplbffel'
+    }
+  }
+  if (/Firefox\//.test(agent)) {
+    return { name: 'Firefox Add-ons', url: 'https://addons.mozilla.org/firefox/addon/tab-space/' }
+  }
+  return {
+    name: 'Chrome Web Store',
+    url: 'https://chromewebstore.google.com/detail/tab-space/nhheanllfhaincfgjpdiacdnfgkipeep'
+  }
+}
+
 export default {
   name: 'ConnectionGuide',
   data() {
@@ -126,6 +164,7 @@ export default {
       toolbarLightIcon,
       safari: isSafari(),
       pairingCode: samplePairingCode.split(''),
+      extensionStore: extensionStoreFor(typeof navigator === 'undefined' ? '' : navigator.userAgent),
       dashboardHost: 'app.mytab.space',
       // The same two destinations the app's own privacy note links to.
       permissionRationaleUrl: 'https://github.com/yuanzhoucq/Tab-Space/issues/15',
@@ -133,11 +172,42 @@ export default {
     }
   },
   computed: {
-    ...mapState(['lang']),
+    ...mapState(['lang', 'webExtensionDetected', 'bridgeErrorCode']),
+    // Outside Safari, which of the three things stands between this browser and
+    // the library: no extension answered on this page, the extension answered
+    // but no Tab Space did, or the browser simply has not been connected yet.
+    variant() {
+      if (this.safari) return 'safari'
+      if (!this.webExtensionDetected) return 'install'
+      if (['helper_unavailable', 'pairing_not_visible'].includes(this.bridgeErrorCode)) return 'openApp'
+      return 'connect'
+    },
+    showIllustration() {
+      return this.variant !== 'openApp'
+    },
+    title() {
+      return {
+        safari: this.lang.connectSafariTitle,
+        install: this.lang.connectInstallTitle,
+        openApp: this.lang.connectOpenAppTitle,
+        connect: this.lang.connectPairTitle
+      }[this.variant]
+    },
+    lede() {
+      return {
+        safari: '',
+        install: this.lang.connectInstallLede,
+        openApp: this.lang.connectOpenAppLede,
+        connect: this.lang.connectPairLede
+      }[this.variant]
+    },
     steps() {
-      return this.safari
-        ? [this.lang.connectSafariStep1, this.lang.connectSafariStep2]
-        : [this.lang.connectPairStep1, this.lang.connectPairStep2, this.lang.connectPairStep3]
+      return {
+        safari: [this.lang.connectSafariStep1, this.lang.connectSafariStep2],
+        install: [this.lang.connectInstallStep1, this.lang.connectInstallStep2, this.lang.connectInstallStep3],
+        openApp: [],
+        connect: [this.lang.connectPairStep1, this.lang.connectPairStep2, this.lang.connectPairStep3]
+      }[this.variant]
     }
   }
 }
@@ -171,6 +241,13 @@ export default {
 }
 
 .guide-copy { align-self: start; }
+
+/* Opening the app is one instruction; there is nothing to draw beside it. */
+.connection-guide.guide-single {
+  grid-template-columns: minmax(0, 1fr);
+  max-width: 560px;
+  text-align: center;
+}
 
 .guide-lede {
   margin: 11px 0 0;
