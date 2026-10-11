@@ -1,0 +1,31 @@
+<svg viewBox="1.875 1.875 15.25 15.25" width="15.25" height="15.25" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <title>Tab Space</title>
+  <!-- The Safari copy of toolbar.svg: the same drawing, viewBox and #007AFF,
+       with one change — a 1.125 stroke instead of 1.25. Everything else that
+       file explains about the drawing holds here too.
+
+       Safari draws the button at about 19pt and puts it next to its own SF
+       Symbols toolbar items, so the weight is set against theirs. Measured off
+       a @2x screenshot of Safari's toolbar (October 2026) by summing pixel
+       coverage across each stroke: Share and Bookmark come to 2.8px, the 1.25
+       drawing to 3.1px. 1.25 × 2.8 / 3.1 ≈ 1.13, rounded to 1.125, which
+       renders at 2.8px in the same 38px slot.
+
+       Chrome and Edge keep 1.25; their neighbours are Chromium's own icons, not
+       SF Symbols. -->
+  <!-- The outbound arrow keeps only what emerges below the upper frame, the
+       same L the artwork was drawn with. -->
+  <mask id="behind" maskUnits="userSpaceOnUse" x="1" y="8" width="9" height="7">
+    <path d="M1 8H7V12H10V15H1V8Z" fill="#FFFFFF"/>
+  </mask>
+  <g stroke="#007AFF" stroke-width="1.125" fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M16.5 6V4.5C16.5 3.39543 15.6046 2.5 14.5 2.5H8.5C7.39543 2.5 6.5 3.39543 6.5 4.5V10.5C6.5 11.6046 7.39543 12.5 8.5 12.5H14.5C15.6046 12.5 16.5 11.6046 16.5 10.5V9"/>
+    <path d="M17.5 7.5L10 7.5"/>
+    <path d="M12.5 4.5L9.5 7.5L12.5 10.5"/>
+    <path d="M12.5 14L12.5 14.5C12.5 15.6046 11.6046 16.5 10.5 16.5L4.5 16.5C3.39543 16.5 2.5 15.6046 2.5 14.5L2.5 13M5 6.49999L4.49998 6.5C3.39542 6.50001 2.5 7.39544 2.5 8.5L2.5 10"/>
+    <g mask="url(#behind)">
+      <path d="M1.5 11.5L9 11.5"/>
+      <path d="M6.5 14.5L9.5 11.5L6.5 8.5"/>
+    </g>
+  </g>
+</svg>

@@ -86,7 +86,9 @@ const baseManifest = {
     // on light and dark chrome alike. See extension/assets/toolbar.svg.
     //
     // Firefox keeps its own pair and its theme_icons below; the blue is
-    // deliberately not carried over there.
+    // deliberately not carried over there. Safari gets the same blue drawing
+    // with a lighter stroke, matched to its SF Symbols toolbar items; see
+    // extension/assets/toolbar-safari.svg.
     default_icon: {
       "16": "toolbar-16.png",
       "32": "toolbar-32.png",
@@ -212,12 +214,14 @@ for (const target of requestedTargets) {
   await mkdir(output, { recursive: true })
   await cp(join(extensionRoot, "src"), output, { recursive: true })
   await cp(join(repositoryRoot, "icon.png"), join(output, "icon.png"))
-  // Firefox ships its own artwork under the same filenames the manifest uses,
-  // so each package carries one toolbar icon set and nothing has to branch at
-  // runtime. Chrome and Edge get the blue drawing; Firefox gets the dark/light
-  // pair its theme_icons switches between.
+  // Firefox and Safari ship their own artwork under the same filenames the
+  // manifest uses, so each package carries one toolbar icon set and nothing has
+  // to branch at runtime. Chrome and Edge get the blue drawing; Safari gets it
+  // with a lighter stroke; Firefox gets the dark/light pair its theme_icons
+  // switches between.
+  const toolbarPrefix = target === "firefox" || target === "safari" ? `toolbar-${target}` : "toolbar"
   for (const size of [16, 32, 48, 128]) {
-    const source = target === "firefox" ? `toolbar-firefox-${size}.png` : `toolbar-${size}.png`
+    const source = `${toolbarPrefix}-${size}.png`
     await cp(join(extensionRoot, "assets", source), join(output, `toolbar-${size}.png`))
     if (target === "firefox") {
       await cp(join(extensionRoot, "assets", `toolbar-firefox-light-${size}.png`),

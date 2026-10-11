@@ -5,7 +5,8 @@ kept because the choice between them is a matter of taste, not correctness — a
 four render correctly and none is a discard.
 
 **None of these is used by the build.** `build.mjs` reads `../toolbar.svg` for
-Chrome and Edge, and `../toolbar-firefox-*.png` for Firefox. Swapping one in
+Chrome and Edge, `../toolbar-safari.svg` (the same drawing, lighter stroke) for
+Safari, and `../toolbar-firefox-*.png` for Firefox. Swapping one in
 means rendering it over `../toolbar-{16,32,48,128}.png`; the command is in
 `../../README.md`.
 
@@ -15,10 +16,10 @@ means rendering it over `../toolbar-{16,32,48,128}.png`; the command is in
 | `two-tone-stroke.svg` + `two-tone-stroke-16.svg` | Every line 2 units wide, ink inside and paper outside, so each theme swallows one half. The most robust: it never asks one colour to work on both backgrounds. | Every path is drawn twice, masks are per-layer, and 16px needs the separate companion glyph. |
 | `logo-blocks.svg` | The app icon's two blocks. Strongest brand recognition, and the only one whose shape is identical on every background. | Colour-heavy next to the line-art icons of neighbouring extensions, and at 16px the arrows inside the blocks do not resolve. |
 
-Scope: the icons here and in the parent folder are for the **Chrome and Edge**
-toolbar button only. Firefox resolves the theme correctly on its own through
-`theme_icons` and keeps its original dark/light pair; nothing here is used
-anywhere else in the product either.
+Scope: the icons here and in the parent folder are for the **Chrome, Edge and
+Safari** toolbar buttons only. Firefox resolves the theme correctly on its own
+through `theme_icons` and keeps its original dark/light pair; nothing here is
+used anywhere else in the product either.
 
 ## Measured background colours
 

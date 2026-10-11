@@ -61,7 +61,14 @@ This applies to **Chrome and Edge only**. Firefox resolves the theme correctly
 on its own through `theme_icons`, so it keeps the dark/light pair it always had,
 committed as `assets/toolbar-firefox-*.png` and `assets/toolbar-firefox-light-*.png`
 and renamed into the plain filenames inside the Firefox package. The blue is
-deliberately not carried over there, and nothing else in the product uses it.
+deliberately not carried over there.
+
+Safari shows the same blue drawing with a lighter stroke, from
+`assets/toolbar-safari.svg`, committed as `assets/toolbar-safari-*.png` and
+renamed the same way. Its neighbours are Safari's own SF Symbols toolbar items,
+which a @2x screenshot measures at 2.8px per stroke against the Chromium
+drawing's 3.1px, so the Safari copy draws 1.125 units instead of 1.25. Nothing
+else in the product uses the blue.
 
 `assets/toolbar.svg` is the Chromium source for every size; the committed PNGs
 are rendered from it with [librsvg](https://gitlab.gnome.org/GNOME/librsvg):
@@ -70,6 +77,7 @@ are rendered from it with [librsvg](https://gitlab.gnome.org/GNOME/librsvg):
 cd extension/assets
 for size in 16 32 48 128; do
   rsvg-convert -w $size -h $size toolbar.svg -o toolbar-$size.png
+  rsvg-convert -w $size -h $size toolbar-safari.svg -o toolbar-safari-$size.png
 done
 ```
 

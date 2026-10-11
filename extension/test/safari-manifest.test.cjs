@@ -37,6 +37,13 @@ test("builds the Safari MV3 manifest without other-browser keys", async () => {
   assert.equal("commands" in manifest, false)
   // Safari 17 blocks the loopback bridge under any connect-src; see build.mjs.
   assert.equal(manifest.content_security_policy.extension_pages, "script-src 'self'; object-src 'self'")
+  // Safari's own render of the blue drawing, lighter to match its SF Symbols.
+  for (const size of [16, 32, 48, 128]) {
+    assert.deepEqual(
+      await readFile(join(extensionRoot, `dist/safari/toolbar-${size}.png`)),
+      await readFile(join(extensionRoot, `assets/toolbar-safari-${size}.png`))
+    )
+  }
   const background = await readFile(join(extensionRoot, "dist/safari/background.js"), "utf8")
   assert.match(background, /const BUILD_TARGET = "safari"/)
   assert.match(background, /BUILD_TARGET === "safari"\s*\? "safari"/)
