@@ -72,6 +72,31 @@
     }
   }
 
+  // Background lookups ask tabs.query for dashboard tabs only. Safari treats
+  // reading another site's tab URL as a request for access to that site, so
+  // scanning every tab on each connection badged the toolbar button and turned
+  // the next click into a permission prompt for whatever page was open. Ports
+  // are left out of the patterns (Firefox rejects them, and a pattern without
+  // one matches any port); isDashboardUrl still has the final say.
+  function dashboardTabPatterns() {
+    const patterns = []
+    for (const origin of DASHBOARD_ORIGINS) {
+      try {
+        const url = new URL(origin)
+        patterns.push(`${url.protocol}//${url.hostname}/*`)
+      } catch (_) {}
+    }
+    for (const suffix of DASHBOARD_ORIGIN_SUFFIXES) {
+      patterns.push(`https://${suffix}/*`, `https://*.${suffix}/*`)
+    }
+    return patterns
+  }
+
+  async function queryDashboardTabs(browserApi) {
+    const tabs = await browserApi.queryTabs({ url: dashboardTabPatterns() })
+    return (tabs || []).filter(tab => isDashboardUrl(tab.url))
+  }
+
   // The port that answered last time is tried first. That is an ordering hint
   // and nothing more: any unrelated process can take a loopback port at any
   // moment, so the full sweep stays the authoritative way to find the helper.
@@ -463,8 +488,7 @@
   async function sendDashboardEvent(browserApi, event) {
     const message = dashboardMessageForEvent(event)
     if (!message) return { sent: 0 }
-    const tabs = await browserApi.queryTabs({})
-    const dashboards = (tabs || []).filter(tab => isDashboardUrl(tab.url))
+    const dashboards = await queryDashboardTabs(browserApi)
     await Promise.all(dashboards.map(tab =>
       browserApi.sendTabMessage(tab.id, { type: "dashboard.nativeMessage", message }).catch(() => {})))
     return { sent: dashboards.length }
@@ -1441,10 +1465,9 @@
     // keep it awake — so by the time someone approves the browser, the port to
     // the dashboard they are looking at is usually already gone.
     async function postToDashboards(payload) {
-      const tabs = await api.queryTabs({})
-      await Promise.all((tabs || [])
-        .filter(tab => isDashboardUrl(tab.url))
-        .map(tab => api.sendTabMessage(tab.id, payload).catch(() => {})))
+      const dashboards = await queryDashboardTabs(api)
+      await Promise.all(dashboards.map(tab =>
+        api.sendTabMessage(tab.id, payload).catch(() => {})))
     }
 
     // Extension pages — the popup — are told through runtime messages, because

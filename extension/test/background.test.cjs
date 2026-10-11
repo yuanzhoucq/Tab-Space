@@ -426,8 +426,9 @@ test('handles direct protocol replies locally and dispatches legacy browser comm
 
 test('pushes session invalidations to every dashboard tab and nowhere else', async () => {
   const sent = []
+  const queries = []
   const result = await background.sendDashboardEvent({
-    queryTabs: async () => [
+    queryTabs: async query => queries.push(query) && [
       { id: 1, url: 'https://app.mytab.space/' },
       { id: 2, url: 'https://app.mytab.space/settings' },
       { id: 3, url: 'https://example.com/' }
@@ -435,6 +436,9 @@ test('pushes session invalidations to every dashboard tab and nowhere else', asy
     sendTabMessage: async (id, message) => sent.push([id, message])
   }, { event: 'sessions.changed', revision: 12 })
 
+  // Only dashboard tabs are asked for: Safari counts reading any other tab's
+  // URL as a request for access to that site.
+  assert.deepEqual(queries, [{ url: ['https://app.mytab.space/*'] }])
   assert.equal(result.sent, 2)
   assert.deepEqual(sent, [
     [1, { type: 'dashboard.nativeMessage', message: { cmd: 'SessionsChangedRemotely', revision: 12 } }],
