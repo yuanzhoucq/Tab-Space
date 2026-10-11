@@ -131,20 +131,38 @@
     return response && response.result ? response.result : response
   }
 
+  // An update replaces the app bundle but leaves the old helper running until
+  // its ten-minute bundle check restarts it. A helper from before Safari joined
+  // the bridge (4.2 and older) treats Safari as a companion browser, so a save
+  // there is refused with pro_required — an answer, not a transport failure,
+  // which would never fall back. Only helpers that serve Safari advertise the
+  // switcher capability; anything older is treated as no helper at all.
+  const SAFARI_HELPER_CAPABILITY = "switcher.tabs.v1"
+
+  function helperPredatesSafari(handshake) {
+    const capabilities = handshake && handshake.capabilities
+    return Array.isArray(capabilities) && !capabilities.includes(SAFARI_HELPER_CAPABILITY)
+  }
+
   async function requestWithFallback(client, method, params) {
     const started = Date.now()
     if (!socketOpen(client) && transportDownAt && started - transportDownAt < TRANSPORT_DOWN_MS) {
       return runNative(method, params, started, "recent helper_unavailable")
     }
+    let outdated = false
     try {
-      const result = await client.request(method, params || {})
-      transportDownAt = 0
-      return result
+      if (typeof client.connect === "function") outdated = helperPredatesSafari(await client.connect())
+      if (!outdated) {
+        const result = await client.request(method, params || {})
+        transportDownAt = 0
+        return result
+      }
     } catch (error) {
       if (!isTransportError(error)) throw error
       transportDownAt = Date.now()
       return runNative(method, params, started, error.code)
     }
+    return runNative(method, params, started, "helper_outdated")
   }
 
   function resetTransportState() { transportDownAt = 0 }

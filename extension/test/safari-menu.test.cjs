@@ -87,6 +87,29 @@ test("a connection that could not be paired falls back too: no command reached t
   assert.equal(nativeCalls.filter(call => call.op === "bridge.command").length, 1)
 })
 
+test("a helper from before Safari joined the bridge is skipped: the appex runs the command", async () => {
+  nativeCalls.length = 0
+  let reached = 0
+  const stale = {
+    socket: { readyState: 1 },
+    connect: async () => ({ authenticated: true, capabilities: ["sessions.read", "sessions.write"] }),
+    request: async () => { reached += 1; throw Object.assign(new Error("pro"), { code: "pro_required" }) }
+  }
+  assert.deepEqual(await menu.requestWithFallback(stale, "sessions.append", { sessions: [] }), { source: "native" })
+  assert.equal(reached, 0)
+  const traces = nativeCalls.filter(call => call.op === "diagnostics.trace")
+  assert.match(traces[0].detail, /^sessions\.append after helper_outdated \d+ms$/)
+
+  // A current helper is used as before.
+  const current = {
+    socket: { readyState: 1 },
+    connect: async () => ({ authenticated: true, capabilities: ["sessions.read", "switcher.tabs.v1"] }),
+    request: async () => { reached += 1; return { saved: true } }
+  }
+  assert.deepEqual(await menu.requestWithFallback(current, "sessions.append", { sessions: [] }), { saved: true })
+  assert.equal(reached, 1)
+})
+
 test("setPopup switches in both native-menu and forced-fallback directions", async () => {
   const nativeApi = probeApi(false)
   assert.equal(await menu.probe(nativeApi), true)
