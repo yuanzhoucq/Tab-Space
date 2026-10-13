@@ -9,6 +9,7 @@ on:
       - 'sitemap.xml'
       - 'assets/**'
       - 'share/**'
+      - 'open/**'
       - 'icon.png'
       - 'favicon.svg'
       - 'favicon.ico'
@@ -42,6 +43,7 @@ jobs:
           cp -R assets dist/assets
           cp -R zh dist/zh
           cp -R share dist/share
+          cp -R open dist/open
           find dist -name '.DS_Store' -delete
 
       - name: Verify the deploy contains only site files
@@ -52,7 +54,7 @@ jobs:
               exit 1
             fi
           done
-          for required in index.html index-zh.html zh/index.html zh/switcher.html zh/privacy.html zh/multi-browser.html zh/404.html switcher.html privacy.html changelog.html redirect.html storage.html manage-too-many-browser-tabs.html manage-tabs-across-browsers-mac.html tab-space-vs-onetab.html tab-space-vs-safari-tab-groups.html robots.txt sitemap.xml 404.html _headers _redirects assets/css/main.css assets/css/home-v2.css assets/css/compare-v2.css assets/css/switcher.css assets/tab-space-switcher-film.mp4 assets/img/switcher-demo-poster.webp assets/img/switcher-4-1.webp assets/img/multi-browser-workspace.webp assets/img/tab-space-social.webp share/index.html share/share.css share/share.js share/app-icon.png favicon.svg favicon.ico favicon-32x32.png favicon-16x16.png; do
+          for required in index.html index-zh.html zh/index.html zh/switcher.html zh/privacy.html zh/multi-browser.html zh/404.html switcher.html privacy.html changelog.html redirect.html storage.html manage-too-many-browser-tabs.html manage-tabs-across-browsers-mac.html tab-space-vs-onetab.html tab-space-vs-safari-tab-groups.html robots.txt sitemap.xml 404.html _headers _redirects assets/css/main.css assets/css/home-v2.css assets/css/compare-v2.css assets/css/switcher.css assets/tab-space-switcher-film.mp4 assets/img/switcher-demo-poster.webp assets/img/switcher-4-1.webp assets/img/multi-browser-workspace.webp assets/img/tab-space-social.webp share/index.html share/share.css share/share.js share/app-icon.png open/index.html open/open.css open/open.js favicon.svg favicon.ico favicon-32x32.png favicon-16x16.png; do
             if [ ! -e "dist/$required" ]; then
               echo "Refusing to deploy: dist/$required is missing" >&2
               exit 1

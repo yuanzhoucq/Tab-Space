@@ -31,3 +31,12 @@
   X-Content-Type-Options: nosniff
   X-Frame-Options: DENY
   X-Robots-Tag: noindex, nofollow, noarchive
+
+# The iOS app's hand-off page. The one-time token stays in the fragment, and
+# the page must never be cached, indexed or framed.
+/open/*
+  Cache-Control: no-store, no-transform
+  Content-Security-Policy: default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'
+  Referrer-Policy: no-referrer
+  X-Frame-Options: DENY
+  X-Robots-Tag: noindex, nofollow, noarchive

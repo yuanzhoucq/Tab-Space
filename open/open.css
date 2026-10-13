@@ -1,0 +1,43 @@
+:root {
+  color-scheme: light dark;
+  --primary-color: #fa8072;
+  --text-primary: #2d3748;
+  --text-secondary: #718096;
+  --background: #f8f6f2;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --text-primary: #edf2f7;
+    --text-secondary: #a0aec0;
+    --background: #1c1c1e;
+  }
+}
+
+body {
+  margin: 0;
+  color: var(--text-primary);
+  background: var(--background);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
+  line-height: 1.5;
+}
+
+main {
+  max-width: 560px;
+  margin: 0 auto;
+  padding: 56px 20px 40px;
+}
+
+.logo {
+  display: block;
+  width: 64px;
+  height: 64px;
+  margin-bottom: 20px;
+  border-radius: 15px;
+}
+
+h1 { margin: 0 0 8px; font-size: 24px; line-height: 1.25; }
+h2 { margin: 32px 0 8px; font-size: 16px; }
+.lead { margin: 0; color: var(--text-secondary); }
+ol { margin: 0; padding-left: 1.3em; color: var(--text-secondary); }
+li + li { margin-top: 6px; }
