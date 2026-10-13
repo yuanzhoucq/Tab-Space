@@ -1,7 +1,7 @@
-Tab Space saves, organizes, and restores browser tabs. Version 4.1 adds a
-systemwide Mac switcher for open and saved tabs, and 4.1.2 lets that switcher
-close, deduplicate, and act on several tabs at once. Safari stays built in,
-while Chrome, Microsoft Edge, and Firefox connect through companion extensions;
+Tab Space saves, organizes, and restores browser tabs, with a systemwide Mac
+switcher for open and saved tabs. Version 4.3 rebuilds the Safari extension and
+lets Chrome, Microsoft Edge, and Firefox connect by approving them on the Mac.
+Safari stays built in, while those browsers connect through companion extensions;
 the session database remains in the native Mac app.
 
 This repository is public so the web-facing code can be audited: the marketing
@@ -41,7 +41,7 @@ node extension/build.mjs all
 node --test extension/test/*.test.cjs
 ```
 
-The dashboard requires Tab Space 4.0 for Mac plus the Safari extension or a
+The dashboard requires Tab Space 4.0 or later for Mac plus the Safari extension or a
 paired companion browser extension.
 
 ## Contributing
