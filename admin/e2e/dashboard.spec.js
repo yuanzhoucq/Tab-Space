@@ -3079,12 +3079,28 @@ test('imports OneTab text and exports the resulting backup', async ({ page }) =>
 
   await page.getByTestId('import-menu').hover()
   await page.getByTestId('import-onetab').click()
-  await expect(page.getByTestId('import-modal')).toBeVisible()
+  // The dialog used to live inside the hover-only More menu: it sat off the
+  // right edge of the window and went away as soon as the pointer left.
+  await page.mouse.move(10, 400)
+  const modal = page.getByTestId('import-modal')
+  await expect(modal).toBeVisible()
+  const box = await modal.boundingBox()
+  const viewport = page.viewportSize()
+  expect(box.x).toBeGreaterThanOrEqual(0)
+  expect(box.x + box.width).toBeLessThanOrEqual(viewport.width)
+
+  // Pasted the way it arrives from Windows: \r\n, a doubled blank line and a
+  // trailing one, none of which may become an empty group that sinks the rest.
   await page.locator('#import-content').fill([
     'https://example.com | Example',
     'not-a-url | Invalid',
-    'https://openai.com | OpenAI'
-  ].join('\n'))
+    'https://openai.com | OpenAI',
+    '',
+    '',
+    'https://github.com',
+    '',
+    ''
+  ].join('\r\n'))
   await page.getByTestId('import-submit').click()
 
   await expect.poll(() => lastBridgeCommand(page, 'AppendSessions')).toMatchObject({
@@ -3095,10 +3111,14 @@ test('imports OneTab text and exports the resulting backup', async ({ page }) =>
           { title: 'Example', url: 'https://example.com' },
           { title: 'OpenAI', url: 'https://openai.com' }
         ]
+      }, {
+        title: 'From OneTab',
+        sites: [{ title: 'https://github.com', url: 'https://github.com' }]
       }]
     }
   })
-  await expect(page.locator('.session')).toHaveCount(3)
+  await expect(modal).toBeHidden()
+  await expect(page.locator('.session')).toHaveCount(4)
 
   await page.getByTestId('more-menu').hover()
 
@@ -3108,8 +3128,57 @@ test('imports OneTab text and exports the resulting backup', async ({ page }) =>
   const download = await downloadPromise
   expect(download.suggestedFilename()).toMatch(/^Tab-Space-Backup-\d{4}-\d{2}-\d{2}-\d{6}\.tabspace$/)
   const exportedSessions = JSON.parse(await fs.readFile(await download.path(), 'utf8'))
-  expect(exportedSessions).toHaveLength(3)
+  expect(exportedSessions).toHaveLength(4)
   expect(exportedSessions[0].title).toBe('From OneTab')
+})
+
+test('asks for another import source by email with a prefilled template', async ({ page }) => {
+  await openDashboard(page, { initialSessions: sessions })
+
+  const href = await page.getByTestId('import-request').getAttribute('href')
+  const url = new URL(href)
+  expect(url.protocol).toBe('mailto:')
+  expect(url.pathname).toBe('support@mytab.space')
+  expect(url.searchParams.get('subject')).toBe('Import request for Tab Space')
+  expect(url.searchParams.get('body')).toContain('Which app or extension would you like to import from?')
+  expect(url.searchParams.get('body')).toContain('Tab Space dashboard')
+})
+
+test('imports a TabXpert JSON export', async ({ page }) => {
+  await openDashboard(page, { initialSessions: sessions })
+
+  await page.getByTestId('import-tabxpert-input')
+    .setInputFiles(path.join(__dirname, 'fixtures', 'tabxpert-export.json'))
+
+  await expect.poll(() => lastBridgeCommand(page, 'AppendSessions')).toMatchObject({
+    payload: {
+      bookmarks: [{
+        timestamp: 1791899409,
+        title: 'From TabXpert',
+        sites: [{ title: 'Pricing', url: 'https://tabxpert.com/pricing/?language=en-us' }],
+        tags: []
+      }, {
+        timestamp: 1791899181,
+        title: 'TabXpert',
+        sites: [
+          { title: 'Pricing', url: 'https://tabxpert.com/pricing' },
+          { title: 'Demo videos', url: 'https://tabxpert.com/help' },
+          { title: 'FAQ', url: 'https://tabxpert.com/faq' },
+          { title: 'TabXpert Reddit Community', url: 'https://www.reddit.com/r/tabXpert/' },
+          { title: 'Support', url: 'https://tabxpert.com/support' },
+          { title: 'Donate', url: 'https://www.patreon.com/tabxpert' }
+        ]
+      }, {
+        title: 'Test session',
+        sites: [
+          { url: 'https://tabxpert.com/faq/?language=en-us#save-button' },
+          { url: 'https://kpop.fandom.com/wiki/A2O_LITE' },
+          { url: 'https://chromewebstore.google.com/detail/tab-manager-session-manag/maomempcdmkfcjgeabecfpkebghcigac?pli=1' }
+        ]
+      }]
+    }
+  })
+  await expect(page.locator('.session')).toHaveCount(5)
 })
 
 test('exports a self-contained HTML page in the current dashboard style', async ({ page }) => {

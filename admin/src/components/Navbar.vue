@@ -55,7 +55,7 @@
         </div>
         <div class="more-group" data-testid="import-menu">
           <p class="more-group-title">{{lang.import}}</p>
-          <import-dropdown></import-dropdown>
+          <import-dropdown @open-onetab="showOneTabImport = true"></import-dropdown>
         </div>
         <div class="more-group" data-testid="backup-menu">
           <p class="more-group-title">{{lang.backup || 'Backup'}}</p>
@@ -63,6 +63,7 @@
         </div>
       </div>
     </div>
+    <one-tab-import-modal v-if="showOneTabImport" @close="showOneTabImport = false"></one-tab-import-modal>
     <div>
       <router-link class="link" data-testid="settings-link" to="/settings">{{lang.settings}}</router-link>
     </div>
@@ -77,9 +78,13 @@ import Constants from "../constants"
 import ExportDropdown from "./ExportDropdown"
 import ImportDropdown from "./ImportDropdown"
 import BackupDropdown from "./BackupDropdown"
+import OneTabImportModal from "./OneTabImportModal"
 
 export default {
   name: "Navbar",
+  data() {
+    return { showOneTabImport: false }
+  },
   computed: {
     ...mapState(["lang", "bridge", "activeTag", "sessions", "tabSpaceSettings", "aiQuotaRemaining"]),
     ...mapGetters(["aiEnabled", "isPremium"]),
@@ -128,7 +133,8 @@ export default {
   components: {
     ExportDropdown,
     ImportDropdown,
-    BackupDropdown
+    BackupDropdown,
+    OneTabImportModal
   }
 };
 </script>
