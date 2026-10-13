@@ -310,7 +310,11 @@ export function installMockBridge() {
       emitSessions()
     },
     AppendSessions(msg) {
-      sessions.unshift(...clone(msg.bookmarks))
+      // The app gives every stored session a uuid; imports arrive without one.
+      sessions.unshift(...clone(msg.bookmarks).map((bookmark, index) => ({
+        ...bookmark,
+        uuid: bookmark.uuid || `mock-imported-${Date.now()}-${index}`
+      })))
       emitSessions()
     },
     DeleteSession(msg) {
