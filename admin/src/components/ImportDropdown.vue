@@ -1,91 +1,61 @@
 <template>
-  <div>
-    <div class="import-dropdown">
+  <div class="import-dropdown">
     <span>
       <label for="file-input" class="link">
         {{lang.import}}(<code>.tabspace</code>)
       </label>
-      <input type="file" id="file-input" @change="importTabs" accept=".tabspace" />
+      <input type="file" id="file-input" @change="importFile" accept=".tabspace,.json" />
     </span>
-    <span class="link" data-testid="import-onetab" href="#" @click="displayImportOneTab">{{lang.import}} OneTab</span>
-    </div>
-    <div id="import-modal" data-testid="import-modal">
-      <h3 style="margin-left: 20px">{{lang.import}} OneTab</h3>
-      <textarea name="" id="import-content" cols="80" rows="30" 
-      style="margin: 0 auto; display: block;"></textarea>
-       <span class="link" href="#" @click="cancelImport" 
-      style="float:right; margin: 10px; border: #dddddd 1px solid; padding: 3px 8px; border-radius: 4px;">{{lang.cancel}}</span>
-      <span class="link" data-testid="import-submit" href="#" @click="importOneTab"
-      style="float:right; margin: 10px 0px 10px 10px; border: #dddddd 1px solid; padding: 3px 8px; border-radius: 4px;">{{lang.import}}</span>
-    </div>
+    <span>
+      <label for="tabxpert-file-input" class="link" data-testid="import-tabxpert">
+        {{lang.import}} <span>TabXpert</span>(<code>.json</code>)
+      </label>
+      <input type="file" id="tabxpert-file-input" data-testid="import-tabxpert-input"
+             @change="importFile" accept=".json" />
+    </span>
+    <span class="link" data-testid="import-onetab" @click="$emit('open-onetab')">{{lang.import}} OneTab</span>
+    <!-- Every importer here exists because someone had a real export from
+         that app; this asks for the next one, sample file included. -->
+    <a class="link import-request" data-testid="import-request" :href="requestUrl">{{lang.importOtherSource}}</a>
   </div>
 </template>
 
 <script>
 import { mapState } from "vuex"
-import { validateSessions, validURL } from "../utility"
+import BuildInfo from "../build-info"
+import { supportEmail } from "../app-store"
+import { parseImportFile } from "../importers"
+import { validateSessions } from "../utility"
 
 export default {
-  name: "ExportDropdown",
-  props: ["selectedSessions"],
-  computed: mapState(["lang", "bridge"]),
-  mounted() {
-    this.color = document.querySelector("#import-modal").style.color
+  name: "ImportDropdown",
+  computed: {
+    ...mapState(["lang", "bridge"]),
+    requestUrl() {
+      const subject = encodeURIComponent(this.lang.importRequestSubject)
+      const body = encodeURIComponent(`${this.lang.importRequestBody}\n\n---\nTab Space dashboard ${BuildInfo.shortSha}`)
+      return `mailto:${supportEmail}?subject=${subject}&body=${body}`
+    }
   },
   methods: {
-    importTabs(e) {
+    importFile(e) {
+      const input = e.target
       const file = new FileReader();
       file.onload = e => {
-        let importedSessions = JSON.parse(e.target.result);
-        if (Array.isArray(importedSessions[0])) {
-          importedSessions = importedSessions.map(session => {
-            return {
-              timestamp: parseInt(session[0] / 1000),
-              sites: session[1].map(s => { return {title: s[0], url: s[1]} }),
-              title: session[2],
-              tags: session[3] ? session[3].map(t => { return {name: t} }) : []
-            }
-          })
+        let importedSessions
+        try {
+          importedSessions = parseImportFile(e.target.result)
+        } catch (error) {
+          console.error("Import failed", error)
+          return
         }
-        console.log(importedSessions)
-        if (validateSessions(importedSessions)) this.bridge.send({ cmd: "AppendSessions", bookmarks: importedSessions });
+        if (importedSessions.length > 0 && validateSessions(importedSessions)) {
+          this.bridge.send({ cmd: "AppendSessions", bookmarks: importedSessions });
+        }
       };
-      file.readAsText(e.target.files[0]);
-    },
-    displayImportOneTab() {
-      document.querySelector("#import-modal").style.display = "block"
-    },
-    cancelImport() {
-      document.querySelector("#import-modal").style.display = "none"
-    },
-    importOneTab() {
-      let importedSessions = document.querySelector("#import-content").value
-      document.querySelector("#import-modal").style.color = this.color
-      importedSessions = importedSessions.split("\n\n")
-      importedSessions = importedSessions.map(session => {
-        let sites = []
-        session.split("\n").forEach(site => {
-          const s = {
-            title: site.slice(site.indexOf(" | ") + 3),
-            url: site.slice(0, site.indexOf(" | "))
-          }
-          if (validURL(s.url) && s.url !== s.title) sites.push(s)
-        })
-        return {
-          timestamp: parseInt(Date.now() / 1000),
-          sites: sites,
-          title: "From OneTab",
-          tags: []
-        }
-      })
-      console.log(importedSessions)
-      if (validateSessions(importedSessions)) {
-        this.bridge.send({ cmd: "AppendSessions", bookmarks: importedSessions });
-        document.querySelector("#import-content").value = ""
-        document.querySelector("#import-modal").style.display = "none"
-      } else {
-        document.querySelector("#import-modal").style.color = "red"
-      }
+      file.readAsText(input.files[0]);
+      // Let the same file be picked again, e.g. after fixing it.
+      input.value = ""
     }
   }
 };
@@ -119,25 +89,18 @@ export default {
   background-color: rgba(0, 0, 0, 0.06);
 }
 
-#file-input {
-  display: none;
+.import-dropdown .import-request {
+  color: var(--text-secondary, #718096);
+  text-decoration: none;
 }
 
-#import-modal {
+#file-input,
+#tabxpert-file-input {
   display: none;
-  position: absolute;
-  width: 50vw;
-  top: 20vh;
-  left: 25vw;
-  right: 25vw;
-  z-index: 1000;
-  background-color: #fbfbfb;
-  border-radius: 10px;
-  border: #eeeeee 1px solid;
 }
 
 @media (prefers-color-scheme: dark) {
-  .import-dropdown, #import-modal {
+  .import-dropdown {
     background-color: #2d2d2d;
     border-color: #444;
   }
