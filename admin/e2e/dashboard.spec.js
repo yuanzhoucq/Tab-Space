@@ -1119,6 +1119,102 @@ test('selects and moves multiple tabs to an existing session', async ({ page }) 
   await expect(reading).toContainText('Cloudflare Pages')
 })
 
+test('moves selected tabs into a new session', async ({ page }) => {
+  const bulkMoveSessions = [
+    {
+      ...sessions[0],
+      sites: [
+        ...sessions[0].sites,
+        { title: 'Keep in Research', url: 'https://example.com/keep' }
+      ]
+    },
+    sessions[1]
+  ]
+  await openDashboard(page, { initialSessions: bulkMoveSessions })
+
+  const research = page.getByTestId('session-session-research')
+  await research.hover()
+  await research.getByTestId('bulk-select-tabs').click()
+  await research.getByTestId('select-site').nth(0).click()
+  await research.getByTestId('select-site').nth(1).click()
+  await research.getByTestId('bulk-move-target').selectOption({ label: 'New Session' })
+  await expect(research.getByTestId('bulk-move-submit')).toBeEnabled()
+
+  // Every tab in a new session is this session again: the target goes away
+  // and the choice made for part of the session does not carry over.
+  await research.getByTestId('select-site').nth(2).click()
+  await expect(research.getByTestId('bulk-move-new-session')).toHaveCount(0)
+  await expect(research.getByTestId('bulk-move-submit')).toBeDisabled()
+  await research.getByTestId('select-site').nth(2).click()
+  await expect(research.getByTestId('bulk-move-new-session')).toHaveCount(1)
+
+  const commandCount = await page.evaluate(() => window.__tabspaceBridgeCommands.length)
+  await research.getByTestId('bulk-move-target').selectOption({ label: 'New Session' })
+  await research.getByTestId('bulk-move-submit').click()
+
+  // The source gives the tabs up before the new session claims them.
+  await expect.poll(() => page.evaluate(start => (
+    window.__tabspaceBridgeCommands.slice(start)
+      .filter(command => ['UpdateSession', 'AppendSessions'].includes(command.name))
+      .map(command => ({
+        name: command.name,
+        uuid: command.payload.bookmarks[0].uuid,
+        titles: command.payload.bookmarks[0].sites.map(site => site.title)
+      }))
+  ), commandCount)).toEqual([
+    { name: 'UpdateSession', uuid: 'session-research', titles: ['Keep in Research'] },
+    { name: 'AppendSessions', titles: ['OpenAI', 'Cloudflare Pages'] }
+  ])
+
+  await expect(research.getByTestId('bulk-move-bar')).toHaveCount(0)
+  await expect(research.getByTestId('visible-site')).toHaveCount(1)
+  await expect(page.locator('.session')).toHaveCount(3)
+  await expect(page.locator('.session').first()).toContainText('OpenAI')
+})
+
+test('splits the only session into a new one, with nothing to merge with', async ({ page }) => {
+  await openDashboard(page, { initialSessions: [sessions[0]] })
+
+  const research = page.getByTestId('session-session-research')
+  await research.hover()
+  await expect(research.getByTestId('merge-session')).toHaveCount(0)
+  await research.getByTestId('bulk-select-tabs').click()
+  await research.getByTestId('select-site').nth(0).click()
+  await research.getByTestId('bulk-move-target').selectOption({ label: 'New Session' })
+  await research.getByTestId('bulk-move-submit').click()
+
+  await expect.poll(() => lastBridgeCommand(page, 'AppendSessions')).toMatchObject({
+    payload: { bookmarks: [{ title: '', sites: [{ title: 'OpenAI', url: 'https://openai.com' }] }] }
+  })
+  await expect(page.locator('.session')).toHaveCount(2)
+})
+
+test('offers the upgrade instead of moving tabs into a new session past the Free limit', async ({ page }) => {
+  await openDashboard(page, {
+    initialSessions: sessions,
+    nativeProtocolVersion: '2',
+    entitlementTier: 'free',
+    freeSessionLimit: 2
+  })
+  const commandCount = await page.evaluate(() => window.__tabspaceBridgeCommands.length)
+
+  const research = page.getByTestId('session-session-research')
+  await research.hover()
+  await research.getByTestId('bulk-select-tabs').click()
+  await research.getByTestId('select-site').nth(0).click()
+  await research.getByTestId('bulk-move-target').selectOption({ label: 'New Session' })
+  await research.getByTestId('bulk-move-submit').click()
+
+  // Nothing leaves the source: the new session that would hold the tabs could
+  // not be stored.
+  await expect(page.getByTestId('plan-comparison')).toBeVisible()
+  expect(await page.evaluate(start => (
+    window.__tabspaceBridgeCommands.slice(start)
+      .filter(command => ['UpdateSession', 'AppendSessions'].includes(command.name)).length
+  ), commandCount)).toBe(0)
+  await expect(research.getByTestId('visible-site')).toHaveCount(2)
+})
+
 test('keeps the dragged tab preview under the pointer', async ({ page }) => {
   await openDashboard(page, { initialSessions: sessions })
   const research = page.getByTestId('session-session-research')

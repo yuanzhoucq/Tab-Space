@@ -276,6 +276,7 @@
             v-model="bulkMoveTargetUuid"
             :aria-label="bulkActionTargetLabel">
           <option disabled value="">{{ bulkActionTargetLabel }}</option>
+          <option v-if="!allSitesSelected" :value="newSessionTarget" data-testid="bulk-move-new-session">{{ lang.newSession }}</option>
           <option v-for="target in bulkMoveTargets" :key="target.uuid" :value="target.uuid">
             {{ sessionDisplayTitle(target) }} · {{ target.sites.length }} {{ target.sites.length === 1 ? lang.tab : lang.tabs }}
           </option>
@@ -367,7 +368,7 @@
           <v-icon name="arrow-up-circle" :stroke-width="1.5"></v-icon>
         </button>
         <button type="button" class="tag-btn" data-testid="merge-session"
-          v-if="canBulkMove" :aria-label="lang.mergePrompt"
+          v-if="canBulkMove && bulkMoveTargets.length > 0" :aria-label="lang.mergePrompt"
           @click.stop="beginBulkSelection(true)">
           <v-icon name="git-merge" :stroke-width="1.8"></v-icon>
         </button>
@@ -394,6 +395,10 @@
   import { faviconUrl } from '../favicon';
   import { highlightedTextParts, matchingSiteEntries } from '../search';
 
+  // Bulk-move target that stands for a session the move creates. Stored
+  // session uuids never take this form.
+  const NEW_SESSION_TARGET = "__new_session__"
+
   export default {
     name: "SessionCard",
     components: {
@@ -415,6 +420,7 @@
         bulkSelectionPreviousExpansion: false,
         selectedSiteIndexes: [],
         bulkMoveTargetUuid: "",
+        newSessionTarget: NEW_SESSION_TARGET,
         // AI enhance animation (typewriter title + golden flash)
         typewriterActive: false,
         typewriterText: "",
@@ -492,7 +498,9 @@
           && !this.isEditingSession(this.session)
           && this.activeTag !== "@Trash"
           && this.session.sites.length > 0
-          && this.bulkMoveTargets.length > 0
+          // With no other session to move to, part of this one can still
+          // become a new session.
+          && (this.bulkMoveTargets.length > 0 || this.session.sites.length > 1)
       },
       bulkMoveTargets() {
         return this.sessions.filter(session => (
@@ -578,6 +586,11 @@
       },
       tagKeyword() {
         this.tagSuggestionIndex = -1
+      },
+      allSitesSelected(all) {
+        // Every tab moved into a new session is the same session again, so
+        // that target is only offered for part of one.
+        if (all && this.bulkMoveTargetUuid === NEW_SESSION_TARGET) this.bulkMoveTargetUuid = ""
       },
       enhancedFlash(flash) {
         // The bridge sets this after a successful EnhanceSession; only the
@@ -727,6 +740,10 @@
       },
       moveSelectedSites() {
         if (this.selectedSiteIndexes.length === 0) return
+        if (this.bulkMoveTargetUuid === NEW_SESSION_TARGET) {
+          this.moveSelectedSitesToNewSession()
+          return
+        }
         const source = this.getSessionById(this.session.uuid)
         const target = this.getSessionById(this.bulkMoveTargetUuid)
         if (!source || !target || source.uuid === target.uuid) return
@@ -751,6 +768,37 @@
         }
 
         this.moveSitesLegacy(sourceAfterMove, targetAfterMove)
+        this.cancelBulkSelection()
+      },
+      moveSelectedSitesToNewSession() {
+        if (this.allSitesSelected) return
+        if (!this.canCreateSession) {
+          this.$store.commit("setShowSubscriptionModal", {show: true, reason: "limitReached"})
+          return
+        }
+        const source = this.getSessionById(this.session.uuid)
+        if (!source) return
+        const selectedIndexes = new Set(this.selectedSiteIndexes)
+        const movingSites = source.sites.filter((site, index) => selectedIndexes.has(index))
+        if (movingSites.length === 0) return
+
+        // Same order as dropping a dragged tab on the new-session slot: the
+        // source gives the tabs up before the new session claims them, so
+        // duplicate-tab filtering cannot drop them from the new session.
+        this.bridge.send({
+          cmd: "UpdateSession",
+          bookmarks: [{ ...source, sites: source.sites.filter((site, index) => !selectedIndexes.has(index)) }]
+        })
+        this.bridge.send({
+          cmd: "AppendSessions",
+          bookmarks: [{
+            title: "",
+            timestamp: Date.now(),
+            sites: movingSites,
+            // Keeps the new session in the tag view the move was made from.
+            tags: this.activeTag ? [{name: this.activeTag}] : []
+          }]
+        })
         this.cancelBulkSelection()
       },
       moveSitesLegacy(source, target) {
