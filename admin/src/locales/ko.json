@@ -19,6 +19,7 @@
   "export": "내보내기",
   "import": "불러오기",
   "importOtherSource": "다른 곳에서 가져오기?",
+  "importTooLarge": "가져올 내용이 너무 커서 한 번에 보낼 수 없습니다. 여러 번에 나누어 가져오세요. 이미 저장된 세션은 건너뜁니다.",
   "importRequestSubject": "Tab Space 가져오기 요청",
   "importRequestBody": "어떤 앱이나 확장 프로그램에서 가져오고 싶으신가요?\n\n앱 이름:\n링크(선택):\n\n가능하다면 해당 앱의 내보내기 파일을 첨부해 주세요(개인 정보는 먼저 지워 주세요). 실제 형식에 맞춰 가져오기를 만들 수 있습니다.",
   "cancel": "취소",

@@ -19,6 +19,7 @@
   "export": "Esporta",
   "import": "Importa",
   "importOtherSource": "Da un’altra fonte?",
+  "importTooLarge": "Questa importazione è troppo grande per essere inviata in una volta. Importala in parti più piccole: le sessioni già salvate vengono saltate.",
   "importRequestSubject": "Richiesta di importazione per Tab Space",
   "importRequestBody": "Da quale app o estensione vorresti importare?\n\nNome dell’app:\nLink (facoltativo):\n\nSe puoi, allega un file di esportazione (dopo aver rimosso i dati privati) così l’importazione può basarsi sul formato reale.",
   "cancel": "Annulla",

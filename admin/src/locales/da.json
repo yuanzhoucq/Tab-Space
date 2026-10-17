@@ -18,6 +18,7 @@
   "export": "Eksport",
   "import": "Import",
   "importOtherSource": "Fra en anden kilde?",
+  "importTooLarge": "Denne import er for stor til at blive sendt på én gang. Importér den i mindre dele – sessioner, der allerede er gemt, springes over.",
   "importRequestSubject": "Importønske til Tab Space",
   "importRequestBody": "Hvilken app eller udvidelse vil du gerne importere fra?\n\nAppens navn:\nLink (valgfrit):\n\nVedhæft gerne en eksportfil fra den (fjern først private data), så importen kan bygges efter det rigtige format.",
   "cancel": "Annullere",

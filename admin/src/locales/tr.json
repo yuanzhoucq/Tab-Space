@@ -19,6 +19,7 @@
   "export": "Dışarıya aktar",
   "import": "İçeriye Aktar",
   "importOtherSource": "Başka bir kaynaktan mı?",
+  "importTooLarge": "Bu içe aktarma tek seferde gönderilemeyecek kadar büyük. Daha küçük parçalar halinde içe aktarın; zaten kaydedilmiş oturumlar atlanır.",
   "importRequestSubject": "Tab Space için içe aktarma isteği",
   "importRequestBody": "Hangi uygulama veya uzantıdan içe aktarmak istersiniz?\n\nUygulama adı:\nBağlantı (isteğe bağlı):\n\nMümkünse ondan bir dışa aktarma dosyası ekleyin (önce özel içerikleri silin), böylece içe aktarma gerçek biçime göre hazırlanabilir.",
   "cancel": "İptal",

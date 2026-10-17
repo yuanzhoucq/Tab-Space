@@ -19,6 +19,7 @@
   "export": "Exportar",
   "import": "Importar",
   "importOtherSource": "¿Desde otra fuente?",
+  "importTooLarge": "Esta importación es demasiado grande para enviarla de una vez. Impórtala en partes más pequeñas: las sesiones que ya están guardadas se omiten.",
   "importRequestSubject": "Solicitud de importación para Tab Space",
   "importRequestBody": "¿Desde qué aplicación o extensión te gustaría importar?\n\nNombre de la aplicación:\nEnlace (opcional):\n\nSi puedes, adjunta un archivo exportado (quitando antes cualquier dato privado) para que la importación se base en el formato real.",
   "cancel": "Cancelar",

@@ -25,6 +25,7 @@
   "export": "Exporteer",
   "import": "Importeer",
   "importOtherSource": "Uit een andere bron?",
+  "importTooLarge": "Deze import is te groot om in één keer te versturen. Importeer hem in kleinere delen; sessies die al zijn opgeslagen, worden overgeslagen.",
   "importRequestSubject": "Importverzoek voor Tab Space",
   "importRequestBody": "Uit welke app of extensie wil je importeren?\n\nNaam van de app:\nLink (optioneel):\n\nVoeg indien mogelijk een exportbestand ervan toe (verwijder eerst privégegevens), zodat de import op het echte formaat kan worden gebouwd.",
   "cancel": "Annuleer",

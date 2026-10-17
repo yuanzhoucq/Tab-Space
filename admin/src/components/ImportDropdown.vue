@@ -24,7 +24,7 @@
 import { mapState } from "vuex"
 import BuildInfo from "../build-info"
 import { supportEmail } from "../app-store"
-import { parseImportFile } from "../importers"
+import { exceedsImportLimit, parseImportFile } from "../importers"
 import { validateSessions } from "../utility"
 
 export default {
@@ -50,6 +50,10 @@ export default {
           return
         }
         if (importedSessions.length > 0 && validateSessions(importedSessions)) {
+          if (exceedsImportLimit(importedSessions)) {
+            this.$store.commit("setAIToast", { messageKey: "importTooLarge", retry: null })
+            return
+          }
           this.bridge.send({ cmd: "AppendSessions", bookmarks: importedSessions });
         }
       };

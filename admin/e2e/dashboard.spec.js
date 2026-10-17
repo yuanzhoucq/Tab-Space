@@ -3181,6 +3181,31 @@ test('imports a TabXpert JSON export', async ({ page }) => {
   await expect(page.locator('.session')).toHaveCount(5)
 })
 
+test('names an import too large to send instead of dropping it silently', async ({ page }) => {
+  await openDashboard(page, { initialSessions: sessions })
+  const appendCount = await bridgeCommandCount(page, 'AppendSessions')
+
+  // Over 4 MB once parsed, which the app refuses as a single message.
+  const backup = [{
+    timestamp: 1791899409,
+    title: 'Huge archive',
+    tags: [],
+    sites: Array.from({ length: 22000 }, (_, index) => ({
+      title: `Saved page ${index} ${'x'.repeat(200)}`,
+      url: `https://example.com/${index}`
+    }))
+  }]
+  await page.locator('#file-input').setInputFiles({
+    name: 'huge.tabspace',
+    mimeType: 'application/json',
+    buffer: Buffer.from(JSON.stringify(backup))
+  })
+
+  await expect(page.locator('.ai-toast')).toContainText('too large to send in one go')
+  expect(await bridgeCommandCount(page, 'AppendSessions')).toBe(appendCount)
+  await expect(page.locator('.session')).toHaveCount(2)
+})
+
 test('exports a self-contained HTML page in the current dashboard style', async ({ page }) => {
   await openDashboard(page, { initialSessions: sessions })
 

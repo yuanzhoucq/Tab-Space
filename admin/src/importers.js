@@ -4,6 +4,16 @@ import { validURL } from "./utility"
 
 const nowInSeconds = () => parseInt(Date.now() / 1000)
 
+// An import travels to the Tab Space app as a single message, and the app
+// refuses messages over 4 MB without an answer that names the import, so an
+// oversized one used to do nothing at all. The slack covers the envelope the
+// sessions are wrapped in on the way.
+const MAX_IMPORT_BYTES = 4 * 1024 * 1024 - 16 * 1024
+
+export function exceedsImportLimit(sessions) {
+  return new TextEncoder().encode(JSON.stringify(sessions)).length > MAX_IMPORT_BYTES
+}
+
 // OneTab's "Export URLs" text: one `url | title` per line, groups separated by
 // blank lines. Pasted text often carries \r\n line endings, extra blank lines
 // or a trailing newline; none of those should turn into an empty group, and one

@@ -19,6 +19,7 @@
   "export": "Exportera",
   "import": "Importera",
   "importOtherSource": "Från en annan källa?",
+  "importTooLarge": "Den här importen är för stor för att skickas på en gång. Importera den i mindre delar – sessioner som redan är sparade hoppas över.",
   "importRequestSubject": "Importönskemål för Tab Space",
   "importRequestBody": "Vilken app eller tillägg vill du importera från?\n\nAppens namn:\nLänk (valfritt):\n\nBifoga gärna en exportfil från den (ta bort privat innehåll först) så att importen kan byggas efter det riktiga formatet.",
   "cancel": "Avbryt",

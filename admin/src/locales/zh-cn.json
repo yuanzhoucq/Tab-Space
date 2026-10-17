@@ -25,6 +25,7 @@
   "export": "导出",
   "import": "导入",
   "importOtherSource": "从其他来源？",
+  "importTooLarge": "这次导入太大，无法一次发送。请分成几部分导入，已保存的会话会自动跳过。",
   "importRequestSubject": "Tab Space 导入请求",
   "importRequestBody": "你希望从哪个应用或扩展导入？\n\n应用名称：\n链接（可选）：\n\n如果方便，请附上它的导出文件（先删掉隐私内容），这样可以按真实格式来做导入。",
   "cancel": "取消",

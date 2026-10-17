@@ -21,7 +21,7 @@
 
 <script>
 import { mapState } from "vuex"
-import { parseOneTab } from "../importers"
+import { exceedsImportLimit, parseOneTab } from "../importers"
 import { validateSessions } from "../utility"
 
 export default {
@@ -48,6 +48,11 @@ export default {
       const importedSessions = parseOneTab(this.content)
       if (importedSessions.length === 0 || !validateSessions(importedSessions)) {
         this.invalid = true
+        return
+      }
+      // Stays open so the paste can be cut down and sent in parts.
+      if (exceedsImportLimit(importedSessions)) {
+        this.$store.commit("setAIToast", { messageKey: "importTooLarge", retry: null })
         return
       }
       this.bridge.send({ cmd: "AppendSessions", bookmarks: importedSessions })
