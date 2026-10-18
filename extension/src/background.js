@@ -36,16 +36,6 @@
     bridgePort: "tabspace-bridge-port"
   }
 
-  async function verifySafariNativeRoundTrip() {
-    if (BUILD_TARGET !== "safari") return
-    try {
-      const reply = await root.TabSpaceSafariNative.send({ op: "ping" })
-      console.info("[tabspace] Safari native ping", reply)
-    } catch (error) {
-      console.error("[tabspace] Safari native ping failed", error)
-    }
-  }
-
   class BridgeError extends Error {
     constructor(code, message, details) {
       super(message || code)
@@ -1647,7 +1637,6 @@
     }
 
     client.ensureReconnectAlarm()
-    verifySafariNativeRoundTrip()
     // A paired extension must be ready before its popup or dashboard is opened,
     // otherwise the global switcher cannot discover this browser. Every wake-up
     // re-runs this file, so this is also the reconnect for all of them.

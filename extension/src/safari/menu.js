@@ -26,6 +26,17 @@
   // writes one). Without the cache each page load cost five bridge round trips
   // — and, with the Helper down, five appex launches.
   const SETTINGS_MAX_AGE_MS = 5 * 60 * 1000
+  // Whether the handler can draw the menu only changes with the system or the
+  // extension, yet every background start asked again: once a minute when the
+  // helper is not running, each a native round trip. A positive answer is
+  // reused for a day within one extension version; the probe after a failed
+  // click always asks.
+  const PROBE_CACHE_KEY = "tabspace-safari-menu-probe-v1"
+  const PROBE_MAX_AGE_MS = 24 * 60 * 60 * 1000
+  // ai.* waits on the Tab Space service, which can take up to a minute before
+  // it answers or explains a refusal. The default deadline would discard that
+  // answer and report a slow request as a handler that stopped answering.
+  const AI_NATIVE_TIMEOUT_MS = 90 * 1000
   const REDIRECT_HOSTS = new Set(["mytab.space", "tabspacestatic.joyuer.cn"])
   const REDIRECT_GITHUB_HOSTS = new Set(["joyuer.cn", "yuanzhoucq.github.io"])
 
@@ -57,7 +68,8 @@
   // menu closed — is an ordinary error and must not take the native menu away.
   function isMenuUnavailableError(error) {
     return !!error && [
-      "native_unavailable", "native_transport_failed", "native_timeout", "menu_unavailable", "menu_not_shown"
+      "native_unavailable", "native_transport_failed", "native_timeout", "native_unresponsive",
+      "menu_unavailable", "menu_not_shown"
     ].includes(error.code)
   }
 
@@ -97,7 +109,7 @@
       op: "bridge.command",
       command: method,
       params: params || {}
-    })
+    }, String(method).indexOf("ai.") === 0 ? { timeoutMs: AI_NATIVE_TIMEOUT_MS } : undefined)
   }
 
   // After the helper could not be reached, the next requests of the same flow
@@ -112,22 +124,23 @@
     return !!(client && client.socket && client.socket.readyState === 1)
   }
 
-  async function runNative(method, params, started, reason) {
-    trace("fallback", `${method} after ${reason} ${Date.now() - started}ms`)
+  async function runNative(method, params, started, reason, traced) {
+    const note = traced ? trace : () => {}
+    note("fallback", `${method} after ${reason} ${Date.now() - started}ms`)
     let response
     try {
       response = await nativeCommand(method, params)
     } catch (nativeError) {
-      trace("fallback-failed", `${method} ${nativeError && nativeError.code} ${Date.now() - started}ms`)
+      note("fallback-failed", `${method} ${nativeError && nativeError.code} ${Date.now() - started}ms`)
       throw nativeError
     }
     if (response && response.error) {
-      trace("fallback-failed", `${method} ${response.error.code} ${Date.now() - started}ms`)
+      note("fallback-failed", `${method} ${response.error.code} ${Date.now() - started}ms`)
       const bridged = new Error(response.error.message || response.error.code)
       bridged.code = response.error.code || "native_error"
       throw bridged
     }
-    trace("fallback-done", `${method} ${Date.now() - started}ms`)
+    note("fallback-done", `${method} ${Date.now() - started}ms`)
     return response && response.result ? response.result : response
   }
 
@@ -144,10 +157,13 @@
     return Array.isArray(capabilities) && !capabilities.includes(SAFARI_HELPER_CAPABILITY)
   }
 
-  async function requestWithFallback(client, method, params) {
+  // `trace: false` keeps a background read out of the system log: each trace
+  // is a native message of its own, and a read leaves nothing to explain.
+  async function requestWithFallback(client, method, params, options = {}) {
     const started = Date.now()
+    const traced = options.trace !== false
     if (!socketOpen(client) && transportDownAt && started - transportDownAt < TRANSPORT_DOWN_MS) {
-      return runNative(method, params, started, "recent helper_unavailable")
+      return runNative(method, params, started, "recent helper_unavailable", traced)
     }
     let outdated = false
     try {
@@ -160,9 +176,9 @@
     } catch (error) {
       if (!isTransportError(error)) throw error
       transportDownAt = Date.now()
-      return runNative(method, params, started, error.code)
+      return runNative(method, params, started, error.code, traced)
     }
-    return runNative(method, params, started, "helper_outdated")
+    return runNative(method, params, started, "helper_outdated", traced)
   }
 
   function resetTransportState() { transportDownAt = 0 }
@@ -196,18 +212,39 @@
     await call(api.action, "setPopup", { popup })
   }
 
-  async function probe(api) {
+  function extensionVersion(api) {
     try {
-      const forced = await call(api.storage.local, "get", ["tabspace-force-popup-fallback"])
-      if (forced && forced["tabspace-force-popup-fallback"] === true) {
+      return String(api.runtime.getManifest().version || "")
+    } catch (_) {
+      return ""
+    }
+  }
+
+  async function probe(api, options = {}) {
+    try {
+      const stored = await call(api.storage.local, "get", ["tabspace-force-popup-fallback", PROBE_CACHE_KEY])
+      if (stored && stored["tabspace-force-popup-fallback"] === true) {
         await setPopup(api, FALLBACK_POPUP)
         return false
       }
+      const version = extensionVersion(api)
+      const cached = stored && stored[PROBE_CACHE_KEY]
+      const age = cached && typeof cached.at === "number" ? Date.now() - cached.at : -1
+      if (!options.force && cached && cached.version === version && age >= 0 && age < PROBE_MAX_AGE_MS) {
+        await setPopup(api, "")
+        return true
+      }
       const result = await root.TabSpaceSafariNative.send({ op: "ui.probe" })
       const available = !!(result && result.available)
+      if (available) {
+        call(api.storage.local, "set", { [PROBE_CACHE_KEY]: { version, at: Date.now() } }).catch(() => {})
+      } else {
+        call(api.storage.local, "remove", [PROBE_CACHE_KEY]).catch(() => {})
+      }
       await setPopup(api, available ? "" : FALLBACK_POPUP)
       return available
     } catch (_) {
+      call(api.storage.local, "remove", [PROBE_CACHE_KEY]).catch(() => {})
       await setPopup(api, FALLBACK_POPUP).catch(() => {})
       return false
     }
@@ -269,7 +306,7 @@
       "ignore-pinned-tabs", "externalBrowser1", "externalBrowser2"
     ]
     const entries = await Promise.all(names.map(async name => {
-      const result = await requestWithFallback(context.client, "settings.get", { name })
+      const result = await requestWithFallback(context.client, "settings.get", { name }, { trace: false })
       return [name, result && result.value || ""]
     }))
     const settings = Object.fromEntries(entries)
@@ -281,7 +318,9 @@
   }
 
   // The cached copy when it is fresh enough, otherwise a refresh. A cache with
-  // no timestamp (written by an earlier build) counts as stale.
+  // no timestamp (written by an earlier build) counts as stale. A refresh that
+  // fails keeps the last settings read in force: Tab Space being unreachable
+  // must not switch shortcuts or context menus back on.
   async function cachedSettings(context, maxAgeMs = SETTINGS_MAX_AGE_MS) {
     let stored = null
     try {
@@ -290,7 +329,12 @@
     const settings = stored && stored[SETTINGS_CACHE_KEY]
     const cachedAt = stored && stored[SETTINGS_CACHED_AT_KEY]
     if (settings && typeof cachedAt === "number" && Date.now() - cachedAt < maxAgeMs) return settings
-    return readSettings(context)
+    try {
+      return await readSettings(context)
+    } catch (error) {
+      if (settings) return settings
+      throw error
+    }
   }
 
   // The dashboard's Settings page wrote a value: the next reader refreshes.
@@ -513,6 +557,14 @@
 
   function install(context) {
     const { api } = context
+    // A new Safari session or extension version runs a new native handler, so
+    // a handler that had stopped answering is no reason to wait any longer.
+    const resetNative = () => {
+      const native = root.TabSpaceSafariNative
+      if (native && typeof native.resetBackoff === "function") native.resetBackoff()
+    }
+    if (api.runtime && api.runtime.onStartup) api.runtime.onStartup.addListener(resetNative)
+    if (api.runtime && api.runtime.onInstalled) api.runtime.onInstalled.addListener(resetNative)
     probe(api).then(available => call(api.storage.local, "set", {
       "tabspace-safari-menu-last-result": available ? "menu_native" : "menu_fallback"
     })).catch(() => {})
@@ -544,11 +596,14 @@
           // answers "not available" (or none at all) gets the popup. The
           // probe sets the popup itself either way.
           if (!isMenuDrawFailure(error)) {
-            if (await probe(api)) {
+            if (await probe(api, { force: true })) {
               console.warn("[safari-menu] native handler recovered after:", error)
               return
             }
           } else {
+            // The next background start asks the handler again rather than
+            // handing the button back to a menu that could not be drawn.
+            call(api.storage.local, "remove", [PROBE_CACHE_KEY]).catch(() => {})
             await setPopup(api, FALLBACK_POPUP).catch(() => {})
           }
           await call(api.storage.local, "set", {
@@ -595,6 +650,9 @@
     MENU_SESSIONS_CACHE_KEY,
     MENU_SESSIONS_DEADLINE_MS,
     menuSessions,
+    AI_NATIVE_TIMEOUT_MS,
+    PROBE_CACHE_KEY,
+    PROBE_MAX_AGE_MS,
     SETTINGS_CACHE_KEY,
     SETTINGS_CACHED_AT_KEY,
     SETTINGS_MAX_AGE_MS,

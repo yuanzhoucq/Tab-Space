@@ -2,15 +2,19 @@ const assert = require("node:assert/strict")
 const test = require("node:test")
 
 const nativeCalls = []
+const nativeOptions = []
 let nativeResponder = null
+let nativeResets = 0
 global.TabSpaceSafariNative = {
-  send: async message => {
+  send: async (message, options) => {
     nativeCalls.push(message)
+    nativeOptions.push(options)
     if (nativeResponder) return nativeResponder(message)
     if (message.op === "ui.probe") return { available: true }
     if (message.op === "bridge.command") return { ok: true, result: { source: "native" } }
     return { ok: true }
-  }
+  },
+  resetBackoff: () => { nativeResets += 1 }
 }
 const menu = require("../src/safari/menu.js")
 
@@ -619,4 +623,117 @@ test("restore uses bounded concurrency and opens the first URL active", async ()
   })
   assert.equal(peak, 2)
   assert.deepEqual(created.map(item => item.active), [true, false, false])
+})
+
+function memoryLocal(stored) {
+  return {
+    get: async keys => Object.fromEntries(keys.filter(key => key in stored).map(key => [key, stored[key]])),
+    set: async values => { Object.assign(stored, values) },
+    remove: async keys => { for (const key of keys) delete stored[key] }
+  }
+}
+
+const helperDown = {
+  request: async () => { throw Object.assign(new Error("offline"), { code: "helper_unavailable" }) }
+}
+
+test("a settings refresh through the native handler sends no trace messages", async () => {
+  nativeCalls.length = 0
+  const stored = {}
+  const settings = await menu.readSettings({ api: { storage: { local: memoryLocal(stored) } }, client: helperDown })
+  assert.equal(Object.keys(settings).length, 6)
+  assert.equal(nativeCalls.filter(call => call.op === "bridge.command").length, 6)
+  assert.equal(nativeCalls.filter(call => call.op === "diagnostics.trace").length, 0)
+})
+
+test("a failed refresh keeps the last settings read in force", async () => {
+  const stored = {
+    [menu.SETTINGS_CACHE_KEY]: { "disable-shortcuts": "true" },
+    [menu.SETTINGS_CACHED_AT_KEY]: Date.now() - menu.SETTINGS_MAX_AGE_MS - 1
+  }
+  const context = { api: { storage: { local: memoryLocal(stored) } }, client: helperDown, controller: {} }
+  nativeResponder = async message => {
+    if (message.op === "bridge.command") throw Object.assign(new Error("paused"), { code: "native_unresponsive" })
+    return { ok: true }
+  }
+  try {
+    assert.deepEqual(await menu.cachedSettings(context), { "disable-shortcuts": "true" })
+    // With nothing read before, the failure is the caller's to handle.
+    delete stored[menu.SETTINGS_CACHE_KEY]
+    await assert.rejects(menu.cachedSettings(context), error => error.code === "native_unresponsive")
+  } finally {
+    nativeResponder = null
+  }
+})
+
+test("ai commands get a native deadline long enough for the service to answer", async () => {
+  nativeCalls.length = 0
+  nativeOptions.length = 0
+  await menu.requestWithFallback(helperDown, "ai.enhance", { uuid: "a" })
+  await menu.requestWithFallback(helperDown, "sessions.list", {})
+  const commands = nativeCalls
+    .map((call, index) => ({ call, options: nativeOptions[index] }))
+    .filter(entry => entry.call.op === "bridge.command")
+  assert.deepEqual(commands.map(entry => entry.call.command), ["ai.enhance", "sessions.list"])
+  assert.deepEqual(commands[0].options, { timeoutMs: menu.AI_NATIVE_TIMEOUT_MS })
+  assert.equal(commands[1].options, undefined)
+})
+
+test("a positive probe is reused within its day and version; anything else asks again", async () => {
+  const stored = {}
+  const popups = []
+  let version = "1.5.0"
+  const api = {
+    action: { setPopup: async value => popups.push(value) },
+    runtime: { getManifest: () => ({ version }) },
+    storage: { local: memoryLocal(stored) }
+  }
+  const probes = () => nativeCalls.filter(call => call.op === "ui.probe").length
+  nativeCalls.length = 0
+
+  assert.equal(await menu.probe(api), true)
+  assert.equal(await menu.probe(api), true)
+  assert.equal(probes(), 1)
+  assert.deepEqual(popups, [{ popup: "" }, { popup: "" }])
+
+  assert.equal(await menu.probe(api, { force: true }), true)
+  assert.equal(probes(), 2)
+  version = "1.6.0"
+  await menu.probe(api)
+  assert.equal(probes(), 3)
+  stored[menu.PROBE_CACHE_KEY].at = Date.now() - menu.PROBE_MAX_AGE_MS - 1
+  await menu.probe(api)
+  assert.equal(probes(), 4)
+
+  // A handler that stops answering is asked again at the next start.
+  nativeResponder = async () => { throw Object.assign(new Error("paused"), { code: "native_unresponsive" }) }
+  try {
+    assert.equal(await menu.probe(api, { force: true }), false)
+    assert.equal(menu.PROBE_CACHE_KEY in stored, false)
+    assert.deepEqual(popups.at(-1), { popup: menu.FALLBACK_POPUP })
+  } finally {
+    nativeResponder = null
+  }
+})
+
+test("a paused native handler counts as a menu that could not appear", () => {
+  assert.equal(menu.isMenuUnavailableError({ code: "native_unresponsive" }), true)
+  assert.equal(menu.isMenuDrawFailure({ code: "native_unresponsive" }), false)
+})
+
+test("a new Safari session or extension version lifts the native pause", () => {
+  const listeners = {}
+  const api = {
+    runtime: {
+      onStartup: { addListener: listener => { listeners.startup = listener } },
+      onInstalled: { addListener: listener => { listeners.installed = listener } }
+    },
+    action: { setPopup: async () => {} },
+    storage: { local: memoryLocal({}) }
+  }
+  menu.install({ api, client: helperDown, controller: {} })
+  const before = nativeResets
+  listeners.startup()
+  listeners.installed()
+  assert.equal(nativeResets, before + 2)
 })
