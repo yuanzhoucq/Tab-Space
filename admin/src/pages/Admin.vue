@@ -40,6 +40,7 @@
       <div v-if="nativeDetected && initialRefresh" key="sessions-container" class="sessions-container">
         <session-sidebar></session-sidebar>
         <div class="session-column">
+          <helper-banner></helper-banner>
           <ios-banner></ios-banner>
           <rating-banner></rating-banner>
           <div class="empty-state" v-if="showFirstSaveGuide" data-testid="empty-state">
@@ -68,6 +69,7 @@
   import { VueLoading } from 'vue-loading-template'
   import { mapState, mapGetters } from 'vuex'
 
+  import HelperBanner from '../components/HelperBanner'
   import IosBanner from '../components/IosBanner'
   import Navbar from '../components/Navbar'
   import RatingBanner from '../components/RatingBanner'
@@ -88,6 +90,7 @@
     components: {
       VueLoading,
       ConnectionGuide,
+      HelperBanner,
       IosBanner,
       FirstSaveGuide,
       Navbar,
@@ -298,6 +301,7 @@
     min-width: 0;
   }
 
+  .session-column .helper-banner,
   .session-column .ios-banner,
   .session-column .rating-banner {
     margin-bottom: 12px;

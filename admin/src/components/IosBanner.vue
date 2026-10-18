@@ -65,11 +65,14 @@ export default {
     }
   },
   computed: {
-    ...mapState(["lang", "tabSpaceSettings", "iosBannerRequestCount"]),
+    ...mapState(["lang", "tabSpaceSettings", "iosBannerRequestCount", "helperBannerShown"]),
     ...mapGetters(["liveSessionCount"]),
     canDisplay() {
       // Sessions in Trash do not count: that dashboard is still showing the
       // first-save guide, and the install offer belongs after the first save.
+      // It also waits behind the helper banner: until the helper runs, nothing
+      // from this Mac reaches the iPhone app anyway.
+      if (this.helperBannerShown && !this.requestedByUser) return false
       return this.liveSessionCount >= 1 || this.requestedByUser
     },
     appStoreUrl() {

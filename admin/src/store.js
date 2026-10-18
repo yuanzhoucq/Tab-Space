@@ -104,6 +104,9 @@ const store = new Vuex.Store({
         // iPhone app as incompatible and cannot sell it. So the navbar entry
         // brings the banner back instead of opening that dead end.
         iosBannerRequestCount: 0,
+        // Set by the banner that asks to start the background helper. The other
+        // banners wait while it shows, so the column never stacks two of them.
+        helperBannerShown: false,
         // --- AI (protocol v2) ---
         // Native bridge protocol version (0 until reported). AI UI is gated on
         // this being >= Constants.aiMinProtocolVersion so the dashboard stays
@@ -264,6 +267,9 @@ const store = new Vuex.Store({
         },
         requestIosBanner(state) {
             state.iosBannerRequestCount += 1
+        },
+        setHelperBannerShown(state, shown) {
+            state.helperBannerShown = !!shown
         },
         setNativeDetected(state, detected) {
             state.nativeDetected = detected

@@ -765,6 +765,7 @@ test('keeps the tab switcher hint hidden when an older bridge cannot prove suppo
   await expect(page.getByTestId('switcher-hint')).toHaveCount(0)
   await expect(page.getByTestId('switcher-hint-chip')).toHaveCount(0)
   await expect(page.getByTestId('switcher-hint-popover')).toHaveCount(0)
+  await expect(page.getByTestId('helper-banner')).toHaveCount(0)
 })
 
 test('guides an updated Safari user to launch the helper, then reveals the switcher', async ({ page }) => {
@@ -793,6 +794,58 @@ test('shows the switcher shortcut when Safari reports a current live helper', as
   await page.getByTestId('switcher-hint-chip').click()
   await expect(page.getByTestId('switcher-hint-popover')).toContainText('Press ⌥Tab anywhere on your Mac')
   await expect(page.getByTestId('switcher-open-app')).toHaveCount(0)
+  await expect(page.getByTestId('helper-banner')).toHaveCount(0)
+})
+
+test('asks to start the helper when Safari reports it stopped, and steps aside once it runs', async ({ page }) => {
+  await openDashboard(page, {
+    initialSessions: sessions,
+    switcherHelperStatus: 'needsAppLaunch'
+  })
+
+  const banner = page.getByTestId('helper-banner')
+  await expect(banner).toBeVisible()
+  await expect(banner).toContainText('iCloud sync and the tab switcher are off on this Mac')
+  // The column shows one banner at a time; this one comes first.
+  await expect(page.getByTestId('ios-banner')).toHaveCount(0)
+
+  await page.getByTestId('helper-banner-open').click()
+  await expect.poll(() => bridgeCommandCount(page, 'OpenTabSpaceApp')).toBe(1)
+  await expect(banner).toHaveCount(0)
+  await expect(page.getByTestId('ios-banner')).toBeVisible()
+})
+
+test('closing the helper banner snoozes it for a week, and the third close ends it', async ({ page }) => {
+  await openDashboard(page, {
+    initialSessions: sessions,
+    switcherHelperStatus: 'needsAppLaunch'
+  })
+
+  const banner = page.getByTestId('helper-banner')
+  await expect(banner).toBeVisible()
+  await page.getByTestId('helper-banner-close').click()
+  await expect(banner).toHaveCount(0)
+  expect(await bridgeCommandCount(page, 'OpenTabSpaceApp')).toBe(0)
+
+  await page.reload()
+  await expect(page.getByTestId('switcher-hint-chip')).toContainText('open Tab Space to finish setup')
+  await expect(banner).toHaveCount(0)
+
+  await page.evaluate(() => {
+    localStorage.setItem('tabspace-helper-banner-snoozed-at', String(Date.now() - 8 * 24 * 60 * 60 * 1000))
+  })
+  await page.reload()
+  await expect(banner).toBeVisible()
+
+  await page.evaluate(() => localStorage.setItem('tabspace-helper-banner-snooze-count', '2'))
+  await page.reload()
+  await page.getByTestId('helper-banner-close').click()
+  await page.evaluate(() => {
+    localStorage.setItem('tabspace-helper-banner-snoozed-at', String(Date.now() - 30 * 24 * 60 * 60 * 1000))
+  })
+  await page.reload()
+  await expect(page.getByTestId('switcher-hint-chip')).toContainText('open Tab Space to finish setup')
+  await expect(banner).toHaveCount(0)
 })
 
 test('keeps the rating banner out of the way of the iOS banner', async ({ page }) => {

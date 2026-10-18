@@ -60,13 +60,13 @@ export default {
     }
   },
   computed: {
-    ...mapState(["lang", "sessions", "tabSpaceSettings"]),
+    ...mapState(["lang", "sessions", "tabSpaceSettings", "helperBannerShown"]),
     preferredLanguage() {
       return this.tabSpaceSettings[Constants.preferredLanguageKey] || navigator.language
     },
     visible() {
       if (this.answered || !this.firstSeenAt) return false
-      if (!this.iosBannerDismissed) return false
+      if (!this.iosBannerDismissed || this.helperBannerShown) return false
       if (this.sessions.length < MIN_SESSIONS) return false
       if (this.snoozedAt && Date.now() - this.snoozedAt < SNOOZE_DAYS * DAY_IN_MS) return false
       return Date.now() - this.firstSeenAt >= MIN_DAYS_IN_USE * DAY_IN_MS
