@@ -243,6 +243,15 @@ for (const target of requestedTargets) {
       throw new Error("content-script.js no longer declares SAFARI_DIRECT_BRIDGE; the Safari build cannot enable its bridge.")
     }
     await writeFile(contentScriptPath, contentScript.replace(directOff, "const SAFARI_DIRECT_BRIDGE = true"))
+    // Safari pairs itself, saves for free and works without the helper; the
+    // popup's companion rules for pairing codes and Pro are switched off here.
+    const popupPath = join(output, "popup.js")
+    const popup = await readFile(popupPath, "utf8")
+    const companionPopup = 'const POPUP_TARGET = "companion"'
+    if (!popup.includes(companionPopup)) {
+      throw new Error("popup.js no longer declares POPUP_TARGET; the Safari build cannot switch its popup to Safari.")
+    }
+    await writeFile(popupPath, popup.replace(companionPopup, 'const POPUP_TARGET = "safari"'))
     const backgroundPath = join(output, "background.js")
     const background = await readFile(backgroundPath, "utf8")
     const nativeMessaging = await readFile(join(output, "safari/native.js"), "utf8")

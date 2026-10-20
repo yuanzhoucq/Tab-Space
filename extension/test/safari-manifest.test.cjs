@@ -41,6 +41,10 @@ test("builds the Safari MV3 manifest without other-browser keys", async () => {
   // it alone also ships safari/content-script.js to receive those replies.
   const contentScript = await readFile(join(extensionRoot, "dist/safari/content-script.js"), "utf8")
   assert.match(contentScript, /const SAFARI_DIRECT_BRIDGE = true/)
+  // Safari pairs itself and saves for free: its popup drops the companion
+  // browsers' pairing code and Pro gate. The other packages keep both.
+  assert.match(await readFile(join(extensionRoot, "dist/safari/popup.js"), "utf8"), /const POPUP_TARGET = "safari"/)
+  assert.match(await readFile(join(extensionRoot, "src/popup.js"), "utf8"), /const POPUP_TARGET = "companion"/)
   assert.deepEqual(manifest.icons, { 16: "icon-16.png", 32: "icon-32.png", 48: "icon-48.png", 128: "icon-128.png" })
   // Safari's own render of the blue drawing, lighter to match its SF Symbols.
   for (const size of [16, 32, 48, 128]) {

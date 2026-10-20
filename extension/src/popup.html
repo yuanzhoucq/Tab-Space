@@ -90,6 +90,16 @@
       <p id="pairing-status" role="status" aria-live="polite"></p>
     </section>
 
+    <!-- Safari only: its pairing is automatic, so this replaces the pairing view. -->
+    <section id="unreachable-view" class="pairing-view" hidden>
+      <h2 data-i18n="unreachableTitle">Tab Space isn't responding</h2>
+      <p class="pairing-help" data-i18n="unreachableHelp">Open Tab Space first. If it is already open, quit Safari (⌘Q) and open it again.</p>
+      <div class="actions">
+        <button id="unreachable-open-app" class="primary-action" type="button" data-i18n="openApp">Open Tab Space App</button>
+        <button id="unreachable-retry" class="secondary-action" type="button" data-i18n="retry">Try Again</button>
+      </div>
+    </section>
+
     <section id="success-view" class="success-view" hidden aria-live="polite">
       <div class="success-icon" aria-hidden="true">
         <svg viewBox="0 0 24 24"><path d="M5 12.5l4.2 4.2L19 7"/></svg>

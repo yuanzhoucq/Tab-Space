@@ -7,6 +7,18 @@
     openDashboardAfterSave: "tabspace-open-dashboard-after-save",
     closeTabsAfterSave: "tabspace-close-tabs-after-save"
   }
+  // build.mjs rewrites this line for the Safari package, as it rewrites
+  // BUILD_TARGET in background.js. Safari pairs itself through its native
+  // handler, saves for free and keeps working without the helper, so none of
+  // the companion browsers' pairing or Pro rules apply to it.
+  const POPUP_TARGET = "companion"
+  const SAFARI = POPUP_TARGET === "safari"
+  // How long the Safari popup waits on its background page. A healthy one
+  // answers within about nine seconds even when it has to try both channels
+  // and the native handler times out; a wedged one never answers, and the
+  // popup used to spin on "Loading" for good.
+  const SAFARI_REPLY_TIMEOUT_MS = 12000
+  const SILENCE_REPORTED_KEY = "tabspace-bridge-silence-reported"
   const zh = navigator.language.toLowerCase().startsWith("zh")
   const strings = zh ? {
     ready: "访问资料库，或保存当前浏览器的标签页。",
@@ -56,7 +68,10 @@
     doneCloseSaved: "完成并关闭已保存标签页",
     closeFailed: "标签页已保存，但未能关闭，请手动关闭。",
     followUpFailed: "标签页已保存，但有一项保存后操作未能完成。",
-    websiteAccessRequired: "请在 Safari 中允许 Tab Space 访问当前网站，然后重试。"
+    websiteAccessRequired: "请在 Safari 中允许 Tab Space 访问当前网站，然后重试。",
+    unreachableTitle: "Tab Space 没有响应",
+    unreachableHelp: "请先打开 Tab Space。如果已经打开还是这样，请退出 Safari（⌘Q）后重新打开。",
+    retry: "重试"
   } : {
     ready: "Open your library or save tabs from this browser.",
     saveRequiresPro: "Saving tabs from this browser requires Pro.",
@@ -105,7 +120,10 @@
     doneCloseSaved: "Done and Close Saved Tabs",
     closeFailed: "The tabs were saved, but could not be closed. Please close them manually.",
     followUpFailed: "The tabs were saved, but one selected after-save action could not be completed.",
-    websiteAccessRequired: "Allow Tab Space access to this website in Safari, then try again."
+    websiteAccessRequired: "Allow Tab Space access to this website in Safari, then try again.",
+    unreachableTitle: "Tab Space isn't responding",
+    unreachableHelp: "Open Tab Space first. If it is already open, quit Safari (⌘Q) and open it again.",
+    retry: "Try Again"
   }
 
   for (const element of document.querySelectorAll("[data-i18n]")) {
@@ -152,6 +170,9 @@
   const elements = {
     editor: document.getElementById("editor-view"),
     pairing: document.getElementById("pairing-view"),
+    unreachable: document.getElementById("unreachable-view"),
+    unreachableOpenApp: document.getElementById("unreachable-open-app"),
+    unreachableRetry: document.getElementById("unreachable-retry"),
     success: document.getElementById("success-view"),
     save: document.getElementById("save"),
     proNote: document.getElementById("pro-note"),
@@ -188,6 +209,9 @@
   let savedTabIds = []
 
   function selectedTabs() { return tabs.filter(tab => tab.selected) }
+  // Pro gates saving only from the companion browsers; Safari saves for free.
+  function canSave() { return SAFARI || hasPro }
+  function showsProLock() { return !SAFARI && entitlementResolved && !hasPro }
   function destinationSessionUuid() {
     return elements.destination.value.startsWith("session:")
       ? elements.destination.value.slice("session:".length)
@@ -202,14 +226,14 @@
       ? strings.customizeTabs(selected, tabs.length)
       : strings.hideTabSelection
     elements.saveLabel.textContent = strings.saveCount(selected)
-    elements.save.disabled = !hasPro || selected === 0
-    elements.saveCurrent.disabled = !hasPro || !tabs.some(tab => tab.isCurrent)
+    elements.save.disabled = !canSave() || selected === 0
+    elements.saveCurrent.disabled = !canSave() || !tabs.some(tab => tab.isCurrent)
     for (const chip of document.querySelectorAll(".pro-chip")) {
-      chip.hidden = !entitlementResolved || hasPro
+      chip.hidden = !showsProLock()
     }
-    elements.proNote.hidden = !entitlementResolved || hasPro
-    elements.save.classList.toggle("pro-locked", entitlementResolved && !hasPro)
-    elements.saveCurrent.classList.toggle("pro-locked", entitlementResolved && !hasPro)
+    elements.proNote.hidden = !showsProLock()
+    elements.save.classList.toggle("pro-locked", showsProLock())
+    elements.saveCurrent.classList.toggle("pro-locked", showsProLock())
   }
 
   function renderSessionOptions(sessions) {
@@ -302,6 +326,57 @@
     elements.pairingCode.focus()
   }
 
+  // The popup is where a Safari whose extension has wedged lands, and nothing
+  // else can say so: the helper and the native handler are both reached
+  // through the background page that stopped answering. Anonymous, once a day
+  // for each kind, to the route the dashboard reports the same state to.
+  function reportSafariSilence(kind) {
+    const today = new Date().toISOString().slice(0, 10)
+    const stamp = `${today}:popup-${kind}`
+    try {
+      const reported = (localStorage.getItem(SILENCE_REPORTED_KEY) || "").split(" ").filter(Boolean)
+      if (reported.includes(stamp)) return
+      localStorage.setItem(SILENCE_REPORTED_KEY,
+        [...reported.filter(entry => entry.startsWith(`${today}:`)), stamp].join(" "))
+    } catch (_) {}
+    if (typeof navigator.sendBeacon !== "function") return
+    let version = "unknown"
+    try { version = extensionApi.runtime.getManifest().version || version } catch (_) {}
+    const safariVersion = /Version\/(\d{1,3}(?:\.\d{1,3}){0,3})/.exec(navigator.userAgent || "")
+    const body = JSON.stringify({
+      eventID: crypto.randomUUID(),
+      anonymousInstallID: null,
+      appVersion: `extension ${version}`,
+      platform: "macos",
+      event: "safari_bridge_silent",
+      properties: {
+        source: "popup",
+        browser: "safari",
+        resultType: kind,
+        safariVersion: safariVersion ? safariVersion[1] : null
+      }
+    })
+    try {
+      navigator.sendBeacon("https://tabspace-worker.mytab.space/diagnostics/product",
+        new Blob([body], { type: "text/plain" }))
+    } catch (_) {}
+  }
+
+  // Safari's failure screen. Its pairing is automatic, so a code could only
+  // mislead, and the multi-browser panel the companion browsers' "Open Tab
+  // Space App" leads to is about other browsers. What helps is the app
+  // running and, when the extension itself has wedged, restarting Safari.
+  // `kind` is "no_reply" when the background page never answered and
+  // "unreachable" when it answered that neither channel works.
+  function showUnreachable(kind) {
+    elements.loading.hidden = true
+    elements.editor.hidden = true
+    elements.success.hidden = true
+    elements.pairing.hidden = true
+    elements.unreachable.hidden = false
+    reportSafariSilence(kind)
+  }
+
   function showSuccess(result) {
     savedTabIds = result.closedTabs ? [] : (result.tabIds || [])
     elements.editor.hidden = true
@@ -320,7 +395,7 @@
   }
 
   async function save(tabItems, allWindowsIfEnabled) {
-    if (!hasPro) return
+    if (!canSave()) return
     elements.save.disabled = true
     elements.saveCurrent.disabled = true
     elements.status.textContent = strings.saving
@@ -341,7 +416,7 @@
           updateSelection()
           throw new Error(strings.proRequired)
         }
-        if (response && response.error && ["pairing_required", "authentication_failed"].includes(response.error.code)) {
+        if (!SAFARI && response && response.error && ["pairing_required", "authentication_failed"].includes(response.error.code)) {
           showPairing(response.error)
           return
         }
@@ -413,6 +488,12 @@
   elements.launchApp.addEventListener("click", () => {
     extensionApi.tabs.create({ url: "tabspace://connect" })
   })
+  // Any tabspace:// link other than connect raises the app's main window,
+  // which also starts the helper if it is not running.
+  elements.unreachableOpenApp.addEventListener("click", () => {
+    extensionApi.tabs.create({ url: "tabspace://open" })
+  })
+  elements.unreachableRetry.addEventListener("click", () => window.location.reload())
   async function submitPairingCode() {
     const code = elements.pairingCode.value.trim()
     if (!/^\d{6}$/.test(code)) {
@@ -474,20 +555,21 @@
       if (payload.type === "pairing-awaiting") showPairingWaiting()
       // The browser was approved, or authenticated on its own after the app
       // started. Re-run from the top rather than patching a half-built view.
-      if (payload.type === "bridge-connected" && !elements.pairing.hidden) window.location.reload()
+      if (payload.type === "bridge-connected" && (!elements.pairing.hidden || !elements.unreachable.hidden)) {
+        window.location.reload()
+      }
     })
   }
 
   async function bootstrap() {
-    if (/Safari/i.test(navigator.userAgent) && !/(Chrome|Chromium|Edg)/i.test(navigator.userAgent)) {
-      send({ type: "safari.menuTelemetry" }).catch(() => {})
-    }
+    if (SAFARI) send({ type: "safari.menuTelemetry" }).catch(() => {})
     const preferences = await storageGet({
       [preferenceKeys.openDashboardAfterSave]: false,
       [preferenceKeys.closeTabsAfterSave]: false
     }).catch(() => ({}))
     elements.openDashboardAfterSave.checked = preferences[preferenceKeys.openDashboardAfterSave] === true
     elements.closeTabsAfterSave.checked = preferences[preferenceKeys.closeTabsAfterSave] === true
+    if (SAFARI) return bootstrapSafari()
 
     const connection = await send({ type: "popup.connect" })
     if (!connection || connection.ok !== true) {
@@ -518,6 +600,35 @@
     if (!entitlementResolved) {
       elements.status.textContent = strings.planUnavailable
     }
+    showEditor(response, sessionsResponse)
+  }
+
+  // Resolves to null when the background page does not answer in time, which
+  // in Safari means it has wedged.
+  function sendWithinTimeout(message) {
+    return Promise.race([
+      send(message).catch(error => ({ ok: false, error: { code: "extension_error", message: error.message } })),
+      new Promise(resolve => setTimeout(() => resolve(null), SAFARI_REPLY_TIMEOUT_MS))
+    ])
+  }
+
+  // Without the helper a save still goes through the native handler, so a
+  // connection the helper refused, or that no helper answered, is not the end
+  // of this popup. Only silence from the background page is, or both of its
+  // channels failing.
+  async function bootstrapSafari() {
+    const connection = await sendWithinTimeout({ type: "popup.connect" })
+    if (!connection) return showUnreachable("no_reply")
+    const [response, sessionsResponse] = await Promise.all([
+      sendWithinTimeout({ type: "popup.listTabs" }),
+      sendWithinTimeout({ type: "popup.listSessions" })
+    ])
+    if (!response || !sessionsResponse) return showUnreachable("no_reply")
+    if (connection.ok !== true && sessionsResponse.ok !== true) return showUnreachable("unreachable")
+    showEditor(response, sessionsResponse)
+  }
+
+  function showEditor(response, sessionsResponse) {
     updateSelection()
     elements.loading.hidden = true
     if (!response || !response.ok) {
