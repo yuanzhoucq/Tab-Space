@@ -40,6 +40,8 @@
   "connectSafariTitle": "Autorizza Tab Space",
   "libraryLoadDelayedTitle": "Connesso, ma le sessioni non sono state caricate",
   "libraryLoadDelayedDetail": "L’estensione ha risposto, ma la libreria non è ancora stata caricata. Riprova o contatta l’assistenza se il problema persiste.",
+  "safariExtensionSilentTitle": "Tab Space non risponde in Safari",
+  "safariExtensionSilentDetail": "L’estensione Tab Space di Safari ha smesso di rispondere e ricaricare questa pagina non basta. Esci da Safari (⌘Q), riaprilo e torna su questa pagina.",
   "connectSafariStep1": "Fai clic sul pulsante Tab Space nella barra strumenti di Safari.",
   "connectSafariStep2": "Scegli «Consenti sempre su ogni sito web», così il salvataggio funziona su ogni pagina.",
   "connectSafariPrivacy": "L'avviso di Apple descrive le ampie capacità a disposizione delle estensioni del browser. Tab Space usa questo accesso solo per leggere URL e titolo di ogni scheda — le informazioni necessarie per salvare e riaprire le tue schede.",

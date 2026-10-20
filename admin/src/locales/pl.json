@@ -40,6 +40,8 @@
   "connectSafariTitle": "Autoryzuj Tab Space",
   "libraryLoadDelayedTitle": "Połączono, ale sesje nie zostały wczytane",
   "libraryLoadDelayedDetail": "Rozszerzenie odpowiedziało, ale biblioteka nie została jeszcze wczytana. Spróbuj ponownie lub skontaktuj się z pomocą, jeśli problem będzie się powtarzał.",
+  "safariExtensionSilentTitle": "Tab Space w Safari nie odpowiada",
+  "safariExtensionSilentDetail": "Rozszerzenie Tab Space w Safari przestało odpowiadać, a odświeżenie tej strony nie pomoże. Zakończ Safari (⌘Q), otwórz je ponownie i wróć na tę stronę.",
   "connectSafariStep1": "Kliknij przycisk Tab Space na pasku narzędzi Safari.",
   "connectSafariStep2": "Wybierz „Zawsze zezwalaj na każdej witrynie“, aby zapisywanie działało na każdej stronie.",
   "connectSafariPrivacy": "Ostrzeżenie Apple opisuje szerokie uprawnienia dostępne dla rozszerzeń przeglądarki. Tab Space wykorzystuje ten dostęp wyłącznie do odczytania adresu URL i tytułu każdej karty — informacji potrzebnych do zapisania i ponownego otwarcia Twoich kart.",

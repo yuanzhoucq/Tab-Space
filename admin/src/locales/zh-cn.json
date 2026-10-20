@@ -46,6 +46,8 @@
   "connectSafariTitle": "授权 Tab Space",
   "libraryLoadDelayedTitle": "已连接，但会话尚未加载",
   "libraryLoadDelayedDetail": "扩展已响应，但资料库尚未加载。请重试；如果问题持续，请联系支持。",
+  "safariExtensionSilentTitle": "Safari 中的 Tab Space 没有响应",
+  "safariExtensionSilentDetail": "Safari 的 Tab Space 扩展停止了响应，刷新这个页面无法恢复。请退出 Safari（⌘Q）后重新打开，再回到这个页面。",
   "connectSafariStep1": "点击 Safari 工具栏中的 Tab Space 按钮。",
   "connectSafariStep2": "选择“在每个网站上始终允许”，这样每个页面都能正常保存。",
   "connectSafariPrivacy": "Apple 的提示描述了浏览器扩展可获得的完整能力。Tab Space 只使用其中的标签页 URL 和标题——这些正是保存与重新打开标签页所必需的信息。",

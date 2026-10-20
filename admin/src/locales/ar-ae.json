@@ -46,6 +46,8 @@
   "connectSafariTitle": "امنح Tab Space الإذن",
   "libraryLoadDelayedTitle": "تم الاتصال، لكن الجلسات لم تُحمَّل",
   "libraryLoadDelayedDetail": "استجابت الإضافة، لكن المكتبة لم تُحمَّل بعد. أعد المحاولة، أو تواصل مع الدعم إذا استمرت المشكلة.",
+  "safariExtensionSilentTitle": "Tab Space في Safari لا يستجيب",
+  "safariExtensionSilentDetail": "توقفت إضافة Tab Space في Safari عن الاستجابة، ولن تحل إعادة تحميل هذه الصفحة المشكلة. أنهِ Safari ‏(⌘Q)، ثم افتحه مجددًا وعُد إلى هذه الصفحة.",
   "connectSafariStep1": "انقر زر Tab Space في شريط أدوات Safari.",
   "connectSafariStep2": "اختر «السماح دائمًا في كل موقع» ليعمل الحفظ في كل صفحة.",
   "connectSafariPrivacy": "يصف تحذير Apple القدرة الواسعة المتاحة لامتدادات المتصفح. لا يستخدم Tab Space هذا الوصول إلا لقراءة عنوان كل علامة تبويب ومسارها — وهي المعلومات اللازمة لحفظ علاماتك وإعادة فتحها.",

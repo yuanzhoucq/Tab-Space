@@ -40,6 +40,8 @@
   "connectSafariTitle": "Tab Space'e izin verin",
   "libraryLoadDelayedTitle": "Bağlandı, ancak oturumlar yüklenmedi",
   "libraryLoadDelayedDetail": "Uzantı yanıt verdi, ancak kitaplık henüz yüklenmedi. Yeniden deneyin veya sorun devam ederse destek ekibiyle iletişime geçin.",
+  "safariExtensionSilentTitle": "Safari'deki Tab Space yanıt vermiyor",
+  "safariExtensionSilentDetail": "Safari'deki Tab Space uzantısı yanıt vermeyi bıraktı ve bu sayfayı yenilemek sorunu çözmez. Safari'den çıkın (⌘Q), yeniden açın ve ardından bu sayfaya dönün.",
   "connectSafariStep1": "Safari araç çubuğundaki Tab Space düğmesine tıklayın.",
   "connectSafariStep2": "“Her web sitesinde her zaman izin ver”i seçin; böylece kaydetme her sayfada çalışır.",
   "connectSafariPrivacy": "Apple'ın uyarısı, tarayıcı uzantılarının sahip olabileceği geniş yetkileri anlatır. Tab Space bu erişimi yalnızca her sekmenin URL'sini ve başlığını okumak için kullanır — sekmelerinizi kaydetmek ve yeniden açmak için gereken bilgiler.",

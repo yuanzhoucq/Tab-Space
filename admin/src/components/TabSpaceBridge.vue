@@ -15,6 +15,8 @@
 import { mapState } from 'vuex'
 import Constants from '../constants'
 import config from '../config'
+import { isSafari } from '../device'
+import { reportBridgeSilence } from '../bridge-silence'
 
 const appExtensionEvent = name => `tabspace:app-extension:${name}`
 const legacyBridgeUrl = `${config.staticResourceEndpoint}/storage.html?method=get`
@@ -26,6 +28,13 @@ const legacyBridgeOrigin = new URL(config.staticResourceEndpoint).origin
 // DASHBOARD_ORIGINS / DASHBOARD_ORIGIN_SUFFIXES in extension/src.
 const WEB_EXTENSION_ORIGINS = ["https://app.mytab.space", "http://127.0.0.1:8080"]
 const WEB_EXTENSION_ORIGIN_SUFFIXES = ["tab-space-admin.pages.dev"]
+
+// Safari's content script injects the bridge whether or not the extension
+// behind it is alive, so a bridge on the page proves nothing. A healthy
+// background page answers within milliseconds and one waiting on a busy helper
+// within about fifteen seconds; a wedged one never answers at all, and
+// reloading the page cannot revive it. This long a silence is that case.
+const BRIDGE_SILENCE_MS = 30000
 
 export default {
   name: "TabSpaceBridge",
@@ -47,6 +56,9 @@ export default {
       initialDataTimer: null,
       bookmarkRefreshTimer: null,
       bookmarkRefreshAttempt: 0,
+      bridgeSilenceTimer: null,
+      bridgeWatchStartedAt: 0,
+      bridgeAnswered: false,
       // When the payload arrived, so the time spent turning it into UI can be
       // reported back. The native side stops measuring at the point it hands
       // the payload to Safari, which is before any of this happens.
@@ -113,6 +125,7 @@ export default {
     this.clearInitialDataTimer()
     this.clearBookmarkRefreshTimer()
     this.clearSubscriptionPollTimer()
+    this.clearBridgeSilenceTimer()
   },
   methods: {
     redirectLegacyBridgeLoopbackHost() {
@@ -202,6 +215,7 @@ export default {
       this.$store.commit("setBridge", directBridge)
       this.bridgeReady = true
       this.markNativeDetected()
+      this.watchBridgeSilence()
       this.markDashboardReady()
       this.requestInitialData(directBridge)
     },
@@ -237,6 +251,7 @@ export default {
       this.$store.commit("setBridge", directBridge)
       this.bridgeReady = true
       this.markNativeDetected()
+      this.watchBridgeSilence()
       this.markDashboardReady()
       this.requestInitialData(directBridge)
     },
@@ -355,6 +370,7 @@ export default {
       this.requestDefaultsOnce(iframeBridge)
     },
     handleNativeMessage(cmd, data) {
+      this.noteBridgeAnswered()
       this.markNativeDetected()
       window.dispatchEvent(new CustomEvent("tabspace:native-message", {
         detail: data
@@ -755,6 +771,31 @@ export default {
       this.$store.commit("setConnectionTimedOut", false)
       this.clearAppDetectionTimer()
       this.startInitialDataTimeout()
+    },
+    watchBridgeSilence() {
+      if (!isSafari() || this.bridgeAnswered || this.bridgeSilenceTimer) return
+      this.bridgeWatchStartedAt = Date.now()
+      this.bridgeSilenceTimer = setTimeout(() => {
+        this.bridgeSilenceTimer = null
+        if (this.bridgeAnswered) return
+        this.$store.commit("setBridgeSilent", true)
+        reportBridgeSilence("no_reply", Date.now() - this.bridgeWatchStartedAt)
+      }, BRIDGE_SILENCE_MS)
+    },
+    // Any answer at all means the extension is alive, however slow.
+    noteBridgeAnswered() {
+      if (this.bridgeAnswered) return
+      this.bridgeAnswered = true
+      this.clearBridgeSilenceTimer()
+      if (!this.$store.state.bridgeSilent) return
+      this.$store.commit("setBridgeSilent", false)
+      reportBridgeSilence("recovered", Date.now() - this.bridgeWatchStartedAt)
+    },
+    clearBridgeSilenceTimer() {
+      if (this.bridgeSilenceTimer) {
+        clearTimeout(this.bridgeSilenceTimer)
+        this.bridgeSilenceTimer = null
+      }
     },
     startAppDetectionTimeout() {
       this.clearAppDetectionTimer()

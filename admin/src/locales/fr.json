@@ -46,6 +46,8 @@
   "connectSafariTitle": "Autoriser Tab Space",
   "libraryLoadDelayedTitle": "Connecté, mais les sessions ne sont pas chargées",
   "libraryLoadDelayedDetail": "L’extension a répondu, mais la bibliothèque n’est pas encore chargée. Réessayez ou contactez l’assistance si le problème persiste.",
+  "safariExtensionSilentTitle": "Tab Space ne répond pas dans Safari",
+  "safariExtensionSilentDetail": "L’extension Tab Space de Safari ne répond plus, et recharger cette page n’y changera rien. Quittez Safari (⌘Q), rouvrez-le, puis revenez sur cette page.",
   "connectSafariStep1": "Cliquez sur le bouton Tab Space dans la barre d'outils de Safari.",
   "connectSafariStep2": "Choisissez « Toujours autoriser sur tous les sites web » pour que l'enregistrement fonctionne sur chaque page.",
   "connectSafariPrivacy": "L'avertissement d'Apple décrit les capacités étendues dont disposent les extensions de navigateur. Tab Space n'utilise cet accès que pour lire l'URL et le titre de chaque onglet — les informations nécessaires pour enregistrer et rouvrir vos onglets.",

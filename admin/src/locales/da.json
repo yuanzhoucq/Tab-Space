@@ -39,6 +39,8 @@
   "connectSafariTitle": "Godkend Tab Space",
   "libraryLoadDelayedTitle": "Forbundet, men sessionerne er ikke indlæst",
   "libraryLoadDelayedDetail": "Udvidelsen har svaret, men biblioteket er endnu ikke indlæst. Prøv igen, eller kontakt support, hvis problemet fortsætter.",
+  "safariExtensionSilentTitle": "Tab Space i Safari svarer ikke",
+  "safariExtensionSilentDetail": "Tab Space-udvidelsen i Safari er holdt op med at svare, og det hjælper ikke at genindlæse denne side. Afslut Safari (⌘Q), åbn den igen, og vend så tilbage til denne side.",
   "connectSafariStep1": "Klik på Tab Space-knappen i Safaris værktøjslinje.",
   "connectSafariStep2": "Vælg “Tillad altid på alle websteder”, så det virker at gemme på alle sider.",
   "connectSafariPrivacy": "Apples advarsel beskriver de brede muligheder, browserudvidelser kan få. Tab Space bruger kun denne adgang til at læse hver fanes URL og titel — netop de oplysninger, der skal til for at gemme og åbne dine faner igen.",

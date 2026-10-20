@@ -19,10 +19,19 @@
           </div>
         </div>
       </div>
-      <div v-if="showLoadingState" key="connection-state" class="connection-state" role="status" :data-testid="libraryLoadDelayed ? 'library-load-delayed' : 'connection-loading'">
-        <vue-loading v-if="!libraryLoadDelayed" type="bars" color="#eb5205" :size="{ width: '50px', height: '50px' }"></vue-loading>
-        <p class="connection-title">{{libraryLoadDelayed ? lang.libraryLoadDelayedTitle : (nativeDetected ? lang.loadingSessions : lang.connectingApp)}}</p>
-        <p v-if="libraryLoadDelayed" class="connection-detail">{{lang.libraryLoadDelayedDetail}}</p>
+      <div v-if="showLoadingState" key="connection-state" class="connection-state" role="status" :data-testid="loadingStateTestId">
+        <!-- Safari's extension stopped answering altogether. Retry only
+             reloads this page, which cannot revive it; restarting Safari can. -->
+        <div v-if="bridgeSilent" class="silent-notice" role="alert">
+          <v-icon name="alert-triangle" class="silent-notice-icon" aria-hidden="true"></v-icon>
+          <p class="silent-notice-title">{{lang.safariExtensionSilentTitle}}</p>
+          <p class="silent-notice-detail">{{lang.safariExtensionSilentDetail}}</p>
+        </div>
+        <template v-else>
+          <vue-loading v-if="!libraryLoadDelayed" type="bars" color="#eb5205" :size="{ width: '50px', height: '50px' }"></vue-loading>
+          <p class="connection-title">{{libraryLoadDelayed ? lang.libraryLoadDelayedTitle : (nativeDetected ? lang.loadingSessions : lang.connectingApp)}}</p>
+          <p v-if="libraryLoadDelayed" class="connection-detail">{{lang.libraryLoadDelayedDetail}}</p>
+        </template>
         <div v-if="connectionTimedOut" class="connection-actions">
           <button class="secondary-button" type="button" @click="reload">{{lang.retry}}</button>
           <button v-if="canOpenBundledDashboard"
@@ -111,6 +120,7 @@
         "bridge",
         "nativeDetected",
         "connectionTimedOut",
+        "bridgeSilent",
         "activeTag",
         "initialRefresh"
       ]),
@@ -131,6 +141,10 @@
       },
       libraryLoadDelayed() {
         return this.nativeDetected && !this.initialRefresh && this.connectionTimedOut
+      },
+      loadingStateTestId() {
+        if (this.bridgeSilent) return 'safari-extension-silent'
+        return this.libraryLoadDelayed ? 'library-load-delayed' : 'connection-loading'
       },
       canOpenBundledDashboard() {
         return Boolean(this.bridge && typeof this.bridge.fallbackToBundled === "function")
@@ -372,6 +386,32 @@
 
   .connection-detail {
     color: #777777;
+    line-height: 1.5;
+  }
+
+  .silent-notice {
+    padding: 20px 24px;
+    background-color: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-left: 3px solid var(--primary-color);
+    border-radius: var(--radius-md);
+    color: var(--text-primary);
+  }
+
+  .silent-notice-icon {
+    width: 28px;
+    color: var(--primary-color);
+  }
+
+  .silent-notice-title {
+    margin: 10px 0 6px;
+    font-size: 1.15rem;
+    font-weight: 600;
+  }
+
+  .silent-notice-detail {
+    margin: 0;
+    color: var(--text-secondary);
     line-height: 1.5;
   }
 

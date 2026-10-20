@@ -46,6 +46,8 @@
   "connectSafariTitle": "Tab Space を許可",
   "libraryLoadDelayedTitle": "接続済みですが、セッションが読み込まれていません",
   "libraryLoadDelayedDetail": "拡張機能から応答がありましたが、ライブラリはまだ読み込まれていません。再試行し、問題が続く場合はサポートにお問い合わせください。",
+  "safariExtensionSilentTitle": "Safari の Tab Space が応答していません",
+  "safariExtensionSilentDetail": "Safari の Tab Space 機能拡張が応答しなくなりました。このページを再読み込みしても直りません。Safari を終了（⌘Q）して開き直してから、このページに戻ってください。",
   "connectSafariStep1": "Safari のツールバーにある Tab Space ボタンをクリックします。",
   "connectSafariStep2": "「すべての Web サイトで常に許可」を選ぶと、どのページでも保存できるようになります。",
   "connectSafariPrivacy": "Apple の警告は、ブラウザの機能拡張に与えられる権限の広さを説明したものです。Tab Space はこのアクセスを各タブの URL とタイトルを読み取るためだけに使います——タブを保存して開き直すために必要な情報です。",

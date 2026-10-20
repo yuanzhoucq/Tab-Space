@@ -3814,3 +3814,85 @@ test('asks to open the app when the extension found no Tab Space for this accoun
   await expect(guide.locator('.browser-mock')).toHaveCount(0)
   await expect(guide.getByRole('button', { name: 'Retry', exact: true })).toBeVisible()
 })
+
+test.describe("when Safari's extension stops answering", () => {
+  const SAFARI_UA = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/27.0.1 Safari/605.1.15'
+
+  // The content script has injected the bridge, so the page counts as
+  // connected, but nothing behind it ever answers: Safari's background page
+  // has wedged. Exercises the Safari branch in Chromium, as the test above does.
+  async function openWedgedSafariDashboard(page) {
+    await page.clock.install()
+    await page.addInitScript(userAgent => {
+      Object.defineProperty(navigator, 'userAgent', { value: userAgent })
+      localStorage.setItem('tabspace-whats-new-seen-version', '4.1')
+      window.__beacons = []
+      Object.defineProperty(navigator, 'sendBeacon', {
+        configurable: true,
+        value: (url, data) => { window.__beacons.push({ url, data }); return true }
+      })
+      window.__tabspace_bridge = {
+        protocolVersion: 1,
+        markReady: () => {},
+        send: () => {},
+        onMessage: null
+      }
+    }, SAFARI_UA)
+    await page.route('**/favicon.ico', route => route.fulfill({ status: 204, body: '' }))
+    await page.goto('http://localhost:47317/')
+  }
+
+  async function sentBeacons(page) {
+    return page.evaluate(() => Promise.all(window.__beacons.map(async beacon => ({
+      url: beacon.url,
+      body: JSON.parse(await beacon.data.text())
+    }))))
+  }
+
+  test('asks for a Safari restart after thirty silent seconds and reports it once', async ({ page }) => {
+    await openWedgedSafariDashboard(page)
+    // The existing delayed-library state still comes first: slow is not wedged.
+    await page.clock.fastForward(8000)
+    await expect(page.getByTestId('library-load-delayed')).toBeVisible()
+    expect(await sentBeacons(page)).toEqual([])
+
+    await page.clock.fastForward(22000)
+    const notice = page.getByTestId('safari-extension-silent')
+    await expect(notice).toBeVisible()
+    await expect(notice).toContainText("Tab Space in Safari isn't responding")
+    await expect(notice).toContainText('Quit Safari (⌘Q), open it again')
+    await expect(notice.getByRole('button', { name: 'Retry', exact: true })).toBeVisible()
+
+    const sent = await sentBeacons(page)
+    expect(sent).toHaveLength(1)
+    expect(sent[0].url).toBe('https://tabspace-worker.mytab.space/diagnostics/product')
+    expect(sent[0].body).toMatchObject({
+      anonymousInstallID: null,
+      platform: 'macos',
+      event: 'safari_bridge_silent',
+      properties: { source: 'dashboard', browser: 'safari', resultType: 'no_reply', safariVersion: '27.0.1' }
+    })
+    expect(sent[0].body.appVersion).toMatch(/^dashboard \S+$/)
+    expect(sent[0].body.properties.dashboardRenderMs).toBeGreaterThanOrEqual(30000)
+  })
+
+  test('takes the notice down and reports the recovery when an answer finally arrives', async ({ page }) => {
+    await openWedgedSafariDashboard(page)
+    await page.clock.fastForward(30000)
+    await expect(page.getByTestId('safari-extension-silent')).toBeVisible()
+
+    await page.evaluate(() => window.__tabspace_bridge.onMessage('ReturnDefault', { id: 'protocol', value: '' }))
+    await expect(page.getByTestId('safari-extension-silent')).toHaveCount(0)
+    const sent = await sentBeacons(page)
+    expect(sent.map(beacon => beacon.body.properties.resultType)).toEqual(['no_reply', 'recovered'])
+  })
+
+  test('says nothing when the extension answers, however slowly', async ({ page }) => {
+    await openWedgedSafariDashboard(page)
+    await page.clock.fastForward(20000)
+    await page.evaluate(() => window.__tabspace_bridge.onMessage('ReturnDefault', { id: 'protocol', value: '' }))
+    await page.clock.fastForward(20000)
+    await expect(page.getByTestId('safari-extension-silent')).toHaveCount(0)
+    expect(await sentBeacons(page)).toEqual([])
+  })
+})

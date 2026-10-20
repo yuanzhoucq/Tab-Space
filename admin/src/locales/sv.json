@@ -40,6 +40,8 @@
   "connectSafariTitle": "Godkänn Tab Space",
   "libraryLoadDelayedTitle": "Ansluten, men sessionerna har inte lästs in",
   "libraryLoadDelayedDetail": "Tillägget har svarat, men biblioteket har ännu inte lästs in. Försök igen eller kontakta supporten om problemet kvarstår.",
+  "safariExtensionSilentTitle": "Tab Space i Safari svarar inte",
+  "safariExtensionSilentDetail": "Tab Space-tillägget i Safari har slutat svara, och det hjälper inte att läsa in den här sidan igen. Avsluta Safari (⌘Q), öppna det igen och gå sedan tillbaka till den här sidan.",
   "connectSafariStep1": "Klicka på Tab Space-knappen i Safaris verktygsfält.",
   "connectSafariStep2": "Välj ”Tillåt alltid på alla webbplatser”, så att sparandet fungerar på varje sida.",
   "connectSafariPrivacy": "Apples varning beskriver de vidsträckta möjligheter som webbläsartillägg kan få. Tab Space använder den här åtkomsten enbart för att läsa varje fliks URL och titel — den information som behövs för att spara och öppna dina flikar igen.",

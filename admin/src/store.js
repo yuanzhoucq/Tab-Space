@@ -86,6 +86,10 @@ const store = new Vuex.Store({
         bridge: null,
         nativeDetected: false,
         connectionTimedOut: false,
+        // Safari's extension injected its bridge but has not answered a single
+        // request for a long while: its background page is wedged, and only
+        // quitting and reopening Safari brings it back. See TabSpaceBridge.
+        bridgeSilent: false,
         // Whether the browser extension's content script answered on this page,
         // and why its connection to the app failed. Outside Safari they decide
         // which setup step the connection guide shows: install the extension,
@@ -276,6 +280,9 @@ const store = new Vuex.Store({
         },
         setConnectionTimedOut(state, timedOut) {
             state.connectionTimedOut = timedOut
+        },
+        setBridgeSilent(state, silent) {
+            state.bridgeSilent = !!silent
         },
         setWebExtensionDetected(state, detected) {
             state.webExtensionDetected = detected

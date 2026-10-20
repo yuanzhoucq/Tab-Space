@@ -40,6 +40,8 @@
   "connectSafariTitle": "Tab Space 권한 허용",
   "libraryLoadDelayedTitle": "연결되었지만 세션을 불러오지 못했습니다",
   "libraryLoadDelayedDetail": "확장 프로그램이 응답했지만 라이브러리는 아직 불러오지 못했습니다. 다시 시도하고 문제가 계속되면 지원팀에 문의하세요.",
+  "safariExtensionSilentTitle": "Safari의 Tab Space가 응답하지 않습니다",
+  "safariExtensionSilentDetail": "Safari의 Tab Space 확장 프로그램이 응답하지 않으며, 이 페이지를 새로 고쳐도 해결되지 않습니다. Safari를 종료(⌘Q)한 뒤 다시 열고 이 페이지로 돌아오세요.",
   "connectSafariStep1": "Safari 도구 막대의 Tab Space 버튼을 클릭하세요.",
   "connectSafariStep2": "‘모든 웹 사이트에서 항상 허용’을 선택하면 모든 페이지에서 저장이 작동합니다.",
   "connectSafariPrivacy": "Apple의 경고는 브라우저 확장 프로그램이 가질 수 있는 광범위한 권한을 설명한 것입니다. Tab Space는 이 접근 권한을 각 탭의 URL과 제목을 읽는 데에만 사용합니다. 탭을 저장하고 다시 여는 데 필요한 정보입니다.",

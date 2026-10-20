@@ -46,6 +46,8 @@
   "connectSafariTitle": "Tab Space autoriseren",
   "libraryLoadDelayedTitle": "Verbonden, maar sessies zijn nog niet geladen",
   "libraryLoadDelayedDetail": "De extensie heeft gereageerd, maar de bibliotheek is nog niet geladen. Probeer het opnieuw of neem contact op met ondersteuning als het probleem aanhoudt.",
+  "safariExtensionSilentTitle": "Tab Space reageert niet in Safari",
+  "safariExtensionSilentDetail": "De Tab Space-extensie in Safari reageert niet meer, en deze pagina opnieuw laden helpt niet. Stop Safari (⌘Q), open het opnieuw en ga dan terug naar deze pagina.",
   "connectSafariStep1": "Klik op de Tab Space-knop in de Safari-werkbalk.",
   "connectSafariStep2": "Kies ‘Altijd toestaan op elke website’, zodat opslaan op elke pagina werkt.",
   "connectSafariPrivacy": "De waarschuwing van Apple beschrijft de brede mogelijkheden die browserextensies kunnen krijgen. Tab Space gebruikt deze toegang alleen om de URL en titel van elk tabblad te lezen — precies de gegevens die nodig zijn om je tabbladen te bewaren en opnieuw te openen.",
