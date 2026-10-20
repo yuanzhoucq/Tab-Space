@@ -18,7 +18,6 @@
   // and the native handler times out; a wedged one never answers, and the
   // popup used to spin on "Loading" for good.
   const SAFARI_REPLY_TIMEOUT_MS = 12000
-  const SILENCE_REPORTED_KEY = "tabspace-bridge-silence-reported"
   const zh = navigator.language.toLowerCase().startsWith("zh")
   const strings = zh ? {
     ready: "访问资料库，或保存当前浏览器的标签页。",
@@ -328,17 +327,9 @@
 
   // The popup is where a Safari whose extension has wedged lands, and nothing
   // else can say so: the helper and the native handler are both reached
-  // through the background page that stopped answering. Anonymous, once a day
-  // for each kind, to the route the dashboard reports the same state to.
+  // through the background page that stopped answering. Anonymous, once for
+  // every popup that lands here, to the route the dashboard reports to.
   function reportSafariSilence(kind) {
-    const today = new Date().toISOString().slice(0, 10)
-    const stamp = `${today}:popup-${kind}`
-    try {
-      const reported = (localStorage.getItem(SILENCE_REPORTED_KEY) || "").split(" ").filter(Boolean)
-      if (reported.includes(stamp)) return
-      localStorage.setItem(SILENCE_REPORTED_KEY,
-        [...reported.filter(entry => entry.startsWith(`${today}:`)), stamp].join(" "))
-    } catch (_) {}
     if (typeof navigator.sendBeacon !== "function") return
     let version = "unknown"
     try { version = extensionApi.runtime.getManifest().version || version } catch (_) {}

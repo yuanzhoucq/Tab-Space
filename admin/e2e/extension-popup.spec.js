@@ -269,9 +269,8 @@ test.describe('Safari popup', () => {
       properties: { source: 'popup', browser: 'safari', resultType: 'no_reply' }
     })
     expect(sent[0].body.eventID).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/)
-    // At most once a day: the claim is kept across popup openings.
-    const reported = await page.evaluate(() => localStorage.getItem('tabspace-bridge-silence-reported'))
-    expect(reported).toBe(`${new Date().toISOString().slice(0, 10)}:popup-no_reply`)
+    // Every popup that lands here counts, so nothing is kept between openings.
+    expect(await page.evaluate(() => localStorage.getItem('tabspace-bridge-silence-reported'))).toBeNull()
   })
 
   test('says Tab Space is not responding when neither channel works', async ({ page }) => {
