@@ -31,10 +31,13 @@ const WEB_EXTENSION_ORIGIN_SUFFIXES = ["tab-space-admin.pages.dev"]
 
 // Safari's content script injects the bridge whether or not the extension
 // behind it is alive, so a bridge on the page proves nothing. A healthy
-// background page answers within milliseconds and one waiting on a busy helper
-// within about fifteen seconds; a wedged one never answers at all, and
-// reloading the page cannot revive it. This long a silence is that case.
-const BRIDGE_SILENCE_MS = 30000
+// background page answers within milliseconds; a wedged one never answers at
+// all, and reloading the page cannot revive it. Nobody waits long on a page
+// that says it is still loading, so the notice follows the eight-second
+// "delayed" state by four seconds, the same twelve the Safari popup waits. A
+// helper busy enough to answer later than that takes the notice down when it
+// does, and is reported as "recovered".
+const BRIDGE_SILENCE_MS = 12000
 
 export default {
   name: "TabSpaceBridge",

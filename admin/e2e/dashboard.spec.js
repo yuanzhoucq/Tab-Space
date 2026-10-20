@@ -3849,14 +3849,14 @@ test.describe("when Safari's extension stops answering", () => {
     }))))
   }
 
-  test('asks for a Safari restart after thirty silent seconds and reports it once', async ({ page }) => {
+  test('asks for a Safari restart after twelve silent seconds and reports that page once', async ({ page }) => {
     await openWedgedSafariDashboard(page)
     // The existing delayed-library state still comes first: slow is not wedged.
     await page.clock.fastForward(8000)
     await expect(page.getByTestId('library-load-delayed')).toBeVisible()
     expect(await sentBeacons(page)).toEqual([])
 
-    await page.clock.fastForward(22000)
+    await page.clock.fastForward(4000)
     const notice = page.getByTestId('safari-extension-silent')
     await expect(notice).toBeVisible()
     await expect(notice).toContainText("Tab Space in Safari isn't responding")
@@ -3873,12 +3873,12 @@ test.describe("when Safari's extension stops answering", () => {
       properties: { source: 'dashboard', browser: 'safari', resultType: 'no_reply', safariVersion: '27.0.1' }
     })
     expect(sent[0].body.appVersion).toMatch(/^dashboard \S+$/)
-    expect(sent[0].body.properties.dashboardRenderMs).toBeGreaterThanOrEqual(30000)
+    expect(sent[0].body.properties.dashboardRenderMs).toBeGreaterThanOrEqual(12000)
   })
 
   test('takes the notice down and reports the recovery when an answer finally arrives', async ({ page }) => {
     await openWedgedSafariDashboard(page)
-    await page.clock.fastForward(30000)
+    await page.clock.fastForward(12000)
     await expect(page.getByTestId('safari-extension-silent')).toBeVisible()
 
     await page.evaluate(() => window.__tabspace_bridge.onMessage('ReturnDefault', { id: 'protocol', value: '' }))
@@ -3887,9 +3887,9 @@ test.describe("when Safari's extension stops answering", () => {
     expect(sent.map(beacon => beacon.body.properties.resultType)).toEqual(['no_reply', 'recovered'])
   })
 
-  test('says nothing when the extension answers, however slowly', async ({ page }) => {
+  test('says nothing when the extension answers before the notice is due', async ({ page }) => {
     await openWedgedSafariDashboard(page)
-    await page.clock.fastForward(20000)
+    await page.clock.fastForward(10000)
     await page.evaluate(() => window.__tabspace_bridge.onMessage('ReturnDefault', { id: 'protocol', value: '' }))
     await page.clock.fastForward(20000)
     await expect(page.getByTestId('safari-extension-silent')).toHaveCount(0)

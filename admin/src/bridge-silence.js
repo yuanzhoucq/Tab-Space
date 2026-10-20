@@ -6,13 +6,9 @@ import buildInfo from './build-info'
 // answered, and only quitting and reopening Safari brings it back. Nothing on
 // the native side can report that, because both of its channels run through
 // the wedged page, so the dashboard reports it itself — straight to the
-// Worker's anonymous product diagnostics, at most once a day for each kind.
-const reportedKey = 'tabspace-bridge-silence-reported'
+// Worker's anonymous product diagnostics, once for every page that wedges, so
+// the count is how often people actually met it.
 const endpoint = `${config.aiWorkerEndpoint}/diagnostics/product`
-
-function utcDay() {
-  return new Date().toISOString().slice(0, 10)
-}
 
 function safariVersion() {
   const match = /Version\/(\d{1,3}(?:\.\d{1,3}){0,3})/.exec(navigator.userAgent || '')
@@ -29,26 +25,12 @@ function eventID() {
   return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`
 }
 
-function claimToday(kind) {
-  const today = utcDay()
-  const stamp = `${today}:${kind}`
-  try {
-    const reported = (localStorage.getItem(reportedKey) || '').split(' ').filter(Boolean)
-    if (reported.includes(stamp)) return false
-    const kept = reported.filter(entry => entry.startsWith(`${today}:`))
-    localStorage.setItem(reportedKey, [...kept, stamp].join(' '))
-  } catch (e) {
-    // No storage: the caller's own once-per-page guard still applies.
-  }
-  return true
-}
-
 // `kind` is "no_reply" when the notice goes up and "recovered" when an answer
 // finally arrives after it, which is what tells a wedge apart from a slow start.
 // No install id travels with it: the bridge that knows it is the part that is
 // stuck, and an invented one would count as a new install on the board.
 export function reportBridgeSilence(kind, elapsedMs) {
-  if (typeof navigator.sendBeacon !== 'function' || !claimToday(kind)) return false
+  if (typeof navigator.sendBeacon !== 'function') return false
   const body = JSON.stringify({
     eventID: eventID(),
     anonymousInstallID: null,
