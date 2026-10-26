@@ -4,6 +4,15 @@
   --text-primary: #2d3748;
   --text-secondary: #718096;
   --background: #f8f6f2;
+  /* The drawn Safari window uses the system colors of the app's own guide. */
+  --accent: #007aff;
+  --accent-soft: rgba(0, 122, 255, .14);
+  --window: #fff;
+  --fill: rgba(120, 120, 128, .16);
+  --material: rgba(250, 250, 252, .9);
+  --hairline: rgba(0, 0, 0, .08);
+  --glyph: #3c3c43;
+  --shadow: rgba(0, 0, 0, .1);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -11,8 +20,20 @@
     --text-primary: #edf2f7;
     --text-secondary: #a0aec0;
     --background: #1c1c1e;
+    --accent: #0a84ff;
+    --accent-soft: rgba(10, 132, 255, .24);
+    --window: #2c2c2e;
+    --fill: rgba(120, 120, 128, .32);
+    --material: rgba(58, 58, 60, .92);
+    --hairline: rgba(255, 255, 255, .1);
+    --glyph: #ebebf5;
+    --shadow: rgba(0, 0, 0, .4);
   }
 }
+
+/* open.js sets <html lang> from the browser's language; only that copy shows. */
+html:not([lang|="zh"]) [data-lang="zh"],
+html[lang|="zh"] [data-lang="en"] { display: none; }
 
 body {
   margin: 0;
@@ -37,7 +58,161 @@ main {
 }
 
 h1 { margin: 0 0 8px; font-size: 24px; line-height: 1.25; }
-h2 { margin: 32px 0 8px; font-size: 16px; }
+h2 { margin: 32px 0 0; font-size: 16px; }
 .lead { margin: 0; color: var(--text-secondary); }
-ol { margin: 0; padding-left: 1.3em; color: var(--text-secondary); }
-li + li { margin-top: 6px; }
+
+/* Numbered markers, on the drawing and beside the steps they match. */
+.marker {
+  display: inline-grid;
+  flex: none;
+  place-items: center;
+  box-sizing: border-box;
+  width: 22px;
+  height: 22px;
+  border: 2px solid #fff;
+  border-radius: 50%;
+  background: var(--accent);
+  color: #fff;
+  font: 700 12px/1 ui-rounded, -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+/* The drawn Safari window. */
+.mock {
+  position: relative;
+  box-sizing: border-box;
+  max-width: 300px;
+  height: 330px;
+  margin: 20px auto 30px;
+  border: 1px solid var(--hairline);
+  border-radius: 30px;
+  background: var(--window);
+  box-shadow: 0 8px 36px var(--shadow);
+  font-size: 14px;
+  line-height: 1.2;
+}
+.mock svg { display: block; flex: none; }
+.mock .fill { fill: currentColor; }
+.mock .stroke {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.mock .marker { position: absolute; }
+
+.mock-page {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 16px;
+}
+.mock-block { height: 64px; border-radius: 8px; background: var(--fill); }
+.mock-line { display: block; height: 8px; border-radius: 4px; background: var(--fill); }
+.mock-line.short { width: 150px; }
+.mock-line.medium { width: 180px; }
+
+/* The page menu, open above the address bar. */
+.mock-menu {
+  position: absolute;
+  bottom: 56px;
+  left: 10px;
+  width: 214px;
+  padding: 6px;
+  border: .5px solid var(--hairline);
+  border-radius: 18px;
+  background: var(--material);
+  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(20px);
+  box-shadow: 0 4px 20px var(--shadow);
+}
+.mock-row {
+  position: relative;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  height: 38px;
+  padding: 0 10px;
+  border-radius: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+.mock-row + .mock-row { margin-top: 2px; }
+.mock-row .mock-line { flex: 1; }
+.mock-row img { flex: none; width: 22px; height: 22px; border-radius: 5px; }
+.mock-row svg { width: 22px; height: 22px; color: var(--accent); }
+.mock-row .marker { top: 8px; right: -11px; }
+.mock-glyph { flex: none; width: 22px; height: 22px; border-radius: 6px; background: var(--fill); }
+.mock-separator { height: 1px; margin: 4px 8px; background: var(--hairline); }
+.target { background: var(--accent-soft); }
+
+/* Safari's bottom bar: back, the address field with the page menu button at
+   its left and reload at its right, then more. */
+.mock-bar {
+  position: absolute;
+  right: 10px;
+  bottom: 10px;
+  left: 10px;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.mock-circle {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: var(--fill);
+  color: var(--text-secondary);
+}
+.mock-circle svg { width: 14px; height: 14px; }
+.mock-address {
+  display: flex;
+  flex: 1;
+  gap: 6px;
+  align-items: center;
+  min-width: 0;
+  height: 34px;
+  padding: 0 4px;
+  border-radius: 17px;
+  background: var(--fill);
+}
+.mock-url {
+  flex: 1;
+  overflow: hidden;
+  color: var(--text-secondary);
+  font-size: 13px;
+  text-align: center;
+}
+.mock-button {
+  position: relative;
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  color: var(--glyph);
+  box-shadow: inset 0 0 0 2px var(--accent);
+}
+.mock-button svg { width: 15px; height: 15px; }
+.mock-button:first-child .marker { top: -12px; left: -10px; }
+.mock-button:last-child .marker { top: -12px; right: -10px; }
+
+/* The steps, each beside its marker as in the app. */
+.steps { margin: 0; padding: 0; list-style: none; }
+.steps li { display: flex; gap: 14px; align-items: flex-start; }
+.steps li + li { margin-top: 18px; }
+.steps .marker {
+  width: 28px;
+  height: 28px;
+  margin-top: 1px;
+  border: 0;
+  font-size: 15px;
+}
+.steps strong { display: block; font-size: 17px; line-height: 1.35; }
+.steps p { margin: 2px 0 0; color: var(--text-secondary); font-size: 15px; }
+
+.note { margin: 28px 0 0; color: var(--text-secondary); font-size: 13px; }
