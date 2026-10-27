@@ -152,6 +152,11 @@ const store = new Vuex.Store({
         // native side reports the two facts separately.
         permanentPlusOwned: false,
         plusDisplayPrice: null,      // localized StoreKit price, optional in protocol v2
+        // Pro bought once rather than subscribed. Owners have nothing to manage.
+        lifetimeProOwned: false,
+        // Sent only by native builds that sell the lifetime purchase, and only
+        // while the App Store offers it, so it doubles as "may offer it here".
+        proLifetimeDisplayPrice: null,
         freeSessionLimit: Constants.freeSessionLimit,
         enforcesSessionLimit: false,
         aiQuotaRemaining: null,      // Int, -1 = unlimited, null = unknown
@@ -214,6 +219,8 @@ const store = new Vuex.Store({
         // Whether the permanent Plus grant was ever made, regardless of whether
         // a Pro subscription now sits on top of it.
         ownsPermanentPlus: state => state.permanentPlusOwned,
+        ownsLifetimePro: state => state.entitlementTier === "pro" && state.lifetimeProOwned,
+        lifetimeProOffered: state => !!state.proLifetimeDisplayPrice,
         // Sessions the user still keeps. A library holding nothing but Trash
         // is, to the user, an empty one: it still deserves the first-save
         // guide instead of a bare dashboard.
@@ -365,6 +372,8 @@ const store = new Vuex.Store({
             tier,
             hasPermanentPlus,
             plusDisplayPrice,
+            hasLifetimePro,
+            proLifetimeDisplayPrice,
             freeSessionLimit,
             enforcesSessionLimit
         }) {
@@ -385,6 +394,14 @@ const store = new Vuex.Store({
             if (typeof plusDisplayPrice === "string" && plusDisplayPrice.trim()) {
                 state.plusDisplayPrice = plusDisplayPrice.trim()
             }
+            state.lifetimeProOwned = hasLifetimePro === true
+            // Unlike the Plus price this is not kept when a reply omits it: an
+            // older native build, or one whose store took the purchase off
+            // sale, cannot sell it, so the dashboard must stop offering it.
+            state.proLifetimeDisplayPrice = typeof proLifetimeDisplayPrice === "string"
+                && proLifetimeDisplayPrice.trim()
+                ? proLifetimeDisplayPrice.trim()
+                : null
             const reportedLimit = Number(freeSessionLimit)
             if (Number.isInteger(reportedLimit) && reportedLimit > 0) {
                 state.freeSessionLimit = reportedLimit

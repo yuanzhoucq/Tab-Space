@@ -664,6 +664,8 @@ export default {
         tier: data.tier,
         hasPermanentPlus: data.hasPermanentPlus,
         plusDisplayPrice: data.plusDisplayPrice,
+        hasLifetimePro: data.hasLifetimePro,
+        proLifetimeDisplayPrice: data.proLifetimeDisplayPrice,
         freeSessionLimit: data.freeSessionLimit,
         enforcesSessionLimit: data.enforcesSessionLimit
       })

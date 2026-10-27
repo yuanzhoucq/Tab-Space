@@ -60,7 +60,8 @@
                       data-testid="settings-view-plans" @click="openSubscription">
                 {{lang.viewPlans || 'View plans'}}
               </button>
-              <button type="button" class="secondary-action"
+              <!-- A lifetime owner has no subscription to manage. -->
+              <button v-if="!ownsLifetimePro" type="button" class="secondary-action"
                       data-testid="manage-subscription" @click="manageSubscription">
                 {{lang.manageSubscription || 'Manage subscription'}}
               </button>
@@ -451,8 +452,9 @@ export default {
   },
   computed: {
     ...mapState(["lang", "bridge", "tabSpaceSettings", "aiQuotaRemaining", "aiQuotaResetAt", "plusDisplayPrice", "purchaseRedirecting", "syncStatus"]),
-    ...mapGetters(["aiEnabled", "isPremium", "hasPermanentPlus"]),
+    ...mapGetters(["aiEnabled", "isPremium", "hasPermanentPlus", "ownsLifetimePro"]),
     currentPlanLabel() {
+      if (this.ownsLifetimePro) return this.lang.planProPermanent || 'Pro · Permanent'
       if (this.isPremium) return this.lang.planPremium || 'Pro'
       if (this.hasPermanentPlus) return this.lang.planPlus || 'Plus · Permanent'
       return this.lang.planFree || 'Free'

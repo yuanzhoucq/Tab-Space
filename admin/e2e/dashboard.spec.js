@@ -96,6 +96,8 @@ async function openDashboard(page, options = {}) {
     subscriptionStatus,
     entitlementTier,
     plusDisplayPrice,
+    hasLifetimePro,
+    proLifetimeDisplayPrice,
     freeSessionLimit,
     enforcesSessionLimit,
     quotaRemaining,
@@ -221,6 +223,8 @@ async function openDashboard(page, options = {}) {
                   freeSessionLimit: currentFreeSessionLimit,
                   enforcesSessionLimit: currentEnforcesSessionLimit,
                   ...(plusDisplayPrice ? { plusDisplayPrice } : {}),
+                  ...(hasLifetimePro ? { hasLifetimePro: true } : {}),
+                  ...(proLifetimeDisplayPrice ? { proLifetimeDisplayPrice } : {}),
                   ...(Number(nativeProtocolVersion) >= 3
                     ? {
                         trialEligible
@@ -464,6 +468,8 @@ async function openDashboard(page, options = {}) {
     subscriptionStatus: options.subscriptionStatus || 'free',
     entitlementTier: options.entitlementTier || '',
     plusDisplayPrice: options.plusDisplayPrice || '',
+    hasLifetimePro: Boolean(options.hasLifetimePro),
+    proLifetimeDisplayPrice: options.proLifetimeDisplayPrice || '',
     freeSessionLimit: options.freeSessionLimit || 5,
     enforcesSessionLimit: options.enforcesSessionLimit !== false,
     quotaRemaining: options.quotaRemaining,
@@ -1780,6 +1786,66 @@ test('lets a Pro subscriber reopen the plan comparison from Settings', async ({ 
   await expect(page.getByTestId('subscription-submit')).toHaveCount(0)
   await page.getByTestId('modal-manage-subscription').click()
   await expect.poll(() => lastBridgeCommand(page, 'PurchaseSubscription')).toBeTruthy()
+})
+
+test('offers lifetime Pro beside the subscriptions when the app can sell it', async ({ page }) => {
+  await openDashboard(page, {
+    initialSessions: sessions,
+    nativeProtocolVersion: '2',
+    entitlementTier: 'free',
+    proLifetimeDisplayPrice: '$29.99'
+  })
+
+  await page.getByTestId('settings-link').click()
+  await page.getByTestId('settings-upgrade').click()
+  const lifetime = page.getByTestId('plan-lifetime')
+  await expect(lifetime).toBeVisible()
+  // Annual stays the default; lifetime is a third way to pay for the same Pro.
+  await expect(page.getByTestId('plan-yearly')).toHaveAttribute('aria-pressed', 'true')
+  await expect(lifetime).toHaveAttribute('aria-pressed', 'false')
+  await lifetime.click()
+  await expect(lifetime).toHaveAttribute('aria-pressed', 'true')
+  await expect(page.getByTestId('plan-yearly')).toHaveAttribute('aria-pressed', 'false')
+  // Nothing is subscribed to here, so the action does not say so.
+  await expect(page.getByTestId('subscription-submit')).toHaveText('Buy in Tab Space')
+  await page.getByTestId('subscription-submit').click()
+  await expect.poll(() => lastBridgeCommand(page, 'PurchaseSubscription')).toMatchObject({
+    payload: { productId: 'tabspace.pro.lifetime' }
+  })
+})
+
+test('never offers lifetime Pro through an app that cannot sell it', async ({ page }) => {
+  // Older native builds send no lifetime price, and neither does one whose
+  // App Store has taken the purchase off sale.
+  await openDashboard(page, {
+    initialSessions: sessions,
+    nativeProtocolVersion: '2',
+    entitlementTier: 'free'
+  })
+
+  await page.getByTestId('settings-link').click()
+  await page.getByTestId('settings-upgrade').click()
+  await expect(page.getByTestId('plan-yearly')).toBeVisible()
+  await expect(page.getByTestId('plan-lifetime')).toHaveCount(0)
+  await expect(page.getByTestId('subscription-submit')).toHaveText('Subscribe in Tab Space')
+})
+
+test('shows a lifetime owner their plan with no subscription to manage', async ({ page }) => {
+  await openDashboard(page, {
+    initialSessions: sessions,
+    nativeProtocolVersion: '2',
+    entitlementTier: 'pro',
+    hasLifetimePro: true,
+    proLifetimeDisplayPrice: '$29.99'
+  })
+
+  await page.getByTestId('settings-link').click()
+  await expect(page.getByTestId('plan-status')).toContainText('Pro · Permanent')
+  await expect(page.getByTestId('manage-subscription')).toHaveCount(0)
+  await page.getByTestId('settings-view-plans').click()
+  await expect(page.getByTestId('pro-active-message')).toContainText('Tab Space Pro is yours permanently.')
+  await expect(page.getByTestId('modal-manage-subscription')).toHaveCount(0)
+  await expect(page.getByTestId('plan-lifetime')).toHaveCount(0)
 })
 
 test('picks up a purchase made in the host app when the tab regains focus', async ({ page }) => {

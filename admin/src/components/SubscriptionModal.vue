@@ -13,7 +13,8 @@
              can now open this dialog at any tier. -->
         <div v-if="isPremium" class="status-note is-active" data-testid="pro-active-message">
           <v-icon name="check-circle" class="status-icon"></v-icon>
-          <p>{{ lang.alreadyPremium || "You're on Tab Space Pro." }}</p>
+          <p v-if="ownsLifetimePro">{{ lang.lifetimeProOwned || 'Tab Space Pro is yours permanently.' }}</p>
+          <p v-else>{{ lang.alreadyPremium || "You're on Tab Space Pro." }}</p>
         </div>
 
         <div v-else-if="hasPermanentPlus" class="status-note" data-testid="plus-owned-message">
@@ -44,7 +45,7 @@
                aria-pressed is bound as a string on purpose: Vue 2 removes an
                attribute whose bound value is `false`, which would leave the
                unselected card with no pressed state for screen readers. -->
-          <div class="plans">
+          <div class="plans" :class="{ 'with-lifetime': lifetimeProOffered }">
             <button type="button"
                     class="plan-card"
                     :class="{ selected: selectedProductId === monthlyProductId }"
@@ -63,11 +64,24 @@
               <h4>{{ lang.planYearly || 'Yearly' }}</h4>
               <small>{{ lang.annualTrial || '7-day free trial' }}</small>
             </button>
+            <!-- Only native builds that can sell it say so, and only while the
+                 App Store offers it; the price itself stays in the app. -->
+            <button v-if="lifetimeProOffered"
+                    type="button"
+                    class="plan-card"
+                    :class="{ selected: selectedProductId === lifetimeProductId }"
+                    :aria-pressed="String(selectedProductId === lifetimeProductId)"
+                    data-testid="plan-lifetime"
+                    @click="selectProduct(lifetimeProductId)">
+              <h4>{{ lang.planLifetime || 'Lifetime' }}</h4>
+              <small>{{ lang.planLifetimeNote || 'One-time purchase' }}</small>
+            </button>
           </div>
 
           <button type="button" class="purchase-btn" data-testid="subscription-submit"
                   :disabled="purchaseRedirecting" @click="subscribe">
             <span v-if="purchaseRedirecting">{{ lang.continueInApp || 'Continuing in the Tab Space app…' }}</span>
+            <span v-else-if="selectedProductId === lifetimeProductId">{{ lang.buyInApp || 'Buy in Tab Space' }}</span>
             <span v-else>{{ lang.subscribeInApp || 'Subscribe in Tab Space' }}</span>
           </button>
 
@@ -80,7 +94,8 @@
           </button>
         </template>
 
-        <button v-else type="button" class="purchase-btn standalone" data-testid="modal-manage-subscription"
+        <!-- A lifetime owner has no subscription to manage. -->
+        <button v-else-if="!ownsLifetimePro" type="button" class="purchase-btn standalone" data-testid="modal-manage-subscription"
                 :disabled="purchaseRedirecting" @click="manageSubscription">
           <span v-if="purchaseRedirecting">{{ lang.continueInApp || 'Continuing in the Tab Space app…' }}</span>
           <span v-else>{{ lang.manageSubscription || 'Manage subscription' }}</span>
@@ -109,12 +124,13 @@ export default {
       monthlyProductId: 'tabspace.pro.monthly',
       yearlyProductId: 'tabspace.pro.yearly',
       plusProductId: 'tabspace.plus.lifetime',
+      lifetimeProductId: 'tabspace.pro.lifetime',
       selectedProductId: 'tabspace.pro.yearly'
     }
   },
   computed: {
     ...mapState(['lang', 'bridge', 'showSubscriptionModal', 'subscriptionModalReason', 'plusDisplayPrice', 'purchaseRedirecting']),
-    ...mapGetters(['isPremium', 'hasPermanentPlus']),
+    ...mapGetters(['isPremium', 'hasPermanentPlus', 'ownsLifetimePro', 'lifetimeProOffered']),
     // Why the dialog is open, in the vocabulary the native side accepts.
     purchaseSource() {
       if (this.subscriptionModalReason === 'aiQuota') return 'ai_quota'
@@ -128,6 +144,11 @@ export default {
   watch: {
     isPremium(active) {
       if (active) this.close()
+    },
+    lifetimeProOffered(offered) {
+      if (!offered && this.selectedProductId === this.lifetimeProductId) {
+        this.selectedProductId = this.yearlyProductId
+      }
     }
   },
   methods: {
@@ -135,7 +156,8 @@ export default {
       this.$store.commit('setShowSubscriptionModal', false)
     },
     selectProduct(productId) {
-      if (productId === this.monthlyProductId || productId === this.yearlyProductId) {
+      if (productId === this.monthlyProductId || productId === this.yearlyProductId
+        || (productId === this.lifetimeProductId && this.lifetimeProOffered)) {
         this.selectedProductId = productId
       }
     },
@@ -282,6 +304,10 @@ export default {
   grid-template-columns: repeat(2, 1fr);
   gap: 10px;
   margin: 26px 0 18px;
+}
+
+.plans.with-lifetime {
+  grid-template-columns: repeat(3, 1fr);
 }
 
 .plan-card {
