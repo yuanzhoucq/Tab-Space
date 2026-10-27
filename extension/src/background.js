@@ -195,14 +195,18 @@
       if (ignoreDuplicates && seenUrls.has(tab.url)) return false
       seenUrls.add(tab.url)
       return true
-    }).map(tab => ({
+    }).map(tabSummary)
+  }
+
+  function tabSummary(tab) {
+    return {
       id: tab.id,
       windowId: tab.windowId,
       active: Boolean(tab.active),
       pinned: Boolean(tab.pinned),
       title: tab.title || tab.url,
       url: tab.url
-    }))
+    }
   }
 
   function popupSessionOptions(sessions) {
@@ -1081,8 +1085,12 @@
       return normalizeTabs(tabs).map(tab => ({ ...tab, isCurrent: tab.id === activeId }))
     }
 
+    // Unlike saving, switching has no reason to hide a tab: the dashboard and
+    // browser pages such as chrome://settings are places people go back to.
     async function listSwitcherTabs() {
-      return normalizeTabs(await browserApi.queryTabs({}))
+      return (await browserApi.queryTabs({}) || []).filter(tab =>
+        tab && Number.isInteger(tab.id) && typeof tab.url === "string" && tab.url.length > 0
+      ).map(tabSummary)
     }
 
     async function activateSwitcherTab(tabId, windowId) {

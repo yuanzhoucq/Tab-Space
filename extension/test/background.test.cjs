@@ -68,7 +68,10 @@ test('lists all browser windows for the switcher and activates the selected tab'
       return [
         { id: 4, windowId: 1, title: 'One', url: 'https://one.example', active: true },
         { id: 8, windowId: 2, title: 'Two', url: 'https://two.example' },
-        { id: 9, windowId: 2, title: 'Settings', url: 'chrome://settings' }
+        { id: 9, windowId: 2, title: 'Settings', url: 'chrome://settings' },
+        { id: 10, windowId: 2, title: 'Tab Space', url: 'https://app.mytab.space/' },
+        { id: 11, windowId: 2, title: 'No access', url: '' },
+        { windowId: 2, title: 'No id', url: 'https://three.example' }
       ]
     },
     updateTab: async (id, properties) => calls.push(['update', id, properties]),
@@ -76,7 +79,8 @@ test('lists all browser windows for the switcher and activates the selected tab'
   }
   const controller = background.createController({ browserApi, client: {} })
 
-  assert.deepEqual((await controller.listSwitcherTabs()).map(tab => tab.id), [4, 8])
+  // Saving skips the dashboard and browser pages; switching to them is fine.
+  assert.deepEqual((await controller.listSwitcherTabs()).map(tab => tab.id), [4, 8, 9, 10])
   await controller.activateSwitcherTab(8, 2)
   assert.deepEqual(calls.slice(-2), [
     ['window', 2, { state: 'normal', focused: true }],
