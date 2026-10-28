@@ -98,6 +98,7 @@ async function openDashboard(page, options = {}) {
     plusDisplayPrice,
     hasLifetimePro,
     proLifetimeDisplayPrice,
+    proLifetimeOnSale,
     freeSessionLimit,
     enforcesSessionLimit,
     quotaRemaining,
@@ -225,6 +226,7 @@ async function openDashboard(page, options = {}) {
                   ...(plusDisplayPrice ? { plusDisplayPrice } : {}),
                   ...(hasLifetimePro ? { hasLifetimePro: true } : {}),
                   ...(proLifetimeDisplayPrice ? { proLifetimeDisplayPrice } : {}),
+                  ...(proLifetimeOnSale ? { proLifetimeOnSale: true } : {}),
                   ...(Number(nativeProtocolVersion) >= 3
                     ? {
                         trialEligible
@@ -470,6 +472,7 @@ async function openDashboard(page, options = {}) {
     plusDisplayPrice: options.plusDisplayPrice || '',
     hasLifetimePro: Boolean(options.hasLifetimePro),
     proLifetimeDisplayPrice: options.proLifetimeDisplayPrice || '',
+    proLifetimeOnSale: Boolean(options.proLifetimeOnSale),
     freeSessionLimit: options.freeSessionLimit || 5,
     enforcesSessionLimit: options.enforcesSessionLimit !== false,
     quotaRemaining: options.quotaRemaining,
@@ -1800,6 +1803,8 @@ test('offers lifetime Pro beside the subscriptions when the app can sell it', as
   await page.getByTestId('settings-upgrade').click()
   const lifetime = page.getByTestId('plan-lifetime')
   await expect(lifetime).toBeVisible()
+  // The regular price is no sale, so nothing claims one.
+  await expect(page.getByTestId('lifetime-sale-badge')).toHaveCount(0)
   // Annual stays the default; lifetime is a third way to pay for the same Pro.
   await expect(page.getByTestId('plan-yearly')).toHaveAttribute('aria-pressed', 'true')
   await expect(lifetime).toHaveAttribute('aria-pressed', 'false')
@@ -1812,6 +1817,20 @@ test('offers lifetime Pro beside the subscriptions when the app can sell it', as
   await expect.poll(() => lastBridgeCommand(page, 'PurchaseSubscription')).toMatchObject({
     payload: { productId: 'tabspace.pro.lifetime' }
   })
+})
+
+test('labels lifetime Pro as a limited-time offer while the app reports a sale', async ({ page }) => {
+  await openDashboard(page, {
+    initialSessions: sessions,
+    nativeProtocolVersion: '2',
+    entitlementTier: 'free',
+    proLifetimeDisplayPrice: '$29.99',
+    proLifetimeOnSale: true
+  })
+
+  await page.getByTestId('settings-link').click()
+  await page.getByTestId('settings-upgrade').click()
+  await expect(page.getByTestId('plan-lifetime').getByTestId('lifetime-sale-badge')).toHaveText('Limited time')
 })
 
 test('never offers lifetime Pro through an app that cannot sell it', async ({ page }) => {

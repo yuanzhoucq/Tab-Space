@@ -666,6 +666,7 @@ export default {
         plusDisplayPrice: data.plusDisplayPrice,
         hasLifetimePro: data.hasLifetimePro,
         proLifetimeDisplayPrice: data.proLifetimeDisplayPrice,
+        proLifetimeOnSale: data.proLifetimeOnSale,
         freeSessionLimit: data.freeSessionLimit,
         enforcesSessionLimit: data.enforcesSessionLimit
       })

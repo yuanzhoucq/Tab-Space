@@ -73,6 +73,9 @@
                     :aria-pressed="String(selectedProductId === lifetimeProductId)"
                     data-testid="plan-lifetime"
                     @click="selectProduct(lifetimeProductId)">
+              <div v-if="proLifetimeOnSale" class="sale-badge" data-testid="lifetime-sale-badge">
+                {{ lang.lifetimeSaleBadge || 'Limited time' }}
+              </div>
               <h4>{{ lang.planLifetime || 'Lifetime' }}</h4>
               <small>{{ lang.planLifetimeNote || 'One-time purchase' }}</small>
             </button>
@@ -129,7 +132,7 @@ export default {
     }
   },
   computed: {
-    ...mapState(['lang', 'bridge', 'showSubscriptionModal', 'subscriptionModalReason', 'plusDisplayPrice', 'purchaseRedirecting']),
+    ...mapState(['lang', 'bridge', 'showSubscriptionModal', 'subscriptionModalReason', 'plusDisplayPrice', 'purchaseRedirecting', 'proLifetimeOnSale']),
     ...mapGetters(['isPremium', 'hasPermanentPlus', 'ownsLifetimePro', 'lifetimeProOffered']),
     // Why the dialog is open, in the vocabulary the native side accepts.
     purchaseSource() {
@@ -349,7 +352,8 @@ export default {
   color: var(--text-secondary, #718096);
 }
 
-.best-value {
+.best-value,
+.sale-badge {
   position: absolute;
   top: -10px;
   left: 50%;

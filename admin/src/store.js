@@ -157,6 +157,8 @@ const store = new Vuex.Store({
         // Sent only by native builds that sell the lifetime purchase, and only
         // while the App Store offers it, so it doubles as "may offer it here".
         proLifetimeDisplayPrice: null,
+        // A sale price set in App Store Connect, as judged by the native app.
+        proLifetimeOnSale: false,
         freeSessionLimit: Constants.freeSessionLimit,
         enforcesSessionLimit: false,
         aiQuotaRemaining: null,      // Int, -1 = unlimited, null = unknown
@@ -374,6 +376,7 @@ const store = new Vuex.Store({
             plusDisplayPrice,
             hasLifetimePro,
             proLifetimeDisplayPrice,
+            proLifetimeOnSale,
             freeSessionLimit,
             enforcesSessionLimit
         }) {
@@ -402,6 +405,7 @@ const store = new Vuex.Store({
                 && proLifetimeDisplayPrice.trim()
                 ? proLifetimeDisplayPrice.trim()
                 : null
+            state.proLifetimeOnSale = proLifetimeOnSale === true && state.proLifetimeDisplayPrice !== null
             const reportedLimit = Number(freeSessionLimit)
             if (Number.isInteger(reportedLimit) && reportedLimit > 0) {
                 state.freeSessionLimit = reportedLimit
