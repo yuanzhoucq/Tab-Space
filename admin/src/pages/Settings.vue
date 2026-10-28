@@ -60,8 +60,9 @@
                       data-testid="settings-view-plans" @click="openSubscription">
                 {{lang.viewPlans || 'View plans'}}
               </button>
-              <!-- A lifetime owner has no subscription to manage. -->
-              <button v-if="!ownsLifetimePro" type="button" class="secondary-action"
+              <!-- A lifetime owner has nothing to manage, unless a subscription
+                   bought earlier still renews: buying lifetime does not cancel it. -->
+              <button v-if="!ownsLifetimePro || lifetimeSubscriptionRenews" type="button" class="secondary-action"
                       data-testid="manage-subscription" @click="manageSubscription">
                 {{lang.manageSubscription || 'Manage subscription'}}
               </button>
@@ -72,6 +73,9 @@
             </button>
           </div>
 
+          <p v-if="lifetimeSubscriptionRenews" class="help-text" data-testid="settings-lifetime-subscription-renews">
+            {{lang.lifetimeSubscriptionRenews || 'Your subscription still renews. Turn it off in the App Store so you are not charged again.'}}
+          </p>
           <p v-if="purchaseRedirecting" class="help-text redirect-note" data-testid="redirect-note">
             {{lang.continueInApp || 'Continuing in the Tab Space app…'}}
           </p>
@@ -452,7 +456,7 @@ export default {
   },
   computed: {
     ...mapState(["lang", "bridge", "tabSpaceSettings", "aiQuotaRemaining", "aiQuotaResetAt", "plusDisplayPrice", "purchaseRedirecting", "syncStatus"]),
-    ...mapGetters(["aiEnabled", "isPremium", "hasPermanentPlus", "ownsLifetimePro"]),
+    ...mapGetters(["aiEnabled", "isPremium", "hasPermanentPlus", "ownsLifetimePro", "lifetimeSubscriptionRenews"]),
     currentPlanLabel() {
       if (this.ownsLifetimePro) return this.lang.planProPermanent || 'Pro · Permanent'
       if (this.isPremium) return this.lang.planPremium || 'Pro'

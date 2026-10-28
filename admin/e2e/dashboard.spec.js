@@ -97,6 +97,7 @@ async function openDashboard(page, options = {}) {
     entitlementTier,
     plusDisplayPrice,
     hasLifetimePro,
+    hasActiveSubscription,
     proLifetimeDisplayPrice,
     proLifetimeOnSale,
     freeSessionLimit,
@@ -225,6 +226,7 @@ async function openDashboard(page, options = {}) {
                   enforcesSessionLimit: currentEnforcesSessionLimit,
                   ...(plusDisplayPrice ? { plusDisplayPrice } : {}),
                   ...(hasLifetimePro ? { hasLifetimePro: true } : {}),
+                  ...(hasActiveSubscription ? { hasActiveSubscription: true } : {}),
                   ...(proLifetimeDisplayPrice ? { proLifetimeDisplayPrice } : {}),
                   ...(proLifetimeOnSale ? { proLifetimeOnSale: true } : {}),
                   ...(Number(nativeProtocolVersion) >= 3
@@ -471,6 +473,7 @@ async function openDashboard(page, options = {}) {
     entitlementTier: options.entitlementTier || '',
     plusDisplayPrice: options.plusDisplayPrice || '',
     hasLifetimePro: Boolean(options.hasLifetimePro),
+    hasActiveSubscription: Boolean(options.hasActiveSubscription),
     proLifetimeDisplayPrice: options.proLifetimeDisplayPrice || '',
     proLifetimeOnSale: Boolean(options.proLifetimeOnSale),
     freeSessionLimit: options.freeSessionLimit || 5,
@@ -1865,6 +1868,23 @@ test('shows a lifetime owner their plan with no subscription to manage', async (
   await expect(page.getByTestId('pro-active-message')).toContainText('Tab Space Pro is yours permanently.')
   await expect(page.getByTestId('modal-manage-subscription')).toHaveCount(0)
   await expect(page.getByTestId('plan-lifetime')).toHaveCount(0)
+})
+
+test('keeps subscription management for a lifetime owner whose subscription still renews', async ({ page }) => {
+  await openDashboard(page, {
+    initialSessions: sessions,
+    nativeProtocolVersion: '2',
+    entitlementTier: 'pro',
+    hasLifetimePro: true,
+    hasActiveSubscription: true
+  })
+
+  await page.getByTestId('settings-link').click()
+  await expect(page.getByTestId('manage-subscription')).toBeVisible()
+  await expect(page.getByTestId('settings-lifetime-subscription-renews')).toBeVisible()
+  await page.getByTestId('settings-view-plans').click()
+  await expect(page.getByTestId('modal-lifetime-subscription-renews')).toBeVisible()
+  await expect(page.getByTestId('modal-manage-subscription')).toBeVisible()
 })
 
 test('picks up a purchase made in the host app when the tab regains focus', async ({ page }) => {

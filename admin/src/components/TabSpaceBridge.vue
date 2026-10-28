@@ -665,6 +665,7 @@ export default {
         hasPermanentPlus: data.hasPermanentPlus,
         plusDisplayPrice: data.plusDisplayPrice,
         hasLifetimePro: data.hasLifetimePro,
+        hasActiveSubscription: data.hasActiveSubscription,
         proLifetimeDisplayPrice: data.proLifetimeDisplayPrice,
         proLifetimeOnSale: data.proLifetimeOnSale,
         freeSessionLimit: data.freeSessionLimit,

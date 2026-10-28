@@ -154,6 +154,9 @@ const store = new Vuex.Store({
         plusDisplayPrice: null,      // localized StoreKit price, optional in protocol v2
         // Pro bought once rather than subscribed. Owners have nothing to manage.
         lifetimeProOwned: false,
+        // Buying lifetime does not cancel a subscription. Sent by native builds
+        // from 4.4; absent counts as none.
+        subscriptionActive: false,
         // Sent only by native builds that sell the lifetime purchase, and only
         // while the App Store offers it, so it doubles as "may offer it here".
         proLifetimeDisplayPrice: null,
@@ -223,6 +226,8 @@ const store = new Vuex.Store({
         ownsPermanentPlus: state => state.permanentPlusOwned,
         ownsLifetimePro: state => state.entitlementTier === "pro" && state.lifetimeProOwned,
         lifetimeProOffered: state => !!state.proLifetimeDisplayPrice,
+        // A lifetime owner whose subscription would still renew and charge.
+        lifetimeSubscriptionRenews: (state, getters) => getters.ownsLifetimePro && state.subscriptionActive,
         // Sessions the user still keeps. A library holding nothing but Trash
         // is, to the user, an empty one: it still deserves the first-save
         // guide instead of a bare dashboard.
@@ -375,6 +380,7 @@ const store = new Vuex.Store({
             hasPermanentPlus,
             plusDisplayPrice,
             hasLifetimePro,
+            hasActiveSubscription,
             proLifetimeDisplayPrice,
             proLifetimeOnSale,
             freeSessionLimit,
@@ -398,6 +404,7 @@ const store = new Vuex.Store({
                 state.plusDisplayPrice = plusDisplayPrice.trim()
             }
             state.lifetimeProOwned = hasLifetimePro === true
+            state.subscriptionActive = hasActiveSubscription === true
             // Unlike the Plus price this is not kept when a reply omits it: an
             // older native build, or one whose store took the purchase off
             // sale, cannot sell it, so the dashboard must stop offering it.

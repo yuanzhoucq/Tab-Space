@@ -97,8 +97,12 @@
           </button>
         </template>
 
-        <!-- A lifetime owner has no subscription to manage. -->
-        <button v-else-if="!ownsLifetimePro" type="button" class="purchase-btn standalone" data-testid="modal-manage-subscription"
+        <!-- A lifetime owner has nothing to manage, unless a subscription
+             bought earlier still renews: buying lifetime does not cancel it. -->
+        <p v-if="isPremium && lifetimeSubscriptionRenews" class="managed-note renew-warning" data-testid="modal-lifetime-subscription-renews">
+          {{ lang.lifetimeSubscriptionRenews || 'Your subscription still renews. Turn it off in the App Store so you are not charged again.' }}
+        </p>
+        <button v-if="isPremium && (!ownsLifetimePro || lifetimeSubscriptionRenews)" type="button" class="purchase-btn standalone" data-testid="modal-manage-subscription"
                 :disabled="purchaseRedirecting" @click="manageSubscription">
           <span v-if="purchaseRedirecting">{{ lang.continueInApp || 'Continuing in the Tab Space app…' }}</span>
           <span v-else>{{ lang.manageSubscription || 'Manage subscription' }}</span>
@@ -133,7 +137,7 @@ export default {
   },
   computed: {
     ...mapState(['lang', 'bridge', 'showSubscriptionModal', 'subscriptionModalReason', 'plusDisplayPrice', 'purchaseRedirecting', 'proLifetimeOnSale']),
-    ...mapGetters(['isPremium', 'hasPermanentPlus', 'ownsLifetimePro', 'lifetimeProOffered']),
+    ...mapGetters(['isPremium', 'hasPermanentPlus', 'ownsLifetimePro', 'lifetimeProOffered', 'lifetimeSubscriptionRenews']),
     // Why the dialog is open, in the vocabulary the native side accepts.
     purchaseSource() {
       if (this.subscriptionModalReason === 'aiQuota') return 'ai_quota'
