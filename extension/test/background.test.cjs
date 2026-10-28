@@ -88,6 +88,56 @@ test('lists all browser windows for the switcher and activates the selected tab'
   ])
 })
 
+test('reports when each switcher tab last came to the front', async () => {
+  const stored = {}
+  let clock = 1000
+  const activations = background.createActivationTracker({
+    storage: {
+      get: async key => ({ [key]: stored[key] }),
+      set: async values => Object.assign(stored, values)
+    },
+    now: () => clock
+  })
+  await activations.record(8)
+  clock = 5000
+  await activations.record(4)
+
+  const controller = background.createController({
+    browserApi: {
+      queryTabs: async () => [
+        // The browser's own value wins when it is newer than the record ...
+        { id: 4, windowId: 1, title: 'One', url: 'https://one.example', lastAccessed: 9000.4 },
+        // ... and the record wins when the browser missed a window switch.
+        { id: 8, windowId: 2, title: 'Two', url: 'https://two.example', lastAccessed: 500 },
+        // Safari reports nothing, so an unrecorded tab carries no time at all.
+        { id: 9, windowId: 2, title: 'Three', url: 'https://three.example' }
+      ]
+    },
+    client: {},
+    activations
+  })
+
+  const tabs = await controller.listSwitcherTabs()
+  assert.deepEqual(tabs.map(tab => tab.lastAccessed), [9000, 1000, undefined])
+  assert.equal('lastAccessed' in tabs[2], false)
+
+  // A suspended background starts over from session storage.
+  const revived = background.createActivationTracker({
+    storage: { get: async key => ({ [key]: stored[key] }), set: async () => {} }
+  })
+  assert.deepEqual(await revived.snapshot(), { 4: 5000, 8: 1000 })
+})
+
+test('keeps only the most recent tab activations', async () => {
+  let clock = 0
+  const activations = background.createActivationTracker({ now: () => ++clock })
+  for (let id = 1; id <= 2001; id += 1) activations.record(id)
+  const times = await activations.snapshot()
+  assert.equal(Object.keys(times).length, 2000)
+  assert.equal(times[1], undefined)
+  assert.equal(times[2001], 2001)
+})
+
 test('publishes a complete 501-tab Safari snapshot without truncation', async () => {
   const tabs = Array.from({ length: 501 }, (_, index) => ({
     id: index + 1,

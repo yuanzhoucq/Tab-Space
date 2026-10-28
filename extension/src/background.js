@@ -24,6 +24,11 @@
   const SWITCHER_CLOSE_CAPABILITY = "switcher.tabs.close.v1"
   const RECONNECT_ALARM_NAME = "tabspace-bridge-reconnect"
   const KEEPALIVE_STORAGE_KEY = "tabspace-bridge-heartbeat"
+  const ACTIVATION_STORAGE_KEY = "tabspace-tab-activations"
+  // Tab ids are not reused within a browser run, so closed tabs only ever add
+  // entries. The cap keeps a long run with thousands of short-lived tabs from
+  // growing the record without bound; the oldest entries go first.
+  const ACTIVATION_LIMIT = 2000
   // build.mjs rewrites these two lines for development builds. The first entry
   // is the origin the extension opens; the suffixes cover Cloudflare Pages
   // preview deployments, which get a new hostname per branch.
@@ -207,6 +212,60 @@
       title: tab.title || tab.url,
       url: tab.url
     }
+  }
+
+  // When each tab last came to the front, for the switcher's "most recent
+  // first" order. Chrome, Edge and Firefox report tab.lastAccessed, but only
+  // for switches inside a window; Safari reports nothing. Recording tab and
+  // window activations here covers both. Session storage matches the life of a
+  // tab id and survives the background context being suspended between events.
+  function createActivationTracker(options = {}) {
+    const storage = options.storage || null
+    const now = options.now || (() => Date.now())
+    let times = null
+    let pending = Promise.resolve()
+
+    async function load() {
+      if (times) return times
+      let stored = null
+      if (storage) {
+        try {
+          stored = ((await storage.get(ACTIVATION_STORAGE_KEY)) || {})[ACTIVATION_STORAGE_KEY]
+        } catch (_) {}
+      }
+      if (!times) times = stored && typeof stored === "object" ? { ...stored } : {}
+      return times
+    }
+
+    function record(tabId) {
+      if (!Number.isInteger(tabId)) return pending
+      const at = now()
+      pending = pending.then(async () => {
+        const loaded = await load()
+        loaded[tabId] = at
+        const ids = Object.keys(loaded)
+        if (ids.length > ACTIVATION_LIMIT) {
+          ids.sort((a, b) => loaded[a] - loaded[b])
+            .slice(0, ids.length - ACTIVATION_LIMIT)
+            .forEach(id => { delete loaded[id] })
+        }
+        if (storage) await storage.set({ [ACTIVATION_STORAGE_KEY]: loaded })
+      }).catch(() => {})
+      return pending
+    }
+
+    async function snapshot() {
+      await pending
+      return { ...(await load()) }
+    }
+
+    return { record, snapshot }
+  }
+
+  function lastAccessedFor(tab, activations) {
+    const candidates = [tab.lastAccessed, activations && activations[tab.id]]
+      .filter(value => Number.isFinite(value) && value > 0)
+    return candidates.length > 0 ? Math.round(Math.max(...candidates)) : null
   }
 
   function popupSessionOptions(sessions) {
@@ -1069,6 +1128,7 @@
     const delay = options.delay || (milliseconds =>
       new Promise(resolve => root.setTimeout(resolve, milliseconds)))
     const notifyDashboards = options.notifyDashboards || createDashboardChangeNotifier(browserApi)
+    const activations = options.activations || null
 
     async function listPopupTabs() {
       const [tabs, activeTabs] = await Promise.all([
@@ -1088,9 +1148,17 @@
     // Unlike saving, switching has no reason to hide a tab: the dashboard and
     // browser pages such as chrome://settings are places people go back to.
     async function listSwitcherTabs() {
-      return (await browserApi.queryTabs({}) || []).filter(tab =>
+      const [tabs, times] = await Promise.all([
+        browserApi.queryTabs({}),
+        activations ? activations.snapshot().catch(() => null) : null
+      ])
+      return (tabs || []).filter(tab =>
         tab && Number.isInteger(tab.id) && typeof tab.url === "string" && tab.url.length > 0
-      ).map(tabSummary)
+      ).map(tab => {
+        const summary = tabSummary(tab)
+        const lastAccessed = lastAccessedFor(tab, times)
+        return lastAccessed === null ? summary : { ...summary, lastAccessed }
+      })
     }
 
     async function activateSwitcherTab(tabId, windowId) {
@@ -1439,11 +1507,25 @@
       ? root.TabSpaceSafariMenu.commandClient(client)
       : client
     const notifyDashboards = createDashboardChangeNotifier(api)
+    const sessionStorage = extensionApi.storage && extensionApi.storage.session
+    const activations = createActivationTracker({
+      storage: sessionStorage
+        ? {
+            get: key => preferPromises
+              ? sessionStorage.get(key)
+              : new Promise(resolve => sessionStorage.get(key, resolve)),
+            set: values => preferPromises
+              ? sessionStorage.set(values)
+              : new Promise(resolve => sessionStorage.set(values, resolve))
+          }
+        : null
+    })
     let controller
     controller = createController({
       browserApi: api,
       client: commandClient,
       notifyDashboards,
+      activations,
       browserCommand: (command, data) => {
         if (BUILD_TARGET !== "safari" || !root.TabSpaceSafariMenu) {
           return Promise.reject(new BridgeError("unsupported_command", `Unsupported browser command: ${command}`))
@@ -1552,7 +1634,23 @@
     if (extensionApi.runtime.onInstalled) extensionApi.runtime.onInstalled.addListener(wakeBridge)
     if (extensionApi.windows) {
       if (extensionApi.windows.onCreated) extensionApi.windows.onCreated.addListener(wakeBridge)
-      if (extensionApi.windows.onFocusChanged) extensionApi.windows.onFocusChanged.addListener(wakeBridge)
+      if (extensionApi.windows.onFocusChanged) {
+        extensionApi.windows.onFocusChanged.addListener(windowId => {
+          wakeBridge()
+          // Bringing another window forward shows its active tab without
+          // activating it, so tab.lastAccessed does not move. Negative ids
+          // mean the browser itself lost focus.
+          if (!Number.isInteger(windowId) || windowId < 0) return
+          api.queryTabs({ active: true, windowId })
+            .then(tabs => { if (tabs && tabs[0]) return activations.record(tabs[0].id) })
+            .catch(() => {})
+        })
+      }
+    }
+    if (extensionApi.tabs && extensionApi.tabs.onActivated) {
+      extensionApi.tabs.onActivated.addListener(info => {
+        activations.record(info && info.tabId)
+      })
     }
     // Registered so the keepalive write above dispatches an event at all; the
     // dispatch is the whole point, so the listener itself has nothing to do.
@@ -1664,6 +1762,7 @@
     sendDashboardEvent,
     createDashboardChangeNotifier,
     browserFamily,
+    createActivationTracker,
     createController,
     handleSwitcherEvent,
     isDashboardOrigin,
