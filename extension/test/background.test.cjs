@@ -128,6 +128,18 @@ test('reports when each switcher tab last came to the front', async () => {
   assert.deepEqual(await revived.snapshot(), { 4: 5000, 8: 1000 })
 })
 
+// Window A then window B: if A's tab lookup answers last, A must still be
+// the older visit, or the switcher takes A for the tab the user is on.
+test('dates a focus change by when it happened, not when its lookup answered', async () => {
+  const activations = background.createActivationTracker({ now: () => 9999 })
+  activations.record(2, 2000) // window B, focused second, answered first
+  activations.record(1, 1000) // window A, focused first, answered late
+  assert.deepEqual(await activations.snapshot(), { 1: 1000, 2: 2000 })
+  // A late answer never moves a tab back from a newer visit either.
+  activations.record(2, 1500)
+  assert.equal((await activations.snapshot())[2], 2000)
+})
+
 test('keeps only the most recent tab activations', async () => {
   let clock = 0
   const activations = background.createActivationTracker({ now: () => ++clock })

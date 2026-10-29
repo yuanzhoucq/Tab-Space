@@ -237,12 +237,14 @@
       return times
     }
 
-    function record(tabId) {
+    // `at` is when the activation happened. A focus change has to look its
+    // tab up first, and those lookups can finish out of order, so a late
+    // answer must not stamp its tab as newer than one activated after it.
+    function record(tabId, at = now()) {
       if (!Number.isInteger(tabId)) return pending
-      const at = now()
       pending = pending.then(async () => {
         const loaded = await load()
-        loaded[tabId] = at
+        loaded[tabId] = Math.max(Number(loaded[tabId]) || 0, at)
         const ids = Object.keys(loaded)
         if (ids.length > ACTIVATION_LIMIT) {
           ids.sort((a, b) => loaded[a] - loaded[b])
@@ -1641,8 +1643,9 @@
           // activating it, so tab.lastAccessed does not move. Negative ids
           // mean the browser itself lost focus.
           if (!Number.isInteger(windowId) || windowId < 0) return
+          const focusedAt = Date.now()
           api.queryTabs({ active: true, windowId })
-            .then(tabs => { if (tabs && tabs[0]) return activations.record(tabs[0].id) })
+            .then(tabs => { if (tabs && tabs[0]) return activations.record(tabs[0].id, focusedAt) })
             .catch(() => {})
         })
       }
