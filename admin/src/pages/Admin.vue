@@ -50,6 +50,7 @@
         <session-sidebar></session-sidebar>
         <div class="session-column">
           <helper-banner></helper-banner>
+          <lifetime-banner></lifetime-banner>
           <ios-banner></ios-banner>
           <rating-banner></rating-banner>
           <div class="empty-state" v-if="showFirstSaveGuide" data-testid="empty-state">
@@ -82,6 +83,7 @@
   import IosBanner from '../components/IosBanner'
   import Navbar from '../components/Navbar'
   import RatingBanner from '../components/RatingBanner'
+  import LifetimeBanner from '../components/LifetimeBanner'
   import SessionSidebar from '../components/SessionSidebar'
   import SessionHub from '../components/SessionHub'
   import Sessions from '../components/Sessions'
@@ -104,6 +106,7 @@
       FirstSaveGuide,
       Navbar,
       RatingBanner,
+      LifetimeBanner,
       SessionSidebar,
       SessionHub,
       Sessions,

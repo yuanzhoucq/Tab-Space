@@ -149,6 +149,12 @@ export default {
     }
   },
   watch: {
+    // Opened from the lifetime announcement: show that card selected.
+    showSubscriptionModal(show) {
+      if (show && this.subscriptionModalReason === 'lifetimeIntro' && this.lifetimeProOffered) {
+        this.selectedProductId = this.lifetimeProductId
+      }
+    },
     isPremium(active) {
       if (active) this.close()
     },

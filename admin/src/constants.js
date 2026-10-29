@@ -37,6 +37,12 @@ const constants = {
     // Keep the unreleased 4.1 introduction out of both the automatic modal and
     // its Settings entry. Re-enable this only when the release is actually live.
     whatsNewEnabled: false,
+    // Dashboard-side kill switch for the lifetime Pro offer. Native 4.4 can
+    // sell it, but its price only reaches the dashboard once the host app has
+    // run since updating, which most people rarely do; until then this is
+    // what lets the plan card and the announcement appear. Set false if the
+    // purchase is taken off sale in App Store Connect.
+    lifetimeProOffered: true,
     // The tab switcher's factory shortcut. The real one is a native default the
     // user can rebind, and no bridge message reports it back, so this is what
     // the dashboard shows — always alongside the note that it can be changed.

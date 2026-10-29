@@ -9,6 +9,8 @@ export const helperBannerSnoozeCountKey = "tabspace-helper-banner-snooze-count"
 export const viewModeHintDismissedKey = "tabspace-view-mode-hint-dismissed"
 // Holds the release the What's New dialog has already been shown for, so a
 // later release only has to bump Constants.whatsNewVersion.
+// Set once the lifetime Pro announcement has been opened or closed.
+export const lifetimeBannerDismissedKey = "tabspace-lifetime-banner-dismissed"
 export const whatsNewSeenVersionKey = "tabspace-whats-new-seen-version"
 
 export function readBannerFlag(key) {

@@ -248,6 +248,8 @@
   "planProPermanent": "Pro · Permanent",
   "lifetimeProOwned": "Tab Space Pro est à vous pour toujours.",
   "lifetimeSubscriptionRenews": "Votre abonnement se renouvelle toujours. Désactivez-le dans l’App Store pour ne pas être facturé à nouveau.",
+  "lifetimeBannerText": "Tab Space Pro est désormais un achat unique : payez une fois, gardez-le pour toujours.",
+  "lifetimeBannerDismiss": "Fermer",
   "plusOwnedSummary": "Les sessions illimitées et toutes les fonctions essentielles vous appartiennent définitivement. Vous recevez aussi 5 requêtes d’IA par semaine ; Pro rend l’IA illimitée.",
   "freeSessionAllowanceUsed": "Session enregistrée. Votre quota Free est épuisé ; passez à une offre supérieure pour en enregistrer une autre.",
   "annualTrial": "Essai gratuit de 7 jours",

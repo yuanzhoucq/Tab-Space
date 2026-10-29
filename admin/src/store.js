@@ -157,6 +157,9 @@ const store = new Vuex.Store({
         // Buying lifetime does not cancel a subscription. Sent by native builds
         // from 4.4; absent counts as none.
         subscriptionActive: false,
+        // Native 4.4 and later can sell lifetime Pro; they are the builds that
+        // report hasActiveSubscription.
+        nativeSellsLifetime: false,
         // Sent only by native builds that sell the lifetime purchase, and only
         // while the App Store offers it, so it doubles as "may offer it here".
         proLifetimeDisplayPrice: null,
@@ -225,7 +228,8 @@ const store = new Vuex.Store({
         // a Pro subscription now sits on top of it.
         ownsPermanentPlus: state => state.permanentPlusOwned,
         ownsLifetimePro: state => state.entitlementTier === "pro" && state.lifetimeProOwned,
-        lifetimeProOffered: state => !!state.proLifetimeDisplayPrice,
+        lifetimeProOffered: state => !!state.proLifetimeDisplayPrice
+            || (state.nativeSellsLifetime && Constants.lifetimeProOffered),
         // A lifetime owner whose subscription would still renew and charge.
         lifetimeSubscriptionRenews: (state, getters) => getters.ownsLifetimePro && state.subscriptionActive,
         // Sessions the user still keeps. A library holding nothing but Trash
@@ -405,6 +409,7 @@ const store = new Vuex.Store({
             }
             state.lifetimeProOwned = hasLifetimePro === true
             state.subscriptionActive = hasActiveSubscription === true
+            state.nativeSellsLifetime = typeof hasActiveSubscription === "boolean"
             // Unlike the Plus price this is not kept when a reply omits it: an
             // older native build, or one whose store took the purchase off
             // sale, cannot sell it, so the dashboard must stop offering it.

@@ -226,7 +226,7 @@ async function openDashboard(page, options = {}) {
                   enforcesSessionLimit: currentEnforcesSessionLimit,
                   ...(plusDisplayPrice ? { plusDisplayPrice } : {}),
                   ...(hasLifetimePro ? { hasLifetimePro: true } : {}),
-                  ...(hasActiveSubscription ? { hasActiveSubscription: true } : {}),
+                  ...(hasActiveSubscription !== undefined ? { hasActiveSubscription } : {}),
                   ...(proLifetimeDisplayPrice ? { proLifetimeDisplayPrice } : {}),
                   ...(proLifetimeOnSale ? { proLifetimeOnSale: true } : {}),
                   ...(Number(nativeProtocolVersion) >= 3
@@ -473,7 +473,7 @@ async function openDashboard(page, options = {}) {
     entitlementTier: options.entitlementTier || '',
     plusDisplayPrice: options.plusDisplayPrice || '',
     hasLifetimePro: Boolean(options.hasLifetimePro),
-    hasActiveSubscription: Boolean(options.hasActiveSubscription),
+    hasActiveSubscription: options.hasActiveSubscription,
     proLifetimeDisplayPrice: options.proLifetimeDisplayPrice || '',
     proLifetimeOnSale: Boolean(options.proLifetimeOnSale),
     freeSessionLimit: options.freeSessionLimit || 5,
@@ -1885,6 +1885,52 @@ test('keeps subscription management for a lifetime owner whose subscription stil
   await page.getByTestId('settings-view-plans').click()
   await expect(page.getByTestId('modal-lifetime-subscription-renews')).toBeVisible()
   await expect(page.getByTestId('modal-manage-subscription')).toBeVisible()
+})
+
+test('announces lifetime Pro once to Free users of an app that can sell it, before its price is known', async ({ page }) => {
+  await openDashboard(page, {
+    initialSessions: sessions,
+    nativeProtocolVersion: '2',
+    entitlementTier: 'free',
+    hasActiveSubscription: false
+  })
+
+  const banner = page.getByTestId('lifetime-banner')
+  await expect(banner).toBeVisible()
+  // Nothing has judged the price yet, so no limited time is claimed.
+  await expect(page.getByTestId('lifetime-banner-sale')).toHaveCount(0)
+  await page.getByTestId('lifetime-banner-open').click()
+  await expect(page.getByTestId('plan-lifetime')).toHaveAttribute('aria-pressed', 'true')
+  await expect(page.getByTestId('subscription-submit')).toHaveText('Buy in Tab Space')
+  await expect(banner).toHaveCount(0)
+
+  await page.reload()
+  await expect(page.getByTestId('session-stats')).toBeVisible()
+  await expect(page.getByTestId('lifetime-banner')).toHaveCount(0)
+})
+
+test('keeps the lifetime announcement from subscribers and from apps that cannot sell it', async ({ page }) => {
+  await openDashboard(page, {
+    initialSessions: sessions,
+    nativeProtocolVersion: '2',
+    entitlementTier: 'pro',
+    hasActiveSubscription: true
+  })
+  await expect(page.getByTestId('session-stats')).toBeVisible()
+  await expect(page.getByTestId('lifetime-banner')).toHaveCount(0)
+})
+
+test('shows no lifetime offer to an app older than 4.4', async ({ page }) => {
+  await openDashboard(page, {
+    initialSessions: sessions,
+    nativeProtocolVersion: '2',
+    entitlementTier: 'free'
+  })
+  await expect(page.getByTestId('session-stats')).toBeVisible()
+  await expect(page.getByTestId('lifetime-banner')).toHaveCount(0)
+  await page.getByTestId('settings-link').click()
+  await page.getByTestId('settings-upgrade').click()
+  await expect(page.getByTestId('plan-lifetime')).toHaveCount(0)
 })
 
 test('picks up a purchase made in the host app when the tab regains focus', async ({ page }) => {

@@ -248,6 +248,8 @@
   "planProPermanent": "Pro · Permanent",
   "lifetimeProOwned": "Tab Space Pro is yours permanently.",
   "lifetimeSubscriptionRenews": "Your subscription still renews. Turn it off in the App Store so you are not charged again.",
+  "lifetimeBannerText": "Tab Space Pro is now a one-time purchase: pay once, keep it for good.",
+  "lifetimeBannerDismiss": "Dismiss",
   "plusOwnedSummary": "Unlimited sessions and all core features are yours permanently. You also receive 5 AI requests each week; Pro makes AI unlimited.",
   "freeSessionAllowanceUsed": "Session saved. Your Free session allowance is now used; upgrade to save another.",
   "annualTrial": "7-day free trial",
