@@ -641,8 +641,8 @@ test("a settings refresh through the native handler sends no trace messages", as
   nativeCalls.length = 0
   const stored = {}
   const settings = await menu.readSettings({ api: { storage: { local: memoryLocal(stored) } }, client: helperDown })
-  assert.equal(Object.keys(settings).length, 6)
-  assert.equal(nativeCalls.filter(call => call.op === "bridge.command").length, 6)
+  assert.equal(Object.keys(settings).length, 7)
+  assert.equal(nativeCalls.filter(call => call.op === "bridge.command").length, 7)
   assert.equal(nativeCalls.filter(call => call.op === "diagnostics.trace").length, 0)
 })
 
@@ -736,4 +736,114 @@ test("a new Safari session or extension version lifts the native pause", () => {
   listeners.startup()
   listeners.installed()
   assert.equal(nativeResets, before + 2)
+})
+
+function menuSaveApi(stored = {}, contextMenuCalls = []) {
+  return {
+    windows: { getCurrent: async () => ({ left: 0, top: 0, width: 100, height: 100 }) },
+    tabs: { query: async () => [{ id: 7, url: "https://a.test", active: true }] },
+    contextMenus: {
+      removeAll: async () => { contextMenuCalls.push("removeAll") },
+      create: async item => { contextMenuCalls.push(item.id) }
+    },
+    storage: {
+      local: {
+        get: async keys => Object.fromEntries([].concat(keys).filter(key => key in stored).map(key => [key, stored[key]])),
+        set: async values => Object.assign(stored, values),
+        remove: async keys => { for (const key of keys) delete stored[key] }
+      }
+    }
+  }
+}
+
+test("a menu save opens the dashboard only when the handler says so; an older handler's always does", async () => {
+  const saves = []
+  const controller = { saveTabIds: async (ids, options) => { saves.push(options); return { savedCount: ids.length } } }
+  const client = { request: async () => ({ sessions: [] }) }
+  try {
+    for (const chosen of [
+      { action: "save", closeTabs: true, openDashboard: false, sessionUuid: "s-1" },
+      { action: "saveCurrent", openDashboard: false },
+      { action: "save", closeTabs: false }
+    ]) {
+      nativeResponder = async message => message.op === "ui.menu" ? { shown: true, chosen } : { available: true }
+      await menu.show({ api: menuSaveApi(), client, controller }, {})
+    }
+  } finally {
+    nativeResponder = null
+  }
+  assert.deepEqual(saves.map(options => options.openDashboardAfterSave), [false, false, true])
+  assert.equal(saves[0].destinationSessionUuid, "s-1")
+})
+
+test("shortcut and context-menu saves follow open-dashboard-after-save", async () => {
+  for (const [value, expected] of [["false", false], ["true", true], ["", true]]) {
+    const saves = []
+    const client = {
+      request: async (method, params) => ({ value: params.name === menu.OPEN_DASHBOARD_AFTER_SAVE ? value : "" })
+    }
+    const controller = { saveTabIds: async (ids, options) => { saves.push(options); return {} } }
+    const context = { api: menuSaveApi(), client, controller }
+    await menu.performCommand("SaveTabs", {}, context)
+    await menu.performCommand("SaveCurrentPageToTabSpace", {}, context)
+    assert.deepEqual(saves.map(options => options.openDashboardAfterSave), [expected, expected], `value "${value}"`)
+  }
+
+  // Settings that cannot be read keep the old behaviour rather than fail the save.
+  const saves = []
+  const down = { request: async () => { throw Object.assign(new Error("store is loading"), { code: "internal_error" }) } }
+  const controller = { saveTabIds: async (ids, options) => { saves.push(options); return {} } }
+  await menu.performCommand("SaveCurrentTab", {}, { api: menuSaveApi(), client: down, controller })
+  assert.equal(saves[0].openDashboardAfterSave, true)
+})
+
+test("settings changed in the menu drop the cached copy and rebuild the page context menu", async () => {
+  const stored = {
+    [menu.SETTINGS_CACHE_KEY]: { "disable-context-menus": "" },
+    [menu.SETTINGS_CACHED_AT_KEY]: Date.now()
+  }
+  const contextMenuCalls = []
+  const client = {
+    request: async (method, params) => method === "settings.get"
+      ? { value: params.name === "disable-context-menus" ? "true" : "" }
+      : { sessions: [] }
+  }
+  try {
+    nativeResponder = async message => message.op === "ui.menu"
+      ? { shown: true, chosen: null, settingsChanged: true }
+      : { available: true }
+    await menu.show({ api: menuSaveApi(stored, contextMenuCalls), client, controller: {} }, {})
+  } finally {
+    nativeResponder = null
+  }
+  assert.equal(stored[menu.SETTINGS_CACHE_KEY]["disable-context-menus"], "true")
+  assert.deepEqual(contextMenuCalls, ["removeAll"])
+
+  // A menu that changed nothing leaves the cache and the context menu alone.
+  contextMenuCalls.length = 0
+  const cachedAt = stored[menu.SETTINGS_CACHED_AT_KEY]
+  try {
+    nativeResponder = async message => message.op === "ui.menu" ? { shown: true, chosen: null } : { available: true }
+    await menu.show({ api: menuSaveApi(stored, contextMenuCalls), client, controller: {} }, {})
+  } finally {
+    nativeResponder = null
+  }
+  assert.equal(stored[menu.SETTINGS_CACHED_AT_KEY], cachedAt)
+  assert.deepEqual(contextMenuCalls, [])
+})
+
+test("a helper that does not know a setting yet reads it as unset; the other settings still refresh", async () => {
+  const stored = {}
+  const client = {
+    socket: { readyState: 1 },
+    request: async (method, params) => {
+      if (params.name === menu.OPEN_DASHBOARD_AFTER_SAVE) {
+        throw Object.assign(new Error("unknown"), { code: "invalid_setting" })
+      }
+      return { value: params.name === "shift-shortcuts" ? "true" : "" }
+    }
+  }
+  const settings = await menu.readSettings({ api: { storage: { local: memoryLocal(stored) } }, client })
+  assert.equal(settings["shift-shortcuts"], "true")
+  assert.equal(settings[menu.OPEN_DASHBOARD_AFTER_SAVE], "")
 })

@@ -32,6 +32,10 @@
   // reused for a day within one extension version; the probe after a failed
   // click always asks.
   const PROBE_CACHE_KEY = "tabspace-safari-menu-probe-v1"
+  // Whether a save from Safari ends on the dashboard. Unset reads as on, the
+  // behaviour every earlier build had. The toolbar menu's Settings submenu
+  // writes it; NativeMenu.swift sends its value with each menu save.
+  const OPEN_DASHBOARD_AFTER_SAVE = "open-dashboard-after-save"
   const PROBE_MAX_AGE_MS = 24 * 60 * 60 * 1000
   // ai.* waits on the Tab Space service, which can take up to a minute before
   // it answers or explains a refusal. The default deadline would discard that
@@ -303,10 +307,18 @@
   async function readSettings(context) {
     const names = [
       "disable-shortcuts", "shift-shortcuts", "disable-context-menus",
-      "ignore-pinned-tabs", "externalBrowser1", "externalBrowser2"
+      "ignore-pinned-tabs", "externalBrowser1", "externalBrowser2",
+      OPEN_DASHBOARD_AFTER_SAVE
     ]
     const entries = await Promise.all(names.map(async name => {
-      const result = await requestWithFallback(context.client, "settings.get", { name }, { trace: false })
+      let result
+      try {
+        result = await requestWithFallback(context.client, "settings.get", { name }, { trace: false })
+      } catch (error) {
+        // A helper from before a setting existed refuses its name; that one
+        // reads as unset instead of failing the whole refresh.
+        if (!error || error.code !== "invalid_setting") throw error
+      }
       return [name, result && result.value || ""]
     }))
     const settings = Object.fromEntries(entries)
@@ -342,6 +354,10 @@
     await call(api.storage.local, "remove", [SETTINGS_CACHED_AT_KEY]).catch(() => {})
   }
 
+  function opensDashboardAfterSave(settings) {
+    return !settings || settings[OPEN_DASHBOARD_AFTER_SAVE] !== "false"
+  }
+
   async function performCommand(command, data, context) {
     const { api, controller, client } = context
     const tabs = await call(api.tabs, "query", { currentWindow: true })
@@ -356,14 +372,14 @@
         return controller.saveTabIds(tabs.map(tab => tab.id), {
           allWindowsIfEnabled: true,
           closeTabsAfterSave: true,
-          openDashboardAfterSave: true,
+          openDashboardAfterSave: opensDashboardAfterSave(await cachedSettings(context).catch(() => null)),
           preserveActiveTab: true
         })
       case "SaveCurrentTab":
       case "SaveCurrentPageToTabSpace":
         return controller.saveTabIds(active ? [active.id] : [], {
           closeTabsAfterSave: false,
-          openDashboardAfterSave: true
+          openDashboardAfterSave: opensDashboardAfterSave(await cachedSettings(context).catch(() => null))
         })
       case "CloseRightTabs": return closeRelativeTabs(api, "right")
       case "CloseLeftTabs": return closeRelativeTabs(api, "left")
@@ -417,11 +433,13 @@
   async function performChosen(chosen, context) {
     const { api, controller, client, sessions, currentTabs } = context
     switch (chosen.action) {
+      // The handler read the setting when it drew the menu; a handler too
+      // old to send it meant "always".
       case "save":
         return controller.saveTabIds(currentTabs.map(tab => tab.id), {
           allWindowsIfEnabled: true,
           closeTabsAfterSave: chosen.closeTabs === true,
-          openDashboardAfterSave: true,
+          openDashboardAfterSave: chosen.openDashboard !== false,
           preserveActiveTab: true,
           destinationSessionUuid: chosen.sessionUuid || ""
         })
@@ -429,7 +447,7 @@
         const active = currentTabs.find(tab => tab.active) || currentTabs[0]
         return controller.saveTabIds(active ? [active.id] : [], {
           closeTabsAfterSave: false,
-          openDashboardAfterSave: true,
+          openDashboardAfterSave: chosen.openDashboard !== false,
           destinationSessionUuid: chosen.sessionUuid || ""
         })
       }
@@ -546,6 +564,13 @@
     // the Helper immediately and still uses the WS-first transport policy.
     if (client && typeof client.close === "function") client.close()
     recordMenu(client, "native").catch(() => {})
+    // The Settings submenu writes the shared defaults itself, so the cached
+    // copy is stale the moment the menu closes: shortcuts read the new values
+    // on the next page load, and the page context menu is rebuilt now.
+    if (response.settingsChanged === true) {
+      await invalidateSettings(api)
+      await syncContextMenus(api, await cachedSettings(context).catch(() => null))
+    }
     const result = await perform(response.chosen, {
       ...context,
       sessions,
@@ -553,6 +578,16 @@
       clickedTab
     })
     return { shown: true, result }
+  }
+
+  // The page context menu, as the settings ask for it. Settings that could not
+  // be read leave the menu as it is rather than add or remove it on a guess.
+  async function syncContextMenus(api, settings) {
+    if (!api.contextMenus || !settings) return
+    await call(api.contextMenus, "removeAll").catch(() => {})
+    if (settings["disable-context-menus"] === "true") return
+    await call(api.contextMenus, "create", { id: "SaveCurrentPageToTabSpace", title: "Save Current Page", contexts: ["page"] })
+    await call(api.contextMenus, "create", { id: "SaveAllPagesToTabSpace", title: "Save All Pages", contexts: ["page"] })
   }
 
   function install(context) {
@@ -614,12 +649,7 @@
       })
     }
     if (api.contextMenus) {
-      call(api.contextMenus, "removeAll").catch(() => {}).then(async () => {
-        const settings = await settingsAtStartup
-        if (settings["disable-context-menus"] === "true") return
-        await call(api.contextMenus, "create", { id: "SaveCurrentPageToTabSpace", title: "Save Current Page", contexts: ["page"] })
-        await call(api.contextMenus, "create", { id: "SaveAllPagesToTabSpace", title: "Save All Pages", contexts: ["page"] })
-      }).catch(() => {})
+      settingsAtStartup.then(settings => syncContextMenus(api, settings)).catch(() => {})
       if (api.contextMenus.onClicked) {
         api.contextMenus.onClicked.addListener(info => {
           if (["SaveCurrentPageToTabSpace", "SaveAllPagesToTabSpace"].includes(info.menuItemId)) {
@@ -650,6 +680,7 @@
     MENU_SESSIONS_CACHE_KEY,
     MENU_SESSIONS_DEADLINE_MS,
     menuSessions,
+    OPEN_DASHBOARD_AFTER_SAVE,
     AI_NATIVE_TIMEOUT_MS,
     PROBE_CACHE_KEY,
     PROBE_MAX_AGE_MS,
@@ -673,6 +704,7 @@
     recordMenu,
     readSettings,
     show,
+    syncContextMenus,
     install
   }
 })
