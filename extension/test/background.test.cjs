@@ -884,7 +884,7 @@ test('popup exposes and persists both opt-in post-save actions', () => {
   assert.equal(popup.includes('tabspace-close-tabs-after-save'), true)
   assert.equal(popup.includes('openDashboardAfterSave: elements.openDashboardAfterSave.checked'), true)
   assert.equal(popup.includes('closeTabsAfterSave: elements.closeTabsAfterSave.checked'), true)
-  assert.equal(popup.includes('openDashboardAfterSave: "打开 Tab Space 管理页"'), true)
+  assert.equal(popup.includes('openDashboardAfterSave: "打开 Tab Space 资料库"'), true)
   assert.equal(popup.includes('打开 Tab Space Dashboard'), false)
 })
 

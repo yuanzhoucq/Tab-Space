@@ -1983,7 +1983,7 @@ test('asks for a refresh when AI still reports the pre-purchase entitlement', as
   })
 
   const prompt = page.getByTestId('subscription-refresh-toast')
-  await expect(prompt).toContainText('Refresh the dashboard')
+  await expect(prompt).toContainText('Refresh this page')
   await page.evaluate(() => { window.__tabspaceReloadMarker = true })
   await prompt.getByTestId('subscription-refresh-reload').click()
   await expect.poll(() => page.evaluate(() => window.__tabspaceReloadMarker)).toBeUndefined()
@@ -3229,7 +3229,7 @@ test('distinguishes a connected library timeout and recovers when valid data arr
   await expect(delayed).toContainText('The extension has responded')
   await expect(page.getByTestId('pairing-guide')).toHaveCount(0)
   await expect(page.getByTestId('safari-permission-guide')).toHaveCount(0)
-  await expect(delayed.getByRole('button', { name: 'Open bundled dashboard' })).toHaveCount(0)
+  await expect(delayed.getByRole('button', { name: 'Open built-in library' })).toHaveCount(0)
 
   // Retry remains a full reload; it must not send the user to permissions.
   await Promise.all([
@@ -3322,7 +3322,7 @@ test('offers the bundled dashboard only when an old app exposes it', async ({ pa
     bundledDashboard: true
   })
 
-  const bundledDashboard = page.getByRole('button', { name: 'Open bundled dashboard' })
+  const bundledDashboard = page.getByRole('button', { name: 'Open built-in library' })
   await expect(bundledDashboard).toBeVisible({ timeout: 10000 })
   await bundledDashboard.click()
   await expect.poll(() => page.evaluate(() => window.__tabspaceBundledDashboardOpened)).toBe(true)
