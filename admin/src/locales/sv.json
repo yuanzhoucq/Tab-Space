@@ -79,6 +79,7 @@
   "ignore-pinned-tabs": "Hoppa över nålade sidor när flikar sparas",
   "ignore-duplicated-tabs": "Spara inte duplicerade flikar (även om det är olika sessioner)",
   "save-all-windows": "Spara flikar från alla fönster",
+  "open-dashboard-after-save": "Öppna biblioteket efter att ha sparat",
   "disable-shortcuts": "Stäng av kortkommandon",
   "shortcuts": "Kortkommandon",
   "shortcutTip": "Notera: Kortkommandon fungerar inte när adressfältet i Safari är tomt..",

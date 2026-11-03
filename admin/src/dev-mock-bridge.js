@@ -163,7 +163,8 @@ export function installMockBridge() {
   const clone = value => JSON.parse(JSON.stringify(value))
   const marketing = new URLSearchParams(window.location.search).get('mock') === 'marketing'
   let sessions = marketing ? marketingSessions() : sampleSessions()
-  const defaults = {}
+  // What a current Tab Space app reports for a setting older apps lack.
+  const defaults = { 'open-dashboard-after-save': 'true' }
 
   const emit = (name, message) => {
     setTimeout(() => {

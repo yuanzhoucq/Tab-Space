@@ -79,6 +79,7 @@
   "ignore-pinned-tabs": "고정탭은 저장하지 않기",
   "ignore-duplicated-tabs": "중복탭 저장하지 않기 (다른 세션의 탭 포함)",
   "save-all-windows": "모든 창의 탭 저장",
+  "open-dashboard-after-save": "저장 후 라이브러리 열기",
   "disable-shortcuts": "단축키 비활성화",
   "shortcuts": "단축키",
   "shortcutTip": "주의: Safari 주소창이 비어 있으면 단축키가 작동하지 않습니다.",

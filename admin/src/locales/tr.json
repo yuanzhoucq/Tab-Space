@@ -79,6 +79,7 @@
   "ignore-pinned-tabs": "Kaydederken sabitlenmiş sekmeleri atla",
   "ignore-duplicated-tabs": "Aynı adresli sekmeleri kayıt etme (farklı oturumlar için dahi geçerlidir)",
   "save-all-windows": "Bütün pencerelerden her sekmeyi kayıt et",
+  "open-dashboard-after-save": "Kaydettikten sonra kitaplığı aç",
   "disable-shortcuts": "Kısayolları etkisiz bırak",
   "shortcuts": "Kısayollar",
   "shortcutTip": "Not: Safari adres çubuğu boş iken kısayollar çalışmaz.",

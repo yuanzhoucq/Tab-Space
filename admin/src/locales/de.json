@@ -79,6 +79,7 @@
   "ignore-pinned-tabs": "Ignoriere gepinnte Webseiten, wenn Tabs gespeichert werden",
   "ignore-duplicated-tabs": "Speichere keine duplizierten Tabs (bezieht sich auch auf die in anderen Sitzungen gespeicherten)",
   "save-all-windows": "Sichere Tabs aus allen Fenstern",
+  "open-dashboard-after-save": "Nach dem Sichern die Bibliothek öffnen",
   "disable-shortcuts": "Deaktiviere Shortcuts",
   "disable-context-menus": "Deaktiviere Kontextmenü",
   "shortcuts": "Shortcuts",

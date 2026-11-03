@@ -85,6 +85,7 @@
   "ignore-pinned-tabs": "Vastgemaakte webpagina's negeren bij het opslaan van tabbladen",
   "ignore-duplicated-tabs": "Gedupliceerde tabbladen niet opslaan (ook niet als ze in andere sessies voorkomen)",
   "save-all-windows": "Tabbladen van alle vensters opslaan",
+  "open-dashboard-after-save": "Bibliotheek openen na het bewaren",
   "shift-shortcuts": "Snelkoppelingen gebruiken met Ctrl + Shift",
   "disable-shortcuts": "Snelkoppelingen uitschakelen",
   "disable-context-menus": "Contextuele menu's uitschakelen",

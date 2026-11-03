@@ -467,9 +467,12 @@ export default {
       return this.bridge && this.bridge.mode === "webextension"
     },
     settingsForBridge() {
-      if (!this.isWebExtension) return this.settings
+      const reportedOnly = new Set(Constants.reportedOnlySettings)
+      const available = this.settings.filter(setting => !reportedOnly.has(setting)
+        || ["true", "false"].includes(this.tabSpaceSettings[setting]))
+      if (!this.isWebExtension) return available
       const safariOnly = new Set(["shift-shortcuts", "disable-shortcuts", "disable-context-menus"])
-      return this.settings.filter(setting => !safariOnly.has(setting))
+      return available.filter(setting => !safariOnly.has(setting))
     },
     quotaKnown() {
       return this.aiQuotaRemaining !== null && this.aiQuotaRemaining !== undefined

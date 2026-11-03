@@ -306,6 +306,9 @@ export default {
           break
         case "connection-error":
         case "request-error":
+          // An app older than a setting refuses its name. That says nothing
+          // about the connection, and the setting's toggle stays hidden.
+          if (data.error && data.error.code === "invalid_setting") break
           // The local helper refuses a save over the Free session limit; treat
           // it exactly like the Safari bridge's SessionLimitReached message.
           if (data.error && data.error.code === "session_limit_reached") {

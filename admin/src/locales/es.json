@@ -79,6 +79,7 @@
   "ignore-pinned-tabs": "Ignorar las páginas web ancladas al guardar las pestañas",
   "ignore-duplicated-tabs": "No guardar pestañas duplicadas (inclusive aquellas en diferentes sesiones)",
   "save-all-windows": "Guardar las pestañas de todas las ventanas",
+  "open-dashboard-after-save": "Abrir la biblioteca después de guardar",
   "shift-shortcuts": "Activar atajos con Ctrl + Shift",
   "disable-shortcuts": "Inhabilitar los atajos",
   "shortcuts": "Atajos",

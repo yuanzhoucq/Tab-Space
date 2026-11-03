@@ -85,6 +85,7 @@
   "ignore-pinned-tabs": "Ignorer les pages web épinglés en sauvegardant les onglets",
   "ignore-duplicated-tabs": "Ne pas sauvegarder les onglets dupliqués (même pour ceux présents dans des sessions différentes)",
   "save-all-windows": "Sauvegarder les onglets de toutes les fenêtres",
+  "open-dashboard-after-save": "Ouvrir la bibliothèque après l’enregistrement",
   "shift-shortcuts": "Activez les raccourcis avec Ctrl + Shift",
   "disable-shortcuts": "Désactiver les raccourcis",
   "shortcuts": "Raccourcis",

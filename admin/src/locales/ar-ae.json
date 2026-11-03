@@ -85,6 +85,7 @@
   "ignore-pinned-tabs": "تجاهل صفحات الويب المثبتة أثناء حفظ علامات التبويب",
   "ignore-duplicated-tabs": "لا تحفظ علامات التبويب المكررة (حتى لمن تلك في جلسات مختلفة)",
   "save-all-windows": "حفظ علامات التبويب من جميع النوافذ",
+  "open-dashboard-after-save": "فتح المكتبة بعد الحفظ",
   "shift-shortcuts": "تشغيل الاختصارات باستخدام Ctrl + Shift",
   "disable-shortcuts": "تعطيل الاختصارات",
   "disable-context-menus": "تعطيل قوائم السياق",

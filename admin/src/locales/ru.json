@@ -85,6 +85,7 @@
   "ignore-pinned-tabs": "Игнорировать закрепленные сайты при сохранении вкладок",
   "ignore-duplicated-tabs": "Не сохранять дублированные вкладки (даже для разных сессий)",
   "save-all-windows": "Сохранить вкладки из всех окон",
+  "open-dashboard-after-save": "Открывать библиотеку после сохранения",
   "shift-shortcuts": "Запуск c клавишами Ctrl + Shift",
   "disable-shortcuts": "Отключить быстрые комбинации",
   "disable-context-menus": "Отключить контекстное меню",

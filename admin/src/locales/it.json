@@ -79,6 +79,7 @@
   "ignore-pinned-tabs": "Ignora le pagine web ancorate quando si salvano le tab",
   "ignore-duplicated-tabs": "Non salvare le tab duplicate (anche quelle di sessioni differenti)",
   "save-all-windows": "Salva le tab di tutte le finestre",
+  "open-dashboard-after-save": "Apri la libreria dopo il salvataggio",
   "disable-shortcuts": "Disattiva le scorciatoie",
   "shortcuts": "Scorciatoie da tastiera",
   "shortcutTip": "Nota: le scorciatoie non funzionano quando la barra degli indirizzi è vuota.",

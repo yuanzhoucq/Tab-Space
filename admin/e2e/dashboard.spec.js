@@ -974,8 +974,8 @@ async function openAppExtensionDashboard(page, initialSessions) {
   await page.goto('http://localhost:47317/')
 }
 
-async function openWebExtensionDashboard(page, capabilities) {
-  await page.addInitScript(({ testSessions, bridgeCapabilities }) => {
+async function openWebExtensionDashboard(page, capabilities, settings = {}) {
+  await page.addInitScript(({ testSessions, bridgeCapabilities, bridgeSettings }) => {
     const clone = value => JSON.parse(JSON.stringify(value))
     const channel = 'tabspace-webextension-v2'
     // These bridge tests are not about the one-time release introduction.
@@ -1012,10 +1012,18 @@ async function openWebExtensionDashboard(page, capabilities) {
       if (command.cmd === 'CheckBookmarks') {
         nativeMessage({ cmd: 'ReturnBookmarks', bookmarks: clone(testSessions) })
       } else if (command.cmd === 'CheckDefault') {
+        // An app older than a setting refuses its name.
+        if (bridgeSettings[command.name] === 'refuse') {
+          post('request-error', {
+            requestId: data.requestId,
+            error: { code: 'invalid_setting', message: 'The setting is not available to browser extensions.' }
+          })
+          return
+        }
         nativeMessage({
           cmd: 'ReturnDefault',
           id: command.name,
-          value: command.name === 'tabspace-native-protocol-version' ? '2' : ''
+          value: command.name === 'tabspace-native-protocol-version' ? '2' : (bridgeSettings[command.name] || '')
         })
       } else if (command.cmd === 'GetSuggestions') {
         nativeMessage({ cmd: 'ReturnSuggestions', suggestions: '[]' })
@@ -1029,7 +1037,7 @@ async function openWebExtensionDashboard(page, capabilities) {
       }
       post('request-complete', { requestId: data.requestId })
     })
-  }, { testSessions: sessions, bridgeCapabilities: capabilities })
+  }, { testSessions: sessions, bridgeCapabilities: capabilities, bridgeSettings: settings })
 
   const distRoot = path.resolve(__dirname, '..', 'dist')
   await page.route('http://127.0.0.1:8080/**', async route => {
@@ -3343,6 +3351,47 @@ test('links support, FAQ and privacy to the official website', async ({ page }) 
   await expect(footer.getByRole('link', { name: 'Contact' })).toHaveAttribute('href', 'mailto:support@mytab.space')
   await expect(footer.getByRole('link', { name: 'FAQ' })).toHaveAttribute('href', 'https://mytab.space/#faq')
   await expect(footer.getByRole('link', { name: 'Privacy' })).toHaveAttribute('href', 'https://mytab.space/privacy.html')
+})
+
+// The setting is one an older app does not have, so its toggle waits for the
+// app to report a value. A current app always reports "true" or "false".
+test('shows the open-the-library-after-saving toggle only to an app that reports it', async ({ page }) => {
+  await openDashboard(page, { initialSessions: sessions })
+  await page.getByTestId('settings-link').click()
+  await expect(page).toHaveURL(/#\/settings$/)
+  await expect(page.locator('.setting-item').first()).toBeVisible()
+  await expect(page.locator('.setting-item').filter({ hasText: 'Open the library after saving' })).toHaveCount(0)
+})
+
+test('turns off opening the library after saving', async ({ page }) => {
+  await page.addInitScript(() => {
+    localStorage.setItem('tabspace-e2e-settings', JSON.stringify({ 'open-dashboard-after-save': 'true' }))
+  })
+  await openDashboard(page, { initialSessions: sessions })
+  await page.getByTestId('settings-link').click()
+  await expect(page).toHaveURL(/#\/settings$/)
+
+  const row = page.locator('.setting-item').filter({ hasText: 'Open the library after saving' })
+  await expect(row.locator('.vue-js-switch')).toHaveClass(/toggled/)
+  await row.locator('.vue-js-switch').click()
+  await expect.poll(() => lastBridgeCommand(page, 'SetDefault')).toMatchObject({
+    payload: { name: 'open-dashboard-after-save', value: 'false' }
+  })
+  await expect(row.locator('.vue-js-switch')).not.toHaveClass(/toggled/)
+})
+
+test('a companion app that refuses a newer setting keeps the library and hides the toggle', async ({ page }) => {
+  await openWebExtensionDashboard(page, ['sessions.read'], { 'open-dashboard-after-save': 'refuse' })
+  await expect(page.locator('.session')).toHaveCount(2)
+  await expect.poll(async () => (await page.evaluate(() => window.__tabspaceBridgeCommands))
+    .some(command => command.name === 'CheckDefault' && command.payload.name === 'open-dashboard-after-save'))
+    .toBe(true)
+
+  await page.getByTestId('settings-link').click()
+  await expect(page.locator('.setting-item').first()).toBeVisible()
+  await expect(page.locator('.setting-item').filter({ hasText: 'Open the library after saving' })).toHaveCount(0)
+  await page.goBack()
+  await expect(page.locator('.session')).toHaveCount(2)
 })
 
 test('persists settings across a reload', async ({ page }) => {

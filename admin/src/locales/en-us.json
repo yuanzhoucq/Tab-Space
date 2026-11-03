@@ -85,6 +85,7 @@
   "ignore-pinned-tabs": "Ignore pinned web pages while saving tabs",
   "ignore-duplicated-tabs": "Don't save duplicated tabs (even for those in different sessions)",
   "save-all-windows": "Save tabs from all windows",
+  "open-dashboard-after-save": "Open the library after saving",
   "shift-shortcuts": "Trigger shortcuts with Ctrl + Shift",
   "disable-shortcuts": "Disable shortcuts",
   "disable-context-menus": "Disable context menus",

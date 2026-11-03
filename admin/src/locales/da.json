@@ -77,6 +77,7 @@
   "loading": "indlæser...",
   "ignore-pinned-tabs": "Ignorer fastgjorte web sider under lagring af faner",
   "save-all-windows": "Gem faner fra alle vinduer",
+  "open-dashboard-after-save": "Åbn biblioteket efter arkivering",
   "disable-shortcuts": "Deaktiver genveje",
   "shortcuts": "Genveje",
   "shortcutTip": "OBS: genveje fungerer ikke når Safari´s adressefeltet er tomt.",

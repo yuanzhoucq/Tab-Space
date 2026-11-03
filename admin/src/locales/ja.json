@@ -85,6 +85,7 @@
   "ignore-pinned-tabs": "タブを保存する時にピン留めされたページを無視する",
   "ignore-duplicated-tabs": "重複したタブ（別のセッションにあるものを含む）を保存しない",
   "save-all-windows": "すべてのウィンドウのタブを保存する",
+  "open-dashboard-after-save": "保存後にライブラリを開く",
   "shift-shortcuts": "Ctrl + Shift を押した時にショートカットキーを有効にする",
   "disable-shortcuts": "ショートカットキーを無効にする",
   "disable-context-menus": "コンテキストメニューを無効にする",
