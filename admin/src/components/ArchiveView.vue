@@ -1,19 +1,49 @@
 <template>
   <div class="archive-view" data-testid="archive-view">
-    <div class="archive-status" data-testid="archive-status">
-      <template v-if="archive.enabled">
-        <span class="archive-status-dot" aria-hidden="true"></span>
-        <span>{{ statusText }}</span>
-      </template>
-      <template v-else>
-        <span>{{ lang.archiveDisabled }}</span>
-        <button type="button" class="archive-link-button" data-testid="archive-turn-on" @click="turnOn">
-          {{ lang.archiveTurnOn }}
+    <div class="archive-toolbar" data-testid="archive-status">
+      <!-- What gets saved, and where, is told on demand instead of in a
+           standing paragraph above the list. -->
+      <div class="archive-help" ref="help">
+        <button type="button" class="archive-help-chip" data-testid="archive-help"
+                :aria-expanded="helpOpen ? 'true' : 'false'" @click="helpOpen = !helpOpen">
+          <v-icon name="info" class="archive-help-icon"></v-icon>
+          <span>{{ lang.archiveHowItWorks }}</span>
         </button>
-      </template>
+        <div v-if="helpOpen" class="archive-help-popover" role="dialog" :aria-label="lang.archiveHowItWorks"
+             data-testid="archive-help-popover">
+          <p class="archive-help-title">{{ lang.archiveSwitch }}</p>
+          <ul class="archive-help-points">
+            <li>
+              <span class="archive-help-point-icon"><v-icon name="archive"></v-icon></span>
+              <span>{{ lang.archiveHelpWhat }}</span>
+            </li>
+            <li>
+              <span class="archive-help-point-icon"><v-icon name="slash"></v-icon></span>
+              <span>{{ lang.archiveHelpNot }}</span>
+            </li>
+            <li>
+              <span class="archive-help-point-icon"><v-icon name="monitor"></v-icon></span>
+              <span>{{ lang.archiveHelpLocal }}</span>
+            </li>
+          </ul>
+          <p v-if="archive.lastCapturedAt" class="archive-help-note">{{ lastSavedText }}</p>
+        </div>
+      </div>
+      <label class="archive-switch">
+        <span>{{ lang.archiveSwitch }}</span>
+        <toggle-button
+            data-testid="archive-toggle"
+            :value="archive.enabled"
+            :sync="true"
+            :width="36"
+            :height="20"
+            :color="{checked: '#fa8072', unchecked: '#ccc'}"
+            @change="setEnabled"
+        />
+      </label>
     </div>
-    <p class="archive-intro">{{ lang.archiveIntro }}</p>
-    <p v-if="archive.retentionDays" class="archive-retention" data-testid="archive-retention">
+    <p v-if="!archive.enabled" class="archive-note" data-testid="archive-off">{{ lang.archiveDisabled }}</p>
+    <p v-if="archive.retentionDays" class="archive-note" data-testid="archive-retention">
       {{ retentionText }}
     </p>
 
@@ -23,46 +53,105 @@
 
     <section v-for="group in groups" :key="group.day" class="archive-day">
       <h3 class="archive-day-title">{{ group.label }}</h3>
-      <article
-          v-for="entry in group.entries"
-          :key="entry.id"
-          class="archive-entry"
-          :data-testid="`archive-entry-${entry.id}`"
-      >
-        <header class="archive-entry-header">
-          <div class="archive-entry-heading">
-            <span class="archive-entry-title">{{ entryTitle(entry) }}</span>
-            <span class="archive-entry-meta">
-              {{ reasonLabel(entry) }} · {{ timeLabel(entry.updatedAt) }} · {{ pagesLabel(entry) }}
-              <template v-if="expiryLabel(entry)"> · <span class="archive-expiry">{{ expiryLabel(entry) }}</span></template>
+
+      <!-- Titles only, like the session list in that view: one card a day, one
+           row an entry, and a click on the row shows its pages. -->
+      <div v-if="sessionViewMode === 'titles'" class="titles-card">
+        <div v-for="entry in group.entries" :key="entry.id" class="titles-row"
+             :data-testid="`archive-entry-${entry.id}`">
+          <div class="titles-summary" @click="toggle(entry)">
+            <span class="titles-title">{{ entryTitle(entry) }}</span>
+            <span class="source-chip titles-tag" data-testid="archive-reason">
+              <v-icon :name="reasonIcon(entry)"></v-icon>{{ reasonLabel(entry) }}
             </span>
+            <span v-if="expiryLabel(entry)" class="tag tag-expiry titles-tag">{{ expiryLabel(entry) }}</span>
+            <span class="titles-spacer" aria-hidden="true"></span>
+            <span class="titles-count">{{ countLabel(entry) }}</span>
+            <button type="button" class="btn del-btn" data-testid="archive-delete"
+                    :aria-label="lang.archiveDelete" :title="lang.archiveDelete" @click.stop="remove(entry)">
+              <v-icon name="trash-2" class="btn-icon"></v-icon>
+            </button>
+            <button type="button" class="btn keep-btn" data-testid="archive-keep"
+                    :aria-label="lang.archiveKeep" :title="lang.archiveKeep"
+                    :disabled="pendingId === entry.id" @click.stop="keep(entry)">
+              <v-icon name="bookmark" class="btn-icon"></v-icon>
+            </button>
+            <button type="button" class="btn restore-btn" data-testid="archive-open"
+                    :aria-label="lang.archiveOpenAll" :title="lang.archiveOpenAll" @click.stop="openAll(entry)">
+              <v-icon name="external-link" class="btn-icon" :stroke-width="2.4"></v-icon>
+            </button>
           </div>
-          <div class="archive-entry-actions">
-            <button type="button" class="archive-action" data-testid="archive-open" @click="openAll(entry)">
-              {{ lang.archiveOpenAll }}
-            </button>
-            <button type="button" class="archive-action archive-action-primary" data-testid="archive-keep"
-                    :disabled="pendingId === entry.id" @click="keep(entry)">
-              {{ lang.archiveKeep }}
-            </button>
-            <button type="button" class="archive-action archive-action-icon" data-testid="archive-delete"
-                    :aria-label="lang.archiveDelete" :title="lang.archiveDelete" @click="remove(entry)">
-              <v-icon name="trash-2" :stroke-width="1.6"></v-icon>
-            </button>
+          <ul v-if="expanded[entry.id]" class="archive-sites titles-sites">
+            <li v-for="site in entry.sites" :key="site.url">
+              <div class="fav">
+                <img class="fav-img" :src="favicon(site.url) || fallbackIcon" loading="lazy" decoding="async"
+                     referrerpolicy="no-referrer" alt @error="useFallbackIcon">
+              </div>
+              <span class="site-title">
+                <a class="link" :href="site.url" target="_blank" rel="noopener">{{ site.title || site.url }}</a>
+              </span>
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Otherwise laid out like a saved session's card, so the two read as
+           one library. -->
+      <template v-else>
+        <article
+            v-for="entry in group.entries"
+            :key="entry.id"
+            class="archive-entry"
+            :data-testid="`archive-entry-${entry.id}`"
+            @click="handleCardClick($event, entry)"
+        >
+          <div class="archive-entry-header">
+            <span class="archive-entry-title">{{ entryTitle(entry) }}</span>
+            <div class="archive-entry-actions">
+              <button type="button" class="btn restore-btn" data-testid="archive-open"
+                      :aria-label="lang.archiveOpenAll" :title="lang.archiveOpenAll" @click="openAll(entry)">
+                <v-icon name="external-link" class="btn-icon" :stroke-width="2.4"></v-icon>
+              </button>
+              <button type="button" class="btn keep-btn" data-testid="archive-keep"
+                      :aria-label="lang.archiveKeep" :title="lang.archiveKeep"
+                      :disabled="pendingId === entry.id" @click="keep(entry)">
+                <v-icon name="bookmark" class="btn-icon"></v-icon>
+              </button>
+              <button type="button" class="btn del-btn" data-testid="archive-delete"
+                      :aria-label="lang.archiveDelete" :title="lang.archiveDelete" @click="remove(entry)">
+                <v-icon name="trash-2" class="btn-icon"></v-icon>
+              </button>
+            </div>
           </div>
-        </header>
-        <ul class="archive-sites">
-          <li v-for="site in visibleSites(entry)" :key="site.url" class="archive-site">
-            <img class="archive-favicon" :src="favicon(site.url) || fallbackIcon" loading="lazy" decoding="async"
-                 referrerpolicy="no-referrer" alt @error="useFallbackIcon">
-            <a class="archive-site-link" :href="site.url" target="_blank" rel="noopener">{{ site.title || site.url }}</a>
-          </li>
-        </ul>
-        <button v-if="entry.sites.length > collapsedSiteCount && !expanded[entry.id]"
-                type="button" class="archive-link-button archive-more" @click="expand(entry.id)">
-          {{ moreLabel(entry) }}
-        </button>
-      </article>
+          <!-- The compact view shows the favicon strip, and a click on the
+               card opens it, as on a session card. -->
+          <ul :class="['archive-sites', {'collapsed-sites': isCompact(entry)}]" data-testid="archive-sites">
+            <li v-for="site in visibleSites(entry)" :key="site.url"
+                :class="{'collapsed-site': isCompact(entry)}" :title="isCompact(entry) ? (site.title || site.url) : null">
+              <div :class="['fav', {'collapsed-fav': isCompact(entry)}]">
+                <img :class="['fav-img', {'collapsed-fav-img': isCompact(entry)}]"
+                     :src="favicon(site.url) || fallbackIcon" loading="lazy" decoding="async"
+                     referrerpolicy="no-referrer" alt @error="useFallbackIcon">
+              </div>
+              <span v-if="!isCompact(entry)" class="site-title">
+                <a class="link" :href="site.url" target="_blank" rel="noopener">{{ site.title || site.url }}</a>
+              </span>
+            </li>
+            <li v-if="isCompact(entry) && entry.sites.length > collapsedVisibleLimit"
+                class="collapsed-site collapsed-site-overflow">
+              +{{ entry.sites.length - collapsedVisibleLimit }}
+            </li>
+          </ul>
+          <div class="archive-tags">
+            <!-- Tag-shaped, but tinted and inert: it says how the pages were saved,
+                 not a tag anyone set. -->
+            <span class="source-chip" data-testid="archive-reason">
+              <v-icon :name="reasonIcon(entry)"></v-icon>{{ reasonLabel(entry) }}
+            </span>
+            <span v-if="expiryLabel(entry)" class="tag tag-expiry">{{ expiryLabel(entry) }}</span>
+          </div>
+        </article>
+      </template>
     </section>
 
     <button v-if="archive.nextBeforeDay" type="button" class="archive-load-more" data-testid="archive-load-more"
@@ -74,33 +163,28 @@
 
 <script>
 import { mapState } from 'vuex'
+import { ToggleButton } from 'vue-js-toggle-button'
 import Constants from '../constants'
 import { faviconUrl } from '../favicon'
 import WebPageIcon from '../assets/img/icon-webpage.svg'
 
 const dayMs = 86400000
 
-function hostOf(url) {
-  try {
-    return new URL(url).hostname.replace(/^www\./, "")
-  } catch (_) {
-    return ""
-  }
-}
-
 export default {
   name: "ArchiveView",
+  components: { ToggleButton },
   data() {
     return {
-      collapsedSiteCount: 6,
+      collapsedVisibleLimit: 10,
       expanded: {},
       pendingId: "",
+      helpOpen: false,
       fallbackIcon: WebPageIcon,
       now: Date.now()
     }
   },
   computed: {
-    ...mapState(["lang", "bridge", "archive", "tabSpaceSettings"]),
+    ...mapState(["lang", "bridge", "archive", "tabSpaceSettings", "sessionViewMode"]),
     locale() {
       return this.tabSpaceSettings[Constants.preferredLanguageKey] || undefined
     },
@@ -118,8 +202,7 @@ export default {
       }
       return groups
     },
-    statusText() {
-      if (!this.archive.lastCapturedAt) return this.lang.archiveOn
+    lastSavedText() {
       return this.lang.archiveLastCaptured.replace("{time}", this.relativeTime(this.archive.lastCapturedAt))
     },
     retentionText() {
@@ -129,9 +212,13 @@ export default {
   mounted() {
     this.refresh()
     document.addEventListener("visibilitychange", this.onVisibilityChange)
+    document.addEventListener("keydown", this.onKeydown)
+    document.addEventListener("click", this.onDocumentClick)
   },
   beforeDestroy() {
     document.removeEventListener("visibilitychange", this.onVisibilityChange)
+    document.removeEventListener("keydown", this.onKeydown)
+    document.removeEventListener("click", this.onDocumentClick)
   },
   methods: {
     refresh() {
@@ -146,11 +233,19 @@ export default {
         this.bridge.send({ cmd: "ListArchive", beforeDay: this.archive.nextBeforeDay })
       }
     },
-    turnOn() {
+    onKeydown(event) {
+      if (event.key === "Escape") this.helpOpen = false
+    },
+    onDocumentClick(event) {
+      if (this.helpOpen && this.$refs.help && !this.$refs.help.contains(event.target)) this.helpOpen = false
+    },
+    // The same setting as the switch in General Preferences.
+    setEnabled(event) {
       if (!this.bridge) return
-      this.bridge.send({ cmd: "SetDefault", name: "auto-archive-enabled", value: "true" })
-      this.$store.commit("setTabSpaceSetting", { key: "auto-archive-enabled", value: "true" })
-      this.refresh()
+      const value = event.value ? "true" : "false"
+      this.bridge.send({ cmd: "SetDefault", name: "auto-archive-enabled", value })
+      this.$store.commit("setTabSpaceSetting", { key: "auto-archive-enabled", value })
+      this.$store.commit("setArchiveEnabled", event.value)
     },
     openAll(entry) {
       if (!this.bridge) return
@@ -170,14 +265,23 @@ export default {
     remove(entry) {
       if (this.bridge) this.bridge.send({ cmd: "DeleteArchiveEntries", ids: [entry.id] })
     },
-    expand(id) {
-      this.$set(this.expanded, id, true)
+    isCompact(entry) {
+      return this.sessionViewMode === "compact" && !this.expanded[entry.id]
+    },
+    toggle(entry) {
+      this.$set(this.expanded, entry.id, !this.expanded[entry.id])
+    },
+    countLabel(entry) {
+      const count = entry.sites.length
+      return `${count} ${count === 1 ? (this.lang.tab || "tab") : (this.lang.tabs || "tabs")}`
+    },
+    handleCardClick(event, entry) {
+      if (this.sessionViewMode !== "compact") return
+      if (event.target.closest("a, button, .tag")) return
+      this.$set(this.expanded, entry.id, !this.expanded[entry.id])
     },
     visibleSites(entry) {
-      return this.expanded[entry.id] ? entry.sites : entry.sites.slice(0, this.collapsedSiteCount)
-    },
-    moreLabel(entry) {
-      return this.lang.archiveMoreSites.replace("{count}", entry.sites.length - this.collapsedSiteCount)
+      return this.isCompact(entry) ? entry.sites.slice(0, this.collapsedVisibleLimit) : entry.sites
     },
     favicon(url) {
       return faviconUrl(url)
@@ -185,22 +289,19 @@ export default {
     useFallbackIcon(event) {
       if (event && event.target && event.target.src !== this.fallbackIcon) event.target.src = this.fallbackIcon
     },
+    // Named the way an untitled saved session is.
     entryTitle(entry) {
-      const hosts = []
-      for (const site of entry.sites) {
-        const host = hostOf(site.url)
-        if (host && !hosts.includes(host)) hosts.push(host)
-        if (hosts.length === 3) break
-      }
-      return hosts.length > 0 ? hosts.join(" · ") : (entry.sites[0] && entry.sites[0].title) || ""
+      return `${this.lang.saveAt} ${new Date(entry.updatedAt * 1000).Format('yyyy-MM-dd hh:mm')}`
+    },
+    reasonIcon(entry) {
+      if (entry.reason === "burst") return "layers"
+      if (entry.reason === "restart") return "rotate-ccw"
+      return "layout"
     },
     reasonLabel(entry) {
       if (entry.reason === "burst") return this.lang.archiveReasonBurst
       if (entry.reason === "restart") return this.lang.archiveReasonRestart
       return this.lang.archiveReasonWindow
-    },
-    pagesLabel(entry) {
-      return this.lang.archivePages.replace("{count}", entry.sites.length)
     },
     // Free entries say when they go, once that is close.
     expiryLabel(entry) {
@@ -208,9 +309,6 @@ export default {
       const left = Math.ceil((entry.updatedAt * 1000 + this.archive.retentionDays * dayMs - this.now) / dayMs)
       if (left > 3) return ""
       return this.lang.archiveExpiresIn.replace("{days}", Math.max(1, left))
-    },
-    timeLabel(seconds) {
-      return new Date(seconds * 1000).toLocaleTimeString(this.locale, { hour: "2-digit", minute: "2-digit" })
     },
     dayLabel(date) {
       const today = new Date(this.now)
@@ -244,24 +342,143 @@ export default {
   gap: 12px;
 }
 
-.archive-status {
+.archive-toolbar {
   display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.archive-help {
+  position: relative;
+}
+
+.archive-help-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px 4px 8px;
+  border: 0;
+  border-radius: 999px;
+  background-color: rgba(250, 128, 114, 0.08);
+  color: var(--text-secondary, #666);
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.archive-help-chip:hover,
+.archive-help-chip[aria-expanded="true"] {
+  background-color: rgba(250, 128, 114, 0.16);
+  color: var(--text-primary, #2d3748);
+}
+
+.archive-help-icon {
+  width: 14px;
+  height: 14px;
+  stroke: var(--primary-color, #fa8072);
+}
+
+/* The switcher hint's popover: a floating card with a caret toward the chip. */
+.archive-help-popover {
+  position: absolute;
+  top: calc(100% + 10px);
+  left: 0;
+  z-index: 1100;
+  width: 340px;
+  max-width: calc(100vw - 32px);
+  padding: 14px 16px 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  background: var(--card-bg, #fff);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.14), 0 2px 8px rgba(0, 0, 0, 0.08);
+  animation: archive-help-in 0.14s ease-out;
+}
+
+.archive-help-popover::before {
+  content: "";
+  position: absolute;
+  top: -6px;
+  left: 22px;
+  width: 10px;
+  height: 10px;
+  background: var(--card-bg, #fff);
+  border-left: 1px solid var(--border-color);
+  border-top: 1px solid var(--border-color);
+  transform: rotate(45deg);
+}
+
+@keyframes archive-help-in {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: none; }
+}
+
+.archive-help-title {
+  margin: 0 0 10px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.archive-help-points {
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* Undo the library's global row style for list items. */
+.archive-help-points li {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--text-secondary);
+}
+
+.archive-help-points li:hover {
+  background: none;
+}
+
+.archive-help-point-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 24px;
+  height: 24px;
+  border-radius: 7px;
+  background-color: rgba(250, 128, 114, 0.12);
+}
+
+.archive-help-point-icon svg {
+  width: 13px;
+  height: 13px;
+  stroke: var(--primary-color, #fa8072);
+}
+
+.archive-help-note {
+  margin: 12px 0 0;
+  padding-top: 10px;
+  border-top: 1px solid var(--border-color, #e2e8f0);
+  font-size: 11.5px;
+  color: var(--text-secondary);
+}
+
+.archive-switch {
+  display: inline-flex;
   align-items: center;
   gap: 8px;
   font-size: 13px;
   color: var(--text-secondary, #666);
+  cursor: pointer;
 }
 
-.archive-status-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: #34c759;
-  flex-shrink: 0;
-}
-
-.archive-intro,
-.archive-retention {
+.archive-note {
   margin: 0;
   font-size: 13px;
   line-height: 1.5;
@@ -275,142 +492,335 @@ export default {
   font-size: 14px;
 }
 
-.archive-day {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
 .archive-day-title {
-  margin: 8px 0 0;
+  margin: 8px 0 10px;
   font-size: 13px;
   font-weight: 600;
   color: var(--text-secondary, #666);
 }
 
+/* The card, header, buttons and page rows follow SessionCard. */
 .archive-entry {
-  background: var(--card-background, #fff);
-  border: 1px solid var(--border-color, #e6e6e6);
-  border-radius: 12px;
-  padding: 12px 14px;
+  border-radius: var(--radius-lg, 12px);
+  width: 100%;
+  box-sizing: border-box;
+  margin: 0 auto 16px;
+  padding: 14px 18px 10px 28px;
+  background-color: var(--card-bg, white);
+  border: 1px solid var(--border-color, #e2e8f0);
+  box-shadow: var(--shadow-sm, 0 1px 2px 0 rgba(0, 0, 0, 0.05));
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  position: relative;
+}
+
+.archive-entry:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md, 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06));
+  z-index: 50;
 }
 
 .archive-entry-header {
   display: flex;
-  align-items: flex-start;
   justify-content: space-between;
-  gap: 12px;
-}
-
-.archive-entry-heading {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  min-width: 0;
+  align-items: center;
+  margin-bottom: 10px;
 }
 
 .archive-entry-title {
-  font-weight: 600;
-  font-size: 14px;
+  font-size: 18px;
+  font-weight: bold;
+  box-shadow: inset 0 -10px #fadc23;
+  display: inline-block;
+  min-height: 22px;
+  max-width: 350px;
+  white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  white-space: nowrap;
+  margin-right: 20px;
 }
 
-.archive-entry-meta {
-  font-size: 12px;
-  color: var(--text-secondary, #888);
+.archive-tags {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  margin-top: 6px;
 }
 
-.archive-expiry {
-  color: #d9822b;
+.tag {
+  background-color: #f0f0f0;
+  border: 1px solid #e0e0e0;
+  padding: 5px 10px;
+  color: #666666;
+  font-size: 11px;
+  border-radius: 999px;
+  margin-right: 5px;
+  margin-top: 1px;
+  margin-bottom: 5px;
+  display: inline-flex;
+  align-items: center;
+  line-height: 1;
+}
+
+.source-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin: 1px 5px 5px 0;
+  padding: 5px 10px 5px 8px;
+  border: 1px solid rgba(250, 128, 114, 0.22);
+  border-radius: 999px;
+  background-color: rgba(250, 128, 114, 0.08);
+  color: #c4594b;
+  font-size: 11px;
+  line-height: 1;
+  cursor: default;
+}
+
+.source-chip svg {
+  width: 11px;
+  height: 11px;
+  stroke: currentColor;
+}
+
+.tag-expiry {
+  color: #c2410c;
+  background-color: #fff4e5;
+  border-color: #fcd9b0;
 }
 
 .archive-entry-actions {
   display: flex;
-  gap: 6px;
+  align-items: center;
+  white-space: nowrap;
   flex-shrink: 0;
 }
 
-.archive-action {
-  border: 1px solid var(--border-color, #ddd);
-  background: transparent;
-  border-radius: 8px;
-  padding: 4px 10px;
-  font: inherit;
-  font-size: 12px;
-  cursor: pointer;
-  color: inherit;
-}
-
-.archive-action-primary {
-  border-color: salmon;
-  color: #e0604f;
-}
-
-.archive-action-icon {
+.btn {
   display: inline-flex;
   align-items: center;
-  padding: 4px 6px;
+  justify-content: center;
+  padding: 6px;
+  margin-right: 4px;
+  border: 0;
+  font: inherit;
+  color: var(--text-secondary, #718096);
+  cursor: pointer;
+  border-radius: 6px;
+  transition: background-color 0.15s ease, color 0.15s ease;
+  background: transparent;
 }
 
-.archive-action-icon svg {
-  width: 14px;
-  height: 14px;
+.btn:hover {
+  background-color: rgba(0, 0, 0, 0.06);
 }
 
-.archive-action:disabled {
+.btn:disabled {
   opacity: 0.5;
   cursor: default;
 }
 
-.archive-sites {
-  list-style: none;
-  margin: 10px 0 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.archive-site {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  min-width: 0;
-}
-
-.archive-favicon {
+.btn-icon {
   width: 16px;
   height: 16px;
+}
+
+.btn svg {
+  stroke: var(--text-secondary, #718096) !important;
+  transition: stroke 0.15s ease;
+}
+
+.btn:hover svg {
+  stroke: var(--text-primary, #2d3748) !important;
+}
+
+.restore-btn svg {
+  stroke: var(--primary-color, #fa8072) !important;
+}
+
+.restore-btn:hover {
+  background-color: rgba(250, 128, 114, 0.12);
+}
+
+.restore-btn:hover svg {
+  stroke: var(--primary-color-hover, #e07060) !important;
+}
+
+.keep-btn:hover {
+  background-color: rgba(53, 171, 229, 0.12);
+}
+
+.keep-btn:hover svg {
+  stroke: #35abe5 !important;
+}
+
+.del-btn:hover {
+  background-color: rgba(235, 82, 5, 0.1);
+}
+
+.del-btn:hover svg {
+  stroke: #eb5205 !important;
+}
+
+.archive-sites {
+  margin: 0 0 0 -45px;
+}
+
+.fav {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 5px;
+  width: 14px;
+  height: 14px;
   flex-shrink: 0;
 }
 
-.archive-site-link {
-  font-size: 13px;
-  color: inherit;
-  text-decoration: none;
+.fav-img {
+  width: 14px;
+  height: 14px;
+  vertical-align: middle;
+}
+
+.site-title {
+  flex: 1;
+  min-width: 0;
+}
+
+.site-title .link {
+  display: block;
+  white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  max-width: calc(100% - 50px);
+}
+
+/* Titles only: the session list's view of the same name. */
+.titles-card {
+  width: 100%;
+  box-sizing: border-box;
+  margin: 0 auto 16px;
+  padding: 6px 18px;
+  border: 1px solid var(--border-color, #e2e8f0);
+  border-radius: var(--radius-lg, 12px);
+  background-color: var(--card-bg, white);
+  box-shadow: var(--shadow-sm, 0 1px 2px 0 rgba(0, 0, 0, 0.05));
+}
+
+.titles-row {
+  min-width: 0;
+  padding: 8px 4px;
+}
+
+.titles-row + .titles-row {
+  border-top: 1px solid var(--border-color, #e2e8f0);
+}
+
+.titles-summary {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  min-height: 30px;
+  margin: -4px;
+  padding: 4px;
+  border-radius: 6px;
+  cursor: default;
+  transition: background-color 0.15s ease-out;
+}
+
+.titles-summary:hover {
+  background-color: rgba(0, 0, 0, 0.035);
+}
+
+.titles-title {
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  font-size: 15px;
+  line-height: 20px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  margin-right: 10px;
+}
+
+.titles-tag {
+  margin: 0 5px 0 0;
+  flex-shrink: 0;
+}
+
+.titles-spacer {
+  flex: 1;
+  min-width: 12px;
+}
+
+.titles-count {
+  flex-shrink: 0;
+  margin: 0 10px;
+  color: var(--text-secondary, #718096);
+  font-size: 12px;
   white-space: nowrap;
 }
 
-.archive-site-link:hover {
-  text-decoration: underline;
+.titles-summary .btn {
+  margin-right: 0;
 }
 
-.archive-link-button {
-  border: 0;
-  background: none;
+.titles-sites {
+  margin: 8px 0 0 -45px;
+}
+
+.collapsed-sites {
+  display: flex;
+  align-items: center;
+  min-height: 28px;
+  margin: 6px 0 0;
+  padding: 0 25px 0 0;
+}
+
+.collapsed-site {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  flex: 0 0 28px;
+  box-sizing: border-box;
+  margin: 0;
   padding: 0;
-  font: inherit;
-  font-size: 13px;
-  color: #e0604f;
-  cursor: pointer;
+  border: 2px solid var(--card-bg, #ffffff);
+  border-radius: 50%;
+  background: var(--code-bg, #edf2f7);
+  position: relative;
 }
 
-.archive-more {
-  margin-top: 6px;
+.collapsed-site + .collapsed-site {
+  margin-left: -8px;
+}
+
+.collapsed-site:hover {
+  background: var(--code-bg, #edf2f7);
+}
+
+.collapsed-site-overflow {
+  color: var(--text-secondary, #718096);
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.fav.collapsed-fav {
+  width: 16px;
+  height: 16px;
+  margin-right: 0;
+}
+
+.fav .collapsed-fav-img {
+  display: block;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  object-fit: contain;
+  background-color: transparent;
 }
 
 .archive-load-more {
@@ -426,9 +836,58 @@ export default {
 }
 
 @media (prefers-color-scheme: dark) {
+  .titles-card {
+    color: #d0d0d0;
+    border-color: #3a3a3a;
+    background-color: var(--card-bg, #2a2a2a);
+  }
+
+  .titles-summary:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+  }
+
+  .archive-help-popover {
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.55), 0 2px 8px rgba(0, 0, 0, 0.3);
+  }
+
   .archive-entry {
-    background: rgba(255, 255, 255, 0.04);
-    border-color: rgba(255, 255, 255, 0.1);
+    background-color: var(--card-bg, #2a2a2a);
+    color: #d0d0d0;
+    border-color: #3a3a3a;
+  }
+
+  .tag {
+    background-color: #404040;
+    border-color: #555555;
+    color: #d0d0d0;
+  }
+
+  .tag-expiry {
+    color: #fdba74;
+  }
+
+  .source-chip {
+    color: #f4a497;
+    background-color: rgba(250, 128, 114, 0.12);
+    border-color: rgba(250, 128, 114, 0.28);
+  }
+
+  .archive-entry-title {
+    color: #f5f5f5;
+    box-shadow: inset 0 -10px #685e02;
+  }
+
+  .btn:hover {
+    background-color: rgba(255, 255, 255, 0.08);
+  }
+
+  .btn:hover svg {
+    stroke: #e2e8f0 !important;
+  }
+
+  .fav > img {
+    background-color: #aaaaaa;
+    border-radius: 2px;
   }
 }
 </style>

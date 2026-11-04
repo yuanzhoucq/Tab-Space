@@ -4186,19 +4186,24 @@ test('opens, keeps and deletes archived windows', async ({ page }) => {
   })
   await page.getByTestId('filter-archive').click()
   await expect(page.getByTestId('archive-view')).toBeVisible()
-  await expect(page.getByTestId('archive-status')).toContainText('Archiving is on')
+  await expect(page.getByTestId('archive-off')).toHaveCount(0)
+  await page.getByTestId('archive-help').click()
+  await expect(page.getByTestId('archive-help-popover')).toContainText('on this Mac')
+  await page.keyboard.press('Escape')
+  await expect(page.getByTestId('archive-help-popover')).toHaveCount(0)
   await expect(page.getByTestId('archive-retention')).toHaveCount(0)
 
   const windowEntry = page.getByTestId('archive-entry-archive-window')
-  await expect(windowEntry).toContainText('forums.swift.org · developer.apple.com')
+  await expect(windowEntry).toContainText('Saved at')
+  await expect(windowEntry.getByTestId('archive-reason')).toHaveText('Closed window')
   await windowEntry.getByTestId('archive-open').click()
   await expect.poll(() => lastBridgeCommand(page, 'RestoreSession')).toMatchObject({
     payload: { bookmarks: [{ sites: archiveEntries[0].sites }] }
   })
 
+  // Keeping takes the person to All, where the new session is.
   await windowEntry.getByTestId('archive-keep').click()
-  await expect(windowEntry).toHaveCount(0)
-  await page.getByTestId('filter-all').click()
+  await expect(page.getByTestId('archive-view')).toHaveCount(0)
   await expect(page.locator('.session')).toHaveCount(sessions.length + 1)
 
   await page.getByTestId('filter-archive').click()

@@ -356,6 +356,9 @@ const store = new Vuex.Store({
         setArchiveOpen(state, open) {
             state.archiveOpen = open === true && state.archive.available
         },
+        setArchiveEnabled(state, enabled) {
+            state.archive = { ...state.archive, enabled: enabled === true }
+        },
         // `firstPage` replaces the list; a later page is appended to it.
         setArchive(state, archive) {
             const data = archive && typeof archive === "object" ? archive : {}

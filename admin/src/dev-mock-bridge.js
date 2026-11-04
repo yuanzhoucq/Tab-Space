@@ -149,6 +149,51 @@ function marketingSessions() {
   ]
 }
 
+// Archived windows for the Archive view. `?mock&archive=free` shows the Free
+// retention notice as well.
+function sampleArchive() {
+  const now = Math.floor(Date.now() / 1000)
+  const site = (title, url) => ({ title, url })
+  return [
+    {
+      id: 'mock-archive-window', reason: 'window', browser: 'safari', closedAt: now - 25 * 60, updatedAt: now - 25 * 60,
+      sites: [
+        site('SwiftUI | Apple Developer Documentation', 'https://developer.apple.com/documentation/swiftui'),
+        site('Swift Forums', 'https://forums.swift.org'),
+        site('GitHub · Trending', 'https://github.com/trending')
+      ]
+    },
+    {
+      id: 'mock-archive-burst', reason: 'burst', browser: 'safari', closedAt: now - 3 * 3600, updatedAt: now - 3 * 3600,
+      sites: [
+        site('Kyoto Travel Guide - What to do in Kyoto City', 'https://www.japan-guide.com/e/e2158.html'),
+        site('Kyoto – Travel guide at Wikivoyage', 'https://en.wikivoyage.org/wiki/Kyoto'),
+        site('Airbnb | Kyoto – Holiday Rentals', 'https://www.airbnb.com/kyoto-japan/stays')
+      ]
+    },
+    {
+      id: 'mock-archive-restart', reason: 'restart', browser: 'safari', closedAt: now - 30 * 3600, updatedAt: now - 30 * 3600,
+      sites: [
+        site('Hacker News', 'https://news.ycombinator.com'),
+        site('Wikipedia', 'https://www.wikipedia.org/'),
+        site('The Verge', 'https://www.theverge.com'),
+        site('Cloudflare Pages documentation', 'https://developers.cloudflare.com/pages/'),
+        site('MacBook Pro - Apple', 'https://www.apple.com/macbook-pro/'),
+        site('Figma Community', 'https://www.figma.com/community'),
+        site('Notion – The AI workspace that works for you', 'https://www.notion.so'),
+        site('Coursera | Online Courses From Top Universities', 'https://www.coursera.org')
+      ]
+    },
+    {
+      id: 'mock-archive-old', reason: 'window', browser: 'safari', closedAt: now - 6 * 86400, updatedAt: now - 6 * 86400,
+      sites: [
+        site('ReAct: Synergizing Reasoning and Acting in Language Models', 'https://arxiv.org/abs/2210.03629'),
+        site('arXiv.org e-Print archive', 'https://arxiv.org')
+      ]
+    }
+  ]
+}
+
 // What the marketing library's AI enhance "finds" for its untitled session.
 function marketingEnhancement() {
   const zh = (navigator.language || '').toLowerCase().startsWith('zh')
@@ -161,10 +206,13 @@ export function installMockBridge() {
   if (window.__tabspace_bridge) return
 
   const clone = value => JSON.parse(JSON.stringify(value))
-  const marketing = new URLSearchParams(window.location.search).get('mock') === 'marketing'
+  const query = new URLSearchParams(window.location.search)
+  const marketing = query.get('mock') === 'marketing'
+  let archive = sampleArchive()
+  const archiveRetentionDays = query.get('archive') === 'free' ? 7 : 0
   let sessions = marketing ? marketingSessions() : sampleSessions()
   // What a current Tab Space app reports for a setting older apps lack.
-  const defaults = { 'open-dashboard-after-save': 'true' }
+  const defaults = { 'open-dashboard-after-save': 'true', 'auto-archive-enabled': 'true' }
 
   const emit = (name, message) => {
     setTimeout(() => {
@@ -175,6 +223,15 @@ export function installMockBridge() {
   }
 
   const emitSessions = () => emit('ReturnBookmarks', { value: sessions })
+  const emitArchive = () => emit('ReturnArchive', {
+    archive: {
+      entries: archive,
+      enabled: defaults['auto-archive-enabled'] !== 'false',
+      firstPage: true,
+      lastCapturedAt: archive.length > 0 ? archive[0].updatedAt : undefined,
+      ...(archiveRetentionDays ? { retentionDays: archiveRetentionDays } : {})
+    }
+  })
   const indexOf = uuid => sessions.findIndex(s => s.uuid === uuid)
 
   // --- AI (protocol v2) mock state ---
@@ -352,6 +409,25 @@ export function installMockBridge() {
         sessions = sessions.filter(s => s.uuid !== source.uuid)
       }
       emitSessions()
+    },
+    ListArchive: emitArchive,
+    DeleteArchiveEntries(msg) {
+      const ids = new Set(msg.ids || [])
+      archive = archive.filter(entry => !ids.has(entry.id))
+      emitArchive()
+    },
+    KeepArchiveEntry(msg) {
+      const entry = archive.find(item => item.id === msg.id)
+      archive = archive.filter(item => item.id !== msg.id)
+      if (entry) {
+        sessions.unshift({
+          uuid: `mock-kept-${entry.id}`, title: '', timestamp: Date.now(), comment: '',
+          sites: clone(entry.sites), tags: []
+        })
+      }
+      emitSessions()
+      emitArchive()
+      emit('ArchiveKept', { id: msg.id, ok: true })
     },
     RestoreSession(msg) {
       console.log('[mock bridge] RestoreSession', msg.bookmarks.map(b => b.uuid))

@@ -44,7 +44,7 @@
       :class="{'active-tag': archiveOpen}"
       @click="openArchive"
     >
-      <v-icon class="system-tag-icon" name="archive" :stroke-width="1.8"></v-icon>
+      <v-icon class="system-tag-icon" name="clock" :stroke-width="1.8"></v-icon>
       {{ lang.archive }}
     </button>
 

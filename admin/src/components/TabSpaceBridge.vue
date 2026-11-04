@@ -435,6 +435,12 @@ export default {
             this.$store.commit("setFreeSessionLimit", data.limit)
             this.$store.commit("setShowSubscriptionModal", {show: true, reason: "limitReached"})
           }
+          // The entry has left the archive for the library, so the library is
+          // where the person is taken: the new session is at the top of All.
+          if (data.ok && this.$store.state.archiveOpen) {
+            this.$store.commit("setActiveTag", "")
+            window.scrollTo({top: 0, behavior: "smooth"})
+          }
           break
         case "ReturnSuggestions":
           this.handleSuggestions(data)

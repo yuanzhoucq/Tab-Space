@@ -59,7 +59,7 @@
           <archive-view v-if="archiveOpen"></archive-view>
           <sessions v-else></sessions>
         </div>
-        <session-hub v-if="!archiveOpen"></session-hub>
+        <session-hub></session-hub>
       </div>
     </div>
     <footer>

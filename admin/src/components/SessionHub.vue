@@ -15,7 +15,7 @@
           </symbol>
       </svg>
       <button
-          v-if="aiEnabled && activeTag !== '@Trash'"
+          v-if="aiEnabled && activeTag !== '@Trash' && !archiveOpen"
           type="button"
           class="hub-btn organize-btn"
           data-testid="organize-library"
@@ -89,7 +89,7 @@
       </button>
       <!-- Last in the rail: the new session lands at the top of the list, so the
            button sits away from the controls that act on what is already there. -->
-      <button v-if="activeTag !== '@Trash'" type="button" class="hub-btn" data-testid="add-session" :aria-label="lang.newSession" :title="lang.newSession" @click="insertSession">
+      <button v-if="activeTag !== '@Trash' && !archiveOpen" type="button" class="hub-btn" data-testid="add-session" :aria-label="lang.newSession" :title="lang.newSession" @click="insertSession">
           <v-icon class="button" :stroke-width="1.2" name="plus-circle" fill="rgba(250, 128, 114, 0.2)"
       stroke="salmon"></v-icon>
       </button>
@@ -113,7 +113,7 @@ export default {
         }
     },
     computed: {
-      ...mapState(["lang", "bridge", "sessions", "sessionViewMode", "activeTag", "keyword", "editingSessionUuid", "suggestions"]),
+      ...mapState(["lang", "bridge", "sessions", "sessionViewMode", "activeTag", "keyword", "editingSessionUuid", "suggestions", "archiveOpen"]),
       ...mapGetters(["displaySessions", "aiEnabled", "canCreateSession"]),
       // Each view keeps its own icon, so the button reads as "you are here"
       // instead of an unlabelled cycle. The icons describe a row of the list:
@@ -204,6 +204,9 @@ export default {
 <style scoped>
 .session-hub {
     margin-left: 15px;
+    /* The rail keeps its width whichever buttons a view shows, so the cards
+       beside it do not shift between views. */
+    min-width: 30px;
     display: flex;
     flex-direction: column;
     align-items: center;
