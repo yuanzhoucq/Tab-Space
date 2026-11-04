@@ -290,6 +290,11 @@
   const ARCHIVE_SUPPRESS_MS = 30000
   const ARCHIVE_OUTBOX_LIMIT = 20
   const ARCHIVE_OUTBOX_MAX_AGE_MS = 7 * 86400000
+  // A waiting capture is retried on ordinary tab events, but not more often.
+  const ARCHIVE_OUTBOX_RETRY_MS = 60000
+  // Tabs a refresh found gone stay findable this long, for the close events
+  // that report them after the refresh already ran.
+  const ARCHIVE_GONE_MS = 10000
   // The app cannot take captures at all, so keeping them would be pointless.
   const ARCHIVE_FINAL_ERRORS = ["unsupported_method", "unsupported_command", "pro_required", "invalid_archive"]
 
@@ -337,6 +342,7 @@
     const now = options.now || (() => Date.now())
     const setTimer = options.setTimer || ((callback, delay) => root.setTimeout(callback, delay))
     const clearTimer = options.clearTimer || (timer => root.clearTimeout(timer))
+    const onCaptured = options.onCaptured || (() => {})
 
     let cache = null
     let closes = null
@@ -345,6 +351,9 @@
     let refreshTimer = null
     let restartTimer = null
     let queue = Promise.resolve()
+    // Whether the outbox may hold something, and when it was last tried.
+    let outboxWaiting = true
+    let outboxTriedAt = 0
 
     function serial(task) {
       queue = queue.then(task).catch(() => {})
@@ -363,8 +372,12 @@
       if (cache) return cache
       const stored = await read(ARCHIVE_TABS_KEY)
       cache = stored && typeof stored.tabs === "object" && stored.tabs
-        ? { tabs: { ...stored.tabs }, updatedAt: Number(stored.updatedAt) || 0 }
-        : { tabs: {}, updatedAt: 0 }
+        ? {
+            tabs: { ...stored.tabs },
+            gone: stored.gone && typeof stored.gone === "object" ? { ...stored.gone } : {},
+            updatedAt: Number(stored.updatedAt) || 0
+          }
+        : { tabs: {}, gone: {}, updatedAt: 0 }
       return cache
     }
 
@@ -386,10 +399,13 @@
 
     // `prune` drops tabs the browser no longer reports. A wake-up must not
     // prune: the events that woke it may be the very closes still queued,
-    // and pruning first would forget the tabs they need.
+    // and pruning first would forget the tabs they need. Even a pruning
+    // refresh can run between a close and its event, so what it drops is
+    // kept aside for a few seconds, where the late event still finds it.
     async function refresh(prune) {
       const loaded = await loadCache()
       const tabs = (await queryTabs({})) || []
+      const at = now()
       const next = prune ? {} : loaded.tabs
       for (const tab of tabs) {
         if (!isArchivableTab(tab)) {
@@ -398,8 +414,25 @@
         }
         next[tab.id] = { url: tab.url, title: tab.title || tab.url, windowId: tab.windowId, index: tab.index }
       }
+      for (const [id, gone] of Object.entries(loaded.gone)) {
+        if (!(at - gone.goneAt <= ARCHIVE_GONE_MS) || next[id]) delete loaded.gone[id]
+      }
+      if (prune) {
+        for (const [id, tab] of Object.entries(loaded.tabs)) {
+          if (!next[id]) loaded.gone[id] = { ...tab, goneAt: at }
+        }
+      }
       loaded.tabs = next
       await saveCache()
+    }
+
+    // A tab as last seen, whether the cache still holds it or a refresh
+    // already set it aside. Taking it removes it from both.
+    function takeTab(loaded, id) {
+      const tab = loaded.tabs[id] || loaded.gone[id]
+      delete loaded.tabs[id]
+      delete loaded.gone[id]
+      return tab
     }
 
     function isSuppressed(tabId, at) {
@@ -413,15 +446,22 @@
     }
 
     // Sends what is waiting, oldest first, and stops at the first failure: an
-    // app that is not running now will be tried again on the next event.
+    // app that is not running now will be tried again on the next event. A
+    // new capture is written down before it is sent, so a background context
+    // ended mid-request loses nothing; sending it twice only refreshes the
+    // app's entry.
     async function drainOutbox(extra) {
+      outboxTriedAt = now()
       const stored = (await read(ARCHIVE_OUTBOX_KEY)) || []
       const pending = (extra ? [...stored, { ...extra, at: now() }] : stored)
         .filter(item => item && now() - item.at <= ARCHIVE_OUTBOX_MAX_AGE_MS)
+        .slice(-ARCHIVE_OUTBOX_LIMIT)
       if (pending.length === 0) {
+        outboxWaiting = false
         if (stored.length > 0) await storage.set({ [ARCHIVE_OUTBOX_KEY]: [] })
         return
       }
+      if (extra) await storage.set({ [ARCHIVE_OUTBOX_KEY]: pending })
       let sent = 0
       for (const item of pending) {
         try {
@@ -434,7 +474,12 @@
           break
         }
       }
-      await storage.set({ [ARCHIVE_OUTBOX_KEY]: pending.slice(sent).slice(-ARCHIVE_OUTBOX_LIMIT) })
+      const left = pending.slice(sent)
+      outboxWaiting = left.length > 0
+      await storage.set({ [ARCHIVE_OUTBOX_KEY]: left })
+      if (sent > 0) {
+        try { onCaptured() } catch (_) {}
+      }
     }
 
     function deliver(payload) {
@@ -443,6 +488,13 @@
 
     function flushOutbox() {
       return drainOutbox(null)
+    }
+
+    // Ordinary tab events retry a waiting capture, at most once a minute,
+    // so an app that comes back is caught up without a timer of its own.
+    function retryOutboxSoon() {
+      if (!outboxWaiting || now() - outboxTriedAt < ARCHIVE_OUTBOX_RETRY_MS) return
+      return flushOutbox()
     }
 
     function scheduleFlush(delay) {
@@ -511,6 +563,12 @@
       start(freshBrowser) {
         return serial(async () => {
           const loaded = await loadCache()
+          if (freshBrowser) {
+            // Closes the last run recorded but never got to flush, such as a
+            // window closed just before quitting. Their tabs already left the
+            // cache, so the restart comparison below cannot see them.
+            await flush(true)
+          }
           const remembered = Object.values(loaded.tabs)
           if (freshBrowser) {
             if (remembered.length >= ARCHIVE_WINDOW_MINIMUM
@@ -518,8 +576,7 @@
               await storage.set({ [ARCHIVE_RESTART_KEY]: { tabs: remembered, at: now() } })
             }
             loaded.tabs = {}
-            closes = []
-            await saveCloses()
+            loaded.gone = {}
           }
           await refresh(false)
           // Closes from before a suspension that never got their flush.
@@ -532,16 +589,23 @@
         if (refreshTimer !== null) clearTimer(refreshTimer)
         refreshTimer = setTimer(() => {
           refreshTimer = null
-          serial(() => refresh(true))
+          serial(async () => {
+            await refresh(true)
+            await retryOutboxSoon()
+          })
         }, ARCHIVE_REFRESH_DELAY_MS)
+      },
+      // The library is being opened: deliver what is waiting first, so the
+      // list it asks for already holds it.
+      retryOutbox() {
+        return serial(() => outboxWaiting ? flushOutbox() : undefined)
       },
       tabRemoved(tabId, removeInfo) {
         const at = now()
         return serial(async () => {
           const loaded = await loadCache()
-          const tab = loaded.tabs[tabId]
+          const tab = takeTab(loaded, tabId)
           if (!tab) return
-          delete loaded.tabs[tabId]
           await saveCache()
           if (isSuppressed(tabId, at)) return
           const pending = await loadCloses()
@@ -567,9 +631,11 @@
           for (const close of pending) {
             if (close.windowId === windowId && at - close.at <= ARCHIVE_QUIET_MS * 2) close.windowClosing = true
           }
-          for (const [id, tab] of Object.entries(loaded.tabs)) {
-            if (tab.windowId !== windowId) continue
-            delete loaded.tabs[id]
+          const ids = [...Object.keys(loaded.tabs), ...Object.keys(loaded.gone)]
+          for (const id of ids) {
+            const seen = loaded.tabs[id] || loaded.gone[id]
+            if (!seen || seen.windowId !== windowId) continue
+            const tab = takeTab(loaded, id)
             if (isSuppressed(Number(id), at)) continue
             pending.push({ url: tab.url, title: tab.title, windowId, index: tab.index, at, windowClosing: true })
           }
@@ -914,6 +980,9 @@
     if (!event || typeof event.event !== "string") return null
     if (event.event === "sessions.changed") {
       return { cmd: "SessionsChangedRemotely", revision: event.revision }
+    }
+    if (event.event === "archive.changed") {
+      return { cmd: "ArchiveChanged" }
     }
     return null
   }
@@ -1761,6 +1830,7 @@
     async function handleDashboard(message) {
       const operation = dashboardCommandToOperation(message)
       let result
+      if (operation.method === "archive.list" && archive) await archive.retryOutbox()
       if (operation.kind === "native") {
         try {
           result = await client.request(operation.method, operation.params)
@@ -1915,7 +1985,9 @@
       ? createArchiveTracker({
           storage: { get: keys => api.getStorage(keys), set: values => api.setStorage(values) },
           queryTabs: query => api.queryTabs(query),
-          send: payload => commandClient.request("archive.capture", payload)
+          send: payload => commandClient.request("archive.capture", payload),
+          // A library left open on the archive shows the new entry.
+          onCaptured: () => { sendDashboardEvent(api, { event: "archive.changed" }).catch(() => {}) }
         })
       : null
     let controller
@@ -2057,6 +2129,11 @@
         archive.tabRemoved(tabId, removeInfo)
       })
       if (extensionApi.tabs.onCreated) extensionApi.tabs.onCreated.addListener(() => archive.tabChanged())
+      // A tab dragged to another window or reordered keeps its id, so the
+      // cache must hear about it, or closing its old window would archive it.
+      for (const event of ["onAttached", "onDetached", "onMoved"]) {
+        if (extensionApi.tabs[event]) extensionApi.tabs[event].addListener(() => archive.tabChanged())
+      }
       if (extensionApi.tabs.onUpdated) {
         extensionApi.tabs.onUpdated.addListener((tabId, changeInfo) => {
           if (changeInfo && (changeInfo.url || changeInfo.title || changeInfo.pinned !== undefined

@@ -12,6 +12,8 @@ function harness(options = {}) {
   const timers = []
   const sent = []
   let failing = options.failing || null
+  let hanging = false
+  let captured = 0
   const tracker = background.createArchiveTracker({
     storage: {
       async get(key) { return { [key]: store[key] } },
@@ -19,9 +21,11 @@ function harness(options = {}) {
     },
     queryTabs: async () => tabs,
     send: async payload => {
+      if (hanging) return new Promise(() => {})
       if (failing) throw failing
       sent.push(payload)
     },
+    onCaptured: () => { captured += 1 },
     now: () => clock,
     setTimer: (callback, delay) => {
       const timer = { callback, at: clock + delay, done: false }
@@ -36,6 +40,8 @@ function harness(options = {}) {
     sent,
     setTabs(next) { tabs = next },
     fail(error) { failing = error },
+    hang() { hanging = true },
+    get captured() { return captured },
     async advance(milliseconds) {
       // Let queued events run (and arm their timers) before time moves.
       await tracker.idle()
@@ -169,4 +175,94 @@ test('maps the dashboard archive commands and answers', () => {
   const messages = background.dashboardMessagesFor(keep, { sessions: [], archive })
   assert.deepEqual(messages.map(message => message.cmd), ['ReturnBookmarks', 'ReturnArchive', 'ArchiveKept'])
   assert.equal(messages[2].ok, true)
+})
+
+test('a refresh that runs between a close and its event does not lose the window', async () => {
+  const h = harness({ tabs: [tab(1, 10, 'a'), tab(2, 10, 'b'), tab(3, 11, 'c')] })
+  await h.tracker.start(false)
+  // The window is already gone when the refresh asks; its events come after.
+  h.setTabs([tab(3, 11, 'c')])
+  h.tracker.tabChanged()
+  await h.advance(1000)
+  h.tracker.tabRemoved(1, { windowId: 10, isWindowClosing: true })
+  h.tracker.tabRemoved(2, { windowId: 10, isWindowClosing: true })
+  h.tracker.windowRemoved(10)
+  await h.advance(2500)
+  assert.equal(h.sent.length, 1)
+  assert.deepEqual(h.sent[0].sites.map(site => site.title), ['a', 'b'])
+})
+
+test('a window closed just before quitting is archived on the next launch', async () => {
+  const first = harness({ tabs: [tab(1, 10, 'a'), tab(2, 10, 'b'), tab(3, 11, 'c')] })
+  await first.tracker.start(false)
+  first.tracker.windowRemoved(10)
+  await first.tracker.idle()
+  // Quit before the flush timer fired.
+
+  const second = harness({ stored: first.store, clock: 1_000_000 + 60_000, tabs: [tab(9, 20, 'c')] })
+  await second.tracker.start(true)
+  assert.equal(second.sent.length, 1)
+  assert.equal(second.sent[0].reason, 'window')
+  assert.deepEqual(second.sent[0].sites.map(site => site.title), ['a', 'b'])
+  await second.advance(16_000)
+  assert.equal(second.sent.length, 1, 'the restored tab is not a restart loss')
+})
+
+test('a capture is written down before it is sent', async () => {
+  const h = harness({ tabs: [tab(1, 10, 'a'), tab(2, 10, 'b')] })
+  await h.tracker.start(false)
+  h.hang()
+  h.tracker.windowRemoved(10)
+  await h.tracker.idle()
+  h.advance(2500)
+  await new Promise(resolve => setImmediate(resolve))
+  await new Promise(resolve => setImmediate(resolve))
+  assert.equal(h.store['tabspace-archive-outbox'].length, 1)
+  assert.equal(h.store['tabspace-archive-closes'].length, 0)
+})
+
+test('a waiting capture is retried on tab changes, at most once a minute', async () => {
+  const h = harness({ tabs: [tab(1, 10, 'a'), tab(2, 10, 'b'), tab(3, 11, 'c')] })
+  await h.tracker.start(false)
+  h.fail(Object.assign(new Error('offline'), { code: 'bridge_unavailable' }))
+  h.tracker.windowRemoved(10)
+  await h.advance(2500)
+  h.fail(null)
+
+  h.tracker.tabChanged()
+  await h.advance(1000)
+  assert.deepEqual(h.sent, [], 'too soon after the failed try')
+
+  await h.advance(60_000)
+  h.tracker.tabChanged()
+  await h.advance(1000)
+  assert.equal(h.sent.length, 1)
+  assert.deepEqual(h.store['tabspace-archive-outbox'], [])
+  assert.equal(h.captured, 1)
+})
+
+test('opening the library delivers a waiting capture first', async () => {
+  const h = harness({ tabs: [tab(1, 10, 'a'), tab(2, 10, 'b')] })
+  await h.tracker.start(false)
+  h.fail(Object.assign(new Error('offline'), { code: 'bridge_unavailable' }))
+  h.tracker.windowRemoved(10)
+  await h.advance(2500)
+  h.fail(null)
+  await h.tracker.retryOutbox()
+  assert.equal(h.sent.length, 1)
+})
+
+test('moving a tab to another window keeps it out of the old window\'s capture', async () => {
+  const h = harness({ tabs: [tab(1, 10, 'a'), tab(2, 10, 'b'), tab(3, 10, 'c')] })
+  await h.tracker.start(false)
+  h.setTabs([tab(1, 10, 'a'), tab(2, 10, 'b'), tab(3, 11, 'c')])
+  h.tracker.tabChanged() // onAttached
+  await h.advance(1000)
+  h.tracker.windowRemoved(10)
+  await h.advance(2500)
+  assert.deepEqual(h.sent[0].sites.map(site => site.title), ['a', 'b'])
+})
+
+test('an archive change reaches open dashboards as ArchiveChanged', () => {
+  assert.deepEqual(background.dashboardMessageForEvent({ event: 'archive.changed' }), { cmd: 'ArchiveChanged' })
 })
