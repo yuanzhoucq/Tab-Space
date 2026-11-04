@@ -297,6 +297,13 @@
     return Boolean(tab && Number.isInteger(tab.id) && !tab.incognito && !tab.pinned && isSavableUrl(tab.url))
   }
 
+  // Tab order, which is how the person saw the pages. Browsers close a
+  // window's tabs from the last one, so event order would read backwards.
+  function inTabOrder(closes) {
+    return [...closes].sort((a, b) =>
+      ((a.windowId || 0) - (b.windowId || 0)) || ((a.index || 0) - (b.index || 0)))
+  }
+
   function archiveSites(closes) {
     const seen = new Set()
     const sites = []
@@ -389,7 +396,7 @@
           delete next[tab && tab.id]
           continue
         }
-        next[tab.id] = { url: tab.url, title: tab.title || tab.url, windowId: tab.windowId }
+        next[tab.id] = { url: tab.url, title: tab.title || tab.url, windowId: tab.windowId, index: tab.index }
       }
       loaded.tabs = next
       await saveCache()
@@ -468,11 +475,11 @@
         windows.get(close.windowId).push(close)
       }
       for (const group of windows.values()) {
-        const sites = archiveSites(group)
+        const sites = archiveSites(inTabOrder(group))
         if (sites.length >= ARCHIVE_WINDOW_MINIMUM) await deliver({ reason: "window", sites })
       }
       for (const run of archiveBursts(loose)) {
-        await deliver({ reason: "burst", sites: archiveSites(run) })
+        await deliver({ reason: "burst", sites: archiveSites(inTabOrder(run)) })
       }
     }
 
@@ -493,7 +500,7 @@
       const open = new Set(((await queryTabs({})) || [])
         .filter(tab => tab && typeof tab.url === "string")
         .map(tab => tab.url))
-      const sites = archiveSites(pending.tabs.filter(tab => tab && !open.has(tab.url)))
+      const sites = archiveSites(inTabOrder(pending.tabs.filter(tab => tab && !open.has(tab.url))))
       if (sites.length >= ARCHIVE_WINDOW_MINIMUM) await deliver({ reason: "restart", sites })
     }
 
@@ -542,6 +549,7 @@
             url: tab.url,
             title: tab.title,
             windowId: tab.windowId,
+            index: tab.index,
             at,
             windowClosing: Boolean(removeInfo && removeInfo.isWindowClosing)
           })
@@ -563,7 +571,7 @@
             if (tab.windowId !== windowId) continue
             delete loaded.tabs[id]
             if (isSuppressed(Number(id), at)) continue
-            pending.push({ url: tab.url, title: tab.title, windowId, at, windowClosing: true })
+            pending.push({ url: tab.url, title: tab.title, windowId, index: tab.index, at, windowClosing: true })
           }
           await saveCache()
           await saveCloses()

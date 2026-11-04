@@ -68,6 +68,15 @@ test('a closed window is archived once, with its tabs in order', async () => {
   }])
 })
 
+test('a window is archived in tab order although its tabs close from the last one', async () => {
+  const h = harness({ tabs: [tab(1, 10, 'a', { index: 0 }), tab(2, 10, 'b', { index: 1 }), tab(3, 10, 'c', { index: 2 })] })
+  await h.tracker.start(false)
+  for (const id of [3, 2, 1]) h.tracker.tabRemoved(id, { windowId: 10, isWindowClosing: true })
+  h.tracker.windowRemoved(10)
+  await h.advance(2500)
+  assert.deepEqual(h.sent[0].sites.map(site => site.title), ['a', 'b', 'c'])
+})
+
 test('a window whose tabs closed without tab events still comes from the cache', async () => {
   const h = harness({ tabs: [tab(1, 10, 'a'), tab(2, 10, 'b')] })
   await h.tracker.start(false)
