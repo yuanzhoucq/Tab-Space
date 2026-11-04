@@ -1,32 +1,51 @@
 <template>
   <div class="archive-view" data-testid="archive-view">
     <div class="archive-toolbar" data-testid="archive-status">
-      <!-- What gets saved, and where, is told on demand instead of in a
-           standing paragraph above the list. -->
-      <div class="archive-help" ref="help">
-        <button type="button" class="archive-help-chip" data-testid="archive-help"
-                :aria-expanded="helpOpen ? 'true' : 'false'" @click="helpOpen = !helpOpen">
-          <v-icon name="info" class="archive-help-icon"></v-icon>
-          <span>{{ lang.archiveHowItWorks }}</span>
-        </button>
-        <div v-if="helpOpen" class="archive-help-popover" role="dialog" :aria-label="lang.archiveHowItWorks"
-             data-testid="archive-help-popover">
-          <p class="archive-help-title">{{ lang.archiveSwitch }}</p>
-          <ul class="archive-help-points">
-            <li>
-              <span class="archive-help-point-icon"><v-icon name="archive"></v-icon></span>
-              <span>{{ lang.archiveHelpWhat }}</span>
-            </li>
-            <li>
-              <span class="archive-help-point-icon"><v-icon name="slash"></v-icon></span>
-              <span>{{ lang.archiveHelpNot }}</span>
-            </li>
-            <li>
-              <span class="archive-help-point-icon"><v-icon name="monitor"></v-icon></span>
-              <span>{{ lang.archiveHelpLocal }}</span>
-            </li>
-          </ul>
-          <p v-if="archive.lastCapturedAt" class="archive-help-note">{{ lastSavedText }}</p>
+      <!-- What gets saved, and where it lives, is told on demand instead of
+           in a standing paragraph above the list. -->
+      <div class="archive-chips" ref="chips">
+        <div class="archive-help">
+          <button type="button" class="archive-help-chip" data-testid="archive-help"
+                  :aria-expanded="openPopover === 'help' ? 'true' : 'false'" @click="togglePopover('help')">
+            <v-icon name="info" class="archive-help-icon"></v-icon>
+            <span>{{ lang.archiveHowItWorks }}</span>
+          </button>
+          <div v-if="openPopover === 'help'" class="archive-help-popover" role="dialog"
+               :aria-label="lang.archiveHowItWorks" data-testid="archive-help-popover">
+            <p class="archive-help-title">{{ lang.archiveSwitch }}</p>
+            <ul class="archive-help-points">
+              <li>
+                <span class="archive-help-point-icon"><v-icon name="archive"></v-icon></span>
+                <span>{{ lang.archiveHelpWhat }}</span>
+              </li>
+              <li>
+                <span class="archive-help-point-icon"><v-icon name="slash"></v-icon></span>
+                <span>{{ lang.archiveHelpNot }}</span>
+              </li>
+            </ul>
+            <p v-if="archive.lastCapturedAt" class="archive-help-note">{{ lastSavedText }}</p>
+          </div>
+        </div>
+        <div class="archive-help">
+          <button type="button" class="archive-help-chip" data-testid="archive-local"
+                  :aria-expanded="openPopover === 'local' ? 'true' : 'false'" @click="togglePopover('local')">
+            <v-icon name="monitor" class="archive-help-icon"></v-icon>
+            <span>{{ lang.archiveLocalOnly }}</span>
+          </button>
+          <div v-if="openPopover === 'local'" class="archive-help-popover" role="dialog"
+               :aria-label="lang.archiveLocalOnly" data-testid="archive-local-popover">
+            <p class="archive-help-title">{{ lang.archiveLocalOnly }}</p>
+            <ul class="archive-help-points">
+              <li>
+                <span class="archive-help-point-icon"><v-icon name="monitor"></v-icon></span>
+                <span>{{ lang.archiveLocalWhere }}</span>
+              </li>
+              <li>
+                <span class="archive-help-point-icon"><v-icon name="cloud"></v-icon></span>
+                <span>{{ lang.archiveLocalSync }}</span>
+              </li>
+            </ul>
+          </div>
         </div>
       </div>
       <label class="archive-switch">
@@ -178,7 +197,7 @@ export default {
       collapsedVisibleLimit: 10,
       expanded: {},
       pendingId: "",
-      helpOpen: false,
+      openPopover: "",
       fallbackIcon: WebPageIcon,
       now: Date.now()
     }
@@ -234,10 +253,13 @@ export default {
       }
     },
     onKeydown(event) {
-      if (event.key === "Escape") this.helpOpen = false
+      if (event.key === "Escape") this.openPopover = ""
     },
     onDocumentClick(event) {
-      if (this.helpOpen && this.$refs.help && !this.$refs.help.contains(event.target)) this.helpOpen = false
+      if (this.openPopover && this.$refs.chips && !this.$refs.chips.contains(event.target)) this.openPopover = ""
+    },
+    togglePopover(name) {
+      this.openPopover = this.openPopover === name ? "" : name
     },
     // The same setting as the switch in General Preferences.
     setEnabled(event) {
@@ -347,6 +369,13 @@ export default {
   align-items: center;
   justify-content: space-between;
   gap: 12px;
+}
+
+.archive-chips {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
 }
 
 .archive-help {
