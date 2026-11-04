@@ -425,6 +425,10 @@ export default {
         case "ReturnArchive":
           this.$store.commit("setArchive", data.archive)
           break
+        case "ArchiveChanged":
+          // A window closed while the archive is on screen.
+          if (this.$store.state.archiveOpen && this.bridge) this.bridge.send({cmd: "ListArchive"})
+          break
         case "ArchiveKept":
           // Keeping counts toward the Free session limit like any other save.
           if (!data.ok && data.error === "session_limit_reached") {

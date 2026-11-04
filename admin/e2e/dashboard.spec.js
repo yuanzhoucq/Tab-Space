@@ -172,6 +172,10 @@ async function openDashboard(page, options = {}) {
       setSessions(value) {
         currentSessions = clone(value)
       },
+      // A window the extension archived after the dashboard asked.
+      addArchiveEntry(entry) {
+        currentArchive.unshift(clone(entry))
+      },
       // Stands in for a purchase completed in the host app while the dashboard
       // was in the background.
       setEntitlement(tier) {
@@ -4200,6 +4204,29 @@ test('opens, keeps and deletes archived windows', async ({ page }) => {
   await page.getByTestId('filter-archive').click()
   await page.getByTestId('archive-entry-archive-burst').getByTestId('archive-delete').click()
   await expect(page.getByTestId('archive-empty')).toBeVisible()
+})
+
+test('shows a newly archived window while the archive is open', async ({ page }) => {
+  await openDashboard(page, {
+    initialSessions: sessions,
+    nativeProtocolVersion: '2',
+    entitlementTier: 'plus',
+    archiveEntries
+  })
+  await page.getByTestId('filter-archive').click()
+  await expect(page.getByTestId('archive-entry-archive-window')).toBeVisible()
+  await page.evaluate(() => {
+    window.__tabspaceTest.addArchiveEntry({
+      id: 'archive-new',
+      reason: 'window',
+      browser: 'safari',
+      closedAt: Math.floor(Date.now() / 1000),
+      updatedAt: Math.floor(Date.now() / 1000),
+      sites: [{ title: 'New A', url: 'https://new.example/a' }, { title: 'New B', url: 'https://new.example/b' }]
+    })
+    window.__tabspaceTest.emit('ArchiveChanged')
+  })
+  await expect(page.getByTestId('archive-entry-archive-new')).toBeVisible()
 })
 
 test('tells Free how long the archive lasts and offers the upgrade when keeping is over the limit', async ({ page }) => {
