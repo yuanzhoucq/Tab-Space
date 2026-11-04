@@ -109,7 +109,9 @@ async function openDashboard(page, options = {}) {
     splitSaveStoresNothing,
     splitSaveError,
     holdSplitPreview,
-    splitPreviewOmitsOriginalUuid
+    splitPreviewOmitsOriginalUuid,
+    archiveEntries,
+    archiveRetentionDays
   }) => {
     const clone = value => JSON.parse(JSON.stringify(value))
     const settingsKey = 'tabspace-e2e-settings'
@@ -139,6 +141,16 @@ async function openDashboard(page, options = {}) {
     let currentSwitcherHelperStatus = switcherHelperStatus
     window.__tabspaceBridgeCommands = []
     window.__tabspaceRestoredSessions = []
+    let currentArchive = clone(archiveEntries || [])
+    const returnArchive = () => emit('ReturnArchive', {
+      archive: {
+        entries: currentArchive,
+        enabled: true,
+        firstPage: true,
+        lastCapturedAt: currentArchive.length > 0 ? currentArchive[0].updatedAt : undefined,
+        ...(archiveRetentionDays ? { retentionDays: archiveRetentionDays } : {})
+      }
+    })
 
     const emit = (messageName, message = {}) => {
       setTimeout(() => {
@@ -427,6 +439,36 @@ async function openDashboard(page, options = {}) {
         if (name === 'RestoreSession') {
           window.__tabspaceRestoredSessions = (payload.bookmarks || []).map(session => session.uuid)
         }
+
+        // An app without the archive never answers, which keeps it hidden.
+        if (archiveEntries && name === 'ListArchive') {
+          returnArchive()
+          return
+        }
+
+        if (archiveEntries && name === 'DeleteArchiveEntries') {
+          const ids = new Set(payload.ids || [])
+          currentArchive = currentArchive.filter(entry => !ids.has(entry.id))
+          returnArchive()
+          return
+        }
+
+        if (archiveEntries && name === 'KeepArchiveEntry') {
+          const entry = currentArchive.find(item => item.id === payload.id)
+          if (currentTier === 'free' && currentEnforcesSessionLimit
+            && currentSessions.length >= currentFreeSessionLimit) {
+            emit('ArchiveKept', { id: payload.id, ok: false, error: 'session_limit_reached', limit: currentFreeSessionLimit })
+            return
+          }
+          currentArchive = currentArchive.filter(item => item.id !== payload.id)
+          currentSessions.unshift({
+            uuid: `kept-${payload.id}`, title: 'Saved at 2026-11-04 10:00', timestamp: Date.now(), comment: '',
+            sites: entry ? entry.sites : [], tags: []
+          })
+          returnBookmarks()
+          returnArchive()
+          emit('ArchiveKept', { id: payload.id, ok: true })
+        }
       }
     }
 
@@ -485,7 +527,9 @@ async function openDashboard(page, options = {}) {
     splitSaveStoresNothing: Boolean(options.splitSaveStoresNothing),
     splitSaveError: options.splitSaveError || '',
     holdSplitPreview: Boolean(options.holdSplitPreview),
-    splitPreviewOmitsOriginalUuid: Boolean(options.splitPreviewOmitsOriginalUuid)
+    splitPreviewOmitsOriginalUuid: Boolean(options.splitPreviewOmitsOriginalUuid),
+    archiveEntries: options.archiveEntries || null,
+    archiveRetentionDays: options.archiveRetentionDays || 0
   })
 
   await page.route('**/favicon.ico', route => route.fulfill({ status: 204, body: '' }))
@@ -4095,4 +4139,81 @@ test.describe("when Safari's extension stops answering", () => {
     await expect(page.getByTestId('safari-extension-silent')).toHaveCount(0)
     expect(await sentBeacons(page)).toEqual([])
   })
+})
+
+const archiveEntries = [
+  {
+    id: 'archive-window',
+    reason: 'window',
+    browser: 'safari',
+    closedAt: Math.floor(Date.now() / 1000) - 600,
+    updatedAt: Math.floor(Date.now() / 1000) - 600,
+    sites: [
+      { title: 'Swift Forums', url: 'https://forums.swift.org/t/1' },
+      { title: 'Apple Developer', url: 'https://developer.apple.com/documentation' }
+    ]
+  },
+  {
+    id: 'archive-burst',
+    reason: 'burst',
+    browser: 'safari',
+    closedAt: Math.floor(Date.now() / 1000) - 6 * 86400,
+    updatedAt: Math.floor(Date.now() / 1000) - 6 * 86400,
+    sites: [
+      { title: 'Hotel A', url: 'https://hotels.example/a' },
+      { title: 'Hotel B', url: 'https://hotels.example/b' },
+      { title: 'Map', url: 'https://maps.example/tokyo' }
+    ]
+  }
+]
+
+test('keeps the archive hidden when the app has none', async ({ page }) => {
+  await openDashboard(page, { initialSessions: sessions })
+  await expect(page.getByTestId('filter-all')).toBeVisible()
+  await expect(page.getByTestId('filter-archive')).toHaveCount(0)
+})
+
+test('opens, keeps and deletes archived windows', async ({ page }) => {
+  await openDashboard(page, {
+    initialSessions: sessions,
+    nativeProtocolVersion: '2',
+    entitlementTier: 'plus',
+    archiveEntries
+  })
+  await page.getByTestId('filter-archive').click()
+  await expect(page.getByTestId('archive-view')).toBeVisible()
+  await expect(page.getByTestId('archive-status')).toContainText('Archiving is on')
+  await expect(page.getByTestId('archive-retention')).toHaveCount(0)
+
+  const windowEntry = page.getByTestId('archive-entry-archive-window')
+  await expect(windowEntry).toContainText('forums.swift.org · developer.apple.com')
+  await windowEntry.getByTestId('archive-open').click()
+  await expect.poll(() => lastBridgeCommand(page, 'RestoreSession')).toMatchObject({
+    payload: { bookmarks: [{ sites: archiveEntries[0].sites }] }
+  })
+
+  await windowEntry.getByTestId('archive-keep').click()
+  await expect(windowEntry).toHaveCount(0)
+  await page.getByTestId('filter-all').click()
+  await expect(page.locator('.session')).toHaveCount(sessions.length + 1)
+
+  await page.getByTestId('filter-archive').click()
+  await page.getByTestId('archive-entry-archive-burst').getByTestId('archive-delete').click()
+  await expect(page.getByTestId('archive-empty')).toBeVisible()
+})
+
+test('tells Free how long the archive lasts and offers the upgrade when keeping is over the limit', async ({ page }) => {
+  await openDashboard(page, {
+    initialSessions: sessions,
+    nativeProtocolVersion: '2',
+    entitlementTier: 'free',
+    freeSessionLimit: 2,
+    archiveEntries,
+    archiveRetentionDays: 7
+  })
+  await page.getByTestId('filter-archive').click()
+  await expect(page.getByTestId('archive-retention')).toContainText('7 days')
+  await expect(page.getByTestId('archive-entry-archive-burst')).toContainText('clears in 1d')
+  await page.getByTestId('archive-entry-archive-window').getByTestId('archive-keep').click()
+  await expect(page.locator('.subscription-modal, [data-testid="subscription-modal"]').first()).toBeVisible()
 })

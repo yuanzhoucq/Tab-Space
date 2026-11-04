@@ -6,6 +6,7 @@ const constants = {
         "ignore-duplicated-tabs",
         "save-all-windows",
         "open-dashboard-after-save",
+        "auto-archive-enabled",
         "remove-site-after-click",
         "shift-shortcuts",
         "disable-shortcuts",
@@ -14,7 +15,7 @@ const constants = {
     // Settings an older Tab Space app does not have. Their toggle appears only
     // once the app has reported a value ("true" or "false"); an app without
     // the setting refuses the name or answers with nothing.
-    reportedOnlySettings: ["open-dashboard-after-save"],
+    reportedOnlySettings: ["open-dashboard-after-save", "auto-archive-enabled"],
     preferredLanguageKey: "preferred-language",
     languages,
     externalBrowser1Key: "externalBrowser1",

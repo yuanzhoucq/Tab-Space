@@ -4,7 +4,7 @@
       type="button"
       class="tag-filter system-tag"
       data-testid="filter-all"
-      :class="{'active-tag': activeTag===''}"
+      :class="{'active-tag': !archiveOpen && activeTag===''}"
       @click="setActiveTag('')"
     >
       <v-icon class="system-tag-icon" name="layers" :stroke-width="1.8"></v-icon>
@@ -16,7 +16,7 @@
       class="tag-filter system-tag"
       v-if="hasFavorites"
       data-testid="filter-@Favorite"
-      :class="{'active-tag': activeTag==='@Favorite'}"
+      :class="{'active-tag': !archiveOpen && activeTag==='@Favorite'}"
       @click="setActiveTag('@Favorite')"
     >
       <v-icon class="system-tag-icon" name="star" :stroke-width="1.8"></v-icon>
@@ -27,11 +27,25 @@
       type="button"
       class="tag-filter system-tag upper-border"
       data-testid="filter-untagged"
-      :class="{'active-tag': activeTag==='untagged'}"
+      :class="{'active-tag': !archiveOpen && activeTag==='untagged'}"
       @click="setActiveTag('untagged')"
     >
       <v-icon class="system-tag-icon" name="circle" :stroke-width="1.8"></v-icon>
       {{ lang.untagged }}
+    </button>
+
+    <!-- Not a tag: closed windows the app keeps on this Mac. Appears once the
+         app has answered for its archive. -->
+    <button
+      type="button"
+      class="tag-filter system-tag"
+      v-if="archive.available"
+      data-testid="filter-archive"
+      :class="{'active-tag': archiveOpen}"
+      @click="openArchive"
+    >
+      <v-icon class="system-tag-icon" name="archive" :stroke-width="1.8"></v-icon>
+      {{ lang.archive }}
     </button>
 
     <button
@@ -39,7 +53,7 @@
       class="tag-filter system-tag trash-tag"
       v-if="hasTrash"
       data-testid="filter-@Trash"
-      :class="{'active-tag': activeTag==='@Trash'}"
+      :class="{'active-tag': !archiveOpen && activeTag==='@Trash'}"
       @click="setActiveTag('@Trash')"
     >
       <v-icon class="system-tag-icon" name="trash-2" :stroke-width="1.8"></v-icon>
@@ -52,7 +66,7 @@
       v-for="tag in userTags"
       :key="tag"
       :data-testid="`filter-${tag}`"
-      :class="{'active-tag': activeTag===tag}"
+      :class="{'active-tag': !archiveOpen && activeTag===tag}"
       @click="setActiveTag(tag)"
     >{{tag}}</button>
 
@@ -75,7 +89,7 @@ import { matchingSiteEntries } from '../search'
 export default {
   name: "SessionSidebar",
   computed: {
-    ...mapState(["lang", "activeTag", "keyword"]),
+    ...mapState(["lang", "activeTag", "keyword", "archive", "archiveOpen"]),
     ...mapGetters(["tags", "displaySessions"]),
     userTags() {
       return this.tags.filter(tag => tag !== "@Favorite" && tag !== "@Trash")
@@ -102,6 +116,9 @@ export default {
   methods: {
     setActiveTag(tag) {
       this.$store.commit("setActiveTag", tag)
+    },
+    openArchive() {
+      this.$store.commit("setArchiveOpen", true)
     }
   }
 };

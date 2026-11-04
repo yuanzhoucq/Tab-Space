@@ -101,6 +101,19 @@ const store = new Vuex.Store({
         keyword: "",
         sessionViewMode: getInitialSessionViewMode(),
         activeTag: "",
+        // The archive: batches of tabs that closed together, kept on this Mac
+        // by the native app. `available` turns true with the first answer, so
+        // an app or extension without the archive never shows its entry.
+        archiveOpen: false,
+        archive: {
+            available: false,
+            loaded: false,
+            entries: [],
+            enabled: true,
+            lastCapturedAt: null,
+            retentionDays: null,
+            nextBeforeDay: null
+        },
         editingSessionUuid: "",
         // Bumped to re-open the iOS banner after it was dismissed. The banner
         // carries the install QR code, and on a Mac that code is the only
@@ -338,6 +351,28 @@ const store = new Vuex.Store({
         },
         setActiveTag(state, newTag) {
             state.activeTag = newTag
+            state.archiveOpen = false
+        },
+        setArchiveOpen(state, open) {
+            state.archiveOpen = open === true && state.archive.available
+        },
+        // `firstPage` replaces the list; a later page is appended to it.
+        setArchive(state, archive) {
+            const data = archive && typeof archive === "object" ? archive : {}
+            const entries = Array.isArray(data.entries) ? data.entries : []
+            const firstPage = data.firstPage !== false
+            const known = new Set(firstPage ? [] : state.archive.entries.map(entry => entry.id))
+            state.archive = {
+                available: true,
+                loaded: true,
+                entries: firstPage
+                    ? entries
+                    : [...state.archive.entries, ...entries.filter(entry => !known.has(entry.id))],
+                enabled: data.enabled !== false,
+                lastCapturedAt: Number(data.lastCapturedAt) || null,
+                retentionDays: Number(data.retentionDays) || null,
+                nextBeforeDay: typeof data.nextBeforeDay === "string" ? data.nextBeforeDay : null
+            }
         },
         setEditingSessionUuid(state, newId) {
             state.editingSessionUuid = newId

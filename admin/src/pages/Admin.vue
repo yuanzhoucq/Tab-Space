@@ -56,9 +56,10 @@
           <div class="empty-state" v-if="showFirstSaveGuide" data-testid="empty-state">
             <first-save-guide></first-save-guide>
           </div>
-          <sessions></sessions>
+          <archive-view v-if="archiveOpen"></archive-view>
+          <sessions v-else></sessions>
         </div>
-        <session-hub></session-hub>
+        <session-hub v-if="!archiveOpen"></session-hub>
       </div>
     </div>
     <footer>
@@ -86,6 +87,7 @@
   import LifetimeBanner from '../components/LifetimeBanner'
   import SessionSidebar from '../components/SessionSidebar'
   import SessionHub from '../components/SessionHub'
+  import ArchiveView from '../components/ArchiveView'
   import Sessions from '../components/Sessions'
   import SwitcherHint from '../components/SwitcherHint'
 
@@ -110,6 +112,7 @@
       SessionSidebar,
       SessionHub,
       Sessions,
+      ArchiveView,
       SwitcherHint,
     },
     data() {
@@ -125,6 +128,7 @@
         "connectionTimedOut",
         "bridgeSilent",
         "activeTag",
+        "archiveOpen",
         "initialRefresh"
       ]),
       ...mapGetters(["isPremium", "switcherHintAvailable", "liveSessionCount"]),
@@ -137,6 +141,7 @@
           && this.initialRefresh
           && this.liveSessionCount < 1
           && this.activeTag !== "@Trash"
+          && !this.archiveOpen
       },
       showLoadingState() {
         return (!this.nativeDetected && !this.connectionTimedOut)

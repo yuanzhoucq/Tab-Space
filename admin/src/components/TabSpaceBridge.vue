@@ -309,6 +309,9 @@ export default {
           // An app older than a setting refuses its name. That says nothing
           // about the connection, and the setting's toggle stays hidden.
           if (data.error && data.error.code === "invalid_setting") break
+          // Likewise a command an older app or extension does not have, such
+          // as the archive probe.
+          if (data.error && ["unsupported_method", "unsupported_command"].includes(data.error.code)) break
           // The local helper refuses a save over the Free session limit; treat
           // it exactly like the Safari bridge's SessionLimitReached message.
           if (data.error && data.error.code === "session_limit_reached") {
@@ -418,6 +421,16 @@ export default {
             error: data.error || null,
             limit: data.limit
           })
+          break
+        case "ReturnArchive":
+          this.$store.commit("setArchive", data.archive)
+          break
+        case "ArchiveKept":
+          // Keeping counts toward the Free session limit like any other save.
+          if (!data.ok && data.error === "session_limit_reached") {
+            this.$store.commit("setFreeSessionLimit", data.limit)
+            this.$store.commit("setShowSubscriptionModal", {show: true, reason: "limitReached"})
+          }
           break
         case "ReturnSuggestions":
           this.handleSuggestions(data)
@@ -844,6 +857,8 @@ export default {
         Constants.settings.forEach(setting => {
           bridge.send({cmd: "CheckDefault", name: setting})
         });
+        // Its answer is what reveals the archive; apps without one stay quiet.
+        bridge.send({cmd: "ListArchive"})
       }
       else setTimeout(() => this.checkDefaults(), 200)
     },
