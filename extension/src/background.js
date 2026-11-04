@@ -264,6 +264,328 @@
     return { record, snapshot }
   }
 
+  // Archive: tabs that leave the browser together are handed to the app,
+  // which keeps them on this Mac for a while. A closed window, a burst of
+  // closes, and the windows a relaunch did not bring back qualify; a single
+  // tab closing does not, since the browser's own history covers that.
+  //
+  // Everything here runs on browser events. There is no polling: the cache of
+  // open tabs is refreshed after tabs change, and a capture that could not be
+  // delivered waits for the next event instead of a retry timer.
+  const ARCHIVE_TABS_KEY = "tabspace-archive-tabs"
+  const ARCHIVE_CLOSES_KEY = "tabspace-archive-closes"
+  const ARCHIVE_RESTART_KEY = "tabspace-archive-restart"
+  const ARCHIVE_OUTBOX_KEY = "tabspace-archive-outbox"
+  const ARCHIVE_ALIVE_KEY = "tabspace-archive-alive"
+  // Closes this close together are one gesture.
+  const ARCHIVE_QUIET_MS = 2000
+  const ARCHIVE_BURST_SPAN_MS = 10000
+  const ARCHIVE_BURST_MINIMUM = 3
+  const ARCHIVE_WINDOW_MINIMUM = 2
+  // A relaunch restores windows gradually; compare only after it settles.
+  const ARCHIVE_RESTART_SETTLE_MS = 15000
+  // Older than this, the tabs remembered from the last run are not news.
+  const ARCHIVE_RESTART_MAX_AGE_MS = 3 * 86400000
+  const ARCHIVE_REFRESH_DELAY_MS = 1000
+  const ARCHIVE_SUPPRESS_MS = 30000
+  const ARCHIVE_OUTBOX_LIMIT = 20
+  const ARCHIVE_OUTBOX_MAX_AGE_MS = 7 * 86400000
+  // The app cannot take captures at all, so keeping them would be pointless.
+  const ARCHIVE_FINAL_ERRORS = ["unsupported_method", "unsupported_command", "pro_required", "invalid_archive"]
+
+  function isArchivableTab(tab) {
+    return Boolean(tab && Number.isInteger(tab.id) && !tab.incognito && !tab.pinned && isSavableUrl(tab.url))
+  }
+
+  function archiveSites(closes) {
+    const seen = new Set()
+    const sites = []
+    for (const close of closes) {
+      if (!close || seen.has(close.url)) continue
+      seen.add(close.url)
+      sites.push({ title: close.title || close.url, url: close.url })
+    }
+    return sites
+  }
+
+  // Splits loose closes into gestures: runs whose neighbours are at most
+  // ARCHIVE_QUIET_MS apart. A run short enough and big enough is a burst.
+  function archiveBursts(closes) {
+    const sorted = [...closes].sort((a, b) => a.at - b.at)
+    const runs = []
+    for (const close of sorted) {
+      const run = runs[runs.length - 1]
+      if (run && close.at - run[run.length - 1].at <= ARCHIVE_QUIET_MS) run.push(close)
+      else runs.push([close])
+    }
+    return runs.filter(run =>
+      run[run.length - 1].at - run[0].at <= ARCHIVE_BURST_SPAN_MS
+      && archiveSites(run).length >= ARCHIVE_BURST_MINIMUM)
+  }
+
+  function createArchiveTracker(options) {
+    const storage = options.storage
+    const queryTabs = options.queryTabs
+    const send = options.send
+    const now = options.now || (() => Date.now())
+    const setTimer = options.setTimer || ((callback, delay) => root.setTimeout(callback, delay))
+    const clearTimer = options.clearTimer || (timer => root.clearTimeout(timer))
+
+    let cache = null
+    let closes = null
+    const suppressed = new Map()
+    let flushTimer = null
+    let refreshTimer = null
+    let restartTimer = null
+    let queue = Promise.resolve()
+
+    function serial(task) {
+      queue = queue.then(task).catch(() => {})
+      return queue
+    }
+
+    async function read(key) {
+      try {
+        return ((await storage.get(key)) || {})[key]
+      } catch (_) {
+        return undefined
+      }
+    }
+
+    async function loadCache() {
+      if (cache) return cache
+      const stored = await read(ARCHIVE_TABS_KEY)
+      cache = stored && typeof stored.tabs === "object" && stored.tabs
+        ? { tabs: { ...stored.tabs }, updatedAt: Number(stored.updatedAt) || 0 }
+        : { tabs: {}, updatedAt: 0 }
+      return cache
+    }
+
+    async function loadCloses() {
+      if (closes) return closes
+      const stored = await read(ARCHIVE_CLOSES_KEY)
+      closes = Array.isArray(stored) ? stored : []
+      return closes
+    }
+
+    async function saveCache() {
+      cache.updatedAt = now()
+      await storage.set({ [ARCHIVE_TABS_KEY]: cache })
+    }
+
+    function saveCloses() {
+      return storage.set({ [ARCHIVE_CLOSES_KEY]: closes })
+    }
+
+    // `prune` drops tabs the browser no longer reports. A wake-up must not
+    // prune: the events that woke it may be the very closes still queued,
+    // and pruning first would forget the tabs they need.
+    async function refresh(prune) {
+      const loaded = await loadCache()
+      const tabs = (await queryTabs({})) || []
+      const next = prune ? {} : loaded.tabs
+      for (const tab of tabs) {
+        if (!isArchivableTab(tab)) {
+          delete next[tab && tab.id]
+          continue
+        }
+        next[tab.id] = { url: tab.url, title: tab.title || tab.url, windowId: tab.windowId }
+      }
+      loaded.tabs = next
+      await saveCache()
+    }
+
+    function isSuppressed(tabId, at) {
+      const until = suppressed.get(tabId)
+      if (until === undefined) return false
+      if (until < at) {
+        suppressed.delete(tabId)
+        return false
+      }
+      return true
+    }
+
+    // Sends what is waiting, oldest first, and stops at the first failure: an
+    // app that is not running now will be tried again on the next event.
+    async function drainOutbox(extra) {
+      const stored = (await read(ARCHIVE_OUTBOX_KEY)) || []
+      const pending = (extra ? [...stored, { ...extra, at: now() }] : stored)
+        .filter(item => item && now() - item.at <= ARCHIVE_OUTBOX_MAX_AGE_MS)
+      if (pending.length === 0) {
+        if (stored.length > 0) await storage.set({ [ARCHIVE_OUTBOX_KEY]: [] })
+        return
+      }
+      let sent = 0
+      for (const item of pending) {
+        try {
+          await send({ reason: item.reason, sites: item.sites })
+          sent += 1
+        } catch (error) {
+          if (error && ARCHIVE_FINAL_ERRORS.includes(error.code)) {
+            sent = pending.length
+          }
+          break
+        }
+      }
+      await storage.set({ [ARCHIVE_OUTBOX_KEY]: pending.slice(sent).slice(-ARCHIVE_OUTBOX_LIMIT) })
+    }
+
+    function deliver(payload) {
+      return drainOutbox(payload)
+    }
+
+    function flushOutbox() {
+      return drainOutbox(null)
+    }
+
+    function scheduleFlush(delay) {
+      if (flushTimer !== null) clearTimer(flushTimer)
+      flushTimer = setTimer(() => {
+        flushTimer = null
+        serial(() => flush(false))
+      }, delay)
+    }
+
+    async function flush(force) {
+      const pending = await loadCloses()
+      if (pending.length === 0) return
+      const latest = Math.max(...pending.map(close => close.at))
+      const quietFor = now() - latest
+      if (!force && quietFor < ARCHIVE_QUIET_MS) {
+        scheduleFlush(ARCHIVE_QUIET_MS - quietFor)
+        return
+      }
+      closes = []
+      await saveCloses()
+      const windows = new Map()
+      const loose = []
+      for (const close of pending) {
+        if (!close.windowClosing) {
+          loose.push(close)
+          continue
+        }
+        if (!windows.has(close.windowId)) windows.set(close.windowId, [])
+        windows.get(close.windowId).push(close)
+      }
+      for (const group of windows.values()) {
+        const sites = archiveSites(group)
+        if (sites.length >= ARCHIVE_WINDOW_MINIMUM) await deliver({ reason: "window", sites })
+      }
+      for (const run of archiveBursts(loose)) {
+        await deliver({ reason: "burst", sites: archiveSites(run) })
+      }
+    }
+
+    async function checkRestart() {
+      const pending = await read(ARCHIVE_RESTART_KEY)
+      if (!pending || !Array.isArray(pending.tabs)) return
+      const wait = pending.at + ARCHIVE_RESTART_SETTLE_MS - now()
+      if (wait > 0) {
+        if (restartTimer === null) {
+          restartTimer = setTimer(() => {
+            restartTimer = null
+            serial(checkRestart)
+          }, wait)
+        }
+        return
+      }
+      await storage.set({ [ARCHIVE_RESTART_KEY]: null })
+      const open = new Set(((await queryTabs({})) || [])
+        .filter(tab => tab && typeof tab.url === "string")
+        .map(tab => tab.url))
+      const sites = archiveSites(pending.tabs.filter(tab => tab && !open.has(tab.url)))
+      if (sites.length >= ARCHIVE_WINDOW_MINIMUM) await deliver({ reason: "restart", sites })
+    }
+
+    return {
+      // Called once per wake-up. `freshBrowser` means the browser itself was
+      // started since the last run, so the tabs remembered from then are what
+      // the relaunch may have lost.
+      start(freshBrowser) {
+        return serial(async () => {
+          const loaded = await loadCache()
+          const remembered = Object.values(loaded.tabs)
+          if (freshBrowser) {
+            if (remembered.length >= ARCHIVE_WINDOW_MINIMUM
+                && now() - loaded.updatedAt <= ARCHIVE_RESTART_MAX_AGE_MS) {
+              await storage.set({ [ARCHIVE_RESTART_KEY]: { tabs: remembered, at: now() } })
+            }
+            loaded.tabs = {}
+            closes = []
+            await saveCloses()
+          }
+          await refresh(false)
+          // Closes from before a suspension that never got their flush.
+          await flush(false)
+          await flushOutbox()
+          await checkRestart()
+        })
+      },
+      tabChanged() {
+        if (refreshTimer !== null) clearTimer(refreshTimer)
+        refreshTimer = setTimer(() => {
+          refreshTimer = null
+          serial(() => refresh(true))
+        }, ARCHIVE_REFRESH_DELAY_MS)
+      },
+      tabRemoved(tabId, removeInfo) {
+        const at = now()
+        return serial(async () => {
+          const loaded = await loadCache()
+          const tab = loaded.tabs[tabId]
+          if (!tab) return
+          delete loaded.tabs[tabId]
+          await saveCache()
+          if (isSuppressed(tabId, at)) return
+          const pending = await loadCloses()
+          pending.push({
+            url: tab.url,
+            title: tab.title,
+            windowId: tab.windowId,
+            at,
+            windowClosing: Boolean(removeInfo && removeInfo.isWindowClosing)
+          })
+          await saveCloses()
+          scheduleFlush(ARCHIVE_QUIET_MS)
+        })
+      },
+      // Some browsers close a window's tabs without a tab event each, so the
+      // window's remembered tabs are taken from the cache as well.
+      windowRemoved(windowId) {
+        const at = now()
+        return serial(async () => {
+          const loaded = await loadCache()
+          const pending = await loadCloses()
+          for (const close of pending) {
+            if (close.windowId === windowId && at - close.at <= ARCHIVE_QUIET_MS * 2) close.windowClosing = true
+          }
+          for (const [id, tab] of Object.entries(loaded.tabs)) {
+            if (tab.windowId !== windowId) continue
+            delete loaded.tabs[id]
+            if (isSuppressed(Number(id), at)) continue
+            pending.push({ url: tab.url, title: tab.title, windowId, at, windowClosing: true })
+          }
+          await saveCache()
+          await saveCloses()
+          scheduleFlush(ARCHIVE_QUIET_MS)
+        })
+      },
+      // Tabs Tab Space closes itself are already saved somewhere.
+      suppress(tabIds) {
+        const until = now() + ARCHIVE_SUPPRESS_MS
+        for (const id of [].concat(tabIds || [])) {
+          if (Number.isInteger(id)) suppressed.set(id, until)
+        }
+      },
+      flushNow() {
+        return serial(() => flush(true))
+      },
+      idle() {
+        return queue
+      }
+    }
+  }
+
   function lastAccessedFor(tab, activations) {
     const candidates = [tab.lastAccessed, activations && activations[tab.id]]
       .filter(value => Number.isFinite(value) && value > 0)
@@ -410,6 +732,24 @@
             origin: "dashboard"
           }
         }
+      case "ListArchive":
+        return {
+          kind: "native",
+          method: "archive.list",
+          params: typeof msg.beforeDay === "string" ? { beforeDay: msg.beforeDay } : {}
+        }
+      case "DeleteArchiveEntries":
+        return {
+          kind: "native",
+          method: "archive.delete",
+          params: { ids: Array.isArray(msg.ids) ? msg.ids.filter(id => typeof id === "string") : [] }
+        }
+      case "KeepArchiveEntry":
+        return {
+          kind: "native",
+          method: "archive.keep",
+          params: { id: typeof msg.id === "string" ? msg.id : "", title: typeof msg.title === "string" ? msg.title : "" }
+        }
       case "GetSuggestions":
         return { kind: "native", method: "suggestions.list", params: {} }
       case "DismissSuggestion":
@@ -450,6 +790,18 @@
       originalUuid: (operation.params && operation.params.originalUuid) || "",
       ok: !error
     }
+    if (error) {
+      message.error = error.code || "save_failed"
+      if (error.details && error.details.limit !== undefined) message.limit = error.details.limit
+    }
+    return message
+  }
+
+  // ArchiveKept answers KeepArchiveEntry either way. Like ReturnSplitSaved it
+  // carries a refusal as a message, because the Safari direct bridge has no
+  // request-error channel.
+  function archiveKeptMessage(operation, error) {
+    const message = { cmd: "ArchiveKept", id: (operation.params && operation.params.id) || "", ok: !error }
     if (error) {
       message.error = error.code || "save_failed"
       if (error.details && error.details.limit !== undefined) message.limit = error.details.limit
@@ -515,6 +867,24 @@
           ? { clusters: typeof result.clusters === "string" ? result.clusters : JSON.stringify(result.clusters) }
           : {})
       }]
+    }
+    if (operation.method === "archive.list" || operation.method === "archive.delete") {
+      return [{ cmd: "ReturnArchive", archive: result || {} }]
+    }
+    if (operation.method === "archive.keep") {
+      const messages = []
+      if (Array.isArray(result && result.sessions)) {
+        messages.push({
+          cmd: "ReturnBookmarks",
+          bookmarks: result.sessions,
+          value: JSON.stringify(result.sessions),
+          source: "local-bridge",
+          dispatchedAtMs: Date.now()
+        })
+      }
+      if (result && result.archive) messages.push({ cmd: "ReturnArchive", archive: result.archive })
+      messages.push(archiveKeptMessage(operation))
+      return messages
     }
     if (operation.method === "suggestions.list") {
       return [{
@@ -1131,6 +1501,12 @@
       new Promise(resolve => root.setTimeout(resolve, milliseconds)))
     const notifyDashboards = options.notifyDashboards || createDashboardChangeNotifier(browserApi)
     const activations = options.activations || null
+    const archive = options.archive || null
+
+    function removeOwnTabs(ids) {
+      if (archive) archive.suppress(ids)
+      return browserApi.removeTabs(ids)
+    }
 
     async function listPopupTabs() {
       const [tabs, activeTabs] = await Promise.all([
@@ -1186,7 +1562,7 @@
       if (ids.length === 0) return { closed: 0 }
 
       try {
-        await browserApi.removeTabs(ids)
+        await removeOwnTabs(ids)
       } catch (error) {
         // A single id the user closed in the meantime rejects the whole batch,
         // so retry one at a time before giving up on the rest. Pass the scalar
@@ -1194,7 +1570,7 @@
         // while Chromium and Firefox accept both forms.
         for (const id of ids) {
           try {
-            await browserApi.removeTabs(id)
+            await removeOwnTabs(id)
           } catch (singleError) {
             // Counted below, not here.
           }
@@ -1303,7 +1679,7 @@
           const idsToClose = keepActive
             ? result.tabIds.filter(id => id !== activeTabId)
             : result.tabIds
-          if (idsToClose.length > 0) await browserApi.removeTabs(idsToClose)
+          if (idsToClose.length > 0) await removeOwnTabs(idsToClose)
           closedTabs = true
         } catch (error) {
           postSaveErrors.push({ action: "closeTabs", error: serializeError(error) })
@@ -1392,6 +1768,9 @@
           if (operation.method === "sessions.saveSplit" && error && typeof error.code === "string") {
             return { messages: [splitSavedMessage(operation, error)], result: null }
           }
+          if (operation.method === "archive.keep" && error && typeof error.code === "string") {
+            return { messages: [archiveKeptMessage(operation, error)], result: null }
+          }
           throw error
         }
       } else if (operation.kind === "local") {
@@ -1417,7 +1796,7 @@
       handleDashboard,
       activateSwitcherTab,
       closeSwitcherTabs,
-      closeTabs(tabIds) { return browserApi.removeTabs(tabIds) },
+      closeTabs(tabIds) { return removeOwnTabs(tabIds) },
       pair(code) { return client.pair(code) },
       connect(options) {
         return client.connect(options).then(handshake => ({
@@ -1522,12 +1901,22 @@
           }
         : null
     })
+    // Archiving is Safari-only for now; companion browsers collect tabs only
+    // with Pro and get it in a later release.
+    const archive = BUILD_TARGET === "safari" && extensionApi.tabs && extensionApi.tabs.onRemoved
+      ? createArchiveTracker({
+          storage: { get: keys => api.getStorage(keys), set: values => api.setStorage(values) },
+          queryTabs: query => api.queryTabs(query),
+          send: payload => commandClient.request("archive.capture", payload)
+        })
+      : null
     let controller
     controller = createController({
       browserApi: api,
       client: commandClient,
       notifyDashboards,
       activations,
+      archive,
       browserCommand: (command, data) => {
         if (BUILD_TARGET !== "safari" || !root.TabSpaceSafariMenu) {
           return Promise.reject(new BridgeError("unsupported_command", `Unsupported browser command: ${command}`))
@@ -1655,6 +2044,40 @@
         activations.record(info && info.tabId)
       })
     }
+    if (archive) {
+      extensionApi.tabs.onRemoved.addListener((tabId, removeInfo) => {
+        archive.tabRemoved(tabId, removeInfo)
+      })
+      if (extensionApi.tabs.onCreated) extensionApi.tabs.onCreated.addListener(() => archive.tabChanged())
+      if (extensionApi.tabs.onUpdated) {
+        extensionApi.tabs.onUpdated.addListener((tabId, changeInfo) => {
+          if (changeInfo && (changeInfo.url || changeInfo.title || changeInfo.pinned !== undefined
+              || changeInfo.status === "complete")) archive.tabChanged()
+        })
+      }
+      if (extensionApi.windows && extensionApi.windows.onRemoved) {
+        extensionApi.windows.onRemoved.addListener(windowId => archive.windowRemoved(windowId))
+      }
+      // Session storage lives as long as the browser does, so a missing mark
+      // means the browser was started since the tabs were last remembered.
+      const browserSession = extensionApi.storage && extensionApi.storage.session
+      if (browserSession) {
+        const getMark = preferPromises
+          ? browserSession.get(ARCHIVE_ALIVE_KEY)
+          : new Promise(resolve => browserSession.get(ARCHIVE_ALIVE_KEY, resolve))
+        Promise.resolve(getMark).then(values => {
+          const fresh = !(values && values[ARCHIVE_ALIVE_KEY])
+          if (fresh) {
+            const marked = browserSession.set({ [ARCHIVE_ALIVE_KEY]: Date.now() })
+            if (marked && typeof marked.catch === "function") marked.catch(() => {})
+          }
+          return archive.start(fresh)
+        }).catch(() => archive.start(false))
+      } else {
+        archive.start(false)
+        if (extensionApi.runtime.onStartup) extensionApi.runtime.onStartup.addListener(() => archive.start(true))
+      }
+    }
     // Registered so the keepalive write above dispatches an event at all; the
     // dispatch is the whole point, so the listener itself has nothing to do.
     if (extensionApi.storage && extensionApi.storage.onChanged) {
@@ -1766,6 +2189,9 @@
     createDashboardChangeNotifier,
     browserFamily,
     createActivationTracker,
+    createArchiveTracker,
+    archiveBursts,
+    isArchivableTab,
     createController,
     handleSwitcherEvent,
     isDashboardOrigin,
