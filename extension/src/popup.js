@@ -69,7 +69,7 @@
     followUpFailed: "标签页已保存，但有一项保存后操作未能完成。",
     websiteAccessRequired: "请在 Safari 中允许 Tab Space 访问当前网站，然后重试。",
     unreachableTitle: "Tab Space 没有响应",
-    unreachableHelp: "请先打开 Tab Space。如果已经打开还是这样，请退出 Safari（⌘Q）后重新打开。",
+    unreachableHelp: "请先打开 Tab Space。如果已经打开还是这样，请到 Safari 设置 → 扩展里取消勾选 Tab Space 再重新勾选；仍然不行，再退出 Safari（⌘Q）后重新打开。",
     retry: "重试"
   } : {
     ready: "Open your library or save tabs from this browser.",
@@ -121,7 +121,7 @@
     followUpFailed: "The tabs were saved, but one selected after-save action could not be completed.",
     websiteAccessRequired: "Allow Tab Space access to this website in Safari, then try again.",
     unreachableTitle: "Tab Space isn't responding",
-    unreachableHelp: "Open Tab Space first. If it is already open, quit Safari (⌘Q) and open it again.",
+    unreachableHelp: "Open Tab Space first. If it is already open, go to Safari Settings → Extensions, turn Tab Space off and on again. If that doesn't help, quit Safari (⌘Q) and reopen it.",
     retry: "Try Again"
   }
 
