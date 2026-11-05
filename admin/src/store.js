@@ -112,6 +112,8 @@ const store = new Vuex.Store({
             enabled: true,
             lastCapturedAt: null,
             retentionDays: null,
+            storageDays: null,
+            hiddenCount: 0,
             nextBeforeDay: null
         },
         editingSessionUuid: "",
@@ -374,6 +376,9 @@ const store = new Vuex.Store({
                 enabled: data.enabled !== false,
                 lastCapturedAt: Number(data.lastCapturedAt) || null,
                 retentionDays: Number(data.retentionDays) || null,
+                storageDays: Number(data.storageDays) || null,
+                // Counted on the first page only; later pages keep it.
+                hiddenCount: firstPage ? Number(data.hiddenCount) || 0 : state.archive.hiddenCount,
                 nextBeforeDay: typeof data.nextBeforeDay === "string" ? data.nextBeforeDay : null
             }
         },

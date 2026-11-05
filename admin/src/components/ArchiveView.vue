@@ -62,8 +62,10 @@
       </label>
     </div>
     <p v-if="!archive.enabled" class="archive-note" data-testid="archive-off">{{ lang.archiveDisabled }}</p>
-    <p v-if="archive.retentionDays" class="archive-note" data-testid="archive-retention">
+    <p v-if="retentionLimited" class="archive-note" data-testid="archive-retention">
       {{ retentionText }}
+      <button v-if="archive.hiddenCount > 0" type="button" class="archive-upgrade-link"
+              data-testid="archive-show-hidden" @click="showUpgrade">{{ hiddenText }}</button>
     </p>
 
     <div v-if="archive.entries.length === 0" class="archive-empty" data-testid="archive-empty">
@@ -224,8 +226,17 @@ export default {
     lastSavedText() {
       return this.lang.archiveLastCaptured.replace("{time}", this.relativeTime(this.archive.lastCapturedAt))
     },
+    // Free and Plus see fewer days than the Mac keeps; Pro sees them all.
+    // An app that sends no storageDays only ever sent retentionDays to Free.
+    retentionLimited() {
+      const { retentionDays, storageDays } = this.archive
+      return Boolean(retentionDays) && (!storageDays || retentionDays < storageDays)
+    },
     retentionText() {
-      return this.lang.archiveFreeRetention.replace("{days}", this.archive.retentionDays)
+      return this.lang.archiveRetention.replace("{days}", this.archive.retentionDays)
+    },
+    hiddenText() {
+      return this.lang.archiveShowHidden.replace("{count}", this.archive.hiddenCount)
     }
   },
   mounted() {
@@ -240,6 +251,9 @@ export default {
     document.removeEventListener("click", this.onDocumentClick)
   },
   methods: {
+    showUpgrade() {
+      this.$store.commit("setShowSubscriptionModal", true)
+    },
     refresh() {
       this.now = Date.now()
       if (this.bridge) this.bridge.send({ cmd: "ListArchive" })
@@ -325,9 +339,10 @@ export default {
       if (entry.reason === "restart") return this.lang.archiveReasonRestart
       return this.lang.archiveReasonWindow
     },
-    // Free entries say when they go, once that is close.
+    // On a limited plan an entry says when it leaves the view, once that is
+    // close. It stays on the Mac, so this is not a deletion.
     expiryLabel(entry) {
-      if (!this.archive.retentionDays) return ""
+      if (!this.retentionLimited) return ""
       const left = Math.ceil((entry.updatedAt * 1000 + this.archive.retentionDays * dayMs - this.now) / dayMs)
       if (left > 3) return ""
       return this.lang.archiveExpiresIn.replace("{days}", Math.max(1, left))
@@ -512,6 +527,20 @@ export default {
   font-size: 13px;
   line-height: 1.5;
   color: var(--text-secondary, #888);
+}
+
+.archive-upgrade-link {
+  margin-left: 4px;
+  padding: 0;
+  border: none;
+  background: none;
+  font: inherit;
+  color: #fa8072;
+  cursor: pointer;
+}
+
+.archive-upgrade-link:hover {
+  text-decoration: underline;
 }
 
 .archive-empty {

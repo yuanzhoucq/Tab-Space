@@ -209,7 +209,10 @@ export function installMockBridge() {
   const query = new URLSearchParams(window.location.search)
   const marketing = query.get('mock') === 'marketing'
   let archive = sampleArchive()
-  const archiveRetentionDays = query.get('archive') === 'free' ? 7 : 0
+  // ?archive=free or ?archive=plus shows a limited plan with hidden history;
+  // anything else answers as Pro, which sees everything the Mac keeps.
+  const archiveRetentionDays = { free: 7, plus: 30 }[query.get('archive')] || 365
+  const archiveHiddenCount = archiveRetentionDays < 365 ? 12 : 0
   let sessions = marketing ? marketingSessions() : sampleSessions()
   // What a current Tab Space app reports for a setting older apps lack.
   const defaults = { 'open-dashboard-after-save': 'true', 'auto-archive-enabled': 'true' }
@@ -229,7 +232,9 @@ export function installMockBridge() {
       enabled: defaults['auto-archive-enabled'] !== 'false',
       firstPage: true,
       lastCapturedAt: archive.length > 0 ? archive[0].updatedAt : undefined,
-      ...(archiveRetentionDays ? { retentionDays: archiveRetentionDays } : {})
+      retentionDays: archiveRetentionDays,
+      storageDays: 365,
+      ...(archiveHiddenCount ? { hiddenCount: archiveHiddenCount } : {})
     }
   })
   const indexOf = uuid => sessions.findIndex(s => s.uuid === uuid)

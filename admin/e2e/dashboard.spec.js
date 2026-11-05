@@ -111,7 +111,8 @@ async function openDashboard(page, options = {}) {
     holdSplitPreview,
     splitPreviewOmitsOriginalUuid,
     archiveEntries,
-    archiveRetentionDays
+    archiveRetentionDays,
+    archiveHiddenCount
   }) => {
     const clone = value => JSON.parse(JSON.stringify(value))
     const settingsKey = 'tabspace-e2e-settings'
@@ -148,7 +149,8 @@ async function openDashboard(page, options = {}) {
         enabled: true,
         firstPage: true,
         lastCapturedAt: currentArchive.length > 0 ? currentArchive[0].updatedAt : undefined,
-        ...(archiveRetentionDays ? { retentionDays: archiveRetentionDays } : {})
+        ...(archiveRetentionDays ? { retentionDays: archiveRetentionDays, storageDays: 365 } : {}),
+        ...(archiveHiddenCount ? { hiddenCount: archiveHiddenCount } : {})
       }
     })
 
@@ -533,7 +535,8 @@ async function openDashboard(page, options = {}) {
     holdSplitPreview: Boolean(options.holdSplitPreview),
     splitPreviewOmitsOriginalUuid: Boolean(options.splitPreviewOmitsOriginalUuid),
     archiveEntries: options.archiveEntries || null,
-    archiveRetentionDays: options.archiveRetentionDays || 0
+    archiveRetentionDays: options.archiveRetentionDays || 0,
+    archiveHiddenCount: options.archiveHiddenCount || 0
   })
 
   await page.route('**/favicon.ico', route => route.fulfill({ status: 204, body: '' }))
@@ -4247,8 +4250,38 @@ test('tells Free how long the archive lasts and offers the upgrade when keeping 
     archiveRetentionDays: 7
   })
   await page.getByTestId('filter-archive').click()
-  await expect(page.getByTestId('archive-retention')).toContainText('7 days')
-  await expect(page.getByTestId('archive-entry-archive-burst')).toContainText('clears in 1d')
+  await expect(page.getByTestId('archive-retention')).toContainText('last 7 days')
+  await expect(page.getByTestId('archive-show-hidden')).toHaveCount(0)
+  await expect(page.getByTestId('archive-entry-archive-burst')).toContainText('hidden in 1d')
   await page.getByTestId('archive-entry-archive-window').getByTestId('archive-keep').click()
   await expect(page.locator('.subscription-modal, [data-testid="subscription-modal"]').first()).toBeVisible()
+})
+
+test('offers older auto-saved items a limited plan cannot see', async ({ page }) => {
+  await openDashboard(page, {
+    initialSessions: sessions,
+    nativeProtocolVersion: '2',
+    entitlementTier: 'plus',
+    archiveEntries,
+    archiveRetentionDays: 30,
+    archiveHiddenCount: 4
+  })
+  await page.getByTestId('filter-archive').click()
+  await expect(page.getByTestId('archive-retention')).toContainText('last 30 days')
+  await page.getByTestId('archive-show-hidden').click()
+  await expect(page.locator('.subscription-modal, [data-testid="subscription-modal"]').first()).toBeVisible()
+})
+
+test('shows Pro no retention note because Pro sees everything kept', async ({ page }) => {
+  await openDashboard(page, {
+    initialSessions: sessions,
+    nativeProtocolVersion: '2',
+    entitlementTier: 'pro',
+    archiveEntries,
+    archiveRetentionDays: 365
+  })
+  await page.getByTestId('filter-archive').click()
+  await expect(page.getByTestId('archive-view')).toBeVisible()
+  await expect(page.getByTestId('archive-retention')).toHaveCount(0)
+  await expect(page.getByTestId('archive-entry-archive-burst')).not.toContainText('hidden in')
 })
