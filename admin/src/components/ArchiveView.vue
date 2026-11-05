@@ -65,7 +65,7 @@
     <p v-if="retentionLimited" class="archive-note" data-testid="archive-retention">
       {{ retentionText }}
       <button v-if="archive.hiddenCount > 0" type="button" class="archive-upgrade-link"
-              data-testid="archive-show-hidden" @click="showUpgrade">{{ hiddenText }}</button>
+              data-testid="archive-show-hidden" @click="showUpgrade">{{ lang.archiveShowHidden }}</button>
     </p>
 
     <div v-if="archive.entries.length === 0" class="archive-empty" data-testid="archive-empty">
@@ -85,7 +85,6 @@
             <span class="source-chip titles-tag" data-testid="archive-reason">
               <v-icon :name="reasonIcon(entry)"></v-icon>{{ reasonLabel(entry) }}
             </span>
-            <span v-if="expiryLabel(entry)" class="tag tag-expiry titles-tag">{{ expiryLabel(entry) }}</span>
             <span class="titles-spacer" aria-hidden="true"></span>
             <span class="titles-count">{{ countLabel(entry) }}</span>
             <button type="button" class="btn del-btn" data-testid="archive-delete"
@@ -169,7 +168,6 @@
             <span class="source-chip" data-testid="archive-reason">
               <v-icon :name="reasonIcon(entry)"></v-icon>{{ reasonLabel(entry) }}
             </span>
-            <span v-if="expiryLabel(entry)" class="tag tag-expiry">{{ expiryLabel(entry) }}</span>
           </div>
         </article>
       </template>
@@ -234,10 +232,8 @@ export default {
     },
     retentionText() {
       return this.lang.archiveRetention.replace("{days}", this.archive.retentionDays)
-    },
-    hiddenText() {
-      return this.lang.archiveShowHidden.replace("{count}", this.archive.hiddenCount)
     }
+
   },
   mounted() {
     this.refresh()
@@ -338,14 +334,6 @@ export default {
       if (entry.reason === "burst") return this.lang.archiveReasonBurst
       if (entry.reason === "restart") return this.lang.archiveReasonRestart
       return this.lang.archiveReasonWindow
-    },
-    // On a limited plan an entry says when it leaves the view, once that is
-    // close. It stays on the Mac, so this is not a deletion.
-    expiryLabel(entry) {
-      if (!this.retentionLimited) return ""
-      const left = Math.ceil((entry.updatedAt * 1000 + this.archive.retentionDays * dayMs - this.now) / dayMs)
-      if (left > 3) return ""
-      return this.lang.archiveExpiresIn.replace("{days}", Math.max(1, left))
     },
     dayLabel(date) {
       const today = new Date(this.now)
@@ -640,11 +628,6 @@ export default {
   stroke: currentColor;
 }
 
-.tag-expiry {
-  color: #c2410c;
-  background-color: #fff4e5;
-  border-color: #fcd9b0;
-}
 
 .archive-entry-actions {
   display: flex;
@@ -920,9 +903,6 @@ export default {
     color: #d0d0d0;
   }
 
-  .tag-expiry {
-    color: #fdba74;
-  }
 
   .source-chip {
     color: #f4a497;
