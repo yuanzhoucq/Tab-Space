@@ -68,7 +68,11 @@
               data-testid="archive-show-hidden" @click="showUpgrade">{{ lang.archiveShowHidden }}</button>
     </p>
 
-    <div v-if="archive.entries.length === 0" class="archive-empty" data-testid="archive-empty">
+    <div v-if="searching && displayArchiveEntries.length === 0" class="archive-empty"
+         data-testid="archive-no-matches">
+      {{ lang.nothingHere }}
+    </div>
+    <div v-else-if="archive.entries.length === 0" class="archive-empty" data-testid="archive-empty">
       {{ lang.archiveNothingYet }}
     </div>
 
@@ -77,7 +81,7 @@
 
       <!-- Titles only, like the session list in that view: one card a day, one
            row an entry, and a click on the row shows its pages. -->
-      <div v-if="sessionViewMode === 'titles'" class="titles-card">
+      <div v-if="titlesOnlyView" class="titles-card">
         <div v-for="entry in group.entries" :key="entry.id" class="titles-row"
              :data-testid="`archive-entry-${entry.id}`">
           <div class="titles-summary" @click="toggle(entry)">
@@ -154,7 +158,9 @@
                      referrerpolicy="no-referrer" alt @error="useFallbackIcon">
               </div>
               <span v-if="!isCompact(entry)" class="site-title">
-                <a class="link" :href="site.url" target="_blank" rel="noopener">{{ site.title || site.url }}</a>
+                <a class="link" :href="site.url" target="_blank" rel="noopener"><span
+                    v-for="(part, index) in highlightParts(site.title || site.url)" :key="index"
+                    :class="{'highlight': part.match}">{{ part.text }}</span></a>
               </span>
             </li>
             <li v-if="isCompact(entry) && entry.sites.length > collapsedVisibleLimit"
@@ -173,7 +179,7 @@
       </template>
     </section>
 
-    <button v-if="archive.nextBeforeDay" type="button" class="archive-load-more" data-testid="archive-load-more"
+    <button v-if="archive.nextBeforeDay && !searching" type="button" class="archive-load-more" data-testid="archive-load-more"
             @click="loadMore">
       {{ lang.archiveLoadMore }}
     </button>
@@ -181,10 +187,11 @@
 </template>
 
 <script>
-import { mapState } from 'vuex'
+import { mapGetters, mapState } from 'vuex'
 import { ToggleButton } from 'vue-js-toggle-button'
 import Constants from '../constants'
 import { faviconUrl } from '../favicon'
+import { highlightedTextParts, matchingSiteEntries } from '../search'
 import WebPageIcon from '../assets/img/icon-webpage.svg'
 
 const dayMs = 86400000
@@ -204,12 +211,21 @@ export default {
   },
   computed: {
     ...mapState(["lang", "bridge", "archive", "tabSpaceSettings", "sessionViewMode"]),
+    ...mapGetters(["displayArchiveEntries", "archiveQuery"]),
+    // A search shows each match's matching pages in full cards, as the
+    // session list does.
+    searching() {
+      return Boolean(this.archiveQuery)
+    },
+    titlesOnlyView() {
+      return this.sessionViewMode === "titles" && !this.searching
+    },
     locale() {
       return this.tabSpaceSettings[Constants.preferredLanguageKey] || undefined
     },
     groups() {
       const groups = []
-      for (const entry of this.archive.entries) {
+      for (const entry of this.displayArchiveEntries) {
         const date = new Date(entry.updatedAt * 1000)
         const day = `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`
         let group = groups[groups.length - 1]
@@ -252,7 +268,15 @@ export default {
     },
     refresh() {
       this.now = Date.now()
-      if (this.bridge) this.bridge.send({ cmd: "ListArchive" })
+      if (this.bridge) this.bridge.send(this.withQuery({ cmd: "ListArchive" }))
+    },
+    // Commands that answer with a list carry the search, so the answer is
+    // still the matches.
+    withQuery(message) {
+      return this.searching ? { ...message, query: this.archiveQuery } : message
+    },
+    highlightParts(value) {
+      return highlightedTextParts(value, this.archiveQuery)
     },
     onVisibilityChange() {
       if (document.visibilityState === "visible") this.refresh()
@@ -291,14 +315,14 @@ export default {
       this.pendingId = entry.id
       // The app names the new session the way it names every save, so the
       // automatic AI naming applies to it as well.
-      this.bridge.send({ cmd: "KeepArchiveEntry", id: entry.id, title: "" })
+      this.bridge.send(this.withQuery({ cmd: "KeepArchiveEntry", id: entry.id, title: "" }))
       setTimeout(() => { if (this.pendingId === entry.id) this.pendingId = "" }, 3000)
     },
     remove(entry) {
-      if (this.bridge) this.bridge.send({ cmd: "DeleteArchiveEntries", ids: [entry.id] })
+      if (this.bridge) this.bridge.send(this.withQuery({ cmd: "DeleteArchiveEntries", ids: [entry.id] }))
     },
     isCompact(entry) {
-      return this.sessionViewMode === "compact" && !this.expanded[entry.id]
+      return this.sessionViewMode === "compact" && !this.searching && !this.expanded[entry.id]
     },
     toggle(entry) {
       this.$set(this.expanded, entry.id, !this.expanded[entry.id])
@@ -313,6 +337,7 @@ export default {
       this.$set(this.expanded, entry.id, !this.expanded[entry.id])
     },
     visibleSites(entry) {
+      if (this.searching) return matchingSiteEntries(entry, this.archiveQuery).map(match => match.site)
       return this.isCompact(entry) ? entry.sites.slice(0, this.collapsedVisibleLimit) : entry.sites
     },
     favicon(url) {

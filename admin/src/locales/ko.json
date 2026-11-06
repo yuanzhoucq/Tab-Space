@@ -176,6 +176,7 @@
   "archiveKeep": "세션으로 저장",
   "archiveDelete": "삭제",
   "archiveLoadMore": "이전 항목 보기",
+  "archiveSearchMatches": "‘자동 저장됨’에서도 {count}개 찾음",
   "archiveToday": "오늘",
   "archiveYesterday": "어제",
   "iosBannerText": "이제 iCloud 동기화로 iPhone과 iPad에서도 사용하세요",

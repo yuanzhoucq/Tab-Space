@@ -176,6 +176,7 @@
   "archiveKeep": "Als Sitzung behalten",
   "archiveDelete": "Löschen",
   "archiveLoadMore": "Ältere anzeigen",
+  "archiveSearchMatches": "Auch in „Automatisch gesichert“ gefunden ({count})",
   "archiveToday": "Heute",
   "archiveYesterday": "Gestern",
   "iosBannerText": "Jetzt auf iPhone und iPad mit iCloud-Synchronisierung",

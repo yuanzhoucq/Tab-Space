@@ -176,6 +176,7 @@
   "archiveKeep": "Guardar como sesión",
   "archiveDelete": "Eliminar",
   "archiveLoadMore": "Mostrar anteriores",
+  "archiveSearchMatches": "También en «Guardado auto» ({count})",
   "archiveToday": "Hoy",
   "archiveYesterday": "Ayer",
   "iosBannerText": "Ya disponible en iPhone y iPad con sincronización de iCloud",

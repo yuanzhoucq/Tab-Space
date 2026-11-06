@@ -176,6 +176,7 @@
   "archiveKeep": "セッションとして保存",
   "archiveDelete": "削除",
   "archiveLoadMore": "以前の項目を表示",
+  "archiveSearchMatches": "「自動保存」にも {count} 件見つかりました",
   "archiveToday": "今日",
   "archiveYesterday": "昨日",
   "iosBannerText": "iCloud 同期対応の iPhone・iPad 版が登場",

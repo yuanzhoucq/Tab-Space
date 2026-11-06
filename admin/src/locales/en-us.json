@@ -176,6 +176,7 @@
   "archiveKeep": "Keep as Session",
   "archiveDelete": "Delete",
   "archiveLoadMore": "Show Earlier",
+  "archiveSearchMatches": "Also found in Auto-saved ({count})",
   "archiveToday": "Today",
   "archiveYesterday": "Yesterday",
   "iosBannerText": "Now on iPhone & iPad with iCloud sync",

@@ -12,7 +12,7 @@
 </template>
 
 <script>
-import { mapState } from 'vuex'
+import { mapGetters, mapState } from 'vuex'
 import Constants from '../constants'
 import config from '../config'
 import { isSafari } from '../device'
@@ -83,6 +83,7 @@ export default {
   },
   computed: {
     ...mapState(["bridge", "initialRefresh"]),
+    ...mapGetters(["archiveQuery"]),
     sessions: {
       get() {
         return this.$store.state.sessions;
@@ -91,6 +92,13 @@ export default {
         this.$store.commit("setSessions", value)
       }
     },
+  },
+  watch: {
+    // The search box searches the archive too, whichever view is open, so
+    // the library can say how many auto-saved entries match.
+    archiveQuery() {
+      if (this.$store.state.archive.available) this.listArchive()
+    }
   },
   mounted() {
     if (this.redirectLegacyBridgeLoopbackHost()) return
@@ -423,11 +431,15 @@ export default {
           })
           break
         case "ReturnArchive":
+          // An answer for words no longer in the search box; the answer for
+          // the current ones is on its way.
+          if (data.archive && typeof data.archive.query === "string"
+            && data.archive.query !== this.archiveQuery) break
           this.$store.commit("setArchive", data.archive)
           break
         case "ArchiveChanged":
-          // A window closed while the archive is on screen.
-          if (this.$store.state.archiveOpen && this.bridge) this.bridge.send({cmd: "ListArchive"})
+          // A window closed while the archive is on screen or searched.
+          if (this.$store.state.archiveOpen || this.archiveQuery) this.listArchive()
           break
         case "ArchiveKept":
           // Keeping counts toward the Free session limit like any other save.
@@ -857,6 +869,11 @@ export default {
         clearTimeout(this.initialDataTimer)
         this.initialDataTimer = null
       }
+    },
+    listArchive() {
+      if (!this.bridge) return
+      const query = this.archiveQuery
+      this.bridge.send(query ? {cmd: "ListArchive", query} : {cmd: "ListArchive"})
     },
     checkDefaults(bridge = this.bridge) {
       if (bridge) {

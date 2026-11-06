@@ -169,6 +169,16 @@ test('maps the dashboard archive commands and answers', () => {
   const keep = background.dashboardCommandToOperation({ cmd: 'KeepArchiveEntry', id: 'x', title: 'T' })
   assert.deepEqual(keep, { kind: 'native', method: 'archive.keep', params: { id: 'x', title: 'T' } })
 
+  // A search rides along, trimmed, on every command that answers with a list.
+  assert.deepEqual(background.dashboardCommandToOperation({ cmd: 'ListArchive', query: ' swift ' }),
+    { kind: 'native', method: 'archive.list', params: { query: 'swift' } })
+  assert.deepEqual(background.dashboardCommandToOperation({ cmd: 'ListArchive', query: '  ' }),
+    { kind: 'native', method: 'archive.list', params: {} })
+  assert.deepEqual(background.dashboardCommandToOperation({ cmd: 'DeleteArchiveEntries', ids: ['x'], query: 'swift' }),
+    { kind: 'native', method: 'archive.delete', params: { ids: ['x'], query: 'swift' } })
+  assert.deepEqual(background.dashboardCommandToOperation({ cmd: 'KeepArchiveEntry', id: 'x', title: '', query: 'swift' }),
+    { kind: 'native', method: 'archive.keep', params: { id: 'x', title: '', query: 'swift' } })
+
   const archive = { entries: [], enabled: true }
   assert.deepEqual(background.dashboardMessagesFor({ method: 'archive.list' }, archive),
     [{ cmd: 'ReturnArchive', archive }])

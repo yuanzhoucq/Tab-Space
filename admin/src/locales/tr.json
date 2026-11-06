@@ -176,6 +176,7 @@
   "archiveKeep": "Oturum Olarak Kaydet",
   "archiveDelete": "Sil",
   "archiveLoadMore": "Öncekileri Göster",
+  "archiveSearchMatches": "“Otomatik Kaydedilen” içinde de bulundu ({count})",
   "archiveToday": "Bugün",
   "archiveYesterday": "Dün",
   "iosBannerText": "Artık iCloud eşzamanlama ile iPhone ve iPad'de",

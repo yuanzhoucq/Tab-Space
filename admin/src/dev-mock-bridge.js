@@ -226,9 +226,19 @@ export function installMockBridge() {
   }
 
   const emitSessions = () => emit('ReturnBookmarks', { value: sessions })
-  const emitArchive = () => emit('ReturnArchive', {
+  // Searches the way the app does: every word in one page's title or address.
+  const archiveMatches = query => {
+    const terms = String(query || '').trim().toLowerCase().split(/\s+/).filter(Boolean)
+    if (terms.length === 0) return archive
+    return archive.filter(entry => entry.sites.some(page => {
+      const text = `${page.title}\n${page.url}`.toLowerCase()
+      return terms.every(term => text.includes(term))
+    }))
+  }
+  const emitArchive = (msg = {}) => emit('ReturnArchive', {
     archive: {
-      entries: archive,
+      entries: archiveMatches(msg.query),
+      ...(msg.query ? { query: String(msg.query).trim() } : {}),
       enabled: defaults['auto-archive-enabled'] !== 'false',
       firstPage: true,
       lastCapturedAt: archive.length > 0 ? archive[0].updatedAt : undefined,
@@ -419,7 +429,7 @@ export function installMockBridge() {
     DeleteArchiveEntries(msg) {
       const ids = new Set(msg.ids || [])
       archive = archive.filter(entry => !ids.has(entry.id))
-      emitArchive()
+      emitArchive(msg)
     },
     KeepArchiveEntry(msg) {
       const entry = archive.find(item => item.id === msg.id)
@@ -431,7 +441,7 @@ export function installMockBridge() {
         })
       }
       emitSessions()
-      emitArchive()
+      emitArchive(msg)
       emit('ArchiveKept', { id: msg.id, ok: true })
     },
     RestoreSession(msg) {

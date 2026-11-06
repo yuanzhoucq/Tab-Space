@@ -176,6 +176,7 @@
   "archiveKeep": "Zachowaj jako sesję",
   "archiveDelete": "Usuń",
   "archiveLoadMore": "Pokaż wcześniejsze",
+  "archiveSearchMatches": "Znaleziono też w „Autozapisane” ({count})",
   "archiveToday": "Dzisiaj",
   "archiveYesterday": "Wczoraj",
   "iosBannerText": "Teraz na iPhonie i iPadzie z synchronizacją iCloud",

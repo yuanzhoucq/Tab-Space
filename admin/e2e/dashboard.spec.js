@@ -111,6 +111,7 @@ async function openDashboard(page, options = {}) {
     holdSplitPreview,
     splitPreviewOmitsOriginalUuid,
     archiveEntries,
+    archiveOlderEntries,
     archiveRetentionDays,
     archiveHiddenCount
   }) => {
@@ -143,9 +144,18 @@ async function openDashboard(page, options = {}) {
     window.__tabspaceBridgeCommands = []
     window.__tabspaceRestoredSessions = []
     let currentArchive = clone(archiveEntries || [])
-    const returnArchive = () => emit('ReturnArchive', {
+    // Days past the first page of the list, which only a search reaches.
+    let olderArchive = clone(archiveOlderEntries || [])
+    const archiveMatches = query => {
+      const terms = String(query || '').trim().toLowerCase().split(/\s+/).filter(Boolean)
+      if (terms.length === 0) return currentArchive
+      return [...currentArchive, ...olderArchive].filter(entry => entry.sites.some(site =>
+        terms.every(term => `${site.title}\n${site.url}`.toLowerCase().includes(term))))
+    }
+    const returnArchive = (payload = {}) => emit('ReturnArchive', {
       archive: {
-        entries: currentArchive,
+        entries: archiveMatches(payload.query),
+        ...(payload.query ? { query: payload.query } : {}),
         enabled: true,
         firstPage: true,
         lastCapturedAt: currentArchive.length > 0 ? currentArchive[0].updatedAt : undefined,
@@ -448,14 +458,15 @@ async function openDashboard(page, options = {}) {
 
         // An app without the archive never answers, which keeps it hidden.
         if (archiveEntries && name === 'ListArchive') {
-          returnArchive()
+          returnArchive(payload)
           return
         }
 
         if (archiveEntries && name === 'DeleteArchiveEntries') {
           const ids = new Set(payload.ids || [])
           currentArchive = currentArchive.filter(entry => !ids.has(entry.id))
-          returnArchive()
+          olderArchive = olderArchive.filter(entry => !ids.has(entry.id))
+          returnArchive(payload)
           return
         }
 
@@ -535,6 +546,7 @@ async function openDashboard(page, options = {}) {
     holdSplitPreview: Boolean(options.holdSplitPreview),
     splitPreviewOmitsOriginalUuid: Boolean(options.splitPreviewOmitsOriginalUuid),
     archiveEntries: options.archiveEntries || null,
+    archiveOlderEntries: options.archiveOlderEntries || null,
     archiveRetentionDays: options.archiveRetentionDays || 0,
     archiveHiddenCount: options.archiveHiddenCount || 0
   })
@@ -4215,6 +4227,53 @@ test('opens, keeps and deletes archived windows', async ({ page }) => {
   await page.getByTestId('filter-archive').click()
   await page.getByTestId('archive-entry-archive-burst').getByTestId('archive-delete').click()
   await expect(page.getByTestId('archive-empty')).toBeVisible()
+})
+
+test('searches auto-saved pages beyond the loaded days and says so from All', async ({ page }) => {
+  const olderEntry = {
+    id: 'archive-old',
+    reason: 'window',
+    browser: 'safari',
+    closedAt: Math.floor(Date.now() / 1000) - 40 * 86400,
+    updatedAt: Math.floor(Date.now() / 1000) - 40 * 86400,
+    sites: [
+      { title: 'Kyoto ryokan list', url: 'https://travel.example/kyoto' },
+      { title: 'Train times', url: 'https://rail.example/' }
+    ]
+  }
+  await openDashboard(page, {
+    initialSessions: sessions,
+    nativeProtocolVersion: '2',
+    entitlementTier: 'pro',
+    archiveEntries,
+    archiveOlderEntries: [olderEntry]
+  })
+  await expect(page.getByTestId('filter-archive')).toBeVisible()
+
+  await page.locator('#keyword').fill('  RYOKAN ')
+  await expect.poll(() => lastBridgeCommand(page, 'ListArchive'))
+    .toMatchObject({ payload: { query: 'RYOKAN' } })
+  await expect(page.getByTestId('archive-matches')).toContainText('Auto-saved (1)')
+  await expect(page.getByTestId('archive-match-count')).toHaveText('1')
+
+  await page.getByTestId('archive-matches').click()
+  const entry = page.getByTestId('archive-entry-archive-old')
+  await expect(entry).toBeVisible()
+  await expect(page.getByTestId('archive-entry-archive-window')).toHaveCount(0)
+  // Only the matching pages, with the words marked.
+  await expect(entry.getByTestId('archive-sites').locator('li')).toHaveCount(1)
+  await expect(entry.locator('.highlight')).toHaveText('ryokan')
+  await expect(page.getByTestId('archive-load-more')).toHaveCount(0)
+
+  // A delete during a search answers with the remaining matches.
+  await entry.getByTestId('archive-delete').click()
+  await expect.poll(() => lastBridgeCommand(page, 'DeleteArchiveEntries'))
+    .toMatchObject({ payload: { ids: ['archive-old'], query: 'RYOKAN' } })
+  await expect(page.getByTestId('archive-no-matches')).toBeVisible()
+
+  await page.locator('#keyword').fill('')
+  await expect(page.getByTestId('archive-entry-archive-window')).toBeVisible()
+  await expect(page.getByTestId('archive-match-count')).toHaveCount(0)
 })
 
 test('shows a newly archived window while the archive is open', async ({ page }) => {

@@ -806,23 +806,35 @@
             origin: "dashboard"
           }
         }
+      // `query` searches the archive; the answer to a delete or keep made
+      // during a search lists the same matches.
       case "ListArchive":
         return {
           kind: "native",
           method: "archive.list",
-          params: typeof msg.beforeDay === "string" ? { beforeDay: msg.beforeDay } : {}
+          params: {
+            ...(typeof msg.beforeDay === "string" ? { beforeDay: msg.beforeDay } : {}),
+            ...archiveQueryParam(msg)
+          }
         }
       case "DeleteArchiveEntries":
         return {
           kind: "native",
           method: "archive.delete",
-          params: { ids: Array.isArray(msg.ids) ? msg.ids.filter(id => typeof id === "string") : [] }
+          params: {
+            ids: Array.isArray(msg.ids) ? msg.ids.filter(id => typeof id === "string") : [],
+            ...archiveQueryParam(msg)
+          }
         }
       case "KeepArchiveEntry":
         return {
           kind: "native",
           method: "archive.keep",
-          params: { id: typeof msg.id === "string" ? msg.id : "", title: typeof msg.title === "string" ? msg.title : "" }
+          params: {
+            id: typeof msg.id === "string" ? msg.id : "",
+            title: typeof msg.title === "string" ? msg.title : "",
+            ...archiveQueryParam(msg)
+          }
         }
       case "GetSuggestions":
         return { kind: "native", method: "suggestions.list", params: {} }
@@ -869,6 +881,12 @@
       if (error.details && error.details.limit !== undefined) message.limit = error.details.limit
     }
     return message
+  }
+
+  // A search of the archive, trimmed; absent when there is none.
+  function archiveQueryParam(msg) {
+    const query = typeof msg.query === "string" ? msg.query.trim() : ""
+    return query ? { query } : {}
   }
 
   // ArchiveKept answers KeepArchiveEntry either way. Like ReturnSplitSaved it

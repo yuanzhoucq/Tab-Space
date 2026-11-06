@@ -176,6 +176,7 @@
   "archiveKeep": "Conserva come sessione",
   "archiveDelete": "Elimina",
   "archiveLoadMore": "Mostra precedenti",
+  "archiveSearchMatches": "Anche in «Salvati auto» ({count})",
   "archiveToday": "Oggi",
   "archiveYesterday": "Ieri",
   "iosBannerText": "Ora su iPhone e iPad con la sincronizzazione iCloud",

@@ -3,7 +3,7 @@ import Vuex from 'vuex'
 import LangData from './locales'
 import Constants from './constants'
 import { isHandheld } from './device'
-import { sessionMatchesQuery } from './search'
+import { archiveEntryMatchesQuery, sessionMatchesQuery } from './search'
 
 Vue.use(Vuex);
 
@@ -114,7 +114,9 @@ const store = new Vuex.Store({
             retentionDays: null,
             storageDays: null,
             hiddenCount: 0,
-            nextBeforeDay: null
+            nextBeforeDay: null,
+            // The search these entries answer; "" for the plain list.
+            query: ""
         },
         editingSessionUuid: "",
         // Bumped to re-open the iOS banner after it was dismissed. The banner
@@ -293,6 +295,16 @@ const store = new Vuex.Store({
                 displaySessions = displaySessions.filter(session => sessionMatchesQuery(session, state.keyword))
             }
             return displaySessions
+        },
+        // The words the archive is searched for: the app answers with every
+        // match the tier can see, beyond the days the plain list has loaded.
+        archiveQuery: state => (state.keyword || "").trim(),
+        // Filtered here as well, so a list the app answered without the
+        // current words, or an app that cannot search, shows only matches.
+        displayArchiveEntries: (state, getters) => {
+            const query = getters.archiveQuery
+            if (!query) return state.archive.entries
+            return state.archive.entries.filter(entry => archiveEntryMatchesQuery(entry, query))
         }
     },
     mutations: {
@@ -379,7 +391,8 @@ const store = new Vuex.Store({
                 storageDays: Number(data.storageDays) || null,
                 // Counted on the first page only; later pages keep it.
                 hiddenCount: firstPage ? Number(data.hiddenCount) || 0 : state.archive.hiddenCount,
-                nextBeforeDay: typeof data.nextBeforeDay === "string" ? data.nextBeforeDay : null
+                nextBeforeDay: typeof data.nextBeforeDay === "string" ? data.nextBeforeDay : null,
+                query: typeof data.query === "string" ? data.query : ""
             }
         },
         setEditingSessionUuid(state, newId) {

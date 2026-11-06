@@ -46,6 +46,8 @@
     >
       <v-icon class="system-tag-icon" name="clock" :stroke-width="1.8"></v-icon>
       {{ lang.archive }}
+      <span v-if="archiveMatchCount !== null" class="archive-match-count"
+            data-testid="archive-match-count">{{ archiveMatchCount }}</span>
     </button>
 
     <button
@@ -90,7 +92,11 @@ export default {
   name: "SessionSidebar",
   computed: {
     ...mapState(["lang", "activeTag", "keyword", "archive", "archiveOpen"]),
-    ...mapGetters(["tags", "displaySessions"]),
+    ...mapGetters(["tags", "displaySessions", "displayArchiveEntries", "archiveQuery"]),
+    // While searching, how many auto-saved entries match.
+    archiveMatchCount() {
+      return this.archiveQuery ? this.displayArchiveEntries.length : null
+    },
     userTags() {
       return this.tags.filter(tag => tag !== "@Favorite" && tag !== "@Trash")
     },
@@ -125,6 +131,12 @@ export default {
 </script>
 
 <style scoped>
+.archive-match-count {
+  margin-left: 4px;
+  opacity: 0.6;
+  font-variant-numeric: tabular-nums;
+}
+
 .session-sidebar {
   flex: 0 0 110px;
   margin-right: 20px;

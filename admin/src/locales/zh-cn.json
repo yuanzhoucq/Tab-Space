@@ -176,6 +176,7 @@
   "archiveKeep": "存为会话",
   "archiveDelete": "删除",
   "archiveLoadMore": "显示更早的",
+  "archiveSearchMatches": "「自动保存」中也找到 {count} 项",
   "archiveToday": "今天",
   "archiveYesterday": "昨天",
   "iosBannerText": "iPhone / iPad 版现已上线，支持 iCloud 同步",

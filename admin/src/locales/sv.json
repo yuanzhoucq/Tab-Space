@@ -176,6 +176,7 @@
   "archiveKeep": "Behåll som session",
   "archiveDelete": "Radera",
   "archiveLoadMore": "Visa tidigare",
+  "archiveSearchMatches": "Hittades även i ”Autosparat” ({count})",
   "archiveToday": "I dag",
   "archiveYesterday": "I går",
   "iosBannerText": "Nu på iPhone och iPad med iCloud-synkronisering",

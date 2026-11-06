@@ -37,6 +37,14 @@ export function sessionMatchesQuery(session, query) {
     || sites.some(site => siteMatchesQuery(site, query))
 }
 
+// An auto-saved entry has no title, note or tags of its own: only its pages
+// can match.
+export function archiveEntryMatchesQuery(entry, query) {
+  if (searchTerms(query).length === 0) return true
+  const sites = entry && Array.isArray(entry.sites) ? entry.sites : []
+  return sites.some(site => siteMatchesQuery(site, query))
+}
+
 function siteRelevance(site, query) {
   const normalizedQuery = stringValue(query).trim().toLowerCase()
   const title = stringValue(site && site.title).toLowerCase()

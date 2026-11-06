@@ -176,6 +176,7 @@
   "archiveKeep": "Bewaar als sessie",
   "archiveDelete": "Verwijder",
   "archiveLoadMore": "Toon eerdere",
+  "archiveSearchMatches": "Ook gevonden in ‘Automatisch bewaard’ ({count})",
   "archiveToday": "Vandaag",
   "archiveYesterday": "Gisteren",
   "iosBannerText": "Nu op iPhone en iPad met iCloud-synchronisatie",

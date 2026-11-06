@@ -176,6 +176,7 @@
   "archiveKeep": "Сохранить как сессию",
   "archiveDelete": "Удалить",
   "archiveLoadMore": "Показать более ранние",
+  "archiveSearchMatches": "Также найдено в «Автосохранённое» ({count})",
   "archiveToday": "Сегодня",
   "archiveYesterday": "Вчера",
   "iosBannerText": "Теперь на iPhone и iPad с синхронизацией через iCloud",

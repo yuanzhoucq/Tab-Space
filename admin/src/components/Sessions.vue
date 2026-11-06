@@ -1,5 +1,13 @@
 <template>
   <div class="sessions-list" :data-session-view-mode="sessionViewMode">
+    <!-- Auto-saved entries are not sessions, so a search lists them in their
+         own view; this says they matched too. -->
+    <button v-if="archiveMatchCount > 0" type="button" class="archive-matches"
+            data-testid="archive-matches" @click="openArchive">
+      <v-icon name="clock" class="archive-matches-icon" :stroke-width="1.8"></v-icon>
+      <span>{{ lang.archiveSearchMatches.replace("{count}", archiveMatchCount) }}</span>
+      <v-icon name="chevron-right" class="archive-matches-icon"></v-icon>
+    </button>
     <nav
         v-if="paginationEnabled"
         class="session-pagination"
@@ -214,9 +222,14 @@
         "sessionViewMode",
         "editingSessionUuid",
         "enhancingSessionId",
-        "splittingSessionId"
+        "splittingSessionId",
+        "archive"
       ]),
-      ...mapGetters(["displaySessions", "aiEnabled", "liveSessionCount"]),
+      ...mapGetters(["displaySessions", "aiEnabled", "liveSessionCount", "displayArchiveEntries"]),
+      archiveMatchCount() {
+        if (!this.hasSearch || !this.archive.available) return 0
+        return this.displayArchiveEntries.length
+      },
       hasSearch() {
         return Boolean(this.keyword && this.keyword.trim())
       },
@@ -279,6 +292,9 @@
       })
     },
     methods: {
+      openArchive() {
+        this.$store.commit("setArchiveOpen", true)
+      },
       goToPage(page) {
         if (this.paginationLocked) return
         const nextPage = Math.min(Math.max(1, page), this.pageCount)
@@ -400,6 +416,30 @@
   .sessions-list {
     flex: 1;
     min-width: 0;
+  }
+
+  .archive-matches {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin: 0 0 12px;
+    padding: 6px 10px 6px 12px;
+    border: 1px solid rgba(250, 128, 114, 0.22);
+    border-radius: 999px;
+    background-color: rgba(250, 128, 114, 0.08);
+    color: #c4594b;
+    font: inherit;
+    font-size: 13px;
+    cursor: pointer;
+  }
+
+  .archive-matches:hover {
+    background-color: rgba(250, 128, 114, 0.16);
+  }
+
+  .archive-matches-icon {
+    width: 14px;
+    height: 14px;
   }
 
   .session-placeholder {
@@ -664,6 +704,12 @@
   @media (prefers-color-scheme: dark) {
     .session-placeholder {
       color: #bdbdbd;
+    }
+
+    .archive-matches {
+      color: #f4a497;
+      background-color: rgba(250, 128, 114, 0.12);
+      border-color: rgba(250, 128, 114, 0.28);
     }
 
     .titles-only-card {

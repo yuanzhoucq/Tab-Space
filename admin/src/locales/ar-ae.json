@@ -176,6 +176,7 @@
   "archiveKeep": "حفظ كجلسة",
   "archiveDelete": "حذف",
   "archiveLoadMore": "عرض الأقدم",
+  "archiveSearchMatches": "وُجد أيضًا في «المحفوظ تلقائيًا» ({count})",
   "archiveToday": "اليوم",
   "archiveYesterday": "أمس",
   "iosBannerText": "متوفر الآن على iPhone وiPad مع مزامنة iCloud",
