@@ -182,6 +182,9 @@ const store = new Vuex.Store({
         proLifetimeDisplayPrice: null,
         // A sale price set in App Store Connect, as judged by the native app.
         proLifetimeOnSale: false,
+        // The yearly plan's free trial as { value, unit }, sent only while the
+        // App Store offers one this customer can still take.
+        proYearlyFreeTrial: null,
         freeSessionLimit: Constants.freeSessionLimit,
         enforcesSessionLimit: false,
         aiQuotaRemaining: null,      // Int, -1 = unlimited, null = unknown
@@ -443,6 +446,7 @@ const store = new Vuex.Store({
             hasActiveSubscription,
             proLifetimeDisplayPrice,
             proLifetimeOnSale,
+            proYearlyFreeTrial,
             freeSessionLimit,
             enforcesSessionLimit
         }) {
@@ -474,6 +478,14 @@ const store = new Vuex.Store({
                 ? proLifetimeDisplayPrice.trim()
                 : null
             state.proLifetimeOnSale = proLifetimeOnSale === true && state.proLifetimeDisplayPrice !== null
+            // Not kept when a reply omits it either: no report means no trial
+            // to promise, whether the app predates the field or the App Store
+            // has no trial for this customer.
+            const trial = proYearlyFreeTrial || {}
+            state.proYearlyFreeTrial = Number.isInteger(trial.value) && trial.value > 0
+                && ["day", "month", "year"].includes(trial.unit)
+                ? { value: trial.value, unit: trial.unit }
+                : null
             const reportedLimit = Number(freeSessionLimit)
             if (Number.isInteger(reportedLimit) && reportedLimit > 0) {
                 state.freeSessionLimit = reportedLimit

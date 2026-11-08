@@ -100,6 +100,7 @@ async function openDashboard(page, options = {}) {
     hasActiveSubscription,
     proLifetimeDisplayPrice,
     proLifetimeOnSale,
+    proYearlyFreeTrial,
     freeSessionLimit,
     enforcesSessionLimit,
     quotaRemaining,
@@ -257,6 +258,7 @@ async function openDashboard(page, options = {}) {
                   ...(hasActiveSubscription !== undefined ? { hasActiveSubscription } : {}),
                   ...(proLifetimeDisplayPrice ? { proLifetimeDisplayPrice } : {}),
                   ...(proLifetimeOnSale ? { proLifetimeOnSale: true } : {}),
+                  ...(proYearlyFreeTrial ? { proYearlyFreeTrial } : {}),
                   ...(Number(nativeProtocolVersion) >= 3
                     ? {
                         trialEligible
@@ -535,6 +537,7 @@ async function openDashboard(page, options = {}) {
     hasActiveSubscription: options.hasActiveSubscription,
     proLifetimeDisplayPrice: options.proLifetimeDisplayPrice || '',
     proLifetimeOnSale: Boolean(options.proLifetimeOnSale),
+    proYearlyFreeTrial: options.proYearlyFreeTrial || null,
     freeSessionLimit: options.freeSessionLimit || 5,
     enforcesSessionLimit: options.enforcesSessionLimit !== false,
     quotaRemaining: options.quotaRemaining,
@@ -1905,6 +1908,34 @@ test('labels lifetime Pro as a limited-time offer while the app reports a sale',
   await page.getByTestId('settings-link').click()
   await page.getByTestId('settings-upgrade').click()
   await expect(page.getByTestId('plan-lifetime').getByTestId('lifetime-sale-badge')).toHaveText('Limited time')
+})
+
+test('mentions the yearly free trial only while the app reports one', async ({ page }) => {
+  await openDashboard(page, {
+    initialSessions: sessions,
+    nativeProtocolVersion: '2',
+    entitlementTier: 'free',
+    proYearlyFreeTrial: { value: 7, unit: 'day' }
+  })
+
+  await page.getByTestId('settings-link').click()
+  await page.getByTestId('settings-upgrade').click()
+  await expect(page.getByTestId('plan-yearly-trial')).toHaveText('Free for 7 days')
+})
+
+test('promises no free trial when the app reports none', async ({ page }) => {
+  // Older native builds never report one, and neither does a build whose
+  // App Store offers no trial or whose customer already used it.
+  await openDashboard(page, {
+    initialSessions: sessions,
+    nativeProtocolVersion: '2',
+    entitlementTier: 'free'
+  })
+
+  await page.getByTestId('settings-link').click()
+  await page.getByTestId('settings-upgrade').click()
+  await expect(page.getByTestId('plan-yearly')).toBeVisible()
+  await expect(page.getByTestId('plan-yearly-trial')).toHaveCount(0)
 })
 
 test('never offers lifetime Pro through an app that cannot sell it', async ({ page }) => {

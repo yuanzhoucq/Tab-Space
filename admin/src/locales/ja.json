@@ -277,7 +277,7 @@
   "lifetimeBannerDismiss": "閉じる",
   "plusOwnedSummary": "無制限のセッションとすべての基本機能は永久に利用できます。週 5 回の AI リクエストも含まれ、Pro では AI が無制限になります。",
   "freeSessionAllowanceUsed": "セッションを保存しました。Free のセッション枠を使い切りました。アップグレードするとさらに保存できます。",
-  "annualTrial": "7日間無料トライアル",
+  "annualTrialPeriod": "{period}間無料",
   "proOnlyInfo": "Free と Plus では週 5 回の AI リクエストを利用できます。Pro には週ごとの上限がありません。",
   "quotaResetsAt": "{date} にリセット",
   "manageSubscription": "サブスクリプションを管理",

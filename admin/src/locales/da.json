@@ -277,7 +277,7 @@
   "lifetimeBannerDismiss": "Luk",
   "plusOwnedSummary": "Ubegrænsede sessioner og alle kernefunktioner er dine permanent. Du får også 5 AI-anmodninger om ugen; Pro gør AI ubegrænset.",
   "freeSessionAllowanceUsed": "Sessionen er gemt. Din Free-kvote er opbrugt; opgrader for at gemme en mere.",
-  "annualTrial": "7 dages gratis prøveperiode",
+  "annualTrialPeriod": "Gratis i {period}",
   "proOnlyInfo": "Free og Plus inkluderer 5 AI-anmodninger om ugen. Pro fjerner ugegrænsen.",
   "quotaResetsAt": "Nulstilles {date}",
   "manageSubscription": "Administrer abonnement",

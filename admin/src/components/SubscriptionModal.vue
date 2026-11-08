@@ -62,7 +62,7 @@
                     @click="selectProduct(yearlyProductId)">
               <div class="best-value">{{ lang.planRecommended || 'Best value' }}</div>
               <h4>{{ lang.planYearly || 'Yearly' }}</h4>
-              <small>{{ lang.annualTrial || '7-day free trial' }}</small>
+              <small v-if="annualTrialLabel" data-testid="plan-yearly-trial">{{ annualTrialLabel }}</small>
             </button>
             <!-- Only native builds that can sell it say so, and only while the
                  App Store offers it; the price itself stays in the app. -->
@@ -120,6 +120,7 @@
 
 <script>
 import { mapState, mapGetters } from 'vuex'
+import Constants from '../constants'
 import PlanComparison from './PlanComparison'
 
 export default {
@@ -136,8 +137,24 @@ export default {
     }
   },
   computed: {
-    ...mapState(['lang', 'bridge', 'showSubscriptionModal', 'subscriptionModalReason', 'plusDisplayPrice', 'purchaseRedirecting', 'proLifetimeOnSale']),
+    ...mapState(['lang', 'bridge', 'showSubscriptionModal', 'subscriptionModalReason', 'plusDisplayPrice', 'purchaseRedirecting', 'proLifetimeOnSale', 'proYearlyFreeTrial', 'tabSpaceSettings']),
     ...mapGetters(['isPremium', 'hasPermanentPlus', 'ownsLifetimePro', 'lifetimeProOffered', 'lifetimeSubscriptionRenews']),
+    // Shown only while the app reports a trial this customer can take; its
+    // length comes from the App Store, so nothing here is fixed.
+    annualTrialLabel() {
+      const trial = this.proYearlyFreeTrial
+      if (!trial) return ''
+      const format = locale => new Intl.NumberFormat(locale, {
+        style: 'unit', unit: trial.unit, unitDisplay: 'long'
+      }).format(trial.value)
+      let period
+      try {
+        period = format(this.tabSpaceSettings[Constants.preferredLanguageKey] || undefined)
+      } catch (e) {
+        try { period = format(undefined) } catch (e2) { return '' }
+      }
+      return (this.lang.annualTrialPeriod || 'Free for {period}').replace('{period}', period)
+    },
     // Why the dialog is open, in the vocabulary the native side accepts.
     purchaseSource() {
       if (this.subscriptionModalReason === 'aiQuota') return 'ai_quota'

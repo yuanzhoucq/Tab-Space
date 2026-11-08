@@ -277,7 +277,7 @@
   "lifetimeBannerDismiss": "Schließen",
   "plusOwnedSummary": "Unbegrenzte Sitzungen und alle Kernfunktionen gehören dir dauerhaft. Dazu kommen 5 KI-Anfragen pro Woche; mit Pro ist KI unbegrenzt.",
   "freeSessionAllowanceUsed": "Sitzung gespeichert. Dein Free-Kontingent ist aufgebraucht; mit einem Upgrade kannst du weitere speichern.",
-  "annualTrial": "7 Tage kostenlos testen",
+  "annualTrialPeriod": "{period} kostenlos testen",
   "proOnlyInfo": "Free und Plus enthalten 5 KI-Anfragen pro Woche. Pro hebt das Wochenlimit auf.",
   "quotaResetsAt": "Zurückgesetzt am {date}",
   "manageSubscription": "Abonnement verwalten",

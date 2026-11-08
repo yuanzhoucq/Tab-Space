@@ -706,6 +706,7 @@ export default {
         hasActiveSubscription: data.hasActiveSubscription,
         proLifetimeDisplayPrice: data.proLifetimeDisplayPrice,
         proLifetimeOnSale: data.proLifetimeOnSale,
+        proYearlyFreeTrial: data.proYearlyFreeTrial,
         freeSessionLimit: data.freeSessionLimit,
         enforcesSessionLimit: data.enforcesSessionLimit
       })

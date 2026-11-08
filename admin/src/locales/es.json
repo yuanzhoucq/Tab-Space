@@ -277,7 +277,7 @@
   "lifetimeBannerDismiss": "Cerrar",
   "plusOwnedSummary": "Las sesiones ilimitadas y todas las funciones principales son tuyas para siempre. También recibes 5 solicitudes de IA por semana; Pro ofrece IA ilimitada.",
   "freeSessionAllowanceUsed": "Sesión guardada. Has usado el límite de Free; mejora el plan para guardar otra.",
-  "annualTrial": "Prueba gratuita de 7 días",
+  "annualTrialPeriod": "Prueba gratuita de {period}",
   "proOnlyInfo": "Free y Plus incluyen 5 solicitudes de IA por semana. Pro elimina el límite semanal.",
   "quotaResetsAt": "Se reinicia el {date}",
   "manageSubscription": "Gestionar suscripción",
