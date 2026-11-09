@@ -753,6 +753,26 @@ test('opens an existing dashboard tab without relying on port-sensitive match pa
   assert.deepEqual(result, { reused: true })
 })
 
+test('opens the dashboard on its Auto-saved view, setting the hash on an open one', async () => {
+  function makeApi(tabs) {
+    const calls = []
+    return {
+      calls,
+      queryTabs: async query => query.active ? [] : tabs,
+      updateTab: async (id, properties) => calls.push(['update', id, properties]),
+      createTab: async properties => { calls.push(['create', properties]); return { windowId: 4 } },
+      dashboardUrl: () => 'https://app.mytab.space/'
+    }
+  }
+  const none = makeApi([])
+  await background.createController({ browserApi: none, client: {} }).openDashboard({ view: 'auto-saved' })
+  assert.deepEqual(none.calls, [['create', { url: 'https://app.mytab.space/#/auto-saved', active: true }]])
+
+  const open = makeApi([{ id: 5, url: 'https://app.mytab.space/?lang=ja#old' }])
+  await background.createController({ browserApi: open, client: {} }).openDashboard({ view: 'auto-saved' })
+  assert.deepEqual(open.calls, [['update', 5, { active: true, url: 'https://app.mytab.space/?lang=ja#/auto-saved' }]])
+})
+
 test('reuses the dashboard in the current window first, and brings another window forward otherwise', async () => {
   function makeApi(tabs) {
     const calls = []

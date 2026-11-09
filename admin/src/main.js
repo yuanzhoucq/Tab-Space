@@ -16,7 +16,16 @@ Vue.use(feather, 'v-icon')
 
 const routes = [
   { path: '/', component: Admin },
-  { path: '/settings', component: Settings }
+  { path: '/settings', component: Settings },
+  // The Safari menu's "Show All in Library…": the library on its Auto-saved
+  // view. Redirecting back to `/` lets the next request change the hash again.
+  {
+    path: '/auto-saved',
+    redirect: () => {
+      store.commit('requestArchiveOpen')
+      return '/'
+    }
+  }
 ]
 
 const router = new VueRouter({

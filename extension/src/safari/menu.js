@@ -451,7 +451,7 @@
           destinationSessionUuid: chosen.sessionUuid || ""
         })
       }
-      case "openSpace": return controller.openDashboard()
+      case "openSpace": return controller.openDashboard(chosen.view ? { view: chosen.view } : undefined)
       case "restore": return restoreUrls(api, chosen.urls)
       case "deleteSession": {
         const session = sessionByUuid(sessions, chosen.sessionUuid)

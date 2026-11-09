@@ -105,6 +105,9 @@ const store = new Vuex.Store({
         // by the native app. `available` turns true with the first answer, so
         // an app or extension without the archive never shows its entry.
         archiveOpen: false,
+        // Asked for by a link (the Safari menu's "Show All in Library…")
+        // before the app has answered for its archive; opened on the answer.
+        archiveOpenPending: false,
         archive: {
             available: false,
             loaded: false,
@@ -369,6 +372,12 @@ const store = new Vuex.Store({
         setActiveTag(state, newTag) {
             state.activeTag = newTag
             state.archiveOpen = false
+            state.archiveOpenPending = false
+        },
+        // Opens the archive now if the app has one, or once it says so.
+        requestArchiveOpen(state) {
+            state.archiveOpen = state.archive.available
+            state.archiveOpenPending = !state.archive.available
         },
         setArchiveOpen(state, open) {
             state.archiveOpen = open === true && state.archive.available
@@ -396,6 +405,10 @@ const store = new Vuex.Store({
                 hiddenCount: firstPage ? Number(data.hiddenCount) || 0 : state.archive.hiddenCount,
                 nextBeforeDay: typeof data.nextBeforeDay === "string" ? data.nextBeforeDay : null,
                 query: typeof data.query === "string" ? data.query : ""
+            }
+            if (state.archiveOpenPending) {
+                state.archiveOpenPending = false
+                state.archiveOpen = true
             }
         },
         setEditingSessionUuid(state, newId) {

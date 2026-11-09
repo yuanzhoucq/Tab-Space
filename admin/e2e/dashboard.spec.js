@@ -4260,6 +4260,25 @@ test('opens, keeps and deletes archived windows', async ({ page }) => {
   await expect(page.getByTestId('archive-empty')).toBeVisible()
 })
 
+test('#/auto-saved opens the Auto-saved view on load and on an open dashboard', async ({ page }) => {
+  await openDashboard(page, {
+    path: '/#/auto-saved',
+    expectedSessionCount: null,
+    initialSessions: sessions,
+    nativeProtocolVersion: '2',
+    entitlementTier: 'plus',
+    archiveEntries
+  })
+  await expect(page.getByTestId('archive-view')).toBeVisible()
+  await expect.poll(() => page.evaluate(() => window.location.hash)).toBe('#/')
+
+  await page.getByTestId('filter-all').click()
+  await expect(page.getByTestId('archive-view')).toHaveCount(0)
+  await page.evaluate(() => { window.location.hash = '#/auto-saved' })
+  await expect(page.getByTestId('archive-view')).toBeVisible()
+  await expect.poll(() => page.evaluate(() => window.location.hash)).toBe('#/')
+})
+
 test('searches auto-saved pages beyond the loaded days and says so from All', async ({ page }) => {
   const olderEntry = {
     id: 'archive-old',

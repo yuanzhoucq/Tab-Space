@@ -1821,13 +1821,16 @@
       return Number.isInteger(windowId) ? { ...result, windowId } : result
     }
 
-    async function openDashboard() {
+    // `view: "auto-saved"` lands on the Auto-saved view: a new dashboard
+    // loads with the hash, an open one gets it set, which does not reload it.
+    async function openDashboard(options = {}) {
+      const hash = options.view === "auto-saved" ? "#/auto-saved" : ""
       // Filtering by URL here avoids browser-specific match-pattern handling
       // for the localhost development origin, especially Firefox's rejection
       // of explicit ports in match patterns.
       const matches = (await browserApi.queryTabs({})).filter(tab => isDashboardUrl(tab.url))
       if (!matches || matches.length === 0) {
-        const created = await browserApi.createTab({ url: browserApi.dashboardUrl(), active: true })
+        const created = await browserApi.createTab({ url: browserApi.dashboardUrl() + hash, active: true })
         return withWindow({ reused: false }, created && created.windowId)
       }
       // Prefer the dashboard in the window the user is looking at. After a
@@ -1837,7 +1840,13 @@
       const [current] = await browserApi.queryTabs({ active: true, currentWindow: true })
       const currentWindowId = current ? current.windowId : undefined
       const match = matches.find(tab => tab.windowId === currentWindowId) || matches[0]
-      await browserApi.updateTab(match.id, { active: true })
+      const update = { active: true }
+      if (hash) {
+        const url = new URL(match.url)
+        url.hash = hash
+        update.url = url.href
+      }
+      await browserApi.updateTab(match.id, update)
       if (Number.isInteger(match.windowId) && match.windowId !== currentWindowId
           && typeof browserApi.updateWindow === "function") {
         await browserApi.updateWindow(match.windowId, { state: "normal", focused: true })
