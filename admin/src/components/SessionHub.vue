@@ -83,7 +83,7 @@
                       @click="dismissViewModeHint">{{ lang.viewModeHintDismiss }}</button>
           </div>
       </div>
-      <button type="button" class="hub-btn" data-testid="empty-trash" :aria-label="lang.emptyTrash" :title="lang.emptyTrash" @click="emptyTrash" v-if="activeTag === '@Trash'">
+      <button type="button" class="hub-btn" data-testid="empty-trash" :aria-label="lang.emptyTrash" :title="lang.emptyTrash" @click="emptyTrash" v-if="activeTag === '@Trash' && !archiveOpen">
           <v-icon class="button" :stroke-width="1.2" name="trash" fill="rgba(235, 82, 5, 0.2)"
       stroke="rgb(235, 82, 5)"></v-icon>
       </button>

@@ -4260,6 +4260,28 @@ test('opens, keeps and deletes archived windows', async ({ page }) => {
   await expect(page.getByTestId('archive-empty')).toBeVisible()
 })
 
+test('leaves Empty Trash behind when moving from Trash to Auto-saved', async ({ page }) => {
+  await openDashboard(page, {
+    initialSessions: [...sessions, {
+      uuid: 'session-trashed',
+      title: 'Trashed session',
+      timestamp: 1767398400000,
+      comment: '',
+      sites: [{ title: 'Old tab', url: 'https://example.com/old' }],
+      tags: [{ name: '@Trash' }]
+    }],
+    expectedSessionCount: null,
+    nativeProtocolVersion: '2',
+    entitlementTier: 'plus',
+    archiveEntries
+  })
+  await page.getByTestId('filter-@Trash').click()
+  await expect(page.getByTestId('empty-trash')).toBeVisible()
+  await page.getByTestId('filter-archive').click()
+  await expect(page.getByTestId('archive-view')).toBeVisible()
+  await expect(page.getByTestId('empty-trash')).toHaveCount(0)
+})
+
 test('#/auto-saved opens the Auto-saved view on load and on an open dashboard', async ({ page }) => {
   await openDashboard(page, {
     path: '/#/auto-saved',
