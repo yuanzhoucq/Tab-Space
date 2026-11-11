@@ -149,48 +149,46 @@ function marketingSessions() {
   ]
 }
 
-// Archived windows for the Archive view. `?mock&archive=free` shows the Free
-// retention notice as well.
+// Auto-saved periods for the Auto-saved view. `?mock&archive=free` shows the
+// Free retention notice as well.
 function sampleArchive() {
   const now = Math.floor(Date.now() / 1000)
-  const site = (title, url) => ({ title, url })
+  const page = (title, url, carried = false) => ({ title, url, carried })
+  const period = (id, startedAgo, endedAgo, windows, ongoing = false) => ({
+    id, browser: 'safari', startedAt: now - startedAgo, updatedAt: now - endedAgo, ongoing,
+    windows: windows.map(([closed, pages]) => ({ closed, pages })),
+    sites: windows.flatMap(([, pages]) => pages).map(({ title, url }) => ({ title, url }))
+  })
   return [
-    {
-      id: 'mock-archive-window', reason: 'window', browser: 'safari', closedAt: now - 25 * 60, updatedAt: now - 25 * 60,
-      sites: [
-        site('SwiftUI | Apple Developer Documentation', 'https://developer.apple.com/documentation/swiftui'),
-        site('Swift Forums', 'https://forums.swift.org'),
-        site('GitHub · Trending', 'https://github.com/trending')
-      ]
-    },
-    {
-      id: 'mock-archive-burst', reason: 'burst', browser: 'safari', closedAt: now - 3 * 3600, updatedAt: now - 3 * 3600,
-      sites: [
-        site('Kyoto Travel Guide - What to do in Kyoto City', 'https://www.japan-guide.com/e/e2158.html'),
-        site('Kyoto – Travel guide at Wikivoyage', 'https://en.wikivoyage.org/wiki/Kyoto'),
-        site('Airbnb | Kyoto – Holiday Rentals', 'https://www.airbnb.com/kyoto-japan/stays')
-      ]
-    },
-    {
-      id: 'mock-archive-restart', reason: 'restart', browser: 'safari', closedAt: now - 30 * 3600, updatedAt: now - 30 * 3600,
-      sites: [
-        site('Hacker News', 'https://news.ycombinator.com'),
-        site('Wikipedia', 'https://www.wikipedia.org/'),
-        site('The Verge', 'https://www.theverge.com'),
-        site('Cloudflare Pages documentation', 'https://developers.cloudflare.com/pages/'),
-        site('MacBook Pro - Apple', 'https://www.apple.com/macbook-pro/'),
-        site('Figma Community', 'https://www.figma.com/community'),
-        site('Notion – The AI workspace that works for you', 'https://www.notion.so'),
-        site('Coursera | Online Courses From Top Universities', 'https://www.coursera.org')
-      ]
-    },
-    {
-      id: 'mock-archive-old', reason: 'window', browser: 'safari', closedAt: now - 6 * 86400, updatedAt: now - 6 * 86400,
-      sites: [
-        site('ReAct: Synergizing Reasoning and Acting in Language Models', 'https://arxiv.org/abs/2210.03629'),
-        site('arXiv.org e-Print archive', 'https://arxiv.org')
-      ]
-    }
+    period('mock-archive-now', 40 * 60, 2 * 60, [[false, [
+      page('SwiftUI | Apple Developer Documentation', 'https://developer.apple.com/documentation/swiftui', true),
+      page('Swift Forums', 'https://forums.swift.org'),
+      page('GitHub · Trending', 'https://github.com/trending')
+    ]]], true),
+    period('mock-archive-trip', 4 * 3600, 3 * 3600, [
+      [true, [
+        page('Kyoto Travel Guide - What to do in Kyoto City', 'https://www.japan-guide.com/e/e2158.html'),
+        page('Kyoto – Travel guide at Wikivoyage', 'https://en.wikivoyage.org/wiki/Kyoto')
+      ]],
+      [false, [
+        page('Airbnb | Kyoto – Holiday Rentals', 'https://www.airbnb.com/kyoto-japan/stays'),
+        page('SwiftUI | Apple Developer Documentation', 'https://developer.apple.com/documentation/swiftui')
+      ]]
+    ]),
+    period('mock-archive-yesterday', 32 * 3600, 30 * 3600, [[true, [
+      page('Hacker News', 'https://news.ycombinator.com', true),
+      page('Wikipedia', 'https://www.wikipedia.org/'),
+      page('The Verge', 'https://www.theverge.com'),
+      page('Cloudflare Pages documentation', 'https://developers.cloudflare.com/pages/'),
+      page('MacBook Pro - Apple', 'https://www.apple.com/macbook-pro/'),
+      page('Figma Community', 'https://www.figma.com/community'),
+      page('Notion – The AI workspace that works for you', 'https://www.notion.so'),
+      page('Coursera | Online Courses From Top Universities', 'https://www.coursera.org')
+    ]]]),
+    period('mock-archive-old', 6 * 86400 + 3600, 6 * 86400, [[true, [
+      page('ReAct: Synergizing Reasoning and Acting in Language Models', 'https://arxiv.org/abs/2210.03629'),
+      page('arXiv.org e-Print archive', 'https://arxiv.org')
+    ]]])
   ]
 }
 

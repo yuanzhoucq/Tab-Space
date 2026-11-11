@@ -85,9 +85,9 @@
         <div v-for="entry in group.entries" :key="entry.id" class="titles-row"
              :data-testid="`archive-entry-${entry.id}`">
           <div class="titles-summary" @click="toggle(entry)">
-            <span class="titles-title">{{ entryTitle(entry) }}</span>
-            <span class="source-chip titles-tag" data-testid="archive-reason">
-              <v-icon :name="reasonIcon(entry)"></v-icon>{{ reasonLabel(entry) }}
+            <span class="titles-title">{{ periodLabel(entry) }}</span>
+            <span v-if="chipLabel(entry)" class="source-chip titles-tag" data-testid="archive-chip">
+              <v-icon :name="chipIcon(entry)"></v-icon>{{ chipLabel(entry) }}
             </span>
             <span class="titles-spacer" aria-hidden="true"></span>
             <span class="titles-count">{{ countLabel(entry) }}</span>
@@ -106,15 +106,24 @@
             </button>
           </div>
           <ul v-if="expanded[entry.id]" class="archive-sites titles-sites">
-            <li v-for="site in entry.sites" :key="site.url">
+            <template v-for="row in siteRows(entry, entry.sites)">
+            <li v-if="row.window" :key="row.key" class="archive-window" data-testid="archive-window">
+              <span>{{ row.label }}</span>
+              <button type="button" class="btn restore-btn" data-testid="archive-open-window"
+                      :aria-label="lang.archiveOpenWindow" :title="lang.archiveOpenWindow" @click.stop="openWindow(entry, row.window)">
+                <v-icon name="external-link" class="btn-icon" :stroke-width="2.4"></v-icon>
+              </button>
+            </li>
+            <li v-else :key="row.key">
               <div class="fav">
-                <img class="fav-img" :src="favicon(site.url) || fallbackIcon" loading="lazy" decoding="async"
+                <img class="fav-img" :src="favicon(row.site.url) || fallbackIcon" loading="lazy" decoding="async"
                      referrerpolicy="no-referrer" alt @error="useFallbackIcon">
               </div>
               <span class="site-title">
-                <a class="link" :href="site.url" target="_blank" rel="noopener">{{ site.title || site.url }}</a>
+                <a class="link" :href="row.site.url" target="_blank" rel="noopener">{{ row.site.title || row.site.url }}</a>
               </span>
             </li>
+            </template>
           </ul>
         </div>
       </div>
@@ -130,7 +139,7 @@
             @click="handleCardClick($event, entry)"
         >
           <div class="archive-entry-header">
-            <span class="archive-entry-title">{{ entryTitle(entry) }}</span>
+            <span class="archive-entry-title">{{ periodLabel(entry) }}</span>
             <div class="archive-entry-actions">
               <button type="button" class="btn restore-btn" data-testid="archive-open"
                       :aria-label="lang.archiveOpenAll" :title="lang.archiveOpenAll" @click="openAll(entry)">
@@ -150,29 +159,38 @@
           <!-- The compact view shows the favicon strip, and a click on the
                card opens it, as on a session card. -->
           <ul :class="['archive-sites', {'collapsed-sites': isCompact(entry)}]" data-testid="archive-sites">
-            <li v-for="site in visibleSites(entry)" :key="site.url"
-                :class="{'collapsed-site': isCompact(entry)}" :title="isCompact(entry) ? (site.title || site.url) : null">
+            <template v-for="row in siteRows(entry, visibleSites(entry))">
+            <li v-if="row.window" :key="row.key" class="archive-window" data-testid="archive-window">
+              <span>{{ row.label }}</span>
+              <button type="button" class="btn restore-btn" data-testid="archive-open-window"
+                      :aria-label="lang.archiveOpenWindow" :title="lang.archiveOpenWindow" @click.stop="openWindow(entry, row.window)">
+                <v-icon name="external-link" class="btn-icon" :stroke-width="2.4"></v-icon>
+              </button>
+            </li>
+            <li v-else :key="row.key"
+                :class="{'collapsed-site': isCompact(entry)}" :title="isCompact(entry) ? (row.site.title || row.site.url) : null">
               <div :class="['fav', {'collapsed-fav': isCompact(entry)}]">
                 <img :class="['fav-img', {'collapsed-fav-img': isCompact(entry)}]"
-                     :src="favicon(site.url) || fallbackIcon" loading="lazy" decoding="async"
+                     :src="favicon(row.site.url) || fallbackIcon" loading="lazy" decoding="async"
                      referrerpolicy="no-referrer" alt @error="useFallbackIcon">
               </div>
               <span v-if="!isCompact(entry)" class="site-title">
-                <a class="link" :href="site.url" target="_blank" rel="noopener"><span
-                    v-for="(part, index) in highlightParts(site.title || site.url)" :key="index"
+                <a class="link" :href="row.site.url" target="_blank" rel="noopener"><span
+                    v-for="(part, index) in highlightParts(row.site.title || row.site.url)" :key="index"
                     :class="{'highlight': part.match}">{{ part.text }}</span></a>
               </span>
             </li>
+            </template>
             <li v-if="isCompact(entry) && entry.sites.length > collapsedVisibleLimit"
                 class="collapsed-site collapsed-site-overflow">
               +{{ entry.sites.length - collapsedVisibleLimit }}
             </li>
           </ul>
-          <div class="archive-tags">
-            <!-- Tag-shaped, but tinted and inert: it says how the pages were saved,
-                 not a tag anyone set. -->
-            <span class="source-chip" data-testid="archive-reason">
-              <v-icon :name="reasonIcon(entry)"></v-icon>{{ reasonLabel(entry) }}
+          <div v-if="chipLabel(entry)" class="archive-tags">
+            <!-- Tag-shaped, but tinted and inert: it describes the period, not
+                 a tag anyone set. -->
+            <span class="source-chip" data-testid="archive-chip">
+              <v-icon :name="chipIcon(entry)"></v-icon>{{ chipLabel(entry) }}
             </span>
           </div>
         </article>
@@ -350,15 +368,49 @@ export default {
     entryTitle(entry) {
       return `${this.lang.saveAt} ${new Date(entry.updatedAt * 1000).Format('yyyy-MM-dd hh:mm')}`
     },
-    reasonIcon(entry) {
-      if (entry.reason === "burst") return "layers"
-      if (entry.reason === "restart") return "rotate-ccw"
-      return "layout"
+    // "14:02–16:30" under its day; the start is dated as well when the
+    // period began on an earlier day.
+    periodLabel(entry) {
+      const end = new Date(entry.updatedAt * 1000)
+      const start = new Date((entry.startedAt || entry.updatedAt) * 1000)
+      const sameDay = start.toDateString() === end.toDateString()
+      const from = sameDay ? start.Format('hh:mm') : start.Format('MM-dd hh:mm')
+      return entry.ongoing ? from : `${from}–${end.Format('hh:mm')}`
     },
-    reasonLabel(entry) {
-      if (entry.reason === "burst") return this.lang.archiveReasonBurst
-      if (entry.reason === "restart") return this.lang.archiveReasonRestart
-      return this.lang.archiveReasonWindow
+    windowsOf(entry) {
+      return Array.isArray(entry.windows) && entry.windows.length > 0
+        ? entry.windows
+        : [{ closed: false, pages: entry.sites }]
+    },
+    chipIcon(entry) {
+      return entry.ongoing ? "clock" : "layout"
+    },
+    chipLabel(entry) {
+      if (entry.ongoing) return this.lang.archiveOngoing
+      const count = this.windowsOf(entry).length
+      return count > 1 ? this.lang.archiveWindowCount.replace("{count}", count) : ""
+    },
+    // The pages shown, with a heading before each window's when the period
+    // had several and the full list is on screen.
+    siteRows(entry, sites) {
+      const windows = this.windowsOf(entry)
+      if (windows.length < 2 || this.searching || this.isCompact(entry)) {
+        return sites.map((site, index) => ({ key: `s${index}-${site.url}`, site }))
+      }
+      const rows = []
+      windows.forEach((window, index) => {
+        const label = this.lang.archiveWindowLabel.replace("{n}", index + 1)
+        rows.push({ key: `w${index}`, window, label: window.closed ? `${label} · ${this.lang.archiveWindowClosed}` : label })
+        window.pages.forEach((site, page) => rows.push({ key: `w${index}-${page}-${site.url}`, site }))
+      })
+      return rows
+    },
+    openWindow(entry, window) {
+      if (!this.bridge) return
+      this.bridge.send({
+        cmd: "RestoreSession",
+        bookmarks: [{ title: this.entryTitle(entry), sites: window.pages.map(page => ({ title: page.title, url: page.url })), tags: [], timestamp: entry.updatedAt }]
+      })
     },
     dayLabel(date) {
       const today = new Date(this.now)
@@ -725,6 +777,20 @@ export default {
 
 .del-btn:hover svg {
   stroke: #eb5205 !important;
+}
+
+.archive-window {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #888;
+}
+
+.archive-window:first-child {
+  margin-top: 0;
 }
 
 .archive-sites {

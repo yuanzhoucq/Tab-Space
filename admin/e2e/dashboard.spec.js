@@ -4194,10 +4194,10 @@ test.describe("when Safari's extension stops answering", () => {
 const archiveEntries = [
   {
     id: 'archive-window',
-    reason: 'window',
     browser: 'safari',
-    closedAt: Math.floor(Date.now() / 1000) - 600,
+    startedAt: Math.floor(Date.now() / 1000) - 1800,
     updatedAt: Math.floor(Date.now() / 1000) - 600,
+    ongoing: true,
     sites: [
       { title: 'Swift Forums', url: 'https://forums.swift.org/t/1' },
       { title: 'Apple Developer', url: 'https://developer.apple.com/documentation' }
@@ -4205,10 +4205,20 @@ const archiveEntries = [
   },
   {
     id: 'archive-burst',
-    reason: 'burst',
     browser: 'safari',
-    closedAt: Math.floor(Date.now() / 1000) - 6 * 86400,
+    startedAt: Math.floor(Date.now() / 1000) - 6 * 86400 - 3600,
     updatedAt: Math.floor(Date.now() / 1000) - 6 * 86400,
+    ongoing: false,
+    windows: [
+      {
+        closed: true,
+        pages: [
+          { title: 'Hotel A', url: 'https://hotels.example/a', carried: true },
+          { title: 'Hotel B', url: 'https://hotels.example/b', carried: false }
+        ]
+      },
+      { closed: false, pages: [{ title: 'Map', url: 'https://maps.example/tokyo', carried: false }] }
+    ],
     sites: [
       { title: 'Hotel A', url: 'https://hotels.example/a' },
       { title: 'Hotel B', url: 'https://hotels.example/b' },
@@ -4234,7 +4244,7 @@ test('opens, keeps and deletes archived windows', async ({ page }) => {
   await expect(page.getByTestId('archive-view')).toBeVisible()
   await expect(page.getByTestId('archive-off')).toHaveCount(0)
   await page.getByTestId('archive-help').click()
-  await expect(page.getByTestId('archive-help-popover')).toContainText('close a window')
+  await expect(page.getByTestId('archive-help-popover')).toContainText('by period')
   await page.getByTestId('archive-local').click()
   await expect(page.getByTestId('archive-help-popover')).toHaveCount(0)
   await expect(page.getByTestId('archive-local-popover')).toContainText('iCloud')
@@ -4243,8 +4253,18 @@ test('opens, keeps and deletes archived windows', async ({ page }) => {
   await expect(page.getByTestId('archive-retention')).toHaveCount(0)
 
   const windowEntry = page.getByTestId('archive-entry-archive-window')
-  await expect(windowEntry).toContainText('Saved at')
-  await expect(windowEntry.getByTestId('archive-reason')).toHaveText('Closed window')
+  await expect(windowEntry.getByTestId('archive-chip')).toHaveText('In progress')
+  await expect(windowEntry.getByTestId('archive-window')).toHaveCount(0)
+
+  // A period with several windows lists them apart, each openable alone.
+  const tripEntry = page.getByTestId('archive-entry-archive-burst')
+  await expect(tripEntry.getByTestId('archive-chip')).toHaveText('2 windows')
+  await expect(tripEntry.getByTestId('archive-window')).toHaveText(['Window 1 · closed', 'Window 2'])
+  await tripEntry.getByTestId('archive-open-window').first().click()
+  await expect.poll(() => lastBridgeCommand(page, 'RestoreSession')).toMatchObject({
+    payload: { bookmarks: [{ sites: archiveEntries[1].sites.slice(0, 2) }] }
+  })
+
   await windowEntry.getByTestId('archive-open').click()
   await expect.poll(() => lastBridgeCommand(page, 'RestoreSession')).toMatchObject({
     payload: { bookmarks: [{ sites: archiveEntries[0].sites }] }
@@ -4304,9 +4324,8 @@ test('#/auto-saved opens the Auto-saved view on load and on an open dashboard', 
 test('searches auto-saved pages beyond the loaded days and says so from All', async ({ page }) => {
   const olderEntry = {
     id: 'archive-old',
-    reason: 'window',
     browser: 'safari',
-    closedAt: Math.floor(Date.now() / 1000) - 40 * 86400,
+    startedAt: Math.floor(Date.now() / 1000) - 40 * 86400,
     updatedAt: Math.floor(Date.now() / 1000) - 40 * 86400,
     sites: [
       { title: 'Kyoto ryokan list', url: 'https://travel.example/kyoto' },
@@ -4360,9 +4379,8 @@ test('shows a newly archived window while the archive is open', async ({ page })
   await page.evaluate(() => {
     window.__tabspaceTest.addArchiveEntry({
       id: 'archive-new',
-      reason: 'window',
       browser: 'safari',
-      closedAt: Math.floor(Date.now() / 1000),
+      startedAt: Math.floor(Date.now() / 1000),
       updatedAt: Math.floor(Date.now() / 1000),
       sites: [{ title: 'New A', url: 'https://new.example/a' }, { title: 'New B', url: 'https://new.example/b' }]
     })

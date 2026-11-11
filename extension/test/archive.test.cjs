@@ -12,6 +12,7 @@ function harness(options = {}) {
   const timers = []
   const sent = []
   let failing = options.failing || null
+  let reply = options.reply || (() => ({ archived: true }))
   let hanging = false
   let captured = 0
   const tracker = background.createArchiveTracker({
@@ -24,6 +25,7 @@ function harness(options = {}) {
       if (hanging) return new Promise(() => {})
       if (failing) throw failing
       sent.push(payload)
+      return reply(payload)
     },
     onCaptured: () => { captured += 1 },
     now: () => clock,
@@ -40,6 +42,8 @@ function harness(options = {}) {
     sent,
     setTabs(next) { tabs = next },
     fail(error) { failing = error },
+    replyWith(next) { reply = next },
+    get clock() { return clock },
     hang() { hanging = true },
     get captured() { return captured },
     async advance(milliseconds) {
@@ -61,104 +65,230 @@ function harness(options = {}) {
 const tab = (id, windowId, path, extra = {}) =>
   ({ id, windowId, url: `https://example.com/${path}`, title: path, ...extra })
 
-test('a closed window is archived once, with its tabs in order', async () => {
+const titles = payload => payload.windows.map(window => window.pages.map(page => page.title))
+const carried = payload => payload.windows.map(window => window.pages.map(page => page.carried))
+const last = h => h.sent[h.sent.length - 1]
+const MINUTE = 60_000
+
+async function open(h, tabs) {
+  h.setTabs(tabs)
+  h.tracker.tabChanged()
+  await h.advance(1000)
+}
+
+test('pages opened in a period stay once closed; earlier ones only while open', async () => {
+  const h = harness({ tabs: [tab(1, 10, 'a', { index: 0 }), tab(2, 10, 'b', { index: 1 })] })
+  await h.tracker.start(false)
+  await open(h, [tab(1, 10, 'a', { index: 0 }), tab(2, 10, 'b', { index: 1 }), tab(3, 10, 'c', { index: 2 })])
+  h.tracker.tabRemoved(3, { windowId: 10, isWindowClosing: false })
+  h.tracker.tabRemoved(2, { windowId: 10, isWindowClosing: false })
+  h.setTabs([tab(1, 10, 'a', { index: 0 })])
+  await h.advance(3000)
+  assert.deepEqual(titles(last(h)), [['a', 'c']])
+  assert.deepEqual(carried(last(h)), [[true, false]])
+  assert.equal(last(h).windows[0].closed, false)
+})
+
+test('thirty quiet minutes end a period; the next one carries what is still open', async () => {
+  const h = harness({ tabs: [tab(1, 10, 'a', { index: 0 })] })
+  await h.tracker.start(false)
+  await open(h, [tab(1, 10, 'a', { index: 0 }), tab(2, 10, 'b', { index: 1 })])
+  const openedB = h.clock
+  await h.advance(3000)
+  const first = last(h)
+  assert.deepEqual(titles(first), [['a', 'b']])
+
+  await h.advance(31 * MINUTE)
+  await open(h, [tab(1, 10, 'a', { index: 0 }), tab(2, 10, 'b', { index: 1 }), tab(3, 10, 'c', { index: 2 })])
+  await h.advance(3000)
+  const ended = h.sent.filter(payload => payload.id === first.id)
+  assert.equal(ended[ended.length - 1].endedAt, openedB, 'the first period ends at its last activity')
+  const second = last(h)
+  assert.notEqual(second.id, first.id)
+  assert.deepEqual(titles(second), [['a', 'b', 'c']])
+  assert.deepEqual(carried(second), [[true, true, false]])
+})
+
+test('switching tabs keeps a period going without adding pages', async () => {
+  const h = harness({ tabs: [tab(1, 10, 'a')] })
+  await h.tracker.start(false)
+  await open(h, [tab(1, 10, 'a'), tab(2, 10, 'b')])
+  await h.advance(3000)
+  const first = last(h)
+  for (let i = 0; i < 3; i += 1) {
+    await h.advance(20 * MINUTE)
+    h.tracker.activity()
+  }
+  await open(h, [tab(1, 10, 'a'), tab(2, 10, 'b'), tab(3, 10, 'c')])
+  await h.advance(3000)
+  assert.equal(last(h).id, first.id)
+  assert.deepEqual(titles(last(h)), [['a', 'b', 'c']])
+})
+
+test('activity alone moves the end of the period, written within a minute', async () => {
+  const h = harness({ tabs: [tab(1, 10, 'a')] })
+  await h.tracker.start(false)
+  await open(h, [tab(1, 10, 'a'), tab(2, 10, 'b')])
+  await h.advance(3000)
+  await h.advance(5 * MINUTE)
+  h.tracker.activity()
+  const at = h.clock
+  await h.advance(3000)
+  assert.notEqual(last(h).endedAt, at, 'not written at once')
+  await h.advance(MINUTE)
+  assert.equal(last(h).endedAt, at)
+})
+
+test('a closed window keeps the pages it had, earlier ones included', async () => {
+  const h = harness({ tabs: [tab(1, 10, 'a', { index: 0 }), tab(2, 10, 'b', { index: 1 }), tab(3, 11, 'c')] })
+  await h.tracker.start(false)
+  for (const id of [2, 1]) h.tracker.tabRemoved(id, { windowId: 10, isWindowClosing: true })
+  h.tracker.windowRemoved(10)
+  h.setTabs([tab(3, 11, 'c')])
+  await h.advance(3000)
+  assert.deepEqual(titles(last(h)), [['a', 'b'], ['c']])
+  assert.deepEqual(last(h).windows.map(window => window.closed), [true, false])
+})
+
+test('a window whose tabs closed without tab events is closed from the period', async () => {
   const h = harness({ tabs: [tab(1, 10, 'a'), tab(2, 10, 'b'), tab(3, 11, 'c')] })
   await h.tracker.start(false)
-  h.tracker.tabRemoved(1, { windowId: 10, isWindowClosing: true })
-  h.tracker.tabRemoved(2, { windowId: 10, isWindowClosing: true })
   h.tracker.windowRemoved(10)
-  await h.advance(2500)
-  assert.deepEqual(h.sent, [{
-    reason: 'window',
-    sites: [{ title: 'a', url: 'https://example.com/a' }, { title: 'b', url: 'https://example.com/b' }]
-  }])
+  await h.advance(3000)
+  assert.deepEqual(titles(last(h)), [['a', 'b'], ['c']])
+  assert.equal(last(h).windows[0].closed, true)
 })
 
-test('a window is archived in tab order although its tabs close from the last one', async () => {
-  const h = harness({ tabs: [tab(1, 10, 'a', { index: 0 }), tab(2, 10, 'b', { index: 1 }), tab(3, 10, 'c', { index: 2 })] })
-  await h.tracker.start(false)
-  for (const id of [3, 2, 1]) h.tracker.tabRemoved(id, { windowId: 10, isWindowClosing: true })
-  h.tracker.windowRemoved(10)
-  await h.advance(2500)
-  assert.deepEqual(h.sent[0].sites.map(site => site.title), ['a', 'b', 'c'])
-})
-
-test('a window whose tabs closed without tab events still comes from the cache', async () => {
+test('a refresh that still lists a closed tab does not bring it back', async () => {
   const h = harness({ tabs: [tab(1, 10, 'a'), tab(2, 10, 'b')] })
   await h.tracker.start(false)
+  h.tracker.tabRemoved(2, { windowId: 10, isWindowClosing: false })
+  await open(h, [tab(1, 10, 'a'), tab(2, 10, 'b')])
+  await h.advance(3000)
+  assert.deepEqual(titles(last(h)), [['a']])
+})
+
+test('a tab keeps its last address, and an earlier page that moves counts as new', async () => {
+  const h = harness({ tabs: [tab(1, 10, 'a')] })
+  await h.tracker.start(false)
+  await open(h, [tab(1, 10, 'x')])
+  await h.advance(3000)
+  assert.deepEqual(titles(last(h)), [['x']])
+  assert.deepEqual(carried(last(h)), [[false]])
+})
+
+test('a page moved to another window is filed under that window', async () => {
+  const h = harness({ tabs: [tab(1, 10, 'a'), tab(2, 10, 'b')] })
+  await h.tracker.start(false)
+  await open(h, [tab(1, 10, 'a'), tab(2, 11, 'b')])
   h.tracker.windowRemoved(10)
-  await h.advance(2500)
-  assert.equal(h.sent.length, 1)
-  assert.equal(h.sent[0].reason, 'window')
-  assert.equal(h.sent[0].sites.length, 2)
+  await h.advance(3000)
+  assert.deepEqual(titles(last(h)), [['a'], ['b']])
+  assert.deepEqual(last(h).windows.map(window => window.closed), [true, false])
 })
 
-test('single closes are left to history; three quick ones are a burst', async () => {
-  const h = harness({ tabs: [1, 2, 3, 4, 5].map(id => tab(id, 10, `p${id}`)) })
+test('tabs Tab Space closes itself, pinned and private tabs are left out', async () => {
+  const h = harness({ tabs: [tab(1, 10, 'a'), tab(2, 10, 'p', { pinned: true }), tab(3, 12, 'i', { incognito: true })] })
   await h.tracker.start(false)
-  h.tracker.tabRemoved(1, { windowId: 10 })
-  await h.advance(5000)
-  assert.deepEqual(h.sent, [])
-
-  h.tracker.tabRemoved(2, { windowId: 10 })
-  await h.advance(300)
-  h.tracker.tabRemoved(3, { windowId: 10 })
-  await h.advance(300)
-  h.tracker.tabRemoved(4, { windowId: 10 })
-  await h.advance(2500)
-  assert.equal(h.sent.length, 1)
-  assert.equal(h.sent[0].reason, 'burst')
-  assert.deepEqual(h.sent[0].sites.map(site => site.title), ['p2', 'p3', 'p4'])
+  await open(h, [tab(1, 10, 'a'), tab(2, 10, 'p', { pinned: true }), tab(3, 12, 'i', { incognito: true }), tab(4, 10, 'd')])
+  h.tracker.suppress([4])
+  h.tracker.tabRemoved(4, { windowId: 10, isWindowClosing: false })
+  await h.advance(3000)
+  assert.deepEqual(titles(last(h)), [['a']])
 })
 
-test('tabs Tab Space closes itself, pinned and private tabs are never archived', async () => {
-  const h = harness({
-    tabs: [tab(1, 10, 'a'), tab(2, 10, 'b'), tab(3, 10, 'pinned', { pinned: true }),
-      tab(4, 10, 'private', { incognito: true }), tab(5, 10, 'c')]
-  })
-  await h.tracker.start(false)
-  h.tracker.suppress([1, 2])
-  for (const id of [1, 2, 3, 4]) h.tracker.tabRemoved(id, { windowId: 10 })
-  await h.advance(2500)
-  assert.deepEqual(h.sent, [])
-})
-
-test('after a relaunch, remembered tabs that did not come back are archived', async () => {
-  const first = harness({ tabs: [tab(1, 10, 'a'), tab(2, 10, 'b'), tab(3, 10, 'c')] })
+test('a relaunch ends the last run\'s period as Safari quit and carries the restored tabs', async () => {
+  const first = harness({ tabs: [tab(1, 10, 'a', { index: 0 }), tab(2, 10, 'b', { index: 1 })] })
   await first.tracker.start(false)
+  await open(first, [tab(1, 10, 'a', { index: 0 }), tab(2, 10, 'b', { index: 1 }), tab(3, 10, 'c', { index: 2 })])
+  // Quit before the write timer fired.
+  const lastRun = JSON.parse(JSON.stringify(first.store['tabspace-archive-period']))
 
-  // Same storage, new browser run: only "a" was restored.
-  const second = harness({ stored: first.store, clock: 1_000_000 + 60_000, tabs: [tab(7, 20, 'a')] })
+  const second = harness({ stored: first.store, clock: first.clock + 5 * MINUTE, tabs: [tab(9, 20, 'a')] })
+  // An event from before `start` waits for it.
+  second.tracker.tabRemoved(1, { windowId: 10, isWindowClosing: false })
   await second.tracker.start(true)
-  assert.deepEqual(second.sent, [], 'waits for the relaunch to settle')
-  await second.advance(16_000)
-  assert.equal(second.sent.length, 1)
-  assert.equal(second.sent[0].reason, 'restart')
-  assert.deepEqual(second.sent[0].sites.map(site => site.title), ['b', 'c'])
+  assert.equal(second.sent[0].id, lastRun.id)
+  assert.deepEqual(titles(second.sent[0]), [['a', 'b', 'c']])
+  assert.equal(second.sent[0].windows[0].closed, true)
+
+  // Restored windows arrive over a few seconds.
+  await open(second, [tab(9, 20, 'a', { index: 0 }), tab(10, 20, 'b', { index: 1 })])
+  await second.advance(20_000)
+  await open(second, [tab(9, 20, 'a', { index: 0 }), tab(10, 20, 'b', { index: 1 }), tab(11, 20, 'd', { index: 2 })])
+  await second.advance(3000)
+  assert.notEqual(last(second).id, lastRun.id)
+  assert.deepEqual(titles(last(second)), [['a', 'b', 'd']])
+  assert.deepEqual(carried(last(second)), [[true, true, false]])
 })
 
-test('a capture the app could not take waits for the next event', async () => {
-  const h = harness({ tabs: [tab(1, 10, 'a'), tab(2, 10, 'b'), tab(3, 11, 'c'), tab(4, 11, 'd')] })
+test('a period the user deleted while it went on gives way to a new one', async () => {
+  const h = harness({ tabs: [tab(1, 10, 'a')] })
+  await h.tracker.start(false)
+  h.replyWith(() => ({ archived: false, dismissed: true }))
+  await open(h, [tab(1, 10, 'a'), tab(2, 10, 'b')])
+  await h.advance(3000)
+  const dismissed = last(h)
+  h.replyWith(() => ({ archived: true }))
+  h.tracker.tabRemoved(2, { windowId: 10, isWindowClosing: false })
+  await h.advance(3000)
+  assert.notEqual(last(h).id, dismissed.id)
+  // b closed after the new period began, as a page from before it.
+  assert.deepEqual(titles(last(h)), [['a']])
+  assert.deepEqual(carried(last(h)), [[true]])
+})
+
+test('a write the app could not take waits, one per period', async () => {
+  const h = harness({ tabs: [tab(1, 10, 'a')] })
   await h.tracker.start(false)
   h.fail(Object.assign(new Error('offline'), { code: 'bridge_unavailable' }))
-  h.tracker.windowRemoved(10)
-  await h.advance(2500)
+  await open(h, [tab(1, 10, 'a'), tab(2, 10, 'b')])
+  await h.advance(3000)
+  await open(h, [tab(1, 10, 'a'), tab(2, 10, 'b'), tab(3, 10, 'c')])
+  await h.advance(3000)
   assert.equal(h.store['tabspace-archive-outbox'].length, 1)
+  assert.deepEqual(titles(h.store['tabspace-archive-outbox'][0]), [['a', 'b', 'c']])
 
   h.fail(null)
-  h.tracker.windowRemoved(11)
-  await h.advance(2500)
-  assert.deepEqual(h.sent.map(payload => payload.sites[0].title), ['a', 'c'])
+  await h.tracker.retryOutbox()
+  assert.equal(h.sent.length, 1)
+  assert.deepEqual(h.store['tabspace-archive-outbox'], [])
+  assert.equal(h.captured, 1)
+})
+
+test('a waiting write is retried on tab changes, at most once a minute', async () => {
+  const h = harness({ tabs: [tab(1, 10, 'a')] })
+  await h.tracker.start(false)
+  h.fail(Object.assign(new Error('offline'), { code: 'bridge_unavailable' }))
+  await open(h, [tab(1, 10, 'a'), tab(2, 10, 'b')])
+  await h.advance(3000)
+  h.fail(null)
+  h.tracker.tabChanged()
+  await h.advance(1000)
+  assert.deepEqual(h.sent, [], 'too soon after the failed try')
+  await h.advance(MINUTE)
+  h.tracker.tabChanged()
+  await h.advance(1000)
+  assert.equal(h.sent.length, 1)
+})
+
+test('an app without the archive drops writes instead of hoarding them', async () => {
+  const h = harness({ tabs: [tab(1, 10, 'a')] })
+  await h.tracker.start(false)
+  h.fail(Object.assign(new Error('old app'), { code: 'unsupported_method' }))
+  await open(h, [tab(1, 10, 'a'), tab(2, 10, 'b')])
+  await h.advance(3000)
   assert.deepEqual(h.store['tabspace-archive-outbox'], [])
 })
 
-test('an app without the archive drops captures instead of hoarding them', async () => {
-  const h = harness({ tabs: [tab(1, 10, 'a'), tab(2, 10, 'b')] })
+test('a write is put in the outbox before it is sent', async () => {
+  const h = harness({ tabs: [tab(1, 10, 'a')] })
   await h.tracker.start(false)
-  h.fail(Object.assign(new Error('old app'), { code: 'unsupported_method' }))
-  h.tracker.windowRemoved(10)
-  await h.advance(2500)
-  assert.deepEqual(h.store['tabspace-archive-outbox'], [])
+  h.hang()
+  await open(h, [tab(1, 10, 'a'), tab(2, 10, 'b')])
+  h.advance(3000)
+  for (let i = 0; i < 4; i += 1) await new Promise(resolve => setImmediate(resolve))
+  assert.equal(h.store['tabspace-archive-outbox'].length, 1)
 })
 
 test('maps the dashboard archive commands and answers', () => {
@@ -185,92 +315,6 @@ test('maps the dashboard archive commands and answers', () => {
   const messages = background.dashboardMessagesFor(keep, { sessions: [], archive })
   assert.deepEqual(messages.map(message => message.cmd), ['ReturnBookmarks', 'ReturnArchive', 'ArchiveKept'])
   assert.equal(messages[2].ok, true)
-})
-
-test('a refresh that runs between a close and its event does not lose the window', async () => {
-  const h = harness({ tabs: [tab(1, 10, 'a'), tab(2, 10, 'b'), tab(3, 11, 'c')] })
-  await h.tracker.start(false)
-  // The window is already gone when the refresh asks; its events come after.
-  h.setTabs([tab(3, 11, 'c')])
-  h.tracker.tabChanged()
-  await h.advance(1000)
-  h.tracker.tabRemoved(1, { windowId: 10, isWindowClosing: true })
-  h.tracker.tabRemoved(2, { windowId: 10, isWindowClosing: true })
-  h.tracker.windowRemoved(10)
-  await h.advance(2500)
-  assert.equal(h.sent.length, 1)
-  assert.deepEqual(h.sent[0].sites.map(site => site.title), ['a', 'b'])
-})
-
-test('a window closed just before quitting is archived on the next launch', async () => {
-  const first = harness({ tabs: [tab(1, 10, 'a'), tab(2, 10, 'b'), tab(3, 11, 'c')] })
-  await first.tracker.start(false)
-  first.tracker.windowRemoved(10)
-  await first.tracker.idle()
-  // Quit before the flush timer fired.
-
-  const second = harness({ stored: first.store, clock: 1_000_000 + 60_000, tabs: [tab(9, 20, 'c')] })
-  await second.tracker.start(true)
-  assert.equal(second.sent.length, 1)
-  assert.equal(second.sent[0].reason, 'window')
-  assert.deepEqual(second.sent[0].sites.map(site => site.title), ['a', 'b'])
-  await second.advance(16_000)
-  assert.equal(second.sent.length, 1, 'the restored tab is not a restart loss')
-})
-
-test('a capture is written down before it is sent', async () => {
-  const h = harness({ tabs: [tab(1, 10, 'a'), tab(2, 10, 'b')] })
-  await h.tracker.start(false)
-  h.hang()
-  h.tracker.windowRemoved(10)
-  await h.tracker.idle()
-  h.advance(2500)
-  await new Promise(resolve => setImmediate(resolve))
-  await new Promise(resolve => setImmediate(resolve))
-  assert.equal(h.store['tabspace-archive-outbox'].length, 1)
-  assert.equal(h.store['tabspace-archive-closes'].length, 0)
-})
-
-test('a waiting capture is retried on tab changes, at most once a minute', async () => {
-  const h = harness({ tabs: [tab(1, 10, 'a'), tab(2, 10, 'b'), tab(3, 11, 'c')] })
-  await h.tracker.start(false)
-  h.fail(Object.assign(new Error('offline'), { code: 'bridge_unavailable' }))
-  h.tracker.windowRemoved(10)
-  await h.advance(2500)
-  h.fail(null)
-
-  h.tracker.tabChanged()
-  await h.advance(1000)
-  assert.deepEqual(h.sent, [], 'too soon after the failed try')
-
-  await h.advance(60_000)
-  h.tracker.tabChanged()
-  await h.advance(1000)
-  assert.equal(h.sent.length, 1)
-  assert.deepEqual(h.store['tabspace-archive-outbox'], [])
-  assert.equal(h.captured, 1)
-})
-
-test('opening the library delivers a waiting capture first', async () => {
-  const h = harness({ tabs: [tab(1, 10, 'a'), tab(2, 10, 'b')] })
-  await h.tracker.start(false)
-  h.fail(Object.assign(new Error('offline'), { code: 'bridge_unavailable' }))
-  h.tracker.windowRemoved(10)
-  await h.advance(2500)
-  h.fail(null)
-  await h.tracker.retryOutbox()
-  assert.equal(h.sent.length, 1)
-})
-
-test('moving a tab to another window keeps it out of the old window\'s capture', async () => {
-  const h = harness({ tabs: [tab(1, 10, 'a'), tab(2, 10, 'b'), tab(3, 10, 'c')] })
-  await h.tracker.start(false)
-  h.setTabs([tab(1, 10, 'a'), tab(2, 10, 'b'), tab(3, 11, 'c')])
-  h.tracker.tabChanged() // onAttached
-  await h.advance(1000)
-  h.tracker.windowRemoved(10)
-  await h.advance(2500)
-  assert.deepEqual(h.sent[0].sites.map(site => site.title), ['a', 'b'])
 })
 
 test('an archive change reaches open dashboards as ArchiveChanged', () => {

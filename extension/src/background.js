@@ -264,37 +264,37 @@
     return { record, snapshot }
   }
 
-  // Archive: tabs that leave the browser together are handed to the app,
-  // which keeps them on this Mac for a while. A closed window, a burst of
-  // closes, and the windows a relaunch did not bring back qualify; a single
-  // tab closing does not, since the browser's own history covers that.
+  // Auto-save: the browsing state of each period is handed to the app, which
+  // keeps it on this Mac. A period runs until no window has seen activity for
+  // ARCHIVE_PERIOD_GAP_MS; the next activity starts another. Each window in a
+  // period holds the pages opened during it, closed or not, and the pages
+  // from before it that are still open when it ends, so an entry reads as
+  // the windows looked then. A page from before that closes during the period
+  // stays only in the earlier one.
   //
   // Everything here runs on browser events. There is no polling: the cache of
-  // open tabs is refreshed after tabs change, and a capture that could not be
-  // delivered waits for the next event instead of a retry timer.
+  // open tabs is refreshed after tabs change, the period is written a few
+  // seconds after it changes, and a write that could not be delivered waits
+  // for the next event instead of a retry timer.
   const ARCHIVE_TABS_KEY = "tabspace-archive-tabs"
-  const ARCHIVE_CLOSES_KEY = "tabspace-archive-closes"
-  const ARCHIVE_RESTART_KEY = "tabspace-archive-restart"
+  const ARCHIVE_PERIOD_KEY = "tabspace-archive-period"
   const ARCHIVE_OUTBOX_KEY = "tabspace-archive-outbox"
   const ARCHIVE_ALIVE_KEY = "tabspace-archive-alive"
-  // Closes this close together are one gesture.
-  const ARCHIVE_QUIET_MS = 2000
-  const ARCHIVE_BURST_SPAN_MS = 10000
-  const ARCHIVE_BURST_MINIMUM = 3
-  const ARCHIVE_WINDOW_MINIMUM = 2
-  // A relaunch restores windows gradually; compare only after it settles.
+  // The same gap as AutoArchiveStore.periodGap in the app.
+  const ARCHIVE_PERIOD_GAP_MS = 30 * 60000
+  // A relaunch restores windows gradually; tabs that appear this soon after
+  // it are the last run's, not new ones.
   const ARCHIVE_RESTART_SETTLE_MS = 15000
-  // Older than this, the tabs remembered from the last run are not news.
-  const ARCHIVE_RESTART_MAX_AGE_MS = 3 * 86400000
   const ARCHIVE_REFRESH_DELAY_MS = 1000
+  // A change to the pages is written this soon; activity alone, which only
+  // moves the period's end, less often.
+  const ARCHIVE_WRITE_DELAY_MS = 3000
+  const ARCHIVE_ACTIVITY_WRITE_DELAY_MS = 60000
   const ARCHIVE_SUPPRESS_MS = 30000
   const ARCHIVE_OUTBOX_LIMIT = 20
   const ARCHIVE_OUTBOX_MAX_AGE_MS = 7 * 86400000
-  // A waiting capture is retried on ordinary tab events, but not more often.
+  // A waiting write is retried on ordinary tab events, but not more often.
   const ARCHIVE_OUTBOX_RETRY_MS = 60000
-  // Tabs a refresh found gone stay findable this long, for the close events
-  // that report them after the refresh already ran.
-  const ARCHIVE_GONE_MS = 10000
   // The app cannot take captures at all, so keeping them would be pointless.
   const ARCHIVE_FINAL_ERRORS = ["unsupported_method", "unsupported_command", "pro_required", "invalid_archive"]
 
@@ -302,37 +302,37 @@
     return Boolean(tab && Number.isInteger(tab.id) && !tab.incognito && !tab.pinned && isSavableUrl(tab.url))
   }
 
-  // Tab order, which is how the person saw the pages. Browsers close a
-  // window's tabs from the last one, so event order would read backwards.
-  function inTabOrder(closes) {
-    return [...closes].sort((a, b) =>
-      ((a.windowId || 0) - (b.windowId || 0)) || ((a.index || 0) - (b.index || 0)))
+  function newArchivePeriod(at) {
+    return {
+      id: `${at}-${Math.random().toString(36).slice(2, 10)}`,
+      startedAt: at,
+      lastActivityAt: at,
+      carryUntil: 0,
+      windowOrder: [],
+      closedWindows: [],
+      pages: {}
+    }
   }
 
-  function archiveSites(closes) {
-    const seen = new Set()
-    const sites = []
-    for (const close of closes) {
-      if (!close || seen.has(close.url)) continue
-      seen.add(close.url)
-      sites.push({ title: close.title || close.url, url: close.url })
+  // The period as the app keeps it: its windows in the order they were first
+  // seen, each with its pages in tab order. A page from before the period
+  // counts only while it is open, or as part of a window that closed.
+  function archivePeriodPayload(period, openTabs) {
+    const windows = []
+    for (const windowId of period.windowOrder) {
+      const pages = Object.entries(period.pages)
+        .filter(([tabId, page]) => page.windowId === windowId && (!page.carried || page.windowClosed
+          || (!page.closedAlone && openTabs[tabId])))
+        .map(([, page]) => page)
+        .sort((a, b) => (a.index || 0) - (b.index || 0))
+      if (pages.length === 0) continue
+      windows.push({
+        closed: period.closedWindows.includes(windowId),
+        pages: pages.map(page => ({ title: page.title || page.url, url: page.url, carried: Boolean(page.carried) }))
+      })
     }
-    return sites
-  }
-
-  // Splits loose closes into gestures: runs whose neighbours are at most
-  // ARCHIVE_QUIET_MS apart. A run short enough and big enough is a burst.
-  function archiveBursts(closes) {
-    const sorted = [...closes].sort((a, b) => a.at - b.at)
-    const runs = []
-    for (const close of sorted) {
-      const run = runs[runs.length - 1]
-      if (run && close.at - run[run.length - 1].at <= ARCHIVE_QUIET_MS) run.push(close)
-      else runs.push([close])
-    }
-    return runs.filter(run =>
-      run[run.length - 1].at - run[0].at <= ARCHIVE_BURST_SPAN_MS
-      && archiveSites(run).length >= ARCHIVE_BURST_MINIMUM)
+    if (windows.length === 0) return null
+    return { id: period.id, startedAt: period.startedAt, endedAt: period.lastActivityAt, windows }
   }
 
   function createArchiveTracker(options) {
@@ -344,20 +344,32 @@
     const clearTimer = options.clearTimer || (timer => root.clearTimeout(timer))
     const onCaptured = options.onCaptured || (() => {})
 
+    // Open tabs worth keeping, by id, as last refreshed.
     let cache = null
-    let closes = null
+    let period
     const suppressed = new Map()
-    let flushTimer = null
     let refreshTimer = null
-    let restartTimer = null
+    let writeTimer = null
+    let writeDue = 0
     let queue = Promise.resolve()
     // Whether the outbox may hold something, and when it was last tried.
     let outboxWaiting = true
     let outboxTriedAt = 0
+    // Events that arrive before `start` has decided whether the browser was
+    // just launched wait for it: applied to the last run's period, they
+    // would end it with tabs that are already gone.
+    let started = false
+    const early = []
 
     function serial(task) {
       queue = queue.then(task).catch(() => {})
       return queue
+    }
+
+    function afterStart(task) {
+      if (started) return serial(task)
+      early.push(task)
+      return Promise.resolve()
     }
 
     async function read(key) {
@@ -368,93 +380,132 @@
       }
     }
 
-    async function loadCache() {
-      if (cache) return cache
-      const stored = await read(ARCHIVE_TABS_KEY)
-      cache = stored && typeof stored.tabs === "object" && stored.tabs
-        ? {
-            tabs: { ...stored.tabs },
-            gone: stored.gone && typeof stored.gone === "object" ? { ...stored.gone } : {},
-            updatedAt: Number(stored.updatedAt) || 0
-          }
-        : { tabs: {}, gone: {}, updatedAt: 0 }
-      return cache
-    }
-
-    async function loadCloses() {
-      if (closes) return closes
-      const stored = await read(ARCHIVE_CLOSES_KEY)
-      closes = Array.isArray(stored) ? stored : []
-      return closes
-    }
-
-    async function saveCache() {
-      cache.updatedAt = now()
-      await storage.set({ [ARCHIVE_TABS_KEY]: cache })
-    }
-
-    function saveCloses() {
-      return storage.set({ [ARCHIVE_CLOSES_KEY]: closes })
-    }
-
-    // `prune` drops tabs the browser no longer reports. A wake-up must not
-    // prune: the events that woke it may be the very closes still queued,
-    // and pruning first would forget the tabs they need. Even a pruning
-    // refresh can run between a close and its event, so what it drops is
-    // kept aside for a few seconds, where the late event still finds it.
-    async function refresh(prune) {
-      const loaded = await loadCache()
-      const tabs = (await queryTabs({})) || []
-      const at = now()
-      const next = prune ? {} : loaded.tabs
-      for (const tab of tabs) {
-        if (!isArchivableTab(tab)) {
-          delete next[tab && tab.id]
-          continue
-        }
-        next[tab.id] = { url: tab.url, title: tab.title || tab.url, windowId: tab.windowId, index: tab.index }
+    async function load() {
+      if (!cache) {
+        const stored = await read(ARCHIVE_TABS_KEY)
+        cache = stored && typeof stored.tabs === "object" && stored.tabs
+          ? { tabs: { ...stored.tabs } }
+          : { tabs: {} }
       }
-      for (const [id, gone] of Object.entries(loaded.gone)) {
-        if (!(at - gone.goneAt <= ARCHIVE_GONE_MS) || next[id]) delete loaded.gone[id]
+      if (period === undefined) {
+        const stored = await read(ARCHIVE_PERIOD_KEY)
+        period = stored && typeof stored.id === "string" && stored.pages && typeof stored.pages === "object"
+          ? stored
+          : null
       }
-      if (prune) {
-        for (const [id, tab] of Object.entries(loaded.tabs)) {
-          if (!next[id]) loaded.gone[id] = { ...tab, goneAt: at }
-        }
-      }
-      loaded.tabs = next
-      await saveCache()
     }
 
-    // A tab as last seen, whether the cache still holds it or a refresh
-    // already set it aside. Taking it removes it from both.
-    function takeTab(loaded, id) {
-      const tab = loaded.tabs[id] || loaded.gone[id]
-      delete loaded.tabs[id]
-      delete loaded.gone[id]
-      return tab
+    function save() {
+      return storage.set({ [ARCHIVE_TABS_KEY]: { tabs: cache.tabs, updatedAt: now() }, [ARCHIVE_PERIOD_KEY]: period })
+    }
+
+    function addPage(tabId, tab, carried) {
+      period.pages[tabId] = { url: tab.url, title: tab.title || tab.url, windowId: tab.windowId, index: tab.index, carried }
+      if (!period.windowOrder.includes(tab.windowId)) period.windowOrder.push(tab.windowId)
+    }
+
+    // A new period holds every open tab as a page from before it.
+    function beginPeriod(at) {
+      period = newArchivePeriod(at)
+      for (const [tabId, tab] of Object.entries(cache.tabs)) addPage(tabId, tab, true)
+    }
+
+    // Activity at `at`. After a long enough pause the current period is
+    // written as it ended and a new one begins.
+    async function touch(at) {
+      if (!period) {
+        beginPeriod(at)
+        return
+      }
+      if (at - period.lastActivityAt > ARCHIVE_PERIOD_GAP_MS) {
+        await write()
+        beginPeriod(at)
+        scheduleWrite(ARCHIVE_WRITE_DELAY_MS)
+        return
+      }
+      if (at > period.lastActivityAt) period.lastActivityAt = at
+      scheduleWrite(ARCHIVE_ACTIVITY_WRITE_DELAY_MS)
     }
 
     function isSuppressed(tabId, at) {
-      const until = suppressed.get(tabId)
+      const until = suppressed.get(Number(tabId))
       if (until === undefined) return false
       if (until < at) {
-        suppressed.delete(tabId)
+        suppressed.delete(Number(tabId))
         return false
       }
       return true
     }
 
+    // Brings the cache and the period's pages up to date with the browser. A
+    // tab the period has not seen was opened during it, unless the browser
+    // is still restoring the last run's windows; a page from before the
+    // period that moves to another address now counts as opened during it,
+    // since that is the last address its tab showed.
+    async function refresh() {
+      await load()
+      const tabs = (await queryTabs({})) || []
+      const at = now()
+      // The first period ever, or one lost from storage: the tabs open now
+      // were there before it.
+      if (!period) {
+        beginPeriod(at)
+        period.carryUntil = at
+      }
+      // A tab the period has never seen is the user opening a page, which
+      // may be what ends a pause: the period it joins is settled first.
+      if (at > period.carryUntil && tabs.some(tab => isArchivableTab(tab) && !period.pages[tab.id])) {
+        await touch(at)
+      }
+      const open = {}
+      let changed = false
+      for (const tab of tabs) {
+        if (!tab || !Number.isInteger(tab.id)) continue
+        if (tab.incognito || tab.pinned) {
+          if (period.pages[tab.id]) {
+            delete period.pages[tab.id]
+            changed = true
+          }
+          continue
+        }
+        if (!isArchivableTab(tab)) continue
+        const seen = { url: tab.url, title: tab.title || tab.url, windowId: tab.windowId, index: tab.index }
+        const page = period.pages[tab.id]
+        // Tab ids are not reused, so a closed tab the browser still lists is
+        // on its way out.
+        if (page && (page.closedAlone || page.windowClosed)) continue
+        open[tab.id] = seen
+        if (!page) {
+          addPage(tab.id, seen, at <= period.carryUntil)
+          changed = true
+          continue
+        }
+        if (page.url !== seen.url) {
+          page.carried = false
+          changed = true
+        }
+        if (page.url !== seen.url || page.title !== seen.title || page.windowId !== seen.windowId
+            || page.index !== seen.index) {
+          Object.assign(page, seen)
+          if (!period.windowOrder.includes(seen.windowId)) period.windowOrder.push(seen.windowId)
+          changed = true
+        }
+      }
+      cache.tabs = open
+      await save()
+      if (changed) scheduleWrite(ARCHIVE_WRITE_DELAY_MS)
+    }
+
     // Sends what is waiting, oldest first, and stops at the first failure: an
     // app that is not running now will be tried again on the next event. A
-    // new capture is written down before it is sent, so a background context
-    // ended mid-request loses nothing; sending it twice only refreshes the
-    // app's entry.
+    // write is put in the outbox before it is sent, replacing any earlier one
+    // of the same period, so a background context ended mid-request loses
+    // nothing and sending it twice only rewrites the app's entry.
     async function drainOutbox(extra) {
       outboxTriedAt = now()
-      const stored = (await read(ARCHIVE_OUTBOX_KEY)) || []
-      const pending = (extra ? [...stored, { ...extra, at: now() }] : stored)
-        .filter(item => item && now() - item.at <= ARCHIVE_OUTBOX_MAX_AGE_MS)
+      const stored = ((await read(ARCHIVE_OUTBOX_KEY)) || []).filter(item => item && typeof item.id === "string")
+      const pending = (extra ? [...stored.filter(item => item.id !== extra.id), { ...extra, at: now() }] : stored)
+        .filter(item => now() - item.at <= ARCHIVE_OUTBOX_MAX_AGE_MS)
         .slice(-ARCHIVE_OUTBOX_LIMIT)
       if (pending.length === 0) {
         outboxWaiting = false
@@ -463,9 +514,11 @@
       }
       if (extra) await storage.set({ [ARCHIVE_OUTBOX_KEY]: pending })
       let sent = 0
+      let dismissed = false
       for (const item of pending) {
         try {
-          await send({ reason: item.reason, sites: item.sites })
+          const result = await send({ id: item.id, startedAt: item.startedAt, endedAt: item.endedAt, windows: item.windows })
+          if (result && result.dismissed && period && item.id === period.id) dismissed = true
           sent += 1
         } catch (error) {
           if (error && ARCHIVE_FINAL_ERRORS.includes(error.code)) {
@@ -480,117 +533,93 @@
       if (sent > 0) {
         try { onCaptured() } catch (_) {}
       }
+      // The user deleted or kept the period while it was going on: what is
+      // open now starts a new one, and what closed before stays gone.
+      if (dismissed) {
+        beginPeriod(now())
+        await save()
+        scheduleWrite(ARCHIVE_WRITE_DELAY_MS)
+      }
     }
 
-    function deliver(payload) {
-      return drainOutbox(payload)
+    async function write() {
+      if (writeTimer !== null) {
+        clearTimer(writeTimer)
+        writeTimer = null
+      }
+      await load()
+      if (!period) return
+      const payload = archivePeriodPayload(period, cache.tabs)
+      if (payload) await drainOutbox(payload)
     }
 
-    function flushOutbox() {
-      return drainOutbox(null)
-    }
-
-    // Ordinary tab events retry a waiting capture, at most once a minute,
-    // so an app that comes back is caught up without a timer of its own.
-    function retryOutboxSoon() {
-      if (!outboxWaiting || now() - outboxTriedAt < ARCHIVE_OUTBOX_RETRY_MS) return
-      return flushOutbox()
-    }
-
-    function scheduleFlush(delay) {
-      if (flushTimer !== null) clearTimer(flushTimer)
-      flushTimer = setTimer(() => {
-        flushTimer = null
-        serial(() => flush(false))
+    function scheduleWrite(delay) {
+      const due = now() + delay
+      if (writeTimer !== null) {
+        if (writeDue <= due) return
+        clearTimer(writeTimer)
+      }
+      writeDue = due
+      writeTimer = setTimer(() => {
+        writeTimer = null
+        serial(write)
       }, delay)
     }
 
-    async function flush(force) {
-      const pending = await loadCloses()
-      if (pending.length === 0) return
-      const latest = Math.max(...pending.map(close => close.at))
-      const quietFor = now() - latest
-      if (!force && quietFor < ARCHIVE_QUIET_MS) {
-        scheduleFlush(ARCHIVE_QUIET_MS - quietFor)
-        return
-      }
-      closes = []
-      await saveCloses()
-      const windows = new Map()
-      const loose = []
-      for (const close of pending) {
-        if (!close.windowClosing) {
-          loose.push(close)
-          continue
-        }
-        if (!windows.has(close.windowId)) windows.set(close.windowId, [])
-        windows.get(close.windowId).push(close)
-      }
-      for (const group of windows.values()) {
-        const sites = archiveSites(inTabOrder(group))
-        if (sites.length >= ARCHIVE_WINDOW_MINIMUM) await deliver({ reason: "window", sites })
-      }
-      for (const run of archiveBursts(loose)) {
-        await deliver({ reason: "burst", sites: archiveSites(inTabOrder(run)) })
-      }
-    }
-
-    async function checkRestart() {
-      const pending = await read(ARCHIVE_RESTART_KEY)
-      if (!pending || !Array.isArray(pending.tabs)) return
-      const wait = pending.at + ARCHIVE_RESTART_SETTLE_MS - now()
-      if (wait > 0) {
-        if (restartTimer === null) {
-          restartTimer = setTimer(() => {
-            restartTimer = null
-            serial(checkRestart)
-          }, wait)
-        }
-        return
-      }
-      await storage.set({ [ARCHIVE_RESTART_KEY]: null })
-      const open = new Set(((await queryTabs({})) || [])
-        .filter(tab => tab && typeof tab.url === "string")
-        .map(tab => tab.url))
-      const sites = archiveSites(inTabOrder(pending.tabs.filter(tab => tab && !open.has(tab.url))))
-      if (sites.length >= ARCHIVE_WINDOW_MINIMUM) await deliver({ reason: "restart", sites })
+    // Ordinary tab events retry a waiting write, at most once a minute, so an
+    // app that comes back is caught up without a timer of its own.
+    function retryOutboxSoon() {
+      if (!outboxWaiting || now() - outboxTriedAt < ARCHIVE_OUTBOX_RETRY_MS) return
+      return drainOutbox(null)
     }
 
     return {
       // Called once per wake-up. `freshBrowser` means the browser itself was
-      // started since the last run, so the tabs remembered from then are what
-      // the relaunch may have lost.
+      // started since the last run: the period that run left is written as
+      // the browser quit, with its open windows as closed ones, and a new
+      // period takes the restored tabs as pages from before it.
       start(freshBrowser) {
         return serial(async () => {
-          const loaded = await loadCache()
+          await load()
           if (freshBrowser) {
-            // Closes the last run recorded but never got to flush, such as a
-            // window closed just before quitting. Their tabs already left the
-            // cache, so the restart comparison below cannot see them.
-            await flush(true)
-          }
-          const remembered = Object.values(loaded.tabs)
-          if (freshBrowser) {
-            if (remembered.length >= ARCHIVE_WINDOW_MINIMUM
-                && now() - loaded.updatedAt <= ARCHIVE_RESTART_MAX_AGE_MS) {
-              await storage.set({ [ARCHIVE_RESTART_KEY]: { tabs: remembered, at: now() } })
+            if (period) {
+              for (const [tabId, page] of Object.entries(period.pages)) {
+                if (cache.tabs[tabId] && !page.closedAlone && !page.windowClosed) {
+                  page.windowClosed = true
+                  if (!period.closedWindows.includes(page.windowId)) period.closedWindows.push(page.windowId)
+                }
+              }
+              await write()
             }
-            loaded.tabs = {}
-            loaded.gone = {}
+            cache.tabs = {}
+            beginPeriod(now())
+            period.carryUntil = now() + ARCHIVE_RESTART_SETTLE_MS
           }
-          await refresh(false)
-          // Closes from before a suspension that never got their flush.
-          await flush(false)
-          await flushOutbox()
-          await checkRestart()
+          await refresh()
+          await drainOutbox(null)
+          started = true
+          for (const task of early.splice(0)) {
+            try { await task() } catch (_) {}
+          }
+        })
+      },
+      // Something the user did: switching tabs or windows, or a page loaded
+      // in the tab they are looking at.
+      activity() {
+        const at = now()
+        return afterStart(async () => {
+          await load()
+          await touch(at)
+          await save()
         })
       },
       tabChanged() {
+        if (!started) return
         if (refreshTimer !== null) clearTimer(refreshTimer)
         refreshTimer = setTimer(() => {
           refreshTimer = null
           serial(async () => {
-            await refresh(true)
+            await refresh()
             await retryOutboxSoon()
           })
         }, ARCHIVE_REFRESH_DELAY_MS)
@@ -598,50 +627,44 @@
       // The library is being opened: deliver what is waiting first, so the
       // list it asks for already holds it.
       retryOutbox() {
-        return serial(() => outboxWaiting ? flushOutbox() : undefined)
+        return serial(() => outboxWaiting ? drainOutbox(null) : undefined)
       },
+      // A page opened during the period stays in it once closed. One from
+      // before it leaves the period, unless its whole window is closing.
       tabRemoved(tabId, removeInfo) {
         const at = now()
-        return serial(async () => {
-          const loaded = await loadCache()
-          const tab = takeTab(loaded, tabId)
-          if (!tab) return
-          await saveCache()
-          if (isSuppressed(tabId, at)) return
-          const pending = await loadCloses()
-          pending.push({
-            url: tab.url,
-            title: tab.title,
-            windowId: tab.windowId,
-            index: tab.index,
-            at,
-            windowClosing: Boolean(removeInfo && removeInfo.isWindowClosing)
-          })
-          await saveCloses()
-          scheduleFlush(ARCHIVE_QUIET_MS)
+        return afterStart(async () => {
+          await load()
+          await touch(at)
+          delete cache.tabs[tabId]
+          const page = period.pages[tabId]
+          if (page) {
+            if (isSuppressed(tabId, at)) delete period.pages[tabId]
+            else if (removeInfo && removeInfo.isWindowClosing) page.windowClosed = true
+            else page.closedAlone = true
+          }
+          await save()
+          scheduleWrite(ARCHIVE_WRITE_DELAY_MS)
         })
       },
       // Some browsers close a window's tabs without a tab event each, so the
-      // window's remembered tabs are taken from the cache as well.
+      // window's pages are closed here as well.
       windowRemoved(windowId) {
         const at = now()
-        return serial(async () => {
-          const loaded = await loadCache()
-          const pending = await loadCloses()
-          for (const close of pending) {
-            if (close.windowId === windowId && at - close.at <= ARCHIVE_QUIET_MS * 2) close.windowClosing = true
+        return afterStart(async () => {
+          await load()
+          await touch(at)
+          for (const [tabId, page] of Object.entries(period.pages)) {
+            if (page.windowId !== windowId || page.closedAlone) continue
+            const tab = cache.tabs[tabId]
+            if (tab && tab.windowId !== windowId) continue
+            delete cache.tabs[tabId]
+            if (isSuppressed(tabId, at)) delete period.pages[tabId]
+            else page.windowClosed = true
           }
-          const ids = [...Object.keys(loaded.tabs), ...Object.keys(loaded.gone)]
-          for (const id of ids) {
-            const seen = loaded.tabs[id] || loaded.gone[id]
-            if (!seen || seen.windowId !== windowId) continue
-            const tab = takeTab(loaded, id)
-            if (isSuppressed(Number(id), at)) continue
-            pending.push({ url: tab.url, title: tab.title, windowId, index: tab.index, at, windowClosing: true })
-          }
-          await saveCache()
-          await saveCloses()
-          scheduleFlush(ARCHIVE_QUIET_MS)
+          if (!period.closedWindows.includes(windowId)) period.closedWindows.push(windowId)
+          await save()
+          scheduleWrite(ARCHIVE_WRITE_DELAY_MS)
         })
       },
       // Tabs Tab Space closes itself are already saved somewhere.
@@ -651,8 +674,8 @@
           if (Number.isInteger(id)) suppressed.set(id, until)
         }
       },
-      flushNow() {
-        return serial(() => flush(true))
+      writeNow() {
+        return serial(write)
       },
       idle() {
         return queue
@@ -2155,16 +2178,27 @@
       extensionApi.tabs.onRemoved.addListener((tabId, removeInfo) => {
         archive.tabRemoved(tabId, removeInfo)
       })
+      // A new tab counts as activity once the refresh finds it.
       if (extensionApi.tabs.onCreated) extensionApi.tabs.onCreated.addListener(() => archive.tabChanged())
       // A tab dragged to another window or reordered keeps its id, so the
-      // cache must hear about it, or closing its old window would archive it.
+      // cache must hear about it, or its page would stay filed under the old
+      // window.
       for (const event of ["onAttached", "onDetached", "onMoved"]) {
         if (extensionApi.tabs[event]) extensionApi.tabs[event].addListener(() => archive.tabChanged())
       }
       if (extensionApi.tabs.onUpdated) {
-        extensionApi.tabs.onUpdated.addListener((tabId, changeInfo) => {
-          if (changeInfo && (changeInfo.url || changeInfo.title || changeInfo.pinned !== undefined
-              || changeInfo.status === "complete")) archive.tabChanged()
+        extensionApi.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
+          if (!changeInfo) return
+          // A page loading in a background tab is not the user at work.
+          if (changeInfo.url && tab && tab.active) archive.activity()
+          if (changeInfo.url || changeInfo.title || changeInfo.pinned !== undefined
+              || changeInfo.status === "complete") archive.tabChanged()
+        })
+      }
+      if (extensionApi.tabs.onActivated) extensionApi.tabs.onActivated.addListener(() => archive.activity())
+      if (extensionApi.windows && extensionApi.windows.onFocusChanged) {
+        extensionApi.windows.onFocusChanged.addListener(windowId => {
+          if (Number.isInteger(windowId) && windowId >= 0) archive.activity()
         })
       }
       if (extensionApi.windows && extensionApi.windows.onRemoved) {
@@ -2302,7 +2336,7 @@
     browserFamily,
     createActivationTracker,
     createArchiveTracker,
-    archiveBursts,
+    archivePeriodPayload,
     isArchivableTab,
     createController,
     handleSwitcherEvent,
