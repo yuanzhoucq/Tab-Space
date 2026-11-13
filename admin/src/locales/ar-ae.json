@@ -172,7 +172,7 @@
   "archiveOngoing": "قيد التقدم",
   "archiveWindowCount": "{count} نوافذ",
   "archiveWindowLabel": "النافذة {n}",
-  "archiveWindowClosed": "مغلقة",
+  "archiveWindowOpen": "مفتوحة",
   "archiveOpenWindow": "فتح هذه النافذة",
   "archiveOpenAll": "فتح الكل",
   "archiveKeep": "حفظ كجلسة",

@@ -172,7 +172,7 @@
   "archiveOngoing": "Läuft noch",
   "archiveWindowCount": "{count} Fenster",
   "archiveWindowLabel": "Fenster {n}",
-  "archiveWindowClosed": "geschlossen",
+  "archiveWindowOpen": "geöffnet",
   "archiveOpenWindow": "Dieses Fenster öffnen",
   "archiveOpenAll": "Alle öffnen",
   "archiveKeep": "Als Sitzung behalten",

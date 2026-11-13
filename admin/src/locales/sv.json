@@ -172,7 +172,7 @@
   "archiveOngoing": "Pågår",
   "archiveWindowCount": "{count} fönster",
   "archiveWindowLabel": "Fönster {n}",
-  "archiveWindowClosed": "stängt",
+  "archiveWindowOpen": "öppet",
   "archiveOpenWindow": "Öppna det här fönstret",
   "archiveOpenAll": "Öppna alla",
   "archiveKeep": "Behåll som session",

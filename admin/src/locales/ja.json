@@ -172,7 +172,7 @@
   "archiveOngoing": "進行中",
   "archiveWindowCount": "{count} 個のウインドウ",
   "archiveWindowLabel": "ウインドウ {n}",
-  "archiveWindowClosed": "閉じた",
+  "archiveWindowOpen": "開いている",
   "archiveOpenWindow": "このウインドウを開く",
   "archiveOpenAll": "すべて開く",
   "archiveKeep": "セッションとして保存",

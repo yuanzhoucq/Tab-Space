@@ -172,7 +172,7 @@
   "archiveOngoing": "진행 중",
   "archiveWindowCount": "윈도우 {count}개",
   "archiveWindowLabel": "윈도우 {n}",
-  "archiveWindowClosed": "닫힘",
+  "archiveWindowOpen": "열려 있음",
   "archiveOpenWindow": "이 윈도우 열기",
   "archiveOpenAll": "모두 열기",
   "archiveKeep": "세션으로 저장",

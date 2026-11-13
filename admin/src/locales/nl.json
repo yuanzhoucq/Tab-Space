@@ -172,7 +172,7 @@
   "archiveOngoing": "Bezig",
   "archiveWindowCount": "{count} vensters",
   "archiveWindowLabel": "Venster {n}",
-  "archiveWindowClosed": "gesloten",
+  "archiveWindowOpen": "geopend",
   "archiveOpenWindow": "Dit venster openen",
   "archiveOpenAll": "Open alles",
   "archiveKeep": "Bewaar als sessie",

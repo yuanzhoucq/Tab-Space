@@ -172,7 +172,7 @@
   "archiveOngoing": "En cours",
   "archiveWindowCount": "{count} fenêtres",
   "archiveWindowLabel": "Fenêtre {n}",
-  "archiveWindowClosed": "fermée",
+  "archiveWindowOpen": "ouverte",
   "archiveOpenWindow": "Ouvrir cette fenêtre",
   "archiveOpenAll": "Tout ouvrir",
   "archiveKeep": "Garder comme session",

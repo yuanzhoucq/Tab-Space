@@ -172,7 +172,7 @@
   "archiveOngoing": "Devam ediyor",
   "archiveWindowCount": "{count} pencere",
   "archiveWindowLabel": "Pencere {n}",
-  "archiveWindowClosed": "kapandı",
+  "archiveWindowOpen": "açık",
   "archiveOpenWindow": "Bu pencereyi aç",
   "archiveOpenAll": "Tümünü Aç",
   "archiveKeep": "Oturum Olarak Kaydet",

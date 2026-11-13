@@ -172,7 +172,7 @@
   "archiveOngoing": "I gang",
   "archiveWindowCount": "{count} vinduer",
   "archiveWindowLabel": "Vindue {n}",
-  "archiveWindowClosed": "lukket",
+  "archiveWindowOpen": "åben",
   "archiveOpenWindow": "Åbn dette vindue",
   "archiveOpenAll": "Åbn alle",
   "archiveKeep": "Behold som session",

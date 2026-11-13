@@ -391,16 +391,19 @@ export default {
       return count > 1 ? this.lang.archiveWindowCount.replace("{count}", count) : ""
     },
     // The pages shown, with a heading before each window's when the period
-    // had several and the full list is on screen.
+    // had several and the full list is on screen. The latest window comes
+    // first; each keeps the number it had in the order the windows appeared.
+    // While the period goes on, the windows still open say so; an ended period
+    // is a record and marks none, so nothing in it goes stale.
     siteRows(entry, sites) {
       const windows = this.windowsOf(entry)
       if (windows.length < 2 || this.searching || this.isCompact(entry)) {
         return sites.map((site, index) => ({ key: `s${index}-${site.url}`, site }))
       }
       const rows = []
-      windows.forEach((window, index) => {
+      windows.map((window, index) => [window, index]).reverse().forEach(([window, index]) => {
         const label = this.lang.archiveWindowLabel.replace("{n}", index + 1)
-        rows.push({ key: `w${index}`, window, label: window.closed ? `${label} · ${this.lang.archiveWindowClosed}` : label })
+        rows.push({ key: `w${index}`, window, label: entry.ongoing && !window.closed ? `${label} · ${this.lang.archiveWindowOpen}` : label })
         window.pages.forEach((site, page) => rows.push({ key: `w${index}-${page}-${site.url}`, site }))
       })
       return rows

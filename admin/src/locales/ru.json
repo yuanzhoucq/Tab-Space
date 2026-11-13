@@ -172,7 +172,7 @@
   "archiveOngoing": "Идёт сейчас",
   "archiveWindowCount": "Окон: {count}",
   "archiveWindowLabel": "Окно {n}",
-  "archiveWindowClosed": "закрыто",
+  "archiveWindowOpen": "открыто",
   "archiveOpenWindow": "Открыть это окно",
   "archiveOpenAll": "Открыть все",
   "archiveKeep": "Сохранить как сессию",

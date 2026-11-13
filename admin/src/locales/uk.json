@@ -172,7 +172,7 @@
   "archiveOngoing": "Триває",
   "archiveWindowCount": "Вікон: {count}",
   "archiveWindowLabel": "Вікно {n}",
-  "archiveWindowClosed": "закрито",
+  "archiveWindowOpen": "відкрито",
   "archiveOpenWindow": "Відкрити це вікно",
   "archiveOpenAll": "Відкрити всі",
   "archiveKeep": "Зберегти як сесію",

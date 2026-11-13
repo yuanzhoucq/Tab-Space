@@ -4259,8 +4259,8 @@ test('opens, keeps and deletes archived windows', async ({ page }) => {
   // A period with several windows lists them apart, each openable alone.
   const tripEntry = page.getByTestId('archive-entry-archive-burst')
   await expect(tripEntry.getByTestId('archive-chip')).toHaveText('2 windows')
-  await expect(tripEntry.getByTestId('archive-window')).toHaveText(['Window 1 · closed', 'Window 2'])
-  await tripEntry.getByTestId('archive-open-window').first().click()
+  await expect(tripEntry.getByTestId('archive-window')).toHaveText(['Window 2', 'Window 1'])
+  await tripEntry.getByTestId('archive-open-window').last().click()
   await expect.poll(() => lastBridgeCommand(page, 'RestoreSession')).toMatchObject({
     payload: { bookmarks: [{ sites: archiveEntries[1].sites.slice(0, 2) }] }
   })

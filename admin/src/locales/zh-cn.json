@@ -172,7 +172,7 @@
   "archiveOngoing": "进行中",
   "archiveWindowCount": "{count} 个窗口",
   "archiveWindowLabel": "窗口 {n}",
-  "archiveWindowClosed": "已关闭",
+  "archiveWindowOpen": "当前打开",
   "archiveOpenWindow": "打开这个窗口",
   "archiveOpenAll": "全部打开",
   "archiveKeep": "存为会话",
